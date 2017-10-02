@@ -67,7 +67,7 @@ public class ImageFile extends MediaFileTagged {
     Image currentImage = (Image) content;
 
     //the "guess"
-    return new Double(currentImage.getHeight() * currentImage.getWidth() * getBytesPerPixel()).longValue();
+    return (long) (currentImage.getHeight() * currentImage.getWidth() * getBytesPerPixel());
   }
 
   /*

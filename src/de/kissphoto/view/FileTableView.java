@@ -1,7 +1,5 @@
 package de.kissphoto.view;
 
-import com.sun.javafx.scene.control.skin.TableViewSkin;
-import com.sun.javafx.scene.control.skin.VirtualFlow;
 import de.kissphoto.KissPhoto;
 import de.kissphoto.ctrl.FileChangeWatcher;
 import de.kissphoto.ctrl.FileChangeWatcherEventListener;
@@ -23,6 +21,8 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.skin.TableViewSkin;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -689,7 +689,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
           for (int i = 0; i < selectedIndicesSorted.size(); i++) {
             current = selectedIndicesSorted.get(i); //convert Integer to int
             swapMediaFiles(current - 1, current); //move content
-            selectedIndicesSorted.set(i, new Integer(current - 1)); //move selection -1=one up
+            selectedIndicesSorted.set(i, current - 1); //move selection -1=one up
           }
 
           //renew selection, which has been lost during swapMediaFiles()
@@ -731,7 +731,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
           for (int i = 0; i < selectedIndicesSorted.size(); i++) {
             current = selectedIndicesSorted.get(i); //convert Integer to int
             swapMediaFiles(current, current + 1); //move content
-            selectedIndicesSorted.set(i, new Integer(current + 1)); //move selection +1=one down
+            selectedIndicesSorted.set(i, current + 1); //move selection +1=one down
           }
 
           //renew selection, which has been lost during swapMediaFiles()
@@ -1129,13 +1129,13 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     try {
       if (flow != null) {  //the flow is not valid before it is drawn for the first time. Should be always done after loading a directory ;-)
         if (index > 0 && (index - 1) < flow.getFirstVisibleCell().getIndex()) {
-          flow.show(index - 1); //one line before the selected line should remain visible
+          flow.scrollTo(index - 1); //one line before the selected line should remain visible
         } else if (index < (mediaFileList.getFileList().size() - 1) && (index + 1) > flow.getLastVisibleCell().getIndex()) {
-          flow.show(index + 1);
+          flow.scrollTo(index + 1);
         } else if (index <= 0 && flow.getFirstVisibleCell().getIndex() > 0) {
-          flow.show(0);
+          flow.scrollTo(0);
         } else if (index >= (mediaFileList.getFileList().size() - 1)) {
-          flow.show(index);
+          flow.scrollTo(index);
         }
       }
     } catch (Exception e) {
