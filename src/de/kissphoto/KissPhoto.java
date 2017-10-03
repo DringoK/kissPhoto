@@ -103,8 +103,7 @@ public class KissPhoto extends Application {
   private static final double default_X = 0;
   private static final double default_Y = 0;
   private static final double default_width = 1000;
-  private static final double default_heigth = 800;
-  private static final double default_decoWidth = 8;
+  private static final double default_height = 800;
 
   private static final String STAGE_X = "StageX";
   private static final String STAGE_Y = "StageY";
@@ -125,8 +124,6 @@ public class KissPhoto extends Application {
     globalSettings.setProperty(STAGE_Y, Double.toString(primaryStage.getY()));
     globalSettings.setProperty(STAGE_WIDTH, Double.toString(primaryStage.getWidth()));
     globalSettings.setProperty(STAGE_HEIGHT, Double.toString(primaryStage.getHeight()));
-    globalSettings.setProperty(STAGE_DECO_WIDTH, Double.toString((primaryStage.getWidth() - scene.getWidth()) / 2.0)); //div 2 because border is on both sides
-    //vertically the border is the same, but the title is additionally that's why only the horizontal width is taken
   }
 
   /**
@@ -157,14 +154,9 @@ public class KissPhoto extends Application {
     try {
       primaryStage.setHeight(Double.parseDouble(globalSettings.getProperty(STAGE_HEIGHT)));
     } catch (Exception e) {
-      primaryStage.setHeight(default_heigth);
+      primaryStage.setHeight(default_height);
     }
 
-    try {
-      decoWidth = Double.parseDouble(globalSettings.getProperty(STAGE_DECO_WIDTH));
-    } catch (Exception e) {
-      decoWidth = default_decoWidth;
-    }
   }
 
   /**
@@ -172,21 +164,26 @@ public class KissPhoto extends Application {
    * and therefore the stage is not completely visible now.
    * This method checks the stage's boundaries and moves the stage completely into a visible area
    * For this it might be necessary to make the Stage smaller.
-   *
    * note: if a second screen is active, but the monitor is switched off...there is no chance ;-)
    *
-   * Especially call this method after restoreLastMainWindowSettings has been used...
-   * @param stage
+   * Especially call this method after restoreLastMainWindowSettings() has been used...
+   *
+   * When called during start-up: wait after resizing of stage has been performed (using runlater)
+   * so that the scene size has followed stage size and the decoWidth (border) can be calculated correctly
+   *
+   * @param stage  (not null) the window which will be sized
+   * @throws Exception if stage or scene in stage is null
    */
   public void ensureStageToBeVisible(Stage stage) {
-    //determine entire bounds of all screens
+    Rectangle2D bounds;  //bounds per screen
+    //global bounds along all screens
     double minX = 0;
     double maxX = 0;
     double minY = 0;
     double maxY = 0;
 
-    Rectangle2D bounds;
 
+    //determine entire bounds of all screens
     for (Screen s : Screen.getScreens()) {
       bounds = s.getVisualBounds();
       if (minX > bounds.getMinX()) {
@@ -204,6 +201,8 @@ public class KissPhoto extends Application {
     }
 
     //the border may be invisible, so widen the allowed rectangle for placing the window
+    double decoWidth = (stage.getWidth() - stage.getScene().getWidth()) / 2.0;   //vertically the border is the same, but the title is additionally that's why only the horizontal width is taken
+
     minX = minX - decoWidth;
     maxX = maxX + decoWidth;
     minY = minY - decoWidth;
@@ -217,7 +216,7 @@ public class KissPhoto extends Application {
     //lower part not visible --> move up
     invisiblePixels = (stage.getY() + stage.getHeight()) - maxY;
     if (invisiblePixels > 0) {
-      stage.setX(stage.getY() - invisiblePixels);
+      stage.setY(stage.getY() - invisiblePixels);
     }
 
     //left part not visible --> move to the right
@@ -284,7 +283,7 @@ public class KissPhoto extends Application {
     primaryStage = stage;  //make this parameter value available in event Handler (see setOnClosedEvent)
     primaryStage.setTitle(KISS_PHOTO + KISS_PHOTO_VERSION);
     Group root = new Group();
-    scene = new Scene(root, 1000, 800);
+    scene = new Scene(root, default_width, default_height);
     primaryStage.setScene(scene);
 
     stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/KissPhotoIcon.jpg")));
@@ -352,11 +351,17 @@ public class KissPhoto extends Application {
     final SplashScreen splash = SplashScreen.getSplashScreen();
     if (splash != null) splash.close();
 
-    primaryStage.show();  //show main window before opening files to show messages while loading
     restoreLastMainWindowSettings(); //window must be visible otherwise it has no effect to set window's bounds
-    ensureStageToBeVisible(primaryStage);
+    primaryStage.show();  //show main window before opening files to show messages while loading
 
-    //--------- finally load initial file or folder ---------------
-    fileTableView.openInitialFolder(initialFileOrFolder);
+
+    //wait until resizing has been performed and scene width has followed stage width
+    Platform.runLater(new Runnable() {
+      @Override
+      public void run() {
+        ensureStageToBeVisible(primaryStage);
+        fileTableView.openInitialFolder(initialFileOrFolder);
+      }
+    });
   }
 }
