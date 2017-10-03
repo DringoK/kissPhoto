@@ -85,7 +85,7 @@ import java.awt.*;
  * todo JPG drehen. Z.B. http://mediachest.sourceforge.net/mediautil/
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.8.8g work in progress"; //<------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.8.8h work in progress"; //<------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;

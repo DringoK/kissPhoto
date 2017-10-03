@@ -210,83 +210,143 @@ public class ViewportZoomer {
   // the image area described by the viewport will be shown and zoomed into ImageView
 
   /**
-   * move the viewport right by MOVE_STEP_FACTOR percentage of the visible part
-   * ignore if left image border is already at the right rim of the view (KEEP_PIXELS_VISIBLE pixels remain visible)
-   * if the complete image is visible in the viewport moving is ignored
-   * if no viewport is defined yet nothing will happen
+   * the viewport is centered horizontally relatively to the image
+   * this makes especially sense if the image is horizontally smaller than >zoomTofit<
+   * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
-  public void moveRight() {
-    if (viewer.getViewport() == null) return;
+  public void centerImageX() {
+    Rectangle2D viewport = viewer.getViewport();
+    if (viewport == null) return;
 
-    double newX = viewer.getViewport().getMinX() - (viewer.getViewport().getWidth() * MOVE_STEP_FACTOR);
-    if (newX > (viewer.getFitWidth() * (1 - KEEP_PERCENT_VISIBLE)) / zoomFactor - 2 / zoomFactor)
-      newX = -viewer.getFitWidth() / zoomFactor + 2 / zoomFactor; //stop when right border of the image is at left rim (KEEP_PERCENT_VISIBLE still visible)
+    double newX = (viewer.getMediaWidth() - viewport.getWidth()) / 2;
 
-    viewer.setViewport(new Rectangle2D(newX, viewer.getViewport().getMinY(), viewer.getViewport().getWidth(), viewer.getViewport().getHeight()));
+    viewer.setViewport(new Rectangle2D(newX, viewport.getMinY(), viewport.getWidth(), viewport.getHeight()));
   }
 
   /**
-   * move the picture left by moving the viewport right by MOVE_STEP_FACTOR percentage of the visible part
-   * ignore if viewport is already at the right image border (KEEP_PERCENT_VISIBLE pixels remain visible)
-   *
-   * @todo: PERCENT VISIBLE überdenken: je nachdem wie groß die Vergrößerung ist, sollte sich das ändern (KEEP_PERCENT_VISIBLE verrechnen mit zoomFactor???)
-   * if no viewport is defined yet nothing will happen
-   * @todo: andere move-Richtungen übertragen
+   * the viewport is centered vertically relatively to the image
+   * this makes especially sense if the image is vertically smaller than >zoomTofit<
+   * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
-  public void moveLeft() {
-    if (viewer.getViewport() == null) return;
+  public void centerImageY() {
+    Rectangle2D viewport = viewer.getViewport();
+    if (viewport == null) return;
 
-    double newX = viewer.getViewport().getMinX() + (viewer.getViewport().getWidth() * MOVE_STEP_FACTOR);   //as the viewport moves right over the picture, the picture seems to move left!
-    if (newX > (viewer.getMediaWidth() * (1 - KEEP_PERCENT_VISIBLE))) // stop when viewport leaves image width (keep_percent_visible% before;-)
-      newX = (viewer.getMediaWidth() * (1 - KEEP_PERCENT_VISIBLE));
+    double newY = (viewer.getMediaHeight() - viewport.getHeight()) / 2;
 
-    viewer.setViewport(new Rectangle2D(newX, viewer.getViewport().getMinY(), viewer.getViewport().getWidth(), viewer.getViewport().getHeight()));
-  }
-
-  /**
-   * move the viewport down by MOVE_STEP_FACTOR percentage of the visible part
-   * ignore if top rim of the image is already at the bottom of the view (KEEP_PIXELS_VISIBLE pixels remain visible)
-   * if the complete image is visible in the viewport moving is ignored
-   * if no viewport is defined yet nothing will happen
-   */
-  public void moveDown() {
-    if (viewer.getViewport() == null) return;
-
-    double newY = viewer.getViewport().getMinY() - (viewer.getViewport().getHeight() * MOVE_STEP_FACTOR);
-    if (-newY > viewer.getFitHeight() / zoomFactor - 2 / zoomFactor)
-      newY = -viewer.getFitHeight() / zoomFactor + 2 / zoomFactor; //stop when right border of the image is at left rim (two pixels still visible)
-
-    viewer.setViewport(new Rectangle2D(viewer.getViewport().getMinX(), newY, viewer.getViewport().getWidth(), viewer.getViewport().getHeight()));
-  }
-
-  /**
-   * move the viewport up by MOVE_STEP_FACTOR percentage of the visible part
-   * ignore if lower rim of picture is already at the top of the view (KEEP_PIXELS_VISIBLE pixels remain visible)
-   * if the complete image is visible in the viewport moving is ignored
-   * if no viewport is defined yet nothing will happen
-   */
-  public void moveUp() {
-    if (viewer.getViewport() == null) return;
-
-    double newY = viewer.getViewport().getMinY() + (viewer.getViewport().getHeight() * MOVE_STEP_FACTOR);
-    if (newY > viewer.getFitHeight() - 2 / zoomFactor)
-      newY = viewer.getFitHeight() - 2 / zoomFactor; //stop when left border of the image is at right rim (two pixels still visible)
-
-    viewer.setViewport(new Rectangle2D(viewer.getViewport().getMinX(), newY, viewer.getViewport().getWidth(), viewer.getViewport().getHeight()));
+    viewer.setViewport(new Rectangle2D(viewport.getMinX(), newY, viewport.getWidth(), viewport.getHeight()));
   }
 
   /**
    * move the viewport to the center of the Image
    * if the complete image is visible in the viewport moving is ignored
-   * if no viewport is defined yet nothing will happen
+   * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
   public void moveToCenter() {
-    if (viewer.getViewport() == null) return;
+    Rectangle2D viewport = viewer.getViewport();
+    if (viewport == null) return;
 
-    double newX = (viewer.getMediaWidth() - viewer.getViewport().getWidth()) / 2;
-    double newY = (viewer.getMediaHeight() - viewer.getViewport().getHeight()) / 2;
+    double newX = (viewer.getMediaWidth() - viewport.getWidth()) / 2;
+    double newY = (viewer.getMediaHeight() - viewport.getHeight()) / 2;
 
-    viewer.setViewport(new Rectangle2D(newX, newY, viewer.getViewport().getWidth(), viewer.getViewport().getHeight()));
+    viewer.setViewport(new Rectangle2D(newX, newY, viewport.getWidth(), viewport.getHeight()));
+
+  }
+
+  /**
+   * move the viewport right by MOVE_STEP_FACTOR percentage of the visible part
+   * note: image will visibly move to the other side but cursor will move viewport not picture!!!
+   * stop/ignore if right border of the image is already visible
+   * if the complete width of the image is visible in the viewport is horizontally centered on the picture=picture is centered
+
+   * if no viewport is defined yet (zoomToFit is active) nothing will happen
+   */
+  public void moveRight() {
+    Rectangle2D viewport = viewer.getViewport();
+    if (viewport == null) return;
+
+    //if not the complete width is visible then move
+    if (viewport.getWidth() < viewer.getMediaWidth()) {
+      double newX = viewport.getMinX() + (viewport.getWidth() * MOVE_STEP_FACTOR);    //move ...percent of the viewport
+      if ((newX + viewport.getWidth()) > viewer.getMediaWidth()) {
+        newX = viewer.getMediaWidth() - viewport.getWidth();
+      }
+      viewer.setViewport(new Rectangle2D(newX, viewport.getMinY(), viewport.getWidth(), viewport.getHeight()));
+    } else {
+      centerImageX();
+    }
+  }
+
+  /**
+   * move the viewport left by MOVE_STEP_FACTOR percentage of the visible part
+   * note: image will visibly move to the other side but cursor will move viewport not picture!!!
+   * stop/ignore if left border of the image is already visible
+   * if the complete width of the image is visible in the viewport is horizontally centered on the picture=picture is centered
+   *
+   * if no viewport is defined yet (zoomToFit is active) nothing will happen
+   */
+  public void moveLeft() {
+    Rectangle2D viewport = viewer.getViewport();
+    if (viewport == null) return;
+
+    //if not the complete width is visible then move
+    if (viewport.getWidth() < viewer.getMediaWidth()) {
+      double newX = viewport.getMinX() - (viewport.getWidth() * MOVE_STEP_FACTOR);    //move ...percent of the viewport
+      if (newX < 0) {
+        newX = 0;
+      }
+      viewer.setViewport(new Rectangle2D(newX, viewport.getMinY(), viewport.getWidth(), viewport.getHeight()));
+    } else {
+      centerImageX();
+    }
+  }
+
+  /**
+   * move the viewport down by MOVE_STEP_FACTOR percentage of the visible part
+   * note: image will visibly move to the other side but cursor will move viewport not picture!!!
+   * stop/ignore if lower border of the image is already visible
+   * if the complete height of the image is visible in the viewport is vertically centered on the picture=picture is centered
+
+   * if no viewport is defined yet (zoomToFit is active) nothing will happen
+   */
+  public void moveDown() {
+    Rectangle2D viewport = viewer.getViewport();
+    if (viewport == null) return;
+
+    //if not the complete height is visible then move
+    if (viewport.getHeight() < viewer.getMediaHeight()) {
+      double newY = viewport.getMinY() + (viewport.getHeight() * MOVE_STEP_FACTOR);    //move ...percent of the viewport
+      if ((newY + viewport.getHeight()) > viewer.getMediaHeight()) {
+        newY = viewer.getMediaHeight() - viewport.getHeight();
+      }
+      viewer.setViewport(new Rectangle2D(viewport.getMinX(), newY, viewport.getWidth(), viewport.getHeight()));
+    } else {
+      centerImageY();
+    }
+  }
+
+  /**
+   * move the viewport up by MOVE_STEP_FACTOR percentage of the visible part
+   * note: image will visibly move to the other side but cursor will move viewport not picture!!!
+   * stop/ignore if upper border of the image is already visible
+   * if the complete height of the image is visible in the viewport is vertically centered on the picture=picture is centered
+   *
+   * if no viewport is defined yet (zoomToFit is active) nothing will happen
+   */
+  public void moveUp() {
+    Rectangle2D viewport = viewer.getViewport();
+    if (viewport == null) return;
+
+    //if not the complete height is visible then move
+    if (viewport.getHeight() < viewer.getMediaHeight()) {
+      double newY = viewport.getMinY() - (viewport.getHeight() * MOVE_STEP_FACTOR);    //move ...percent of the viewport
+      if (newY < 0) {
+        newY = 0;
+      }
+      viewer.setViewport(new Rectangle2D(viewport.getMinX(), newY, viewport.getWidth(), viewport.getHeight()));
+    } else {
+      centerImageY();
+    }
   }
 
   /**
