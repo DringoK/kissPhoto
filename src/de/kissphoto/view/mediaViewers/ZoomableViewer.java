@@ -27,4 +27,14 @@ public interface ZoomableViewer {
   double getFitWidth();
 
   double getFitHeight();
+
+  /**
+   * install Handler for resizing the viewer
+   * In common a listener on width/height has to be implemented which calls ViewportZoomer.handleResize()
+   */
+  void installResizeHandler();
+
+  //--------- Zooming in MediaContent View: hand over zoom factor between the viewers
+  //zoom so that the media fits directly in the viewer (delete viewport)
+  void zoomToFit();
 }

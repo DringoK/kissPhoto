@@ -120,6 +120,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   private int lastCaretPosition = CARET_POS_INVALID; //negative = reserved values, zero or positive: last position of caret in InputField while editing
   private boolean selectSearchResultOnNextStartEdit = false;  //during SearchNext searchRec Cursor needs to be set on StartEdit
 
+  private boolean renameDialogActive = false;
 
   /**
    * constructor will try to open the passed file or foldername
@@ -596,7 +597,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     if (currentFile != null && currentFile.isChanged()) {
       mediaContentView.getMovieViewer().resetPlayer(); //stop players and disconnect from file to enable renaming
       successful = mediaFileList.saveCurrentFolder();
-      mediaContentView.setMedia(currentFile); //continue playing
+      mediaContentView.setMedia(currentFile, null); //continue playing
     } else //if current file is not to be changed then leave player as it is (i.e. also do not interrupt playing)
       successful = mediaFileList.saveCurrentFolder();
 
@@ -865,7 +866,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     //initialize with first of selected files
     if (renameDialog == null) renameDialog = new RenameDialog(primaryStage);
 
-    //copy and sort the selection for determine the "fist selected"
+    //copy and sort the selection for determining the "fist selected"
     ObservableList<Integer> selectedIndicesSorted = FXCollections.observableArrayList(getSelectionModel().getSelectedIndices()); //copy
     FXCollections.sort(selectedIndicesSorted);
     try {
@@ -875,21 +876,25 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     }
 
     //---show dialog
-    if (firstSelectedFile != null) {
-      result = renameDialog.showModal(firstSelectedFile.getPrefix(), firstSelectedFile.getSeparator(), firstSelectedFile.getDescription(), firstSelectedFile.getExtension());
-    } else {
-      result = renameDialog.showModal("", "", "", "");
-    }
-
-    //---execute renaming
-    if (result == RenameDialog.RENAME_BTN) {
-      ObservableList<MediaFile> selectedFiles = getSelectionModel().getSelectedItems();
-      for (MediaFile m : selectedFiles) {
-        m.rename(renameDialog.isPrefixChecked(), renameDialog.getPrefix(),
-            renameDialog.isSeparatorChecked(), renameDialog.getSeparator(),
-            renameDialog.isDescriptionChecked(), renameDialog.getDescription(),
-            renameDialog.isExtensionChecked(), renameDialog.getExtension());
+    renameDialogActive = true;
+    try {
+      if (firstSelectedFile != null) {
+        result = renameDialog.showModal(firstSelectedFile.getPrefix(), firstSelectedFile.getSeparator(), firstSelectedFile.getDescription(), firstSelectedFile.getExtension());
+      } else {
+        result = renameDialog.showModal("", "", "", "");
       }
+      //---execute renaming
+      if (result == RenameDialog.RENAME_BTN) {
+        ObservableList<MediaFile> selectedFiles = getSelectionModel().getSelectedItems();
+        for (MediaFile m : selectedFiles) {
+          m.rename(renameDialog.isPrefixChecked(), renameDialog.getPrefix(),
+              renameDialog.isSeparatorChecked(), renameDialog.getSeparator(),
+              renameDialog.isDescriptionChecked(), renameDialog.getDescription(),
+              renameDialog.isExtensionChecked(), renameDialog.getExtension());
+        }
+      }
+    } finally {
+      renameDialogActive = false;
     }
     repaint();
   }
@@ -1085,14 +1090,14 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     public void changed(ObservableValue<? extends Number> observableValue, Number oldNumber, Number newNumber) {
       if (newNumber.intValue() >= 0) { //only if selection is valid
         fileTableView.lastSelection = fileTableView.mediaFileList.getFileList().get(newNumber.intValue());
-        fileTableView.mediaContentView.setMedia(fileTableView.mediaFileList.getFileList().get(newNumber.intValue()));
+        fileTableView.mediaContentView.setMedia(fileTableView.mediaFileList.getFileList().get(newNumber.intValue()), null);
       } else {
         if (fileTableView.mediaFileList.getFileList().size() <= 0) {
           //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
           //keep lastSelection, so the sortOrderChange-Listener can restore selection
 
           //invalid selection
-          fileTableView.mediaContentView.setMedia(null);
+          fileTableView.mediaContentView.setMedia(null, null);
           fileTableView.lastSelection = null;
         }
       }
@@ -1100,10 +1105,11 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   }
 
   /**
-   * @return true if currently in Cell-EditMode
+   * @return true if currently in Cell-EditMode or Multi-EditMode
    */
-  public boolean isCellEditMode() {
-    return (getEditingCell() != null);
+  public boolean isEditMode() {
+    return (getEditingCell() != null) ||  //cell-Edit-Mode? ...or
+        renameDialogActive;           //multi-edit
   }
 
 

@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.util.ResourceBundle;
 
@@ -22,13 +23,19 @@ import java.util.ResourceBundle;
  * @Author: Dr. Ingo Kreuz
  * @Date: 2016-011-06 moved from inner class of MediaContentView to separate class
  * @modified: 2016-11-06
+ * @modified: 2017-10-08 currentPlayerPosition is handed over from main window
  */
 class FullScreenStage extends Stage {
   MediaContentView mediaContentView;
   private static ResourceBundle language = I18Support.languageBundle;
 
-  //@constructor
-  public FullScreenStage(MediaContentView primaryMediaContentView) {
+
+  /**
+   * @param primaryMediaContentView link back to main window for taking over all settings
+   * @param currentPlayerPosition   if not null we try to take over the position in fullScreenStage
+   * @constructor Create new MediaContentView link it to the primary one and take over currentPlayerPosition if possible
+   */
+  public FullScreenStage(MediaContentView primaryMediaContentView, Duration currentPlayerPosition) {
     super();
     initOwner(primaryMediaContentView.getOwner());
     //initModality(Modality.APPLICATION_MODAL);
@@ -39,7 +46,7 @@ class FullScreenStage extends Stage {
     mediaContentView = new MediaContentView(this, primaryMediaContentView);
     root.getChildren().add(mediaContentView);
     mediaContentView.setFileTableView(primaryMediaContentView.getFileTableView());
-    mediaContentView.setMedia(primaryMediaContentView.getCurrentMediaFile());
+    mediaContentView.setMedia(primaryMediaContentView.getCurrentMediaFile(), currentPlayerPosition);
     mediaContentView.prefHeightProperty().bind(scene.heightProperty());
     mediaContentView.prefWidthProperty().bind(scene.widthProperty());
     mediaContentView.getAttrViewer().copyState(primaryMediaContentView.getAttrViewer());

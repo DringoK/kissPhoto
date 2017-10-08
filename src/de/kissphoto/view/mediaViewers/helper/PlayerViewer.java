@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
  *
  * @author Dr. Ingo Kreuz
  * @date 2014-07-24
- * @modified:
+ * @modified: 2017-10-08 autoplay suspended while edit-mode/multi-edit-mode
  */
 public class PlayerViewer extends StackPane {
   protected static ResourceBundle language = I18Support.languageBundle;
@@ -154,15 +154,18 @@ public class PlayerViewer extends StackPane {
    * put the media (movie) into the MovieViewer and play it
    *
    * @param media the media to show
+   * @param seekPosition if not null it is tried to seek this position as soon as the playable media is loaded/visible
    */
-  public void setMedia(Media media) {
+  public void setMedia(Media media, Duration seekPosition) {
     resetPlayer();
     mediaPlayer = new MediaPlayer(media);
 
     mediaPlayer.setOnReady(new Runnable() {
       @Override
       public void run() {
-        if (mainMenuAutoPlayItem.isSelected() && !mediaContentView.isFileTableViewInCellEditMode())
+        if (seekPosition != null) mediaPlayer.seek(seekPosition);
+
+        if (mainMenuAutoPlayItem.isSelected() && !mediaContentView.isFileTableViewInEditMode())
           play();
         else
           pause();
@@ -176,13 +179,12 @@ public class PlayerViewer extends StackPane {
             if (mediaPlayer != null) playerControls.showProgress(mediaPlayer.getCurrentTime());
           }
         });
-
       }
     });
     mediaPlayer.setOnEndOfMedia(new Runnable() {
       @Override
       public void run() {
-        if (mainMenuAutoPlayItem.isSelected() && !mediaContentView.isFileTableViewInCellEditMode()) {
+        if (mainMenuAutoPlayItem.isSelected() && !mediaContentView.isFileTableViewInEditMode()) {
           mediaContentView.showNextMedia();   //if already the last, showNextMedia() will do nothing and media will remain paused...
         }
       }

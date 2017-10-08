@@ -2,9 +2,12 @@ package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.view.MediaContentView;
 import de.kissphoto.view.mediaViewers.helper.PlayerViewer;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaView;
+import javafx.util.Duration;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
@@ -36,6 +39,7 @@ public class MovieViewer extends PlayerViewer implements ZoomableViewer {
   public MovieViewer(final MediaContentView contentView) {
     super(contentView);   //mediaContentView of fatherclass is now = contentView
     mediaView = new MediaView();
+    //note: playerControls defined and initialized in PlayerViewer (fatherclass)
     getChildren().addAll(mediaView, playerControls);
 
     mediaView.setPreserveRatio(true);
@@ -55,9 +59,10 @@ public class MovieViewer extends PlayerViewer implements ZoomableViewer {
    * put the media (movie) into the MovieViewer and play it
    *
    * @param media the media to show
+   * @param seekPosition if not null it is tried to seek this position as soon as the movie is loaded/visible
    */
-  public void setMedia(Media media) {
-    super.setMedia(media);
+  public void setMedia(Media media, Duration seekPosition) {
+    super.setMedia(media, seekPosition);
     mediaView.setMediaPlayer(mediaPlayer);
   }
 
@@ -93,4 +98,26 @@ public class MovieViewer extends PlayerViewer implements ZoomableViewer {
   public double getFitHeight() {
     return mediaView.getFitHeight();
   }
+
+  @Override
+  public void installResizeHandler() {
+    prefWidthProperty().addListener(new ChangeListener<Number>() {
+      @Override
+      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+        viewportZoomer.handleResize();
+      }
+    });
+    prefHeightProperty().addListener(new ChangeListener<Number>() {
+      @Override
+      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+        viewportZoomer.handleResize();
+      }
+    });
+  }
+
+  @Override
+  public void zoomToFit() {
+    viewportZoomer.zoomToFit();
+  }
+
 }

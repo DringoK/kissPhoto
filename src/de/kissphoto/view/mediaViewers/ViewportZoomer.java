@@ -22,7 +22,7 @@ import java.util.ResourceBundle;
  *
  * @author Dr. Ingo Kreuz
  * @date 2016-11-06 all zooming/moving routines moved from PhotoViewer to this class
- * @modified:
+ * @modified: 2017-10-08 fixed: while zooming not the complete space of the surrounding Pane has been used
  */
 
 public class ViewportZoomer {
@@ -35,8 +35,7 @@ public class ViewportZoomer {
   //a number >1 (i.e. 100%) is displayed larger than original size means the Image is zoomed in
   private static final double ZOOM_STEP_FACTOR = 1.1;   //e.g. 1.1= 110%:zoomIn=zoomFactor*ZOOM_STEP_FACTOR, zoomOut=zoomFactor/ZOOM_STEP_FACTOR
   private static final double MOVE_STEP_FACTOR = 0.10;  //e.g. 0.10 = 10%: percentage of the visible part the viewport is moved by the 4 move methods
-  private static final double KEEP_PERCENT_VISIBLE = 0.05; //e.g. 0.05 = 5% when panning the picture by keyboard (arrow keys) keep some pixels visible when moving out
-  private double zoomFactor = 0;  //will be initialized in initializeZooming().
+  private double zoomFactor = 0;  //will be initialized in initializeZooming(). Is the same for all type of media!
 
   //--------------------- mouse support -------------------------
   private double mouseDownX = 0;  //remember where dragging of mouse
@@ -53,6 +52,8 @@ public class ViewportZoomer {
 
     installZoomMouseEventHandlers();
     installKeyboardEventHandler();
+
+    viewer.installResizeHandler();
   }
 
 
@@ -84,10 +85,33 @@ public class ViewportZoomer {
   }
 
   private void handleMouseDragged(MouseEvent mouseEvent) {
-    if (viewer.getViewport() != null) { //only if zooming is currently active
+    double newX;
+    double newY;
+    Rectangle2D viewport = viewer.getViewport();
+    if (viewport != null) { //only if zooming is currently active
       if (mouseEvent.isPrimaryButtonDown()) {
-        double newX = mouseDownMinX + ((mouseDownX - mouseEvent.getX()) / zoomFactor);
-        double newY = mouseDownMinY + ((mouseDownY - mouseEvent.getY()) / zoomFactor);
+        if (viewport.getWidth() < viewer.getMediaWidth()) {
+          newX = mouseDownMinX + ((mouseDownX - mouseEvent.getX()) / zoomFactor);
+          if (newX < 0) {
+            newX = 0;
+          } else if ((newX + viewport.getWidth()) > viewer.getMediaWidth()) {
+            newX = viewer.getMediaWidth() - viewport.getWidth();
+          }
+        } else {
+          //centerMediaX;
+          newX = (viewer.getMediaWidth() - viewport.getWidth()) / 2;
+        }
+
+        if (viewport.getHeight() < viewer.getMediaHeight()) {
+          newY = mouseDownMinY + ((mouseDownY - mouseEvent.getY()) / zoomFactor);
+          if (newY < 0) {
+            newY = 0;
+          } else if ((newY + viewport.getHeight()) > viewer.getMediaHeight()) {
+            newY = viewer.getMediaHeight() - viewport.getHeight();
+          }
+        } else {
+          newY = (viewer.getMediaHeight() - viewport.getHeight()) / 2;
+        }
         viewer.setViewport(new Rectangle2D(newX, newY, viewer.getViewport().getWidth(), viewer.getViewport().getHeight()));
       }
       mouseEvent.consume();
@@ -148,11 +172,11 @@ public class ViewportZoomer {
    * @param newZoomFactor 1=100%, 0.5=50%, etc.
    */
   public void zoom(double newZoomFactor) {
-    if (viewer.getViewport() == null) initializeZooming();
+    if (viewer.getViewport() == null) initializeZooming();  //if zoomToFit
 
-    //zoom
-    double newWidth = Math.min(viewer.getFitWidth(), viewer.getMediaWidth()) / newZoomFactor;
-    double newHeight = Math.min(viewer.getFitHeight(), viewer.getMediaHeight()) / newZoomFactor;
+    //zoom: Viewport has shape of viewer
+    double newWidth = viewer.getFitWidth() / newZoomFactor;
+    double newHeight = viewer.getFitHeight() / newZoomFactor;
 
     //move viewport to keep center of visible part
     double minX = getViewportCenterX() - (newWidth / 2);  // :2= center
@@ -200,7 +224,16 @@ public class ViewportZoomer {
     viewer.setViewport(null);
   }
 
+  /**
+   * Whenever the size of the viewer is changed, than this method must be called
+   * It corrects the viewport when zooming is active, to use as much space as possible
+   */
+  public void handleResize() {
+    if (viewer.getViewport() != null) { //only if zooming was acitive
+      zoom(zoomFactor); //zoom to same zoomfactor again to reset the viewport and to fit it into the new window
+    }
 
+  }
   //---------------------------------- Moving  -------------------------------------
 
   //remember:
@@ -214,7 +247,7 @@ public class ViewportZoomer {
    * this makes especially sense if the image is horizontally smaller than >zoomTofit<
    * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
-  public void centerImageX() {
+  public void centerMediaX() {
     Rectangle2D viewport = viewer.getViewport();
     if (viewport == null) return;
 
@@ -228,7 +261,7 @@ public class ViewportZoomer {
    * this makes especially sense if the image is vertically smaller than >zoomTofit<
    * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
-  public void centerImageY() {
+  public void centerMediaY() {
     Rectangle2D viewport = viewer.getViewport();
     if (viewport == null) return;
 
@@ -242,7 +275,7 @@ public class ViewportZoomer {
    * if the complete image is visible in the viewport moving is ignored
    * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
-  public void moveToCenter() {
+  public void centerMedia() {
     Rectangle2D viewport = viewer.getViewport();
     if (viewport == null) return;
 
@@ -273,7 +306,7 @@ public class ViewportZoomer {
       }
       viewer.setViewport(new Rectangle2D(newX, viewport.getMinY(), viewport.getWidth(), viewport.getHeight()));
     } else {
-      centerImageX();
+      centerMediaX();
     }
   }
 
@@ -297,7 +330,7 @@ public class ViewportZoomer {
       }
       viewer.setViewport(new Rectangle2D(newX, viewport.getMinY(), viewport.getWidth(), viewport.getHeight()));
     } else {
-      centerImageX();
+      centerMediaX();
     }
   }
 
@@ -321,7 +354,7 @@ public class ViewportZoomer {
       }
       viewer.setViewport(new Rectangle2D(viewport.getMinX(), newY, viewport.getWidth(), viewport.getHeight()));
     } else {
-      centerImageY();
+      centerMediaY();
     }
   }
 
@@ -345,9 +378,11 @@ public class ViewportZoomer {
       }
       viewer.setViewport(new Rectangle2D(viewport.getMinX(), newY, viewport.getWidth(), viewport.getHeight()));
     } else {
-      centerImageY();
+      centerMediaY();
     }
   }
+
+  //see also handleMouseDragged() for moving with mouse
 
   /**
    * installs a context menu to the viewers mediaContent view and adds the events handlers for showing/hiding the context menu
@@ -447,7 +482,7 @@ public class ViewportZoomer {
     moveToCenterItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        moveToCenter();
+        centerMedia();
         actionEvent.consume();
       }
     });
@@ -548,7 +583,7 @@ public class ViewportZoomer {
             if (keyEvent.isControlDown())
               zoom100();
             else if (keyEvent.isShiftDown())
-              moveToCenter();
+              centerMedia();
             else
               zoomToFit();
             break;
@@ -592,6 +627,10 @@ public class ViewportZoomer {
       }
     });
 
+  }
+
+  public double getZoomFactor() {
+    return zoomFactor;
   }
 
   //------------------------------- Helpers ------------------------------------

@@ -26,6 +26,7 @@ import java.util.ResourceBundle;
  * @author Dr. Ingo Kreuz
  * @date 2014-05-25
  * @changes: 2014-05-25:
+ * @modified: 2017-10-08: minSize=0,0 added so that all other viewers can also be smaller (surrounding stackPane sets min size to smallest in stack)
  */
 public class OtherViewer extends StackPane {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -71,5 +72,10 @@ public class OtherViewer extends StackPane {
     message.setFill(Color.GRAY);
     message.setFont(Font.font(null, FontWeight.BOLD, 24));
     getChildren().addAll(message);
+
+    //min size is by default the largest content (here the text)
+    //but it must not prevent the StackPane in MediaContentView (which holds all Viewers) from getting smaller
+    //As an effect the above text element might be cut
+    setMinSize(0, 0);
   }
 }

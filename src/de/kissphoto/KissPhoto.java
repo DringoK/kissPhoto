@@ -17,7 +17,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -85,7 +84,7 @@ import java.awt.*;
  * todo JPG drehen. Z.B. http://mediachest.sourceforge.net/mediautil/
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.8.8h work in progress"; //<------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.8.9 work in progress"; //<------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;
@@ -314,19 +313,13 @@ public class KissPhoto extends Application {
 
     mainSplitPane.getItems().addAll(fileTableView, detailsArea);
 
-    //container for splitPane, otherwise it behaves funny (splitters wake-up at the left)
-    HBox appArea = new HBox();
-    appArea.prefHeightProperty().bind(scene.heightProperty());
-    appArea.prefWidthProperty().bind(scene.widthProperty());
-    appArea.getChildren().add(mainSplitPane);
-
     //root-Area
     final BorderPane rootArea = new BorderPane();
     rootArea.prefHeightProperty().bind(scene.heightProperty());
     rootArea.prefWidthProperty().bind(scene.widthProperty());
 
     rootArea.setTop(mainMenuBar);
-    rootArea.setCenter(appArea);
+    rootArea.setCenter(mainSplitPane);
     rootArea.setBottom(statusBar);
     root.getChildren().add(rootArea);
 

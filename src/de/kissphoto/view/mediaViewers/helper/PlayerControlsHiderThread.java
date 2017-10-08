@@ -14,7 +14,7 @@ import javafx.concurrent.Task;
  *
  * @author Dr. Ingo Kreuz
  * @date 2014-08-03
- * @modified:
+ * @modified: 2017-10-08 show the bar longer
  */
 public class PlayerControlsHiderThread {
   private Thread thread;
@@ -35,6 +35,10 @@ public class PlayerControlsHiderThread {
     thread.setDaemon(true); //close when main task is closed
     thread.start();
 
+  }
+
+  public void setShowTimeInMillis(int showTimeInMillis) {
+    hiderTask.setShowTimeInMillis(showTimeInMillis);
   }
 
   /**
@@ -91,12 +95,15 @@ public class PlayerControlsHiderThread {
     //commands for the thread what to do when resetThread() is called or the thread's timer runs out
     protected boolean doHide = false;       //if true hide the PlayerControls
     protected boolean doArmTimer = false;   //if true the Thread will next goto sleep for a certain time and then do the next
-
-
+    protected int showTimeInMillis = 1000;
     protected PlayerControls playerControls;
 
     public void setDoHide(boolean doHide) {
       this.doHide = doHide;
+    }
+
+    public void setShowTimeInMillis(int showTimeInMillis) {
+      this.showTimeInMillis = showTimeInMillis;
     }
 
     public void setDoArmTimer(boolean doArmTimer) {
@@ -127,7 +134,7 @@ public class PlayerControlsHiderThread {
           //prepare/wait for next loop
           interrupted = false;
           if (doArmTimer) {
-            Thread.sleep(1000);
+            Thread.sleep(showTimeInMillis);
           } else {
             Thread.sleep(Integer.MAX_VALUE); //sleep very long when waiting for next command then again do nothing but sleep
           }

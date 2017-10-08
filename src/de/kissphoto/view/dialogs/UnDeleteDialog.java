@@ -137,7 +137,7 @@ public class UnDeleteDialog extends KissDialog {
     if (deletedFileList.size() > 0) {
       FXCollections.sort(deletedFileList);
       listView.setItems(deletedFileList);
-      mediaContentView.setMedia(null);
+      mediaContentView.setMedia(null, null);
 
       //Install Selection Listener to show selected media
       SelectedLineNumberChangeListener selectedLineNumberChangeListener = new SelectedLineNumberChangeListener(mediaContentView, deletedFileList);
@@ -194,7 +194,7 @@ public class UnDeleteDialog extends KissDialog {
     @Override
     public void changed(ObservableValue<? extends Number> observableValue, Number oldNumber, Number newNumber) {
       if (newNumber.intValue() >= 0) { //only if selection is valid
-        mediaContentView.setMedia(mediaFileList.get(newNumber.intValue()));
+        mediaContentView.setMedia(mediaFileList.get(newNumber.intValue()), null);
       }
     }
   }

@@ -34,7 +34,7 @@ import javafx.util.Duration;
  *
  * @author Dr. Ingo Kreuz
  * @date 2014-07-18
- * @modified:
+ * @modified: 2017-10-08 longer showing the Player, higher player
  */
 
 public class PlayerControls extends Pane {
@@ -61,7 +61,7 @@ public class PlayerControls extends Pane {
 
     controlArea.setStyle("-fx-background-color: black;");
     controlArea.setOpacity(0.5);
-    controlArea.setPrefHeight(40);
+    controlArea.setPrefHeight(60);
     controlArea.prefWidthProperty().bind(widthProperty());
 
     Insets insets = new Insets(12, 12, 12, 12); //margin of the control elements
@@ -84,6 +84,14 @@ public class PlayerControls extends Pane {
 
     //------------------- process events ---------------------------------
 
+    setOnMouseMoved(new EventHandler<MouseEvent>() {
+      @Override
+      public void handle(MouseEvent mouseEvent) {
+        show(); //reset show time
+      }
+    });
+
+
     // pause media and swap button with play button
     playPauseButton.setOnMousePressed(new EventHandler<MouseEvent>() {
       public void handle(MouseEvent me) {
@@ -92,11 +100,13 @@ public class PlayerControls extends Pane {
           playerViewer.pause();
         else
           playerViewer.play();
+
       }
     });
 
     //------------------ finally start the thread which will auto-hide this PlayerControls instance
     playerControlsHiderThread = new PlayerControlsHiderThread(this);
+    playerControlsHiderThread.setShowTimeInMillis(2500);
   }
 
   public void cleanUp() {

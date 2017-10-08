@@ -24,6 +24,7 @@ import javafx.scene.media.Media;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 
 import java.util.ResourceBundle;
 
@@ -32,7 +33,6 @@ import java.util.ResourceBundle;
  * <p/>
  * This is the Pane where visible Media (photo, video) is shown
  * It is a JavaFX-Pane which contains an ImageView and a MediaView
- * Fading can be activated  //todo
  * <p/>
  *
  * @Author: Dr. Ingo Kreuz
@@ -44,6 +44,8 @@ import java.util.ResourceBundle;
  * moving around now keeps the focused line in FileView visible
  * @modified: 2014-06-09 moviePlayer support added
  * @modified: 2016-11-06 FullScreenStage moved to separate class (was inner class before)
+ * @modified: 2017-10-08 all viewers' size is bound now to MediaContentView's size, so that zooming works correctly.
+ *                       zooming is resetted now whenever the media changes (handing over zooming is "too clever" i.e. not "KISS"
  */
 public class MediaContentView extends Pane {
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
@@ -61,11 +63,13 @@ public class MediaContentView extends Pane {
   private PhotoViewer photoViewer;
   private MovieViewer movieViewer;
   private OtherViewer otherViewer;
-  //final Player....      //todo
+  //private AudioViewer...      //todo
   private AttributesViewer attrViewer = new AttributesViewer(this);
+
   //every viewer has these items. For enabling/disabling keep a reference to all of them
   static private ObservableList<MenuItem> showOnNextScreenItems = FXCollections.observableArrayList();
   static private ObservableList<MenuItem> fullScreenItems = FXCollections.observableArrayList();
+
 
   /**
    * @constructor
@@ -88,19 +92,31 @@ public class MediaContentView extends Pane {
 
   private void init(Stage owner) {
     this.owner = owner;
-
+    //width/height-binding of the pane is no necessary because it lies in a splitPane which does binding automatically
     setStyle("-fx-background-color: black;");
 
     attrViewer.setVisible(false); //initially attributes are not visible
 
+    //--all MediaViewers are collected in a StackPane
     StackPane stackPane = new StackPane(); //the viewers lie one above the other, so fading will (in future) be possible even from photo to video clip ...)
     stackPane.prefHeightProperty().bind(heightProperty());
     stackPane.prefWidthProperty().bind(widthProperty());
 
     photoViewer = new PhotoViewer(this);
+    photoViewer.fitHeightProperty().bind(heightProperty());
+    photoViewer.fitWidthProperty().bind(widthProperty());
+
     movieViewer = new MovieViewer(this);
+    movieViewer.prefHeightProperty().bind(heightProperty());
+    movieViewer.prefWidthProperty().bind(widthProperty());
+
     otherViewer = new OtherViewer(this);
+    otherViewer.prefHeightProperty().bind(heightProperty());
+    otherViewer.prefWidthProperty().bind(widthProperty());
+
     stackPane.getChildren().addAll(photoViewer, movieViewer, otherViewer);
+
+    //add contents to mediaContentView
     getChildren().addAll(stackPane, attrViewer); //the attr. Viewer lies over all other viewers, but not in stack Pane (because it would fill the whole screen :-(
 
     setOnScroll(new EventHandler<ScrollEvent>() {
@@ -207,6 +223,7 @@ public class MediaContentView extends Pane {
             case "8":
             case "9":
               collectDigit(Integer.parseInt(keyEvent.getText()));
+
               break;
             default:
               eventHandled = false;
@@ -223,20 +240,27 @@ public class MediaContentView extends Pane {
    * e.g. to cleanUp all playerViewers
    */
   public void cleanUp() {
+
     movieViewer.cleanUp();
   }
 
   public void setFileTableView(FileTableView fileTableView) {
+
     this.fileTableView = fileTableView;
   }
 
   /**
-   * put image into the photoViewer and set it visible (and the player invisible)
-   * if null is passed all internal view are set to invisible (= nothing is shown)
+   * put media/image into the appropriate viewer and set it visible (and all others invisible)
+   * if null is passed all internal views are set to invisible (= nothing is shown)
    *
+   * if a lastPlayerPos!=null has been passed and a Player-Media becomes active then
+   * the Media is seeked to this position as soon as it is loaded (see PlayerViewer.setMedia())
+   *
+   * @param lastPlayerPos null=no effect, not null=try to seek the position for player media
    * @param mediaFile is the mediaFile of which it's content is to be shown
+   *
    */
-  public void setMedia(MediaFile mediaFile) {
+  public void setMedia(MediaFile mediaFile, Duration lastPlayerPos) {
     //reset all probably playing players
     movieViewer.resetPlayer();
 
@@ -249,23 +273,36 @@ public class MediaContentView extends Pane {
 
       if (currentMedia != null) {
         if (currentMedia.getClass() == Image.class) {
+          //-------- if photo ---------
           photoViewer.setImage((Image) currentMedia);
           photoViewer.setVisible(true);
           movieViewer.setVisible(false);
           otherViewer.setVisible(false);
+
+          photoViewer.zoomToFit();
         } else if (currentMedia.getClass() == Media.class) {
+          //--------if movie -----------
           if (fullScreenStage == null) //only show film in foreground window (here if there is no fullscreen stage or in fullscreen stage)
-            movieViewer.setMedia((Media) currentMedia);
+            movieViewer.setMedia((Media) currentMedia, lastPlayerPos);
           photoViewer.setVisible(false);
           movieViewer.setVisible(true);
           otherViewer.setVisible(false);
+
+          movieViewer.zoomToFit();
+        } else {
+          //------- if unsupported Media type -------
+          photoViewer.setVisible(false);
+          movieViewer.setVisible(false);
+          otherViewer.setVisible(true);
         }
       } else {
+        //current Media is null
         photoViewer.setVisible(false);
         movieViewer.setVisible(false);
         otherViewer.setVisible(true);
       }
     } else {
+      //mediaFile is null
       photoViewer.setVisible(false);
       movieViewer.setVisible(false);
       otherViewer.setVisible(true);
@@ -273,10 +310,9 @@ public class MediaContentView extends Pane {
 
     //maintain the fullScreenStage's media also, if it is displayed currently
     if (fullScreenStage != null && fullScreenStage.isShowing()) {
-      fullScreenStage.getMediaContentView().setMedia(mediaFile);
+      fullScreenStage.getMediaContentView().setMedia(mediaFile, lastPlayerPos);
     }
   }
-
   /**
    * select previous line in fileTableView
    * the selectionChangeListener there will load the previous media then
@@ -334,7 +370,7 @@ public class MediaContentView extends Pane {
    * if content is in Fullscreen mode
    * then the underlying stage is moved to the next screen
    * if only one screen is available the window is moved to the primary screen
-   * (this might be useful if multiscreen support was switched of while the content was displayed on a secondary screen
+   * (this might be useful if multiscreen support was switched of while the content was displayed on a secondary screen)
    *
    * @param next if true next, if false previous screen is selected
    */
@@ -424,14 +460,19 @@ public class MediaContentView extends Pane {
   }
 
   /**
-   *
+   * open an additional MediaContentView in a full screen stage (window).
+   * Any Players will be stopped in main window, but the position is handed over into full screen
    */
   public void showFullScreen() {
-    if (fullScreenStage == null && !owner.isFullScreen()) { //only if not already in fullScreen-Mode
-      if (movieViewer.isVisible())
-        movieViewer.resetPlayer(); //stop playback if running, because it will be started full screen
+    Duration currentPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
 
-      fullScreenStage = new FullScreenStage(this); //use a new mediaContentView for fullScreen and link to "this" =normal view
+    if (fullScreenStage == null && !owner.isFullScreen()) { //only if not already in fullScreen-Mode
+      if (movieViewer.isVisible()) {
+        currentPlayerPosition = movieViewer.getMediaPlayer().getCurrentTime();
+        movieViewer.resetPlayer(); //stop playback if running, because it will be started full screen
+      }
+
+      fullScreenStage = new FullScreenStage(this, currentPlayerPosition); //use a new mediaContentView for fullScreen and link to "this" =normal view
       fullScreenStage.mediaContentView.getAttrViewer().copyState(attrViewer); //synchronize normal and full screen attributesViewers
 
       //enabling/disabling of fullScreen items in all context menus (of all viewers)
@@ -442,18 +483,23 @@ public class MediaContentView extends Pane {
       for (MenuItem item : showOnNextScreenItems) item.setDisable(false);
 
       fullScreenStage.show();
-
     }
   }
 
   public void endFullScreen() {
+    Duration currentPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
+
     //only if in fullScreen-Mode (seen from the main view)
     if (fullScreenStage != null) {
       attrViewer.copyState(fullScreenStage.mediaContentView.getAttrViewer()); //synchronize normal and full screen attributesViewers
+      if (fullScreenStage.mediaContentView.getMovieViewer().isVisible()) {
+        currentPlayerPosition = fullScreenStage.getMediaContentView().getMovieViewer().getMediaPlayer().getCurrentTime();
+        fullScreenStage.mediaContentView.getMovieViewer().resetPlayer();
+      }
       fullScreenStage.close();
       fullScreenStage.getMediaContentView().cleanUp();
       fullScreenStage = null;
-      setMedia(currentMediaFile); //sync normal view with previous full screen view
+      setMedia(currentMediaFile, currentPlayerPosition); //sync normal view with previous full screen view
 
       //enabling/disabling of fullScreen items in all context menus (of all viewers)
       for (MenuItem item : fullScreenItems) {
@@ -469,7 +515,6 @@ public class MediaContentView extends Pane {
     }
     //if in fullScreenMode (seen from the full-Screen-window itself)
     if (primaryMediaContentView != null) {
-      movieViewer.resetPlayer(); //if there is something playing
       primaryMediaContentView.endFullScreen();
     }
   }
@@ -671,12 +716,12 @@ public class MediaContentView extends Pane {
   }
 
   /**
-   * short for accessing fileTableView.isCellEditMode e.g. from playerViewer
+   * short for accessing fileTableView.isEditMode e.g. from playerViewer
    *
-   * @return true if fileTableView is currently in CellEdit-Mode
+   * @return true if fileTableView is currently in CellEdit-Mode or Multi-edit-Mode
    */
-  public boolean isFileTableViewInCellEditMode() {
-    return fileTableView.isCellEditMode();
+  public boolean isFileTableViewInEditMode() {
+    return fileTableView.isEditMode();
   }
 
 

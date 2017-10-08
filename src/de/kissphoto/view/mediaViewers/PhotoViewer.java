@@ -2,6 +2,8 @@ package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.view.MediaContentView;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.image.ImageView;
 
@@ -61,5 +63,27 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
   @Override
   public double getMediaHeight() {
     return getImage().getHeight();
+  }
+
+  @Override
+  public void zoomToFit() {
+    viewportZoomer.zoomToFit();
+  }
+
+  @Override
+  public void installResizeHandler() {
+    fitWidthProperty().addListener(new ChangeListener<Number>() {
+      @Override
+      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+        viewportZoomer.handleResize();
+      }
+    });
+    fitHeightProperty().addListener(new ChangeListener<Number>() {
+      @Override
+      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+        viewportZoomer.handleResize();
+      }
+    });
+
   }
 }
