@@ -47,32 +47,28 @@ import java.awt.*;
  * <p>
  * Bugs:
  * ======================
- * todo Zoom funktioniert nicht richtig bei Hochkantbildern
+ * todo FileTableView: F2 wirft Exception, wenn mit Tastatur markiert, aber nicht, wenn mit Maus markiert???
+ * todo FileTableView.scrollViewportToIndex überdenken: scrollt z.B. nicht zum letzten File, falls das gelöscht wurde
+ * todo audio abspielen (m4a, mp3, wav): Player nicht ausblenden!
+ * todo Play/Pause sollte auf Strg-P gelegt werden und auch im Edit-Mode und wenn Bild fokussiert erreichbar sein
+ * todo Leertaste sollte auch Play/Pause schalten, solange Liste nicht im Edit-Mode
+ * todo Player-Icons/Zustand nicht immer synchron (Medien-Wechsel, Auto-Play aus, trotzdem wird noch Pause angezeigt...)
+ * todo RecentlyOpened - Liste
+ * todo Ctrl-U k&ouml;nnte alles (besser: nur Prefix und Description oder nur aktuell fokussierte Spalte) von Zeile dr&uuml;ber (vor erster markierter Zeile) in alle markierten kopieren (wie Excel)
+ * todo statt commitEdit lieber &bdquo;n&auml;chsteZeile&ldquo; in FileTableView implementieren, die ggf &bdquo;n&auml;chsteZeile&ldquo; von Cell aufruft
+ * todo ???Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN hei&szlig;en, sonst Warnung
+ * todo strg-Leertaste muss im Editiermodus Vergr&ouml;&szlig;erung zur&uuml;ckstellen (dann f&uuml;r 100%-Zoom eine andere Tastenkombination!!!)
+ * todo Hinweis in Bild auf rechte Maustaste als Hint, damit man auf die Idee kommt es anzuklicken (nur wenn nicht vollbild?!?)
+ * todo wenn nicht Vollbild, dann bei Cursor hoch/runter Fokus auf Tabelle
+ * todo Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
+ * todo Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
+ * todo Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch l&ouml;schen k&ouml;nnen
  * <p>
  * todo Nice to Haves
  * todo 2013-11-10: Nice to have: Undo (Edit-Reset Selected Files...) auch f&uuml;r einzelne Zeilen/selection :-)
  * todo Nice to have: Undo-History
  * todo 2014-05-24: auto column width using field.setPrefWidth(TextUtils.computeTextWidth(field.getFont(), field.getText(), 0.0D) + 10);
  * todo Statuszeile: Anzahl Dateien, Anzahl &Auml;nderungen, Anzahl Markierung, Anzahl L&ouml;schen (Doppelklick k&ouml;nnte hier auch Undelete-Dialog &ouml;ffnen)
- * <p>
- * urgent:
- * ======================
- * todo Umbenennen-Dialog-Beschriftung für %s ist gleich wie für %d???
- * todo letztes Bild löschen --> Markierung wieder ans Ende (falls Liste nicht leer), sonst gibt es keine Markierung mehr
- * todo audio abspielen (m4a, mp3, wav): Player nicht ausblenden!
- * todo Play/Pause sollte auf Strg-P gelegt werden und auch im Edit-Mode und wenn Bild fokussiert erreichbar sein
- * todo Leertaste sollte auch Play/Pause schalten, solange Liste nicht im Edit-Mode
- * todo Player-Icons/Zustand nicht immer synchron (Medien-Wechsel, Auto-Play aus, trotzdem wird noch Pause angezeigt...)
- * todo Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch l&ouml;schen k&ouml;nnen
- * todo RecentlyOpened - Liste
- * todo Ctrl-U k&ouml;nnte alles (besser: nur Prefix und Description oder nur aktuell fokussierte Spalte) von Zeile dr&uuml;ber (vor erster markierter Zeile) in alle markierten kopieren (wie Excel)
- * todo Doppelklick auf Bild muss Vollbild toggeln
- * todo statt commitEdit lieber &bdquo;n&auml;chsteZeile&ldquo; in FileTableView implementieren, die ggf &bdquo;n&auml;chsteZeile&ldquo; von Cell aufruft
- * todo ???Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN hei&szlig;en, sonst Warnung
- * todo strg-Leertaste muss im Editiermodus Vergr&ouml;&szlig;erung zur&uuml;ckstellen (dann f&uuml;r 100%-Zoom eine andere Tastenkombination!!!)
- * todo Hinweis in Bild auf rechte Maustaste als Hint, damit man auf die Idee kommt es anzuklicken (nur wenn nicht vollbild?!?)
- * todo wenn nicht Vollbild, dann bei Cursor hoch/runter Fokus auf Tabelle
- * todo Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
  * <p>
  * planned features:
  * ======================

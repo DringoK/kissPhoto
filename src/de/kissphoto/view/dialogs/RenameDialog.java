@@ -172,7 +172,7 @@ public class RenameDialog extends KissDialog {
       }
     });
     buttonsGridPane.add(separatorBtn, 0, 2);
-    Label separatorDesc = new Label(MessageFormat.format(language.getString("0.inserts.the.current.description.of.the.file"), MediaFile.PLACEHOLDER_DESCRIPTION));
+    Label separatorDesc = new Label(MessageFormat.format(language.getString("0.inserts.the.current.separator.of.the.file"), MediaFile.PLACEHOLDER_SEPARATOR));
     buttonsGridPane.add(separatorDesc, 1, 2);
 
     descriptionBtn = new Button(language.getString("ctrl.d"));
@@ -295,7 +295,7 @@ public class RenameDialog extends KissDialog {
         } else if (event.isShortcutDown() && event.getCode() == KeyCode.C) {
           counterBtn.fire();
           event.consume();
-        } else if (event.isShortcutDown() && event.getCode() == KeyCode.D) {
+        } else if (event.isShortcutDown() && event.getCode() == KeyCode.S) {
           separatorBtn.fire();
           event.consume();
         } else if (event.isShortcutDown() && event.getCode() == KeyCode.D) {

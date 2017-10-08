@@ -227,17 +227,10 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       @Override
       public void handle(KeyEvent keyEvent) {
         //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
+        System.out.println(">>>>>>>>>>> F2 <<<<<<<<<<<<");
         if ((keyEvent.getCode() == KeyCode.F2) && !keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
           keyEvent.consume();
           rename();
-        }
-        //---redundant to accelerator in Edit-Menu: move up/down otherwise struggles with standard use of Key combinations (alt=menu, ctrl=select single, shift=expand selection)
-        else if ((keyEvent.getCode() == KeyCode.UP) && keyEvent.isControlDown() && keyEvent.isShiftDown() && !keyEvent.isMetaDown()) { //Ctrl-Alt-Up
-          keyEvent.consume();
-          moveSelectedFilesUp();
-        } else if ((keyEvent.getCode() == KeyCode.DOWN) && keyEvent.isControlDown() && keyEvent.isShiftDown() && !keyEvent.isMetaDown()) { //Ctrl-Alt-Down
-          keyEvent.consume();
-          moveSelectedFilesDown();
         }
       }
     });
@@ -958,14 +951,18 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     //--------delete
     //copy selection list (otherwise the selection will change while deletion - which leads to random results)
     ObservableList<MediaFile> deletionList = FXCollections.observableArrayList(getSelectionModel().getSelectedItems());
-    getSelectionModel().clearSelection();  //all previously marked files will deleted, so remove the selection and prevent events while deletion on the selection
+    getSelectionModel().clearSelection();  //all previously marked files will deleted, so remove the selection and prevent from events while deletion on the selection
 
     mediaFileList.deleteFiles(deletionList, cutToClipboard);
 
-    //----- select
+    //----- select row after last selected deleted files
+    if (newSelectionIndex > (mediaFileList.getFileList().size() - 1)) { //if last file has been deleted
+      newSelectionIndex = mediaFileList.getFileList().size() - 1;
+    }
     if (newSelectionIndex >= 0) {
       getSelectionModel().select(newSelectionIndex);
       if (mediaFileList.getFileList().size() > 0) getFocusModel().focus(newSelectionIndex);
+      scrollViewportToIndex(newSelectionIndex);
     }
     statusBar.showMessage(MessageFormat.format(language.getString("0.file.s.marked.for.deletion.files.can.be.recovered.using.edit.undelete.until.next.save"), deletionList.size()));
     if (unDeleteMenuItem != null)
@@ -1143,6 +1140,8 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         } else if (index >= (mediaFileList.getFileList().size() - 1)) {
           flow.scrollTo(index);
         }
+        if (flow != null)
+          flow.scrollTo(index); //in the end show the desired line in any case
       }
     } catch (Exception e) {
       //if scrolling is not possible the don't do it (e.g. during Viewport is built newly because of opening an new folder

@@ -46,6 +46,7 @@ import java.util.ResourceBundle;
  * @modified: 2016-11-06 FullScreenStage moved to separate class (was inner class before)
  * @modified: 2017-10-08 all viewers' size is bound now to MediaContentView's size, so that zooming works correctly.
  *                       zooming is resetted now whenever the media changes (handing over zooming is "too clever" i.e. not "KISS"
+ *                       Double Click switches Full-Screen Mode
  */
 public class MediaContentView extends Pane {
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
@@ -128,6 +129,15 @@ public class MediaContentView extends Pane {
           else
             showNextMedia();
           scrollEvent.consume();
+        }
+      }
+    });
+
+    setOnMouseClicked(new EventHandler<MouseEvent>() {
+      @Override
+      public void handle(MouseEvent event) {
+        if (event.getClickCount() > 1) { //if double clicked
+          toggleFullScreenAndNormal();
         }
       }
     });
@@ -509,9 +519,6 @@ public class MediaContentView extends Pane {
       for (MenuItem item : showOnNextScreenItems) item.setDisable(true);
 
       fileTableView.requestFocus();
-      setNeedsLayout(true);
-      repaint();
-      owner.toFront();
     }
     //if in fullScreenMode (seen from the full-Screen-window itself)
     if (primaryMediaContentView != null) {
