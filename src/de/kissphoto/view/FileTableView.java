@@ -141,7 +141,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     this.setPrefWidth(400);
 
     //set properties of the table
-    setEditable(true);
+    setEditable(false); //Edit Event shall not be handled by TableView's default, but by the main menu bar
     getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
     //status: readonly Column to show status flags
@@ -227,9 +227,18 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       @Override
       public void handle(KeyEvent keyEvent) {
         //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
-        System.out.println(">>>>>>>>>>> F2 <<<<<<<<<<<<");
         if ((keyEvent.getCode() == KeyCode.F2) && !keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
           keyEvent.consume();
+          rename();
+        }
+      }
+    });
+
+    //--------- install mouse-handler --------------
+    setOnMouseClicked(new EventHandler<MouseEvent>() {
+      @Override
+      public void handle(MouseEvent event) {
+        if (event.getClickCount() > 1) { //if double clicked
           rename();
         }
       }
@@ -363,7 +372,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    * @param fileName will be compared with physical filename of MediaFiles
    * @return true if the selection was successful
    */
-  public boolean selectPhysicalFilename(String fileName) {
+  public boolean selectRowByPath(String fileName) {
     //select the passed image/media file (initialFileOrFolder) or the first if this could not be found (e.g. if a folder was passed)
     boolean found = false;
     if (!mediaFileList.getFileList().isEmpty() && fileName != null) {
@@ -455,31 +464,17 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   }
 
   /**
-   * forceRefresh forces the FileTableView to refresh the view
-   * because setItems will not fire an update event :-(
-   * This ugly workaround has been found on stackoverflow...
+   * try to select the row of the table by searching for the path of a physical filename
+   * If not found then select first row of the table
+   * @param file path to the physical Filename
    */
-  public void forceRefreshAndSelectPhysicalFilename(final Path file) {
-    final Scene currentScene = primaryStage.getScene();
-
-    if (currentScene != null) currentScene.setCursor(Cursor.WAIT); //might be null during start up
-    statusColumn.setVisible(false);
-
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        statusColumn.setVisible(true);
-
-        if (!selectPhysicalFilename(file.getFileName().toString())) { //try to open the selected file, if the selection was a folder it is not found
-          getSelectionModel().selectFirst();    //then select the first element
-          scrollViewportToIndex(0);
-        } else {
-          scrollViewportToIndex(getSelectionModel().getSelectedIndex()); //if file found and selected then make the selection visible
-        }
-
-        if (currentScene != null) currentScene.setCursor(Cursor.DEFAULT);
-      }
-    });
+  public void selectRowByPath(final Path file) {
+    if (!selectRowByPath(file.getFileName().toString())) { //try to open the selected file, if the selection was a folder it is not found
+      getSelectionModel().selectFirst();    //then select the first element
+      scrollViewportToIndex(0);
+    } else {
+      scrollViewportToIndex(getSelectionModel().getSelectedIndex()); //if file found and selected then make the selection visible
+    }
   }
 
   public void onFolderChanged(String filename, WatchEvent.Kind kind) {
@@ -525,42 +520,37 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     statusBar.showMessage(MessageFormat.format(language.getString("trying.to.open.0"), fileOrFolder.toString()));
 
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          getSelectionModel().clearSelection();  //prevent the selection listener from doing nonsense while loading
-          String errMsg = mediaFileList.openFolder(fileOrFolder);
-          if (errMsg.length() == 0) {
-            primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
-            statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
-            numberingOffset = 1;  //determines with which number renumbering of the list starts.
-            numberingStepSize = 1;
-            numberingDigits = 0;   //zero is [auto]
+    try {
+      getSelectionModel().clearSelection();  //prevent the selection listener from doing nonsense while loading
+      String errMsg = mediaFileList.openFolder(fileOrFolder);
+      if (errMsg.length() == 0) {
+        primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
+        statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
+        numberingOffset = 1;  //determines with which number renumbering of the list starts.
+        numberingStepSize = 1;
+        numberingDigits = 0;   //zero is [auto]
 
-            setItems(mediaFileList.getFileList());
-            forceRefreshAndSelectPhysicalFilename(fileOrFolder);
+        setItems(mediaFileList.getFileList());
+        selectRowByPath(fileOrFolder);
 
-            //after successful load remember this in the settings
-            globalSettings.setProperty(LAST_FILE_OPENED, fileOrFolder.toAbsolutePath().toString());
-            reOpenMenuItem.setDisable(false);
-          } else {
-            statusBar.showError(errMsg);
-            reOpenMenuItem.setDisable(true);
-          }
-
-          //register a file watcher for watching out for changes to this folder from external applications
-          try {
-            //register stops the old thread and starts an new for the new folder to register
-            fileChangeWatcher.registerFolderToWatch(mediaFileList.getCurrentFolderName(), fileTableView);   //openFolder (above) already has set the currentFolderName
-          } catch (Exception e) {
-            //in Case of error the function does not exist to update the folder in background..so what...
-          }
-        } finally {
-          if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
-        }
+        //after successful load remember this in the settings
+        globalSettings.setProperty(LAST_FILE_OPENED, fileOrFolder.toAbsolutePath().toString());
+        reOpenMenuItem.setDisable(false);
+      } else {
+        statusBar.showError(errMsg);
+        reOpenMenuItem.setDisable(true);
       }
-    });
+
+      //register a file watcher for watching out for changes to this folder from external applications
+      try {
+        //register stops the old thread and starts an new for the new folder to register
+        fileChangeWatcher.registerFolderToWatch(mediaFileList.getCurrentFolderName(), fileTableView);   //openFolder (above) already has set the currentFolderName
+      } catch (Exception e) {
+        //in Case of error the function does not exist to update the folder in background..so what...
+      }
+    } finally {
+      if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
+    }
   }
 
   /**
@@ -834,6 +824,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
   /**
    * rename selected line...or if multiple lines are selected call renameWithDialog()
+   * if no column is currently selected, then select descriptionColumn
    */
 
   public synchronized void rename() {
@@ -843,7 +834,10 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       if (getFocusModel().getFocusedCell().getTableColumn() == null) {
         getFocusModel().focus(getFocusModel().getFocusedIndex(), descriptionColumn);
       }
+      setEditable(true);
       edit(getFocusModel().getFocusedIndex(), getFocusModel().getFocusedCell().getTableColumn());
+
+      //editable will reset in TextFieldCell on CommitEdit
     }
 
   }
@@ -1076,6 +1070,13 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     }
   }
 
+  /**
+   * SelectedLineNumberChangeListener
+   * for
+   * - mediaContentView.setMedia for the selected line
+   * - to enable TableView's build in edit features if single line selected
+   * - to disable TableView's build in edit if multiple lines selected. In this case rename() calls rename dialog
+   */
   private static class SelectedLineNumberChangeListener implements ChangeListener<Number> {
     private FileTableView fileTableView; //link back to the fileTableView which has installed the Listener
 
@@ -1085,6 +1086,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     @Override
     public void changed(ObservableValue<? extends Number> observableValue, Number oldNumber, Number newNumber) {
+      //set selected media in mediaContentView (or null if not valid)
       if (newNumber.intValue() >= 0) { //only if selection is valid
         fileTableView.lastSelection = fileTableView.mediaFileList.getFileList().get(newNumber.intValue());
         fileTableView.mediaContentView.setMedia(fileTableView.mediaFileList.getFileList().get(newNumber.intValue()), null);
@@ -1129,6 +1131,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    * @param index line to scroll to become visible in viewport
    */
   public void scrollViewportToIndex(int index) {
+//    scrollTo(index);
     try {
       if (flow != null) {  //the flow is not valid before it is drawn for the first time. Should be always done after loading a directory ;-)
         if (index > 0 && (index - 1) < flow.getFirstVisibleCell().getIndex()) {
@@ -1140,8 +1143,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         } else if (index >= (mediaFileList.getFileList().size() - 1)) {
           flow.scrollTo(index);
         }
-        if (flow != null)
-          flow.scrollTo(index); //in the end show the desired line in any case
+        flow.scrollTo(index); //in the end show the desired line in any case
       }
     } catch (Exception e) {
       //if scrolling is not possible the don't do it (e.g. during Viewport is built newly because of opening an new folder

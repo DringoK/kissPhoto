@@ -47,7 +47,6 @@ import java.awt.*;
  * <p>
  * Bugs:
  * ======================
- * todo FileTableView: F2 wirft Exception, wenn mit Tastatur markiert, aber nicht, wenn mit Maus markiert???
  * todo FileTableView.scrollViewportToIndex überdenken: scrollt z.B. nicht zum letzten File, falls das gelöscht wurde
  * todo audio abspielen (m4a, mp3, wav): Player nicht ausblenden!
  * todo Play/Pause sollte auf Strg-P gelegt werden und auch im Edit-Mode und wenn Bild fokussiert erreichbar sein

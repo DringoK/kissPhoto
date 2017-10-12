@@ -37,16 +37,18 @@ import javafx.scene.input.KeyEvent;
 class TextFieldCell extends TableCell<MediaFile, String> {
   RestrictedInputField inputField;
   Boolean escPressed = false;
+  Boolean stayInEditMode = false; //will be true while moving from one line to the next with cursor-keys up/down
 
   @Override
   public void startEdit() {
     super.startEdit();
     escPressed = false;
+    stayInEditMode = false;
 
     createInputField();        //every time a new TextField
 
     inputField.setText(getString());
-    positionCaretOrSelect();
+    positionCaretOrSelect();   //according values in SearchResult
 
 
     setText(null);
@@ -95,6 +97,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
     setText(getItem());
     this.setContentDisplay(ContentDisplay.TEXT_ONLY);
     setGraphic(null);
+    if (!stayInEditMode) ((FileTableView) getTableColumn().getTableView()).setEditable(false);
   }
 
   @Override
@@ -210,23 +213,26 @@ class TextFieldCell extends TableCell<MediaFile, String> {
 
         //selectAbove/BelowCell() does not work as expected when running over borders of viewport/flow
         int currentLineEdited = fileTableView.getSelectionModel().getSelectedIndex();
+
+        stayInEditMode = true; //for commitEdit of old row
         if (up) {
           if (currentLineEdited > 0) {
             ((FileTableView) getTableColumn().getTableView()).setLastCaretPosition(inputField.getCaretPosition());
             commitEdit(inputField.getText());
             currentLineEdited--;
           }
-        } else {
+        } else {    //down
           if (currentLineEdited < fileTableView.getRowCount() - 1) {
             ((FileTableView) getTableColumn().getTableView()).setLastCaretPosition(inputField.getCaretPosition());
             commitEdit(inputField.getText());
             currentLineEdited++;
           }
         }
-        fileTableView.getSelectionModel().clearAndSelect(currentLineEdited, editingColumn);
-        fileTableView.getSelectionModel().focus(currentLineEdited);
-        fileTableView.scrollViewportToIndex(currentLineEdited);
+        stayInEditMode = false; 
 
+        fileTableView.scrollViewportToIndex(currentLineEdited);
+        fileTableView.getSelectionModel().focus(currentLineEdited);
+        fileTableView.getSelectionModel().clearAndSelect(currentLineEdited, editingColumn);
 
         Platform.runLater(new Runnable() {
           @Override
