@@ -1238,6 +1238,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         @Override
         public void run() {
           selectSearchResultOnNextStartEdit = true;
+          setEditable(true);
           edit(foundIndex, foundCol);
         }
       });
