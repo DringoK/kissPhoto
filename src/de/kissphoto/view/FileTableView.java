@@ -52,6 +52,7 @@ import java.util.ResourceBundle;
  * @modified: 2014-06-22 extra column for the counter's separator (the character after the counter)
  * @modified: 2016-06-12 shift-ctrl up/down for moving files now also works in windows 10
  * @modified: 2016-11-01 RestrictedTextField stores connection to FileTable locally, so that passing editing threads store the correct table cell
+ * @modified: 2017-10-xx  bugfixing and new functionality copyDescriptionDown()
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
@@ -883,22 +884,73 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     } finally {
       renameDialogActive = false;
     }
-    repaint();
+    refresh();
   }
 
   /**
-   * force repaint by reseting the scene in the primary stage
-   * This solves a repainting bug in JavaFx 1.8.05
+   * auto fill from first selected lines to the other selected lines
+   *
+   * if multiple lines are selected
+   * - Prefix
+   * - separator
+   * - and description
+   * are copied from the first of the selected lines to all other selected lines (like autofill in excel)
+   *
+   * if just one line is selected copying will be performed from the above line (if there is any. if not nothing will happen)
+   * if in edit-mode nothing happens (this would have to make TextFieldCell
    */
-  private void repaint() {
-    final Scene scene = primaryStage.getScene();
-    primaryStage.setScene(null);
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        primaryStage.setScene(scene);
+  public void copyDescriptionDown() {
+    MediaFile firstSelectedFile = null;
+    MediaFile otherSelectedFile = null;
+
+    if (isEditMode()) return;
+
+    //multiple selected lines -> copy first to all others
+    if (getSelectionModel().getSelectedIndices().size() > 1) {
+      //copy and sort the selection for determining the "fist selected"
+      ObservableList<Integer> selectedIndicesSorted = FXCollections.observableArrayList(getSelectionModel().getSelectedIndices()); //copy
+      FXCollections.sort(selectedIndicesSorted);
+      try {
+        firstSelectedFile = mediaFileList.getFileList().get(selectedIndicesSorted.get(0));
+      } catch (Exception e) {
+        //firstSelectedFile remains null in case of exception
       }
-    });
+      if (firstSelectedFile != null) {
+        for (Integer indexObject : selectedIndicesSorted) {
+          otherSelectedFile = mediaFileList.getFileList().get(indexObject);
+          copyFileDescriptions(firstSelectedFile, otherSelectedFile);
+        }
+      }
+
+    } else if (getSelectionModel().getSelectedIndices().size() == 1) {
+      int selectedIndex = getSelectionModel().getSelectedIndex();
+      if (selectedIndex > 0) { //not the first file because there is none above to copy from
+        try {
+          firstSelectedFile = mediaFileList.getFileList().get(selectedIndex - 1); //the file above the selected is the source
+          otherSelectedFile = mediaFileList.getFileList().get(selectedIndex); //the selected file is the target
+        } catch (Exception e) {
+          //first/otherSelectedFile remain null in case of exception
+        }
+        if (firstSelectedFile != null && otherSelectedFile != null) {
+          copyFileDescriptions(firstSelectedFile, otherSelectedFile);
+        }
+      }
+
+    } //else size()==0 == nothing selected and nothing will happen
+    refresh();
+
+  }
+
+  /**
+   * copy the descriptive fields from sourceFile to copyToFile
+   *
+   * @param sourceFile copy from
+   * @param copyToFile copy to
+   */
+  public void copyFileDescriptions(MediaFile sourceFile, MediaFile copyToFile) {
+    copyToFile.setPrefix(sourceFile.getPrefix());
+    copyToFile.setSeparator(sourceFile.getSeparator());
+    copyToFile.setDescription(sourceFile.getDescription());
   }
 
   /**
@@ -1072,10 +1124,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
   /**
    * SelectedLineNumberChangeListener
-   * for
-   * - mediaContentView.setMedia for the selected line
-   * - to enable TableView's build in edit features if single line selected
-   * - to disable TableView's build in edit if multiple lines selected. In this case rename() calls rename dialog
+   * for setting mediaContentView.setMedia for the selected line
    */
   private static class SelectedLineNumberChangeListener implements ChangeListener<Number> {
     private FileTableView fileTableView; //link back to the fileTableView which has installed the Listener

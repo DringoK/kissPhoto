@@ -26,11 +26,12 @@ import java.util.ResourceBundle;
  * <p/>
  *
  * @author: Ingo
- * @date: 09.09.12
+ * @date: 2012-09-09
  * @modified: 2014-04-29 added about menu and no longer used the MenuItemBuilder (which is deprecated now)
  * @modified: 2014-05-02 (I18Support, Reopen added)
  * @modified: 2014-16-16 support for full screen mode added to view menu
  * @modified: 2015-10-04 moving changed to ctr-Cursor up/down: Shift-Alt-Cursor up/down does not work under Windows 10 (menu is activated instead)
+ * @modified: 2017-10-13 added AutoFill(Down) Menu-Item to edit menu
  */
 public class MainMenuBar extends MenuBar {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -173,6 +174,17 @@ public class MainMenuBar extends MenuBar {
       }
     });
     editMenu.getItems().add(renameItem);
+
+    final MenuItem autoFillDownItem = new MenuItem(language.getString("autofill.copy.down"));
+    autoFillDownItem.setAccelerator(new KeyCodeCombination(KeyCode.U, KeyCombination.CONTROL_DOWN));
+    autoFillDownItem.setOnAction(new EventHandler<ActionEvent>() {
+      @Override
+      public void handle(ActionEvent event) {
+        event.consume();
+        fileTableView.copyDescriptionDown();
+      }
+    });
+    editMenu.getItems().add(autoFillDownItem);
 
     final MenuItem externalMainEditorItem = new MenuItem(language.getString("external.editor.1"));
     externalMainEditorItem.setAccelerator(new KeyCodeCombination(KeyCode.F2, KeyCombination.CONTROL_DOWN));

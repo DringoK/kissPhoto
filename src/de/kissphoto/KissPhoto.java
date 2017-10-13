@@ -53,7 +53,6 @@ import java.awt.*;
  * todo Leertaste sollte auch Play/Pause schalten, solange Liste nicht im Edit-Mode
  * todo Player-Icons/Zustand nicht immer synchron (Medien-Wechsel, Auto-Play aus, trotzdem wird noch Pause angezeigt...)
  * todo RecentlyOpened - Liste
- * todo Ctrl-U k&ouml;nnte alles (besser: nur Prefix und Description oder nur aktuell fokussierte Spalte) von Zeile dr&uuml;ber (vor erster markierter Zeile) in alle markierten kopieren (wie Excel)
  * todo statt commitEdit lieber &bdquo;n&auml;chsteZeile&ldquo; in FileTableView implementieren, die ggf &bdquo;n&auml;chsteZeile&ldquo; von Cell aufruft
  * todo ???Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN hei&szlig;en, sonst Warnung
  * todo strg-Leertaste muss im Editiermodus Vergr&ouml;&szlig;erung zur&uuml;ckstellen (dann f&uuml;r 100%-Zoom eine andere Tastenkombination!!!)
@@ -79,7 +78,7 @@ import java.awt.*;
  * todo JPG drehen. Z.B. http://mediachest.sourceforge.net/mediautil/
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.8.9 work in progress"; //<------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.8.10 work in progress"; //<------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;
