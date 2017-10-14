@@ -24,6 +24,7 @@ import java.text.MessageFormat;
  * @Date: 2014-04-23
  * @modified: 2014-05-02 (I18Support)
  * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class AboutDialog extends KissDialog {
 
@@ -82,9 +83,8 @@ public class AboutDialog extends KissDialog {
    * show the modal dialog
    */
   public void showModal() {
-    centerOnOwner();
-    toFront();
-    repaint();
+    centerAndScaleDialog();
     showAndWait();
   }
+
 }

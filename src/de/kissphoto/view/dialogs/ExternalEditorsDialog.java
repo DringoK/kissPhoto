@@ -38,6 +38,7 @@ import java.io.File;
  * @date: 2014-05-07
  * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
  * @modified: 2016-11-01 RestrictedTextField no longer tries to store connection to FileTable locally
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class ExternalEditorsDialog extends KissDialog {
   private static final String KISSPHOTO_SPECIFY_EXTERNAL_EDITORS = "kissphoto.specify.external.editors";
@@ -224,9 +225,7 @@ public class ExternalEditorsDialog extends KissDialog {
     otherFileEditorTextField1.setText(OtherFile.getExternalMainEditorPath());
     otherFileEditorTextField2.setText(OtherFile.getExternal2ndEditorPath());
 
-    centerOnOwner();
-    toFront();
-    repaint();
+    centerAndScaleDialog();
     showAndWait();
 
     if (modalResult_bool) {

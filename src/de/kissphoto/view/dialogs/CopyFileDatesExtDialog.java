@@ -34,7 +34,7 @@ import java.nio.file.Paths;
  *
  * @author: Ingo
  * @date: 2014-06-19
- * @modified:
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class CopyFileDatesExtDialog extends KissDialog {
   public static final int FILEDATE_COL_WIDTH = 155;
@@ -232,9 +232,7 @@ public class CopyFileDatesExtDialog extends KissDialog {
     }
     buildClusteredFileList();
 
-    centerOnOwner();
-    toFront();
-    repaint();
+    centerAndScaleDialog();
     showAndWait();
 
     return modalResult_bool;

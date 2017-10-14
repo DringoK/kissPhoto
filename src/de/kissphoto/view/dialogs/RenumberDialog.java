@@ -25,6 +25,7 @@ import javafx.stage.Stage;
  * @modified: 2014-05-02 (I18Support)
  * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
  * @modified: 2016-11-01 RestrictedTextField no longer tries to store connection to FileTable-->adaption here: pass null to constructor
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class RenumberDialog extends KissDialog {
   public static final int NONE_BTN = 0; //no button was pressed: MessageBox left by [x] of the window
@@ -160,9 +161,7 @@ public class RenumberDialog extends KissDialog {
 
     startTextField.requestFocus();
 
-    centerOnOwner();
-    toFront();
-    repaint();
+    centerAndScaleDialog();
     showAndWait();
 
     return modalResult;

@@ -31,6 +31,7 @@ import static de.kissphoto.view.FileTableView.NOTHING_FOUND;
  * @date: 2014-05-03
  * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
  * @modified: 2016-11-04 indicate search mode: in all or in selected lines only
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class FindReplaceDialog extends KissDialog {
   final static String findCaption = language.getString("find");
@@ -177,7 +178,7 @@ public class FindReplaceDialog extends KissDialog {
 
     findFirstMode = !found;    //stay in findFirst Mode if nothing was found
     enableValidButtons();
-    repaint();
+    //repaint();
     showSearchResultInStatusBar();
 
     if (!found) {
@@ -194,7 +195,7 @@ public class FindReplaceDialog extends KissDialog {
 
     findFirstMode = !found;    //stay in findFirst Mode if nothing was found
     enableValidButtons();
-    repaint();
+    //repaint();
     showSearchResultInStatusBar();
 
     if (!found) {
@@ -213,7 +214,7 @@ public class FindReplaceDialog extends KissDialog {
     findFirstMode = true;
     fileTableView.closeSearchAndRestoreSelection();
     enableValidButtons();
-    repaint();
+    //repaint();
 
     counter = counter + firstCounter;  //if an old result exists then add it
     if (counter == 0)
@@ -308,9 +309,7 @@ public class FindReplaceDialog extends KissDialog {
 
     findTextField.requestFocus();
 
-    centerOnOwner();
-    toFront();
-    repaint();
+    centerAndScaleDialog();
     showAndWait();
 
     //if there was a selection with size>0 then restore the selection when closing the dialog window

@@ -29,6 +29,7 @@ import javafx.stage.Stage;
  * @date: 2012-10-05
  * @modified: 2014-05-02 (I18Support)
  * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class UnDeleteDialog extends KissDialog {
   public static final int NONE_BTN = 0;               //no button was pressed: MessageBox left by [x] of the window
@@ -144,9 +145,7 @@ public class UnDeleteDialog extends KissDialog {
       listView.getSelectionModel().selectedIndexProperty().addListener(selectedLineNumberChangeListener);
       listView.getSelectionModel().selectFirst();
 
-      centerOnOwner();
-      toFront();
-      repaint();
+      centerAndScaleDialog();
       showAndWait();
 
       //uninstall listener to prevent from funny effects, when changing the passed list externally later

@@ -26,6 +26,7 @@ import javafx.stage.StageStyle;
  * @date: 2012-09-23
  * @modified: 2014-05-02 (I18Support)
  * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class MessageBox extends KissDialog {
 
@@ -165,11 +166,8 @@ public class MessageBox extends KissDialog {
   public int showModal() {
     modalResult = NONE_BTN;
 
-    centerOnOwner();
-    toFront();
-    repaint();
+    centerAndScaleDialog();
     showAndWait();
-
     return modalResult;
   }
 }

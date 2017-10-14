@@ -1,7 +1,6 @@
 package de.kissphoto.view.dialogs;
 
 import de.kissphoto.helper.I18Support;
-import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -16,7 +15,7 @@ import java.util.ResourceBundle;
  *
  * @author: Ingo
  * @date: 2014-06-16 multi monitor support
- * @modified:
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class KissDialog extends Stage {
   protected static ResourceBundle language = I18Support.languageBundle;
@@ -50,6 +49,7 @@ public class KissDialog extends Stage {
 
   /**
    * For MultiScreen-Support the Dialog should appear always on the same screen as the owner (usually the main stage)
+   * The
    */
   public void centerOnOwner() {
     setX(getOwner().getX() + ((getOwner().getWidth() - this.getWidth()) / 2));
@@ -57,16 +57,14 @@ public class KissDialog extends Stage {
   }
 
   /**
-   * force repaint by reseting the scene
-   * This solves a repainting bug in JavaFx 1.8.05
+   * do all necessary scaling of the dialog, so that all elements are visible (independent from the current platform scaling)
+   * and center the dialog over the main window (i.e. bring to the correct screen and center)
+   *
+   * ..usually called just before showAndWait() in showModal() of child classes
    */
-  protected void repaint() {
-    setScene(null);
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        setScene(scene);
-      }
-    });
+  public void centerAndScaleDialog() {
+    centerOnOwner();
+    toFront();
+    //repaint was no longer necessary with JDK9 and scaling was solved also with that remove... fine :-)
   }
 }

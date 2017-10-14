@@ -27,6 +27,7 @@ import javafx.stage.StageStyle;
  * @author: Ingo
  * @date: 2014-05-02
  * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class LanguageDialog extends KissDialog {
   private static GlobalSettings globalSettings;
@@ -133,9 +134,7 @@ public class LanguageDialog extends KissDialog {
   public boolean showModal() {
     modalResult_bool = CANCEL_BOOL;
 
-    centerOnOwner();
-    toFront();
-    repaint();
+    centerAndScaleDialog();
     showAndWait();
 
     if (modalResult_bool) {  //OK_BOOL=true ;-)

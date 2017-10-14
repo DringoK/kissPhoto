@@ -33,6 +33,7 @@ import java.text.MessageFormat;
  * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
  * @modified: 2014-06-22 extra column for the counter's separator (the character after the counter)
  * @modified: 2016-11-02 RestrictedTextfield has changed signature
+ * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 
 public class RenameDialog extends KissDialog {
@@ -343,10 +344,8 @@ public class RenameDialog extends KissDialog {
     descriptionTextField.setText(initDescription);
     extensionTextField.setText(initExtension);
 
-    centerOnOwner();
-    toFront();
-    repaint();
 
+    centerAndScaleDialog();
     descriptionTextField.requestFocus();
     showAndWait();
 
