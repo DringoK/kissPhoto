@@ -31,7 +31,7 @@ import java.util.ResourceBundle;
  * @modified: 2014-05-02 (I18Support, Reopen added)
  * @modified: 2014-16-16 support for full screen mode added to view menu
  * @modified: 2015-10-04 moving changed to ctr-Cursor up/down: Shift-Alt-Cursor up/down does not work under Windows 10 (menu is activated instead)
- * @modified: 2017-10-13 added AutoFill(Down) Menu-Item to edit menu
+ * @modified: 2017-10-13 added AutoFill(Down) Menu-Item to edit menu + Default Column Widths to View menu
  */
 public class MainMenuBar extends MenuBar {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -333,6 +333,7 @@ public class MainMenuBar extends MenuBar {
    */
   private void createViewMenu() {
     Menu viewMenu = new Menu(language.getString("viewMenu"));
+
     final MenuItem resetSortingItem = new MenuItem(language.getString("reset.sortingMenu"));
     resetSortingItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN, KeyCodeCombination.SHIFT_DOWN));
     resetSortingItem.setOnAction(new EventHandler<ActionEvent>() {
@@ -343,6 +344,17 @@ public class MainMenuBar extends MenuBar {
       }
     });
     viewMenu.getItems().add(resetSortingItem);
+
+    final MenuItem resetColWidthItem = new MenuItem(language.getString("reset.column.widths"));
+    resetColWidthItem.setAccelerator(new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN, KeyCodeCombination.SHIFT_DOWN));
+    resetColWidthItem.setOnAction(new EventHandler<ActionEvent>() {
+
+      public void handle(ActionEvent event) {
+        event.consume();
+        fileTableView.setDefaultColumnWidths();
+      }
+    });
+    viewMenu.getItems().add(resetColWidthItem);
 
     viewMenu.getItems().add(new SeparatorMenuItem());
 

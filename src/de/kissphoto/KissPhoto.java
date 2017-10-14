@@ -17,7 +17,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -91,20 +90,25 @@ public class KissPhoto extends Application {
   protected Scene scene;
   private GlobalSettings globalSettings = new GlobalSettings();
 
+  SplitPane mainSplitPane = new SplitPane();
+  SplitPane detailsArea = new SplitPane();
 
   //------------- IDs for GlobalSettings-File
   private static final double default_X = 0;
   private static final double default_Y = 0;
   private static final double default_width = 1000;
   private static final double default_height = 800;
+  private static final double MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS = 0.5;
+  private static final double DETAILS_AREA_DEFAULT_DIVIDER_POS = 0.99;
 
   private static final String STAGE_X = "StageX";
   private static final String STAGE_Y = "StageY";
   private static final String STAGE_WIDTH = "StageWidth";
   private static final String STAGE_HEIGHT = "StageHeight";
-  private static final String STAGE_DECO_WIDTH = "StageDecoWidth";
 
-  private double decoWidth = 0;
+  private static final String MAIN_SPLIT_PANE_DIVIDER_POSITION = "mainSplitPane_DividerPosition";
+  private static final String DETAILS_AREA_DIVIDER_POSITION = "detailsArea_DividerPosition";
+
 
   /**
    * Store last main window settings from Global-Settings properties file
@@ -117,6 +121,12 @@ public class KissPhoto extends Application {
     globalSettings.setProperty(STAGE_Y, Double.toString(primaryStage.getY()));
     globalSettings.setProperty(STAGE_WIDTH, Double.toString(primaryStage.getWidth()));
     globalSettings.setProperty(STAGE_HEIGHT, Double.toString(primaryStage.getHeight()));
+
+    globalSettings.setProperty(MAIN_SPLIT_PANE_DIVIDER_POSITION, Double.toString(mainSplitPane.getDividerPositions()[0]));
+
+    //todo: folgenden Block aktivieren, sobald MetadataView in detailsArea eingefügt ist
+    //globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(detailsArea.getDividerPositions()[0]));
+    fileTableView.storeLastSettings();
   }
 
   /**
@@ -150,6 +160,20 @@ public class KissPhoto extends Application {
       primaryStage.setHeight(default_height);
     }
 
+    try {
+      mainSplitPane.setDividerPosition(0, Double.parseDouble(globalSettings.getProperty(MAIN_SPLIT_PANE_DIVIDER_POSITION)));
+    } catch (Exception e) {
+      mainSplitPane.setDividerPosition(0, MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS);
+    }
+
+    //todo: folgenden Block aktivieren, sobald MetadataView in detailsArea eingefügt ist
+/*    try {
+      detailsArea.setDividerPosition(0, Double.parseDouble(globalSettings.getProperty(DETAILS_AREA_DIVIDER_POSITION)));
+    } catch (Exception e) {
+      detailsArea.setDividerPosition(0,DETAILS_AREA_DEFAULT_DIVIDER_POS);
+    }
+*/
+    fileTableView.restoreLastSettings();
   }
 
   /**
@@ -249,20 +273,6 @@ public class KissPhoto extends Application {
     Application.launch(args);
   }
 
-  /**
-   * force repaint by reseting the scene
-   * This solves a repainting bug in JavaFx 1.8.05...sometimes
-   */
-  private void repaint() {
-    primaryStage.setScene(null);
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        primaryStage.setScene(scene);
-      }
-    });
-  }
-
   @Override
   public void start(Stage stage) {
     globalSettings.load();
@@ -291,19 +301,18 @@ public class KissPhoto extends Application {
     mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION, globalSettings);
 
     // Left and right split pane
-    SplitPane mainSplitPane = new SplitPane();
     mainSplitPane.prefWidthProperty().bind(scene.widthProperty());
     mainSplitPane.prefHeightProperty().bind(scene.heightProperty());
-    mainSplitPane.setDividerPosition(0, 0.5);
+    mainSplitPane.setDividerPosition(0, MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS);
 
     // File Details: Upper (picture/player) and lower (EXIF) split pane
-    SplitPane detailsArea = new SplitPane();
     detailsArea.setOrientation(Orientation.VERTICAL);
     detailsArea.prefHeightProperty().bind(scene.heightProperty());
     detailsArea.prefWidthProperty().bind(scene.widthProperty());
-    detailsArea.setDividerPosition(0, 0.99);
+    //todo: folgende Zeile aktivieren, sobald MetadataView in detailsArea eingefügt ist
+    detailsArea.setDividerPosition(0, DETAILS_AREA_DEFAULT_DIVIDER_POS);
 
-    detailsArea.getItems().addAll(mediaContentView, new Pane());
+    detailsArea.getItems().addAll(mediaContentView);
 
     mainSplitPane.getItems().addAll(fileTableView, detailsArea);
 
@@ -316,6 +325,7 @@ public class KissPhoto extends Application {
     rootArea.setCenter(mainSplitPane);
     rootArea.setBottom(statusBar);
     root.getChildren().add(rootArea);
+
 
     primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
       public void handle(final WindowEvent event) {
@@ -338,7 +348,7 @@ public class KissPhoto extends Application {
     final SplashScreen splash = SplashScreen.getSplashScreen();
     if (splash != null) splash.close();
 
-    restoreLastMainWindowSettings(); //window must be visible otherwise it has no effect to set window's bounds
+    restoreLastMainWindowSettings();
     primaryStage.show();  //show main window before opening files to show messages while loading
 
 

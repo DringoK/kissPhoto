@@ -52,7 +52,7 @@ import java.util.ResourceBundle;
  * @modified: 2014-06-22 extra column for the counter's separator (the character after the counter)
  * @modified: 2016-06-12 shift-ctrl up/down for moving files now also works in windows 10
  * @modified: 2016-11-01 RestrictedTextField stores connection to FileTable locally, so that passing editing threads store the correct table cell
- * @modified: 2017-10-xx  bugfixing and new functionality copyDescriptionDown()
+ * @modified: 2017-10-14  bugfixing and new functionality copyDescriptionDown() + store Column-Widths
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
@@ -92,7 +92,25 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   public static final String EXTENSION = "extension";
   public static final String MODIFIED = "modified";
   public static final String NOTHING_FOUND = "nothing.found";
+  private static final String FILE_DATE = "fileDate";
 
+  //Default Column Widths
+  private static final int STATUS_COL_DEFAULT_WIDTH = 20;
+  private static final int PREFIX_COL_DEFAULT_WIDTH = 50;
+  private static final int COUNTER_COL_DEFAULT_WIDTH = 40;
+  private static final int SEPARATOR_COL_DEFAULT_WIDTH = 30;
+  private static final int DESCRIPTION_COL_DEFAULT_WIDTH = 480;
+  private static final int EXTENSION_COL_DEFAULT_WIDTH = 50;
+  private static final int FILEDATE_COL_DEFAULT_WIDTH = 155;
+
+  //Constants for writing Width to settings-File
+  private static final String STATUS_COL_WIDTH = "StatusColWidth";
+  private static final String PREFIX_COL_WIDTH = "PrefixColWidth";
+  private static final String COUNTER_COL_WIDTH = "CounterColWidth";
+  private static final String SEPARATOR_COL_WIDTH = "SeparatorColWidth";
+  private static final String DESCRIPTION_COL_WIDTH = "DescriptionColWidth";
+  private static final String EXTENSION_COL_WIDTH = "ExtensionColWidth";
+  private static final String FILEDATE_COL_WIDTH = "FileDateColWidth";
 
   //renumbering values will be initialized on every openFolder() and can be changed by user using renumberDialog()
   private int numberingOffset = 1;  //determines with which number renumbering of the list starts.
@@ -139,7 +157,6 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     this.globalSettings = globalSettings;
 
     this.setMinSize(100.0, 100.0);
-    this.setPrefWidth(400);
 
     //set properties of the table
     setEditable(false); //Edit Event shall not be handled by TableView's default, but by the main menu bar
@@ -147,13 +164,13 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     //status: readonly Column to show status flags
     statusColumn = new TableColumn(language.getString("status"));
-    statusColumn.setPrefWidth(20);
+    statusColumn.setPrefWidth(STATUS_COL_DEFAULT_WIDTH);
     statusColumn.setEditable(false);
     statusColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>("status"));
 
     //prefix
     prefixColumn = new TableColumn(language.getString(PREFIX));
-    prefixColumn.setPrefWidth(50);
+    prefixColumn.setPrefWidth(PREFIX_COL_DEFAULT_WIDTH);
     prefixColumn.setEditable(true);
     prefixColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>(PREFIX));
     prefixColumn.setCellFactory(textFieldCellFactory);
@@ -161,7 +178,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     //counter
     counterColumn = new TableColumn(language.getString(COUNTER));
-    counterColumn.setPrefWidth(40);
+    counterColumn.setPrefWidth(COUNTER_COL_DEFAULT_WIDTH);
     counterColumn.setEditable(true); //as a default counter is editable until renumbering is set to auto-mode
     counterColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>(COUNTER));
     counterColumn.setCellFactory(textFieldCellFactory);
@@ -182,7 +199,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     //separator
     separatorColumn = new TableColumn(language.getString(SEPARATOR));
     separatorColumn.setEditable(true);
-    separatorColumn.setPrefWidth(30);
+    separatorColumn.setPrefWidth(SEPARATOR_COL_DEFAULT_WIDTH);
     separatorColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>(SEPARATOR));
     separatorColumn.setCellFactory(textFieldCellFactory);
     separatorColumn.setOnEditCommit(cellEditCommitEventHandler);
@@ -190,14 +207,14 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     //description
     descriptionColumn = new TableColumn(language.getString(DESCRIPTION));
     descriptionColumn.setEditable(true);
-    descriptionColumn.setPrefWidth(480);
+    descriptionColumn.setPrefWidth(DESCRIPTION_COL_DEFAULT_WIDTH);
     descriptionColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>(DESCRIPTION));
     descriptionColumn.setCellFactory(textFieldCellFactory);
     descriptionColumn.setOnEditCommit(cellEditCommitEventHandler);
 
     //file type (extension)
     extensionColumn = new TableColumn(language.getString(EXTENSION));
-    extensionColumn.setPrefWidth(50);
+    extensionColumn.setPrefWidth(EXTENSION_COL_DEFAULT_WIDTH);
     extensionColumn.setEditable(true);
     extensionColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>(EXTENSION));
     extensionColumn.setCellFactory(textFieldCellFactory);
@@ -205,9 +222,9 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     //file date
     fileDateColumn = new TableColumn(language.getString(MODIFIED));
-    fileDateColumn.setPrefWidth(155);
+    fileDateColumn.setPrefWidth(FILEDATE_COL_DEFAULT_WIDTH);
     fileDateColumn.setEditable(true);
-    fileDateColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>("fileDate"));
+    fileDateColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>(FILE_DATE));
     fileDateColumn.setCellFactory(textFieldCellFactory);
     fileDateColumn.setOnEditCommit(cellEditCommitEventHandler);
 
@@ -325,6 +342,78 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       } else {
         statusBar.showMessage(language.getString("use.ctrl.o.to.open.a.folder"));
       }
+    }
+  }
+
+  public void setDefaultColumnWidths() {
+    statusColumn.setPrefWidth(STATUS_COL_DEFAULT_WIDTH);
+    prefixColumn.setPrefWidth(PREFIX_COL_DEFAULT_WIDTH);
+    counterColumn.setPrefWidth(COUNTER_COL_DEFAULT_WIDTH);
+    separatorColumn.setPrefWidth(SEPARATOR_COL_DEFAULT_WIDTH);
+    descriptionColumn.setPrefWidth(DESCRIPTION_COL_DEFAULT_WIDTH);
+    extensionColumn.setPrefWidth(EXTENSION_COL_DEFAULT_WIDTH);
+    fileDateColumn.setPrefWidth(FILEDATE_COL_DEFAULT_WIDTH);
+  }
+
+  /**
+   * Store last file table settings from Global-Settings properties file
+   * i.e. column widths
+   * assumes:
+   * - globalSettings already loaded
+   * - stage not null
+   */
+  public void storeLastSettings() {
+    globalSettings.setProperty(STATUS_COL_WIDTH, Double.toString(statusColumn.getWidth()));
+    globalSettings.setProperty(PREFIX_COL_WIDTH, Double.toString(prefixColumn.getWidth()));
+    globalSettings.setProperty(COUNTER_COL_WIDTH, Double.toString(counterColumn.getWidth()));
+    globalSettings.setProperty(SEPARATOR_COL_WIDTH, Double.toString(separatorColumn.getWidth()));
+    globalSettings.setProperty(DESCRIPTION_COL_WIDTH, Double.toString(descriptionColumn.getWidth()));
+    globalSettings.setProperty(EXTENSION_COL_WIDTH, Double.toString(extensionColumn.getWidth()));
+    globalSettings.setProperty(FILEDATE_COL_WIDTH, Double.toString(fileDateColumn.getWidth()));
+  }
+
+  /**
+   * Restore last file table settings from Global-Settings properties file
+   * i.e. column widths
+   * assumes:
+   * - globalSettings already loaded
+   * - stage not null
+   */
+  public void restoreLastSettings() {
+    try {
+      statusColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(STATUS_COL_WIDTH)));
+    } catch (Exception e) {
+      primaryStage.setX(STATUS_COL_DEFAULT_WIDTH);
+    }
+    try {
+      prefixColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(PREFIX_COL_WIDTH)));
+    } catch (Exception e) {
+      primaryStage.setX(PREFIX_COL_DEFAULT_WIDTH);
+    }
+    try {
+      counterColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(COUNTER_COL_WIDTH)));
+    } catch (Exception e) {
+      primaryStage.setX(COUNTER_COL_DEFAULT_WIDTH);
+    }
+    try {
+      separatorColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(SEPARATOR_COL_WIDTH)));
+    } catch (Exception e) {
+      primaryStage.setX(SEPARATOR_COL_DEFAULT_WIDTH);
+    }
+    try {
+      descriptionColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(DESCRIPTION_COL_WIDTH)));
+    } catch (Exception e) {
+      primaryStage.setX(DESCRIPTION_COL_DEFAULT_WIDTH);
+    }
+    try {
+      extensionColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(EXTENSION_COL_WIDTH)));
+    } catch (Exception e) {
+      primaryStage.setX(EXTENSION_COL_DEFAULT_WIDTH);
+    }
+    try {
+      fileDateColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(FILEDATE_COL_WIDTH)));
+    } catch (Exception e) {
+      primaryStage.setX(FILEDATE_COL_DEFAULT_WIDTH);
     }
   }
 
