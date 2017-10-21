@@ -4,7 +4,11 @@ import de.kissphoto.view.MediaContentView;
 import de.kissphoto.view.mediaViewers.helper.PlayerViewer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
@@ -28,6 +32,7 @@ import javafx.util.Duration;
  * @author Dr. Ingo Kreuz
  * @date 2014-06-09
  * @modified: 2016-11-06: ViewportZoomerMover extracted for all viewport zooming and moving operations (now identical to PhotoViewer's)
+ * @modified: 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
  */
 public class MovieViewer extends PlayerViewer implements ZoomableViewer {
   protected MediaView mediaView;
@@ -37,7 +42,7 @@ public class MovieViewer extends PlayerViewer implements ZoomableViewer {
    * @constructor to initialize the viewer
    */
   public MovieViewer(final MediaContentView contentView) {
-    super(contentView);   //mediaContentView of fatherclass is now = contentView
+    super(contentView);   //mediaContentView of father class is now = contentView
     mediaView = new MediaView();
     //note: playerControls defined and initialized in PlayerViewer (fatherclass)
     getChildren().addAll(mediaView, playerControls);
@@ -53,6 +58,9 @@ public class MovieViewer extends PlayerViewer implements ZoomableViewer {
     initPlayerContextMenu();
     viewportZoomer.addContextMenuItems(contextMenu);
     viewportZoomer.installContextMenu(mediaContentView, contextMenu);
+
+    installMouseHandlers();
+    installKeyboardHandlers();
   }
 
   /**
@@ -118,6 +126,73 @@ public class MovieViewer extends PlayerViewer implements ZoomableViewer {
   @Override
   public void zoomToFit() {
     viewportZoomer.zoomToFit();
+  }
+
+  private void installMouseHandlers() {
+    setOnScroll(new EventHandler<ScrollEvent>() {
+      @Override
+      public void handle(ScrollEvent event) {
+        boolean handled = viewportZoomer.handleMouseScroll(event);
+        if (handled) event.consume();
+      }
+    });
+    setOnMousePressed(new EventHandler<MouseEvent>() {
+      @Override
+      public void handle(MouseEvent event) {
+        boolean handled = viewportZoomer.handleMousePressed(event);
+        handled = handleMousePressed(event) || handled; //inherited from PlayerViewer
+        if (handled) event.consume();
+      }
+    });
+
+    setOnMouseMoved(new EventHandler<MouseEvent>() {
+      @Override
+      public void handle(MouseEvent event) {
+        boolean handled = handleMouseMoved(event); //inherited from PlayerViewer
+        if (handled) event.consume();
+      }
+    });
+    setOnMouseDragged(new EventHandler<MouseEvent>() {
+      @Override
+      public void handle(MouseEvent event) {
+        boolean handled = viewportZoomer.handleMouseDragged(event);
+        handled = handleMouseDragged(event) || handled; //inherited from PlayerViewer
+        if (handled) event.consume();
+      }
+    });
+    setOnMouseReleased(new EventHandler<MouseEvent>() {
+      @Override
+      public void handle(MouseEvent event) {
+        boolean handled = viewportZoomer.handleMouseReleased(event);
+        if (handled) event.consume();
+      }
+    });
+    setOnMouseClicked(new EventHandler<MouseEvent>() {
+      @Override
+      public void handle(MouseEvent event) {
+        //clicks must only be handled by one class to perform only one action at a time
+        boolean handled = viewportZoomer.handleMouseClicked(event);
+        if (!handled) {
+          handled = handleMouseClicked(event);
+        } //inherited from PlayerViewer
+        if (handled) event.consume();
+      }
+    });
+
+  }
+
+  private void installKeyboardHandlers() {
+    setOnKeyPressed(new EventHandler<KeyEvent>() {
+      @Override
+      public void handle(KeyEvent event) {
+        //keyboard clicks must only be handled by one class to perform only one action at a time
+        boolean handled = viewportZoomer.handleKeyPressed(event);
+        if (!handled) {
+          handleKeyPressed(event);
+        }     //inherited from PlayerViewer
+        if (handled) event.consume();
+      }
+    });
   }
 
 }

@@ -15,7 +15,7 @@ import javafx.scene.shape.Rectangle;
  *
  * @author Dr. Ingo Kreuz
  * @date 2014-07-31
- * @modified:
+ * @modified: 2017-10-21 PlayPauseButton shape now synchronized to playerStatus in PlayerControls
  */
 public class PlayPauseButton extends Group {
   public static final Color CAPTION_COLOR = new Color(1, 1, 1, .90);
@@ -144,10 +144,6 @@ public class PlayPauseButton extends Group {
     this.paused = paused;
     playCaption.setVisible(paused);     //if player is paused then show the playCaption
     pauseCaption.setVisible(!paused);
-  }
-
-  public void togglePaused() {
-    setPaused(!paused);
   }
 
 }

@@ -4,22 +4,24 @@ import de.kissphoto.helper.I18Support;
 import de.kissphoto.view.MediaContentView;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
 import java.util.ResourceBundle;
+
+import static javafx.scene.media.MediaPlayer.Status.PAUSED;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
@@ -30,6 +32,9 @@ import java.util.ResourceBundle;
  * @author Dr. Ingo Kreuz
  * @date 2014-07-24
  * @modified: 2017-10-08 autoplay suspended while edit-mode/multi-edit-mode
+ * @modified: 2017-10-15: handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
+ * @modified: 2017-10-20: single click and space (if not zoomed) will toggle Play/Pause now additionally
+ *
  */
 public class PlayerViewer extends StackPane {
   protected static ResourceBundle language = I18Support.languageBundle;
@@ -43,15 +48,13 @@ public class PlayerViewer extends StackPane {
   private static final KeyCodeCombination PLAY_PAUSE_KEY_CODE_COMBINATION = new KeyCodeCombination(KeyCode.P);
 
   //link to mainMenu items for controlling checking and disabling. Use same link for all instances of the player (i.e. also for full screen)
-  private static CheckMenuItem mainMenuAutoPlayItem;
   private static MenuItem mainMenuPlayPauseItem;
   private static MenuItem mainMenuStopItem;
 
   //contextMenu items for controlling checking and disabling
   protected ContextMenu contextMenu = new ContextMenu();
   private CheckMenuItem autoPlayItem;
-  private MenuItem playItem;
-  private MenuItem pauseItem;
+  private MenuItem playPauseItem;
   private MenuItem stopItem;
 
   protected MediaContentView mediaContentView; //link to the underlying mediaContentView (e.g.for binding sizes and for next media after endOfMedia)
@@ -59,7 +62,11 @@ public class PlayerViewer extends StackPane {
   protected MediaPlayer mediaPlayer;      //initialized in setMedia()
   protected PlayerControls playerControls;
 
-  private boolean paused = false;      //currently paused? (otherwise autoPlay is active)
+  public SimpleBooleanProperty autoPlayProperty = new SimpleBooleanProperty(true); //play immediately and skip automatically to next media
+
+  protected boolean lastMouseButtonWasPrimary = false;
+  protected boolean lastMouseDownWasMouseDragged = false;
+
 
   /**
    * @param mediaContentView remember the view where this viewer resides in
@@ -73,14 +80,68 @@ public class PlayerViewer extends StackPane {
 
     //visible only while hovering
     playerControls.setVisible(false);
-
-    setOnMouseMoved(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        playerControls.show();
-      }
-    });
   }
+
+  /**
+   * @param event
+   * @return if event has been handled
+   */
+  public boolean handleMouseMoved(MouseEvent event) {
+    playerControls.show();
+    return true;
+  }
+
+  ;
+
+  /**
+   * @param event
+   * @return if event has been handled
+   */
+  public boolean handleMouseDragged(MouseEvent event) {
+    lastMouseDownWasMouseDragged = true;
+    return false; //nothing has happened for the user, so don't block further actions if any
+  }
+
+  ;
+
+  /**
+   * @param event
+   * @return if event has been handled
+   */
+  public boolean handleMousePressed(MouseEvent event) {
+    lastMouseButtonWasPrimary = event.isPrimaryButtonDown();
+    return false; //nothing has happened for the user
+  }
+
+  /**
+   * @param event
+   * @return if event has been handled
+   */
+  public boolean handleMouseClicked(MouseEvent event) {
+    boolean handled = false;
+    if (event.getClickCount() == 1 && lastMouseButtonWasPrimary && !lastMouseDownWasMouseDragged) {
+      togglePlayPause();
+      handled = true;
+      }
+    lastMouseDownWasMouseDragged = false;
+    return handled;
+  }
+
+  ;
+
+  /**
+   * @param event
+   * @return if event has been handled
+   */
+  public boolean handleKeyPressed(KeyEvent event) {
+    boolean handled = false;
+    if (event.getCode() == KeyCode.SPACE && !(event.isShiftDown() || event.isControlDown())) { //space without shift or ctrl
+      togglePlayPause();
+      handled = true;
+    }
+    return handled;
+  }
+
 
   /**
    * call this before setting PlayerViewer to null, e.g. to end internal thread
@@ -94,12 +155,10 @@ public class PlayerViewer extends StackPane {
    * Register the Player's main menu items, so that they can be enabled/disabled dependent on the players status
    * MainMenuBar will register its menu items with that
    *
-   * @param autoPlayItem main menu item to toggle autoPlay
    * @param playItem     main menu item to enable/disable/change Pause/Pla
    * @param stopItem     main menu to enable/disable
    */
-  public void registerMainMenuItems(CheckMenuItem autoPlayItem, MenuItem playItem, MenuItem stopItem) {
-    mainMenuAutoPlayItem = autoPlayItem;
+  public void registerMainMenuItems(MenuItem playItem, MenuItem stopItem) {
     mainMenuPlayPauseItem = playItem;
     mainMenuStopItem = stopItem;
   }
@@ -115,26 +174,17 @@ public class PlayerViewer extends StackPane {
     autoPlayItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        toggleAutoPlay(false);
+        toggleAutoPlay();
       }
     });
 
-    playItem = new MenuItem(language.getString(PLAY));  //P = Pause/Play --> only one of the is enabled at one time (at maximum)
-    playItem.setAccelerator(PLAY_PAUSE_KEY_CODE_COMBINATION);
-    playItem.setDisable(true);
-    playItem.setOnAction(new EventHandler<ActionEvent>() {
+    playPauseItem = new MenuItem(language.getString(PLAY));  //P = Pause/Play --> only one of the is enabled at one time (at maximum)
+    playPauseItem.setAccelerator(PLAY_PAUSE_KEY_CODE_COMBINATION);
+    playPauseItem.setDisable(true);
+    playPauseItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        play();
-      }
-    });
-    pauseItem = new MenuItem(language.getString(PAUSE));  //P = Pause/Play --> only one of the is enabled at one time (at maximum)
-    pauseItem.setAccelerator(PLAY_PAUSE_KEY_CODE_COMBINATION);
-    pauseItem.setDisable(true);
-    pauseItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        pause();
+        togglePlayPause();
       }
     });
 
@@ -147,7 +197,15 @@ public class PlayerViewer extends StackPane {
         stop();
       }
     });
-    contextMenu.getItems().addAll(autoPlayItem, playItem, pauseItem, stopItem, new SeparatorMenuItem());
+    contextMenu.getItems().addAll(autoPlayItem, playPauseItem, stopItem, new SeparatorMenuItem());
+
+    //sync context menu's autoPlay check with property
+    autoPlayProperty.addListener(new ChangeListener<Boolean>() {
+      @Override
+      public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+        autoPlayItem.setSelected(newValue);
+      }
+    });
   }
 
   /**
@@ -165,7 +223,7 @@ public class PlayerViewer extends StackPane {
       public void run() {
         if (seekPosition != null) mediaPlayer.seek(seekPosition);
 
-        if (mainMenuAutoPlayItem.isSelected() && !mediaContentView.isFileTableViewInEditMode())
+        if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode())
           play();
         else
           pause();
@@ -184,11 +242,22 @@ public class PlayerViewer extends StackPane {
     mediaPlayer.setOnEndOfMedia(new Runnable() {
       @Override
       public void run() {
-        if (mainMenuAutoPlayItem.isSelected() && !mediaContentView.isFileTableViewInEditMode()) {
+        if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode()) {
           mediaContentView.showNextMedia();   //if already the last, showNextMedia() will do nothing and media will remain paused...
         }
       }
     });
+
+    //install listener for player status to update play/pause/inactive, stop active/inactive
+    mediaPlayer.statusProperty().addListener(new ChangeListener<MediaPlayer.Status>() {
+      @Override
+      public void changed(ObservableValue<? extends MediaPlayer.Status> observable, MediaPlayer.Status oldValue, MediaPlayer.Status newValue) {
+        PlayerViewer.setMenuItemsForPlayerStatus(newValue, mainMenuStopItem, mainMenuPlayPauseItem);
+        PlayerViewer.setMenuItemsForPlayerStatus(newValue, stopItem, playPauseItem);
+        playerControls.setPlayPausedButtonForPlayerStatus(newValue);
+      }
+    });
+
   }
 
   /**
@@ -204,30 +273,18 @@ public class PlayerViewer extends StackPane {
       mediaPlayer.dispose();
       mediaPlayer = null;
     }
-    //adjust the menus
-    mainMenuPlayPauseItem.setDisable(true);
-    mainMenuPlayPauseItem.setText(language.getString(PLAY));
-    playItem.setDisable(true);
-    pauseItem.setDisable(true);
-    mainMenuStopItem.setDisable(true);
-    stopItem.setDisable(true);
   }
 
   /**
    * toggle auto play. if movie viewer is currently visible then pause/play accordingly
-   * if MainMenu calls this it has already toggled it's state
-   * if keyboard/context menu calls this method it needs to toggle main menu first
-   *
-   * @param mainMenuTriggered mainMenu calls this with true all others (context/keyboard) with false
    */
-  public void toggleAutoPlay(boolean mainMenuTriggered) {
-    if (!mainMenuTriggered) mainMenuAutoPlayItem.setSelected(!mainMenuAutoPlayItem.isSelected());
+  public void toggleAutoPlay() {
+    autoPlayProperty.set(!autoPlayProperty.get());
 
-    if (mainMenuAutoPlayItem.isSelected()) {
-      autoPlayItem.setSelected(true);
+
+    if (autoPlayProperty.get()) {
       if (isVisible()) play();
     } else {
-      autoPlayItem.setSelected(false);
       if (isVisible()) pause();
     }
   }
@@ -239,15 +296,6 @@ public class PlayerViewer extends StackPane {
   public void play() {
     if (mediaPlayer != null) {
       mediaPlayer.play();
-      //adjust the menus
-      mainMenuPlayPauseItem.setDisable(false);
-      mainMenuPlayPauseItem.setText(language.getString(PAUSE));
-      playItem.setDisable(true);
-      pauseItem.setDisable(false);
-      mainMenuStopItem.setDisable(false);
-      stopItem.setDisable(false);
-
-      paused = false;
     }
   }
 
@@ -258,15 +306,6 @@ public class PlayerViewer extends StackPane {
   public void pause() {
     if (mediaPlayer != null) {
       mediaPlayer.pause();
-      //adjust the menus
-      mainMenuPlayPauseItem.setDisable(false);
-      mainMenuPlayPauseItem.setText(language.getString(PLAY));
-      playItem.setDisable(false);
-      pauseItem.setDisable(true);
-      mainMenuStopItem.setDisable(false);  //stop is still possible when paused!
-      stopItem.setDisable(false);
-
-      paused = true;
     }
   }
 
@@ -275,8 +314,7 @@ public class PlayerViewer extends StackPane {
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    */
   public void togglePlayPause() {
-    //checking on null is done in play() and pause()
-    if (paused)
+    if (mediaPlayer != null && mediaPlayer.getStatus() == PAUSED)
       play();
     else
       pause();
@@ -290,20 +328,42 @@ public class PlayerViewer extends StackPane {
   public void stop() {
     if (mediaPlayer != null) {
       mediaPlayer.stop();
-      //adjust the menus
-      mainMenuPlayPauseItem.setDisable(false);
-      mainMenuPlayPauseItem.setText(language.getString(PLAY));
-      playItem.setDisable(false);
-      pauseItem.setDisable(true);
-      mainMenuStopItem.setDisable(true);
-      stopItem.setDisable(true);
-      paused = true;
+    }
+  }
+
+  //------------------------------- static helper for menu items ---------------------
+  public static void setMenuItemsForPlayerStatus(MediaPlayer.Status newValue, MenuItem stopItem, MenuItem playPauseItem) {
+    switch (newValue) {
+      case READY:
+      case HALTED:
+      case PAUSED:
+        stopItem.setDisable(false);
+        playPauseItem.setDisable(false);
+        playPauseItem.setText(language.getString(PlayerViewer.PLAY));
+        break;
+      case PLAYING:
+        stopItem.setDisable(false);
+        playPauseItem.setDisable(false);
+        playPauseItem.setText(language.getString(PlayerViewer.PAUSE));
+        break;
+      case STOPPED:
+        stopItem.setDisable(true);
+        playPauseItem.setDisable(false);
+        playPauseItem.setText(language.getString(PlayerViewer.PLAY));
+        break;
+      case STALLED:
+      case UNKNOWN:
+      case DISPOSED:
+      default:
+        stopItem.setDisable(true);
+        playPauseItem.setDisable(false);
+        break;
     }
   }
 
   //------------------------------- getters / setters ------------------------
   public boolean isPaused() {
-    return paused;
+    return (mediaPlayer.getStatus() == PAUSED);
   }
 
   public MediaPlayer getMediaPlayer() {

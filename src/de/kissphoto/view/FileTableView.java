@@ -53,6 +53,7 @@ import java.util.ResourceBundle;
  * @modified: 2016-06-12 shift-ctrl up/down for moving files now also works in windows 10
  * @modified: 2016-11-01 RestrictedTextField stores connection to FileTable locally, so that passing editing threads store the correct table cell
  * @modified: 2017-10-14  bugfixing and new functionality copyDescriptionDown() + store Column-Widths
+ * @modified: 2017-10-20  space-bar is now play/pause additionally if not in edit mode
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
@@ -248,6 +249,10 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         if ((keyEvent.getCode() == KeyCode.F2) && !keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
           keyEvent.consume();
           rename();
+        } else if ((keyEvent.getCode() == KeyCode.SPACE) && !keyEvent.isControlDown() && !keyEvent.isShiftDown()
+            && !isEditMode() && mediaContentView.getMovieViewer().isVisible()) {
+          keyEvent.consume();
+          mediaContentView.getMovieViewer().togglePlayPause();
         }
       }
     });

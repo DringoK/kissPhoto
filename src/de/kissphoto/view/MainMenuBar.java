@@ -8,6 +8,8 @@ import de.kissphoto.view.dialogs.ExternalEditorsDialog;
 import de.kissphoto.view.dialogs.LanguageDialog;
 import de.kissphoto.view.dialogs.WriteFolderStructureCSVDialog;
 import de.kissphoto.view.mediaViewers.helper.PlayerViewer;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.*;
@@ -32,6 +34,7 @@ import java.util.ResourceBundle;
  * @modified: 2014-16-16 support for full screen mode added to view menu
  * @modified: 2015-10-04 moving changed to ctr-Cursor up/down: Shift-Alt-Cursor up/down does not work under Windows 10 (menu is activated instead)
  * @modified: 2017-10-13 added AutoFill(Down) Menu-Item to edit menu + Default Column Widths to View menu
+ * @modified: 2017-10-15: see also PlayerViewer: handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
  */
 public class MainMenuBar extends MenuBar {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -396,7 +399,7 @@ public class MainMenuBar extends MenuBar {
     autoPlayItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        mediaContentView.getMovieViewer().toggleAutoPlay(true);
+        mediaContentView.getMovieViewer().toggleAutoPlay();
       }
     });
 
@@ -420,9 +423,17 @@ public class MainMenuBar extends MenuBar {
       }
     });
     playerMenu.getItems().addAll(autoPlayItem, playPauseItem, stopItem, new SeparatorMenuItem());
-    mediaContentView.getMovieViewer().registerMainMenuItems(autoPlayItem, playPauseItem, stopItem);
+    mediaContentView.getMovieViewer().registerMainMenuItems(playPauseItem, stopItem);
 
     getMenus().add(playerMenu);
+
+    //synchronize the autoPlay check with the players property
+    mediaContentView.getMovieViewer().autoPlayProperty.addListener(new ChangeListener<Boolean>() {
+      @Override
+      public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+        autoPlayItem.setSelected(newValue);
+      }
+    });
   }
 
   /**

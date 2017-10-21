@@ -23,6 +23,7 @@ import java.util.ResourceBundle;
  * @author Dr. Ingo Kreuz
  * @date 2016-11-06 all zooming/moving routines moved from PhotoViewer to this class
  * @modified: 2017-10-08 fixed: while zooming not the complete space of the surrounding Pane has been used
+ * @modified: 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
  */
 
 public class ViewportZoomer {
@@ -37,6 +38,8 @@ public class ViewportZoomer {
   private static final double MOVE_STEP_FACTOR = 0.10;  //e.g. 0.10 = 10%: percentage of the visible part the viewport is moved by the 4 move methods
   private double zoomFactor = 0;  //will be initialized in initializeZooming(). Is the same for all type of media!
 
+  ContextMenu contextMenu = null; //initialized in installContextMenu()
+
   //--------------------- mouse support -------------------------
   private double mouseDownX = 0;  //remember where dragging of mouse
   private double mouseDownY = 0;
@@ -50,74 +53,9 @@ public class ViewportZoomer {
   public ViewportZoomer(ZoomableViewer viewer) {
     this.viewer = viewer;
 
-    installZoomMouseEventHandlers();
-    installKeyboardEventHandler();
-
+    ((Node) viewer).setCursor(Cursor.OPEN_HAND);
     viewer.installResizeHandler();
   }
-
-
-  private void handleMouseScrollEvent(ScrollEvent scrollEvent) {
-    if (scrollEvent.isControlDown()) {
-      if (scrollEvent.getDeltaY() > 0)
-        zoomIn();
-      else
-        zoomOut();
-      scrollEvent.consume();
-    }
-  }
-
-  private void handleMouseDown(MouseEvent mouseEvent) {
-
-    //---initialize drag origin for moving a zoomed image
-    if (viewer.getViewport() != null) { //only if zooming is currently active
-      mouseDownX = mouseEvent.getX();
-      mouseDownY = mouseEvent.getY();
-      mouseDownMinX = viewer.getViewport().getMinX();
-      mouseDownMinY = viewer.getViewport().getMinY();
-      mouseEvent.consume();
-    }
-
-    //-- pressing mouse wheel resets zooming
-    if (mouseEvent.isMiddleButtonDown()) {
-      zoomToFit();
-    }
-  }
-
-  private void handleMouseDragged(MouseEvent mouseEvent) {
-    double newX;
-    double newY;
-    Rectangle2D viewport = viewer.getViewport();
-    if (viewport != null) { //only if zooming is currently active
-      if (mouseEvent.isPrimaryButtonDown()) {
-        if (viewport.getWidth() < viewer.getMediaWidth()) {
-          newX = mouseDownMinX + ((mouseDownX - mouseEvent.getX()) / zoomFactor);
-          if (newX < 0) {
-            newX = 0;
-          } else if ((newX + viewport.getWidth()) > viewer.getMediaWidth()) {
-            newX = viewer.getMediaWidth() - viewport.getWidth();
-          }
-        } else {
-          //centerMediaX;
-          newX = (viewer.getMediaWidth() - viewport.getWidth()) / 2;
-        }
-
-        if (viewport.getHeight() < viewer.getMediaHeight()) {
-          newY = mouseDownMinY + ((mouseDownY - mouseEvent.getY()) / zoomFactor);
-          if (newY < 0) {
-            newY = 0;
-          } else if ((newY + viewport.getHeight()) > viewer.getMediaHeight()) {
-            newY = viewer.getMediaHeight() - viewport.getHeight();
-          }
-        } else {
-          newY = (viewer.getMediaHeight() - viewport.getHeight()) / 2;
-        }
-        viewer.setViewport(new Rectangle2D(newX, newY, viewer.getViewport().getWidth(), viewer.getViewport().getHeight()));
-      }
-      mouseEvent.consume();
-    }
-  }
-
 
   //---------------------------------- Zooming -------------------------------------
 
@@ -382,7 +320,7 @@ public class ViewportZoomer {
     }
   }
 
-  //see also handleMouseDragged() for moving with mouse
+  //see also handleMouseMoved() for moving with mouse
 
   /**
    * installs a context menu to the viewers mediaContent view and adds the events handlers for showing/hiding the context menu
@@ -391,6 +329,7 @@ public class ViewportZoomer {
    * @param contextMenu      the context menu to add to the mediaContentView
    */
   public void installContextMenu(MediaContentView mediaContentView, ContextMenu contextMenu) {
+    this.contextMenu = contextMenu;
 
     mediaContentView.addContextMenuItems(contextMenu);  //every viewer of kissPhoto lies in a MediaContentView
 
@@ -403,19 +342,6 @@ public class ViewportZoomer {
         contextMenu.show(mediaContentView, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
       }
     });
-    //hide context menu if clicked "somewhere else" or request focus on mouse click
-    ((Node) viewer).setOnMouseClicked(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        if (contextMenu.isShowing()) {
-          contextMenu.hide(); //this closes the context Menu
-          mouseEvent.consume();
-        } else {
-          ((Node) viewer).requestFocus();
-        }
-      }
-    });
-
   }
 
   /**
@@ -454,8 +380,8 @@ public class ViewportZoomer {
       }
     });
 
-    MenuItem zoomFitItem = new MenuItem(language.getString("zoom.to.fit.middle.mouse.button")); //space
-    zoomFitItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE));
+    MenuItem zoomFitItem = new MenuItem(language.getString("zoom.to.fit.middle.mouse.button")); //ctrl-space
+    zoomFitItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.CONTROL_DOWN));
     zoomFitItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
@@ -464,8 +390,8 @@ public class ViewportZoomer {
       }
     });
 
-    MenuItem zoom100Item = new MenuItem(language.getString("zoom.100")); //ctrl-space
-    zoom100Item.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.CONTROL_DOWN));
+    MenuItem zoom100Item = new MenuItem(language.getString("zoom.100")); //shift-space
+    zoom100Item.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.SHIFT_DOWN));
     zoom100Item.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
@@ -477,8 +403,8 @@ public class ViewportZoomer {
     contextMenu.getItems().addAll(zoomInItem, zoomOutItem, zoomFitItem, zoom100Item);
 
     //---- moving menu menu items
-    MenuItem moveToCenterItem = new MenuItem(language.getString("move.to.center"));//shift-space
-    moveToCenterItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.SHIFT_DOWN));
+    MenuItem moveToCenterItem = new MenuItem(language.getString("move.to.center"));//ctrl-shift-space
+    moveToCenterItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
     moveToCenterItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
@@ -535,98 +461,179 @@ public class ViewportZoomer {
     return contextMenu;
   }
 
-  public void installZoomMouseEventHandlers() {
-    //----------- mouse support ----------------
-    ((Node) viewer).setCursor(Cursor.OPEN_HAND);
+  //----------- mouse support ----------------
+  //zooming
 
-    //zooming
-    ((Node) viewer).setOnScroll(new EventHandler<ScrollEvent>() {
-      @Override
-      public void handle(ScrollEvent scrollEvent) {
-        handleMouseScrollEvent(scrollEvent);
-      }
-    });
-
-    //dragging = moving viewport
-    ((Node) viewer).setOnMousePressed(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        handleMouseDown(mouseEvent);
-        ((Node) viewer).setCursor(Cursor.CLOSED_HAND);
-      }
-    });
-    ((Node) viewer).setOnMouseDragged(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        handleMouseDragged(mouseEvent);
-      }
-    });
-    ((Node) viewer).setOnMouseReleased(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        ((Node) viewer).setCursor(Cursor.OPEN_HAND);
-      }
-    });
-
+  /**
+   * @param scrollEvent
+   * @return if event has been handled
+   */
+  public boolean handleMouseScroll(ScrollEvent scrollEvent) {
+    boolean handled = false;
+    if (scrollEvent.isControlDown()) {
+      if (scrollEvent.getDeltaY() > 0)
+        zoomIn();
+      else
+        zoomOut();
+      handled = true;
+    }
+    return handled;
   }
 
-  public void installKeyboardEventHandler() {
-    //------------- keyboard support ---------------
-    ((Node) viewer).setOnKeyPressed(new EventHandler<KeyEvent>() {
-      @Override
-      public void handle(KeyEvent keyEvent) {
+  //dragging = moving viewport
 
-        boolean eventHandled = true;
+  /**
+   * @param mouseEvent
+   * @return if event has been handled
+   */
+  public boolean handleMousePressed(MouseEvent mouseEvent) {
+    boolean handled = false;
 
-        switch (keyEvent.getCode()) {
-          case SPACE:
-            if (keyEvent.isControlDown())
-              zoom100();
-            else if (keyEvent.isShiftDown())
-              centerMedia();
-            else
-              zoomToFit();
-            break;
+    //---initialize drag origin for moving a zoomed image
+    if (viewer.getViewport() != null) { //only if zooming is currently active
+      mouseDownX = mouseEvent.getX();
+      mouseDownY = mouseEvent.getY();
+      mouseDownMinX = viewer.getViewport().getMinX();
+      mouseDownMinY = viewer.getViewport().getMinY();
+      handled = true;
+    }
+    //-- pressing mouse wheel resets zooming
+    if (mouseEvent.isMiddleButtonDown()) {
+      zoomToFit();
+      handled = true;
+    }
 
-          case LEFT:
-            moveLeft();
-            break;
-          case RIGHT:
-            moveRight();
-            break;
-          case UP:
-            if (viewer.getViewport() != null) //only if currently zoomed
-              moveUp();               //pan around
-            else                      //otherwise go back directly
-              return;                 //not consuming the event and letting MediaContentView move to prev mediaFile
-            break;
-          case DOWN:
-            if (viewer.getViewport() != null) //only if currently zoomed
-              moveDown();             //pan around
-            else                      //otherwise go back directly
-              return;                 //not consuming the event and letting MediaContentView move to next mediaFile
-            break;
-          default:
-            eventHandled = false;
-        }
+    ((Node) viewer).setCursor(Cursor.CLOSED_HAND);
+    return handled;
+  }
 
-        if (!eventHandled) {
-          eventHandled = true;
-          switch (keyEvent.getText()) {
-            case "+":
-              zoomIn();
-              break;//get numpad and normal keys
-            case "-":
-              zoomOut();
-              break;
-            default:
-              eventHandled = false;
+  /**
+   * @param mouseEvent
+   * @return if event has been handled
+   */
+  public boolean handleMouseDragged(MouseEvent mouseEvent) {
+    boolean handled = false;
+    double newX;
+    double newY;
+    Rectangle2D viewport = viewer.getViewport();
+    if (viewport != null) { //only if zooming is currently active
+      if (mouseEvent.isPrimaryButtonDown()) {
+        if (viewport.getWidth() < viewer.getMediaWidth()) {
+          newX = mouseDownMinX + ((mouseDownX - mouseEvent.getX()) / zoomFactor);
+          if (newX < 0) {
+            newX = 0;
+          } else if ((newX + viewport.getWidth()) > viewer.getMediaWidth()) {
+            newX = viewer.getMediaWidth() - viewport.getWidth();
           }
+        } else {
+          //centerMediaX;
+          newX = (viewer.getMediaWidth() - viewport.getWidth()) / 2;
         }
-        if (eventHandled) keyEvent.consume();
-      }
-    });
 
+        if (viewport.getHeight() < viewer.getMediaHeight()) {
+          newY = mouseDownMinY + ((mouseDownY - mouseEvent.getY()) / zoomFactor);
+          if (newY < 0) {
+            newY = 0;
+          } else if ((newY + viewport.getHeight()) > viewer.getMediaHeight()) {
+            newY = viewer.getMediaHeight() - viewport.getHeight();
+          }
+        } else {
+          newY = (viewer.getMediaHeight() - viewport.getHeight()) / 2;
+        }
+        viewer.setViewport(new Rectangle2D(newX, newY, viewer.getViewport().getWidth(), viewer.getViewport().getHeight()));
+        handled = true;
+      }
+    }
+    return handled;
+  }
+
+  /**
+   * @param mouseEvent
+   * @return if event has been handled
+   */
+  public boolean handleMouseReleased(MouseEvent mouseEvent) {
+    ((Node) viewer).setCursor(Cursor.OPEN_HAND);
+    return false;
+  }
+
+  /**
+   * @param mouseEvent
+   * @return if envent has been handled
+   */
+  public boolean handleMouseClicked(MouseEvent mouseEvent) {
+    boolean handled = false;
+    //hide context menu if clicked "somewhere else" or request focus on mouse click
+    if (contextMenu.isShowing()) {
+      contextMenu.hide(); //this closes the context Menu
+      handled = true;
+    }
+    //if the user clicks on an element he expects to set the focus there (for keyboard zooming/panning)
+    ((Node) viewer).requestFocus();
+    return handled;
+  }
+
+  //------------- keyboard support ---------------
+
+  /**
+   * @param event
+   * @return if event has been handled
+   */
+  public boolean handleKeyPressed(KeyEvent event) {
+
+    boolean eventHandled = false;
+
+    if (viewer.getViewport() != null) { //zooming/panning only if viewport ist active
+      switch (event.getCode()) {
+        case SPACE:
+          if (event.isControlDown() && event.isShiftDown()) {
+            centerMedia();
+            eventHandled = true;
+          } else if (event.isControlDown()) {
+            zoomToFit();
+            eventHandled = true;
+          } else if (event.isShiftDown()) {
+            zoom100();
+            eventHandled = true;
+          }
+          break;
+
+        case LEFT:
+          moveLeft();
+          eventHandled = true;
+          break;
+        case RIGHT:
+          moveRight();
+          eventHandled = true;
+          break;
+        case UP:
+          moveUp();
+          eventHandled = true;
+          break;
+        case DOWN:
+          moveDown();
+          eventHandled = true;
+          break;
+        default:
+          eventHandled = false;
+      }
+    }
+
+    //--- Zoom in/out is always possible: if not already zoomed, zooming is started
+    if (!eventHandled) {
+      switch (event.getText()) {
+        case "+":
+          zoomIn();
+          eventHandled = true;
+          break;//get numpad and normal keys
+        case "-":
+          zoomOut();
+          eventHandled = true;
+          break;
+        default:
+          eventHandled = false;
+      }
+    }
+    return eventHandled;
   }
 
   public double getZoomFactor() {

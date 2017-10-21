@@ -48,36 +48,31 @@ import java.awt.*;
  * ======================
  * todo FileTableView.scrollViewportToIndex überdenken: scrollt z.B. nicht zum letzten File, falls das gelöscht wurde
  * todo audio abspielen (m4a, mp3, wav): Player nicht ausblenden!
- * todo Play/Pause sollte auf Strg-P gelegt werden und auch im Edit-Mode und wenn Bild fokussiert erreichbar sein
- * todo Leertaste sollte auch Play/Pause schalten, solange Liste nicht im Edit-Mode
- * todo Player-Icons/Zustand nicht immer synchron (Medien-Wechsel, Auto-Play aus, trotzdem wird noch Pause angezeigt...)
- * todo RecentlyOpened - Liste
- * todo statt commitEdit lieber &bdquo;n&auml;chsteZeile&ldquo; in FileTableView implementieren, die ggf &bdquo;n&auml;chsteZeile&ldquo; von Cell aufruft
- * todo ???Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN hei&szlig;en, sonst Warnung
- * todo strg-Leertaste muss im Editiermodus Vergr&ouml;&szlig;erung zur&uuml;ckstellen (dann f&uuml;r 100%-Zoom eine andere Tastenkombination!!!)
- * todo Hinweis in Bild auf rechte Maustaste als Hint, damit man auf die Idee kommt es anzuklicken (nur wenn nicht vollbild?!?)
+ * todo ??? statt commitEdit lieber "nächsteZeile"; in FileTableView implementieren, die ggf "nächsteZeile" von Cell aufruft
+ * todo Hinweis in Bild auf rechte Maustaste als Hint, damit man auf die Idee kommt es anzuklicken (nur wenn nicht Vollbild?!?)
  * todo wenn nicht Vollbild, dann bei Cursor hoch/runter Fokus auf Tabelle
  * todo Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
  * todo Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
  * todo Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch l&ouml;schen k&ouml;nnen
  * <p>
  * todo Nice to Haves
- * todo 2013-11-10: Nice to have: Undo (Edit-Reset Selected Files...) auch f&uuml;r einzelne Zeilen/selection :-)
- * todo Nice to have: Undo-History
  * todo 2014-05-24: auto column width using field.setPrefWidth(TextUtils.computeTextWidth(field.getFont(), field.getText(), 0.0D) + 10);
  * todo Statuszeile: Anzahl Dateien, Anzahl &Auml;nderungen, Anzahl Markierung, Anzahl L&ouml;schen (Doppelklick k&ouml;nnte hier auch Undelete-Dialog &ouml;ffnen)
  * <p>
  * planned features:
  * ======================
- * todo EXIF anzeigen
- * todo EXIF-Info &uuml;ber Umbenennen (=&Auml;ndern!!!) in Dateinamen etc. reinholen
- * todo Ausrichtung &uuml;ber EXIF &auml;ndern
- * todo Datum &auml;ndern, auch EXIF
- * todo alle EXIF &auml;ndern
  * todo JPG drehen. Z.B. http://mediachest.sourceforge.net/mediautil/
+ * todo Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN hei&szlig;en, sonst Warnung
+ * todo RecentlyOpened - Liste
+ * todo EXIF anzeigen
+ * todo EXIF-Info über Umbenennen (=ändern!!!) in Dateinamen etc. reinholen
+ * todo Ausrichtung über EXIF ändern
+ * todo Datum ändern, auch EXIF
+ * todo alle EXIF ändern
+ * todo Nice to have: Undo-History
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.8.10 work in progress"; //<------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.8.13"; //<------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;

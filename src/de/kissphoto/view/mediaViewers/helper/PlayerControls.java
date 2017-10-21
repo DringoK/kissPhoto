@@ -10,6 +10,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
@@ -35,6 +36,7 @@ import javafx.util.Duration;
  * @author Dr. Ingo Kreuz
  * @date 2014-07-18
  * @modified: 2017-10-08 longer showing the Player, higher player
+ * @modified: 2017-10-21 play/pause-symbol synchronized with player state
  */
 
 public class PlayerControls extends Pane {
@@ -95,7 +97,6 @@ public class PlayerControls extends Pane {
     // pause media and swap button with play button
     playPauseButton.setOnMousePressed(new EventHandler<MouseEvent>() {
       public void handle(MouseEvent me) {
-        playPauseButton.togglePaused();
         if (playPauseButton.isPaused())
           playerViewer.pause();
         else
@@ -209,6 +210,33 @@ public class PlayerControls extends Pane {
       return String.format("%d:%02d:%02d", hours, minutes, seconds);
     } else {
       return String.format("%02d:%02d", minutes, seconds);
+    }
+  }
+
+  /**
+   * set the visible play pause button in Player controls to the according shape
+   *
+   * @param newValue status of the player
+   */
+  public void setPlayPausedButtonForPlayerStatus(MediaPlayer.Status newValue) {
+    switch (newValue) {
+      case READY:
+      case HALTED:
+      case STOPPED:
+      case PAUSED:
+        playPauseButton.setVisible(true);
+        playPauseButton.setPaused(true); //if paused then show play
+        break;
+      case PLAYING:
+        playPauseButton.setVisible(true);
+        playPauseButton.setPaused(false); //if playing then show pause
+        break;
+      case STALLED:
+      case UNKNOWN:
+      case DISPOSED:
+      default:
+        playPauseButton.setVisible(false);
+        break;
     }
   }
 
