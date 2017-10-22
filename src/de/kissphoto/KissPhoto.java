@@ -54,25 +54,24 @@ import java.awt.*;
  * todo Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
  * todo Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
  * todo Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch l&ouml;schen k&ouml;nnen
- * <p>
- * todo Nice to Haves
- * todo 2014-05-24: auto column width using field.setPrefWidth(TextUtils.computeTextWidth(field.getFont(), field.getText(), 0.0D) + 10);
- * todo Statuszeile: Anzahl Dateien, Anzahl &Auml;nderungen, Anzahl Markierung, Anzahl L&ouml;schen (Doppelklick k&ouml;nnte hier auch Undelete-Dialog &ouml;ffnen)
- * <p>
  * planned features:
  * ======================
  * todo JPG drehen. Z.B. http://mediachest.sourceforge.net/mediautil/
  * todo Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN hei&szlig;en, sonst Warnung
- * todo RecentlyOpened - Liste
  * todo EXIF anzeigen
  * todo EXIF-Info über Umbenennen (=ändern!!!) in Dateinamen etc. reinholen
- * todo Ausrichtung über EXIF ändern
  * todo Datum ändern, auch EXIF
  * todo alle EXIF ändern
+ * nice to haves:
+ * ===============
+ * <p>
+ * todo 2014-05-24: auto column width using field.setPrefWidth(TextUtils.computeTextWidth(field.getFont(), field.getText(), 0.0D) + 10);
+ * todo Statuszeile: Anzahl Dateien, Anzahl &Auml;nderungen, Anzahl Markierung, Anzahl L&ouml;schen (Doppelklick k&ouml;nnte hier auch Undelete-Dialog &ouml;ffnen)
  * todo Nice to have: Undo-History
+ * <p>
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.8.13"; //<------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.8.14"; //<------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;
@@ -294,7 +293,7 @@ public class KissPhoto extends Application {
     mediaContentView.setFileTableView(fileTableView);
 
     mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION, globalSettings);
-
+    mainMenuBar.addRecentlyMenu(fileTableView.getFileHistory().getRecentlyFilesMenu());
     // Left and right split pane
     mainSplitPane.prefWidthProperty().bind(scene.widthProperty());
     mainSplitPane.prefHeightProperty().bind(scene.heightProperty());

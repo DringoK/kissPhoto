@@ -8,6 +8,7 @@ import de.kissphoto.helper.I18Support;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MediaFileList;
 import de.kissphoto.view.dialogs.*;
+import de.kissphoto.view.fileTableHelpers.FileHistory;
 import de.kissphoto.view.fileTableHelpers.TextFieldCellFactory;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -52,8 +53,9 @@ import java.util.ResourceBundle;
  * @modified: 2014-06-22 extra column for the counter's separator (the character after the counter)
  * @modified: 2016-06-12 shift-ctrl up/down for moving files now also works in windows 10
  * @modified: 2016-11-01 RestrictedTextField stores connection to FileTable locally, so that passing editing threads store the correct table cell
- * @modified: 2017-10-14  bugfixing and new functionality copyDescriptionDown() + store Column-Widths
- * @modified: 2017-10-20  space-bar is now play/pause additionally if not in edit mode
+ * @modified: 2017-10-14 bugfixing and new functionality copyDescriptionDown() + store Column-Widths
+ * @modified: 2017-10-20 space-bar is now play/pause additionally if not in edit mode
+ * @modified: 2017-10-22 file-open history (Open recent) support
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
@@ -141,6 +143,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   private boolean selectSearchResultOnNextStartEdit = false;  //during SearchNext searchRec Cursor needs to be set on StartEdit
 
   private boolean renameDialogActive = false;
+  private FileHistory fileHistory = null;
 
   /**
    * constructor will try to open the passed file or foldername
@@ -156,6 +159,8 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     this.mediaContentView = mediaContentView;
     this.statusBar = statusBar;
     this.globalSettings = globalSettings;
+    fileHistory = new FileHistory(globalSettings, this);
+
 
     this.setMinSize(100.0, 100.0);
 
@@ -336,14 +341,8 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     } else {
       //second trial is to open the last file opened
       String LastFileOrFolderName = null;
-      try {
-        LastFileOrFolderName = globalSettings.getProperty(LAST_FILE_OPENED);
-      } catch (Exception e) {
-        //nothing to do in case of exception --> user can load using the menu
-      }
-
-      if (LastFileOrFolderName != null) {
-        openFolder(LastFileOrFolderName);
+      if (fileHistory.getRecentlyOpenedList().size() > 0) {
+        openFolder(fileHistory.getRecentlyOpenedList().get(0));
       } else {
         statusBar.showMessage(language.getString("use.ctrl.o.to.open.a.folder"));
       }
@@ -375,6 +374,14 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     globalSettings.setProperty(DESCRIPTION_COL_WIDTH, Double.toString(descriptionColumn.getWidth()));
     globalSettings.setProperty(EXTENSION_COL_WIDTH, Double.toString(extensionColumn.getWidth()));
     globalSettings.setProperty(FILEDATE_COL_WIDTH, Double.toString(fileDateColumn.getWidth()));
+
+
+    try {
+      Path currentFile = mediaFileList.getFileList().get(getSelectionModel().getFocusedIndex()).getFileOnDisk();
+      fileHistory.refreshOpenedFileInHistory(currentFile); //todo: aktuell gewählte Datei anhängen
+    } catch (Exception e) {
+      //if there is no focused file, then do not update the selection but keep it as it was when the folder opened
+    }
   }
 
   /**
@@ -615,9 +622,9 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     statusBar.showMessage(MessageFormat.format(language.getString("trying.to.open.0"), fileOrFolder.toString()));
 
+    String errMsg = mediaFileList.openFolder(fileOrFolder);
     try {
       getSelectionModel().clearSelection();  //prevent the selection listener from doing nonsense while loading
-      String errMsg = mediaFileList.openFolder(fileOrFolder);
       if (errMsg.length() == 0) {
         primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
         statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
@@ -628,14 +635,8 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         setItems(mediaFileList.getFileList());
         selectRowByPath(fileOrFolder);
 
-        //after successful load remember this in the settings
-        globalSettings.setProperty(LAST_FILE_OPENED, fileOrFolder.toAbsolutePath().toString());
-        reOpenMenuItem.setDisable(false);
-      } else {
-        statusBar.showError(errMsg);
-        reOpenMenuItem.setDisable(true);
+        fileHistory.putOpenedFileToHistory(fileOrFolder);
       }
-
       //register a file watcher for watching out for changes to this folder from external applications
       try {
         //register stops the old thread and starts an new for the new folder to register
@@ -645,6 +646,9 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       }
     } finally {
       if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
+      if (errMsg.length() > 0) {
+        statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), fileOrFolder.toString()));
+      }
     }
   }
 
@@ -1487,6 +1491,10 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
   public void setReOpenMenuItem(MenuItem reOpenMenuItem) {
     this.reOpenMenuItem = reOpenMenuItem;
+  }
+
+  public FileHistory getFileHistory() {
+    return fileHistory;
   }
 
   public StatusBar getStatusBar() {

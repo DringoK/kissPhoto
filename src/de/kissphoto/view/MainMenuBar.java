@@ -34,7 +34,8 @@ import java.util.ResourceBundle;
  * @modified: 2014-16-16 support for full screen mode added to view menu
  * @modified: 2015-10-04 moving changed to ctr-Cursor up/down: Shift-Alt-Cursor up/down does not work under Windows 10 (menu is activated instead)
  * @modified: 2017-10-13 added AutoFill(Down) Menu-Item to edit menu + Default Column Widths to View menu
- * @modified: 2017-10-15: see also PlayerViewer: handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
+ * @modified: 2017-10-15 see also PlayerViewer: handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
+ * @modified: 2017-10-21 FileHistory-Support added and reopen removed (because equal to ctrl-1)
  */
 public class MainMenuBar extends MenuBar {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -43,6 +44,13 @@ public class MainMenuBar extends MenuBar {
   protected MediaContentView mediaContentView; //link to mediaContentView for full screen etc
   private Stage primaryStage; //link to embedding window
   private String versionString; //link to versionString of Main Window for About Dialog
+
+  private Menu fileMenu = new Menu(language.getString("fileMenu"));
+  private Menu editMenu = new Menu(language.getString("editMenu"));
+  private Menu viewMenu = new Menu(language.getString("viewMenu"));
+  private Menu playerMenu = new Menu(language.getString("player"));
+  private Menu extrasMenu = new Menu(language.getString("extrasMenu"));
+  private Menu helpMenu = new Menu(language.getString("helpMenu"));
 
   private GlobalSettings globalSettings; //link to global settings for LanguageDialog
 
@@ -76,7 +84,6 @@ public class MainMenuBar extends MenuBar {
    * ########################### File Menu Items and actions ###########################
    */
   private void createFileMenu() {
-    Menu fileMenu = new Menu(language.getString("fileMenu"));
 
     final MenuItem openItem = new MenuItem(language.getString("openMenu"));
     openItem.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN));
@@ -87,18 +94,6 @@ public class MainMenuBar extends MenuBar {
       }
     });
     fileMenu.getItems().add(openItem);
-
-    final MenuItem reOpenItem = new MenuItem(language.getString("reopenMenu"));
-    reOpenItem.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
-    reOpenItem.setOnAction(new EventHandler<ActionEvent>() {
-      public void handle(ActionEvent event) {
-        event.consume();
-        fileTableView.reOpenFolder();
-      }
-    });
-    reOpenItem.setDisable(true); //disabled until the first loading of a directory
-    fileTableView.setReOpenMenuItem(reOpenItem); //for controlling the disabled state
-    fileMenu.getItems().add(reOpenItem);
 
     MenuItem saveItem = new MenuItem(language.getString("saveMenu"));
     saveItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN));
@@ -150,12 +145,13 @@ public class MainMenuBar extends MenuBar {
     getMenus().add(fileMenu);
   }
 
+  public void addRecentlyMenu(Menu recentlyMenu) {
+    fileMenu.getItems().add(1, recentlyMenu);
+  }
   /**
    * ########################### Edit Menu Items ###########################
    */
   private void createEditMenu() {
-    Menu editMenu = new Menu(language.getString("editMenu"));
-
     final MenuItem findReplaceItem = new MenuItem(language.getString("findReplaceMenu"));
     findReplaceItem.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
     findReplaceItem.setOnAction(new EventHandler<ActionEvent>() {
@@ -335,8 +331,6 @@ public class MainMenuBar extends MenuBar {
    * ########################### View Menu Items ###########################
    */
   private void createViewMenu() {
-    Menu viewMenu = new Menu(language.getString("viewMenu"));
-
     final MenuItem resetSortingItem = new MenuItem(language.getString("reset.sortingMenu"));
     resetSortingItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN, KeyCodeCombination.SHIFT_DOWN));
     resetSortingItem.setOnAction(new EventHandler<ActionEvent>() {
@@ -392,7 +386,6 @@ public class MainMenuBar extends MenuBar {
   }
 
   private void createPlayerMenu() {
-    Menu playerMenu = new Menu(language.getString("player"));
     CheckMenuItem autoPlayItem = new CheckMenuItem(language.getString(PlayerViewer.AUTO_PLAY));
     autoPlayItem.setSelected(true);
     autoPlayItem.setAccelerator(new KeyCodeCombination(KeyCode.P, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
@@ -443,8 +436,6 @@ public class MainMenuBar extends MenuBar {
   ExternalEditorsDialog externalEditorsDialog;
 
   private void createExtrasMenu() {
-    Menu extrasMenu = new Menu(language.getString("extrasMenu"));
-
     MenuItem languageItem = new MenuItem(language.getString("language.settingsMenu"));
     languageItem.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -475,7 +466,6 @@ public class MainMenuBar extends MenuBar {
   AboutDialog aboutDialog;
 
   private void createHelpMenu() {
-    Menu helpMenu = new Menu(language.getString("helpMenu"));
     MenuItem aboutItem = new MenuItem(language.getString("aboutMenu"));
     aboutItem.setAccelerator(new KeyCodeCombination(KeyCode.F1));
     aboutItem.setOnAction(new EventHandler<ActionEvent>() {
