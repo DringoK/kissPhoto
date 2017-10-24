@@ -162,7 +162,7 @@ public class CopyFileDatesExtDialog extends KissDialog {
     if (!masterExtTextField.getText().startsWith("."))
       ext = "." + ext;     //for comparing with MediaFiles.getExtension() the leading . is necessary
 
-    //clear old result
+    //clearMessage old result
     root.getChildren().clear();
     //lookup all MediaFiles with the given Extension
 

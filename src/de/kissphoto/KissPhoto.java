@@ -66,12 +66,11 @@ import java.awt.*;
  * ===============
  * <p>
  * todo 2014-05-24: auto column width using field.setPrefWidth(TextUtils.computeTextWidth(field.getFont(), field.getText(), 0.0D) + 10);
- * todo Statuszeile: Anzahl Dateien, Anzahl &Auml;nderungen, Anzahl Markierung, Anzahl L&ouml;schen (Doppelklick k&ouml;nnte hier auch Undelete-Dialog &ouml;ffnen)
  * todo Nice to have: Undo-History
  * <p>
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.8.14"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.8.15"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;
@@ -289,7 +288,9 @@ public class KissPhoto extends Application {
     statusBar = new StatusBar();
     statusBar.showMessage("");
     mediaContentView = new MediaContentView(primaryStage); //Area for showing Media
+
     fileTableView = new FileTableView(primaryStage, mediaContentView, statusBar, globalSettings); //File table and directory
+    statusBar.connectUndeleteDialog(fileTableView);
     mediaContentView.setFileTableView(fileTableView);
 
     mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION, globalSettings);

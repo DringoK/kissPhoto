@@ -174,7 +174,7 @@ public class UnDeleteDialog extends KissDialog {
 
   /**
    * clean up the dialog:
-   * clear the internal list of the dialog
+   * clearMessage the internal list of the dialog
    * Use this as soon as undeletion is completed
    */
   public void cleanUp() {

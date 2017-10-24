@@ -56,6 +56,7 @@ import java.util.ResourceBundle;
  * @modified: 2017-10-14 bugfixing and new functionality copyDescriptionDown() + store Column-Widths
  * @modified: 2017-10-20 space-bar is now play/pause additionally if not in edit mode
  * @modified: 2017-10-22 file-open history (Open recent) support
+ * @modified: 2017-10-24 statistics in statusBar support
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
@@ -637,6 +638,9 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
         fileHistory.putOpenedFileToHistory(fileOrFolder);
       }
+      registerStatisticsPanel();
+
+
       //register a file watcher for watching out for changes to this folder from external applications
       try {
         //register stops the old thread and starts an new for the new folder to register
@@ -644,12 +648,54 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       } catch (Exception e) {
         //in Case of error the function does not exist to update the folder in background..so what...
       }
+
     } finally {
       if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
       if (errMsg.length() > 0) {
         statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), fileOrFolder.toString()));
       }
     }
+  }
+
+  /**
+   * Status Bar's statistics are registered with the currently loaded MediaFileList and Selection
+   */
+  private void registerStatisticsPanel() {
+    //register statistics-changes
+    mediaFileList.getFileList().addListener(new ListChangeListener<MediaFile>() {
+      @Override
+      public void onChanged(Change<? extends MediaFile> c) {
+        while (c.next()) {
+          if (c.wasAdded() || c.wasRemoved()) {
+            statusBar.showFilesNumber(mediaFileList.getFileList().size());
+          }
+        }
+      }
+    });
+    getSelectionModel().getSelectedIndices().addListener(new ListChangeListener() {
+      @Override
+      public void onChanged(Change c) {
+        while (c.next()) {
+          if (c.wasAdded() || c.wasRemoved()) {
+            statusBar.showSelectedNumber(getSelectionModel().getSelectedIndices().size());
+          }
+        }
+      }
+    });
+    mediaFileList.getDeletedFileList().addListener(new ListChangeListener<MediaFile>() {
+      @Override
+      public void onChanged(Change<? extends MediaFile> c) {
+        while (c.next()) {
+          if (c.wasAdded() || c.wasRemoved()) {
+            statusBar.showDeletedNumber(mediaFileList.getDeletedFileList().size());
+          }
+        }
+      }
+    });
+
+    //note: modifications are not yet registered, because they are not tracked in a observable list, but es attributes of MediaFile (decentral)
+    //it's not worth to search for them every time a change has been made only to show the number
+    //therefore the modificationNumber remains invisible as initialized in StatisticsPanel
   }
 
   /**
@@ -1162,10 +1208,10 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         mediaFileList.unDeleteFiles(getFocusModel().getFocusedIndex(), unDeletionList);
         statusBar.showMessage(MessageFormat.format(language.getString("0.file.s.recovered.before.the.previously.selected.row.you.may.want.to.use.view.reset.sorting.columns.from.main.menu"), unDeletionList.size()));
       } else {
-        statusBar.showMessage("");
+        statusBar.clearMessage();
       }
 
-      unDeleteDialog.cleanUp(); //clear internal list of the dialog to enable garbage collection and prevent interference with linked media files
+      unDeleteDialog.cleanUp(); //clearMessage internal list of the dialog to enable garbage collection and prevent interference with linked media files
     } else {
       statusBar.showError(language.getString("no.files.marked.for.deletion.therefore.nothing.to.un.delete"));
     }
@@ -1446,7 +1492,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   }
 
   /**
-   * clear the status bar and                     (always)
+   * clearMessage the status bar and                     (always)
    * restore the old selection from before search (only if it was searchInSelection mode)
    * that was stored in searchRec
    */
@@ -1458,7 +1504,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       scrollViewportToIndex(getMediaFileList().getFileList().indexOf(searchRec.selection.get(0)));
       getFocusModel().focus(getMediaFileList().getFileList().indexOf(searchRec.selection.get(0)));
     }
-    statusBar.clear();
+    statusBar.clearMessage();
     searchRec = null; //pointer to MediaFile's searchRec is deleted to indicate "no search active i.e. call findFirst or replaceAll first)
   }
 

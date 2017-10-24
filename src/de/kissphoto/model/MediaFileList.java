@@ -207,7 +207,7 @@ public class MediaFileList {
 
     //renamings and timestamp changes
     for (MediaFile mediaFile : fileList) {
-      if (mediaFile.isFilenameChanged()) {
+      if (mediaFile.isChanged()) {
         changes++;
       }
     }
