@@ -311,7 +311,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         if (db.hasFiles()) {
           success = true;
           //load first file only
-          openFolder(db.getFiles().get(0).getAbsolutePath());
+          openFolder(db.getFiles().get(0).getAbsolutePath(), true);
         }
         dragEvent.setDropCompleted(success);
         dragEvent.consume();
@@ -338,12 +338,12 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     if ((initialFileOrFolderName != null) && (initialFileOrFolderName.length() > 0)) {
       //first trial is to open the file passed as a parameter
-      openFolder(initialFileOrFolderName);
+      openFolder(initialFileOrFolderName, false); //no unsaved changes possible, because initial opening
     } else {
       //second trial is to open the last file opened
       String LastFileOrFolderName = null;
       if (fileHistory.getRecentlyOpenedList().size() > 0) {
-        openFolder(fileHistory.getRecentlyOpenedList().get(0));
+        openFolder(fileHistory.getRecentlyOpenedList().get(0), false); //no unsaved changes possible, because initial opening
       } else {
         statusBar.showMessage(language.getString("use.ctrl.o.to.open.a.folder"));
       }
@@ -560,7 +560,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       //File dir = dirChooserDialog.showDialog(primaryStage);
       File dir = dirChooserDialog.showOpenDialog(primaryStage);
       if (dir != null) {
-        openFolder(dir.toPath());
+        openFolder(dir.toPath(), false); //false, because already cared for unsaved changes
         resetSortOrder();
       }
     }
@@ -602,57 +602,67 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    * if the string is a path to a folder then the folder is opened and the first file is focused
    *
    * @param fileOrFolderName string path to the file or folder
+   * @param askForUnsavedChanges if true and ansaved changes are pending then a dialog opens, if false the caller must care itself for it
    */
-  public void openFolder(String fileOrFolderName) {
-    openFolder(Paths.get(fileOrFolderName));
+  public void openFolder(String fileOrFolderName, boolean askForUnsavedChanges) {
+    openFolder(Paths.get(fileOrFolderName), askForUnsavedChanges);
   }
 
   /**
+   * if unsaved changes are pending a dialog opens to ask if the should be saved
+   * 
    * open a file or folder (from File)
    * If the file-object is a file then the containing folder is opened and the file is focused
    * if this file is invalid then then containing folder is opened and the first file is focused
    * if the file-object is a folder then the folder is opened and the first file is focused
    *
    * @param fileOrFolder file object representing a file or folder
+   * @param askForUnsavedChanges if true and ansaved changes are pending then a dialog opens, if false the caller must care itself for it
    */
-  public synchronized void openFolder(final Path fileOrFolder) {
-    final Scene primaryScene = primaryStage.getScene();
-    if (primaryScene != null)
-      primaryScene.setCursor(Cursor.WAIT); //can be null during openInitialFolder() called from main()
-    final FileTableView fileTableView = this; //for handing over to the runLater event
+  public synchronized void openFolder(final Path fileOrFolder, boolean askForUnsavedChanges) {
+    boolean openCanContinue = true;
+    if (askForUnsavedChanges)
+      openCanContinue = askIfContinueUnsavedChanges();
 
-    statusBar.showMessage(MessageFormat.format(language.getString("trying.to.open.0"), fileOrFolder.toString()));
+    if (openCanContinue) {
+      final Scene primaryScene = primaryStage.getScene();
+      if (primaryScene != null)
+        primaryScene.setCursor(Cursor.WAIT); //can be null during openInitialFolder() called from main()
+      final FileTableView fileTableView = this; //for handing over to the runLater event
 
-    String errMsg = mediaFileList.openFolder(fileOrFolder);
-    try {
-      getSelectionModel().clearSelection();  //prevent the selection listener from doing nonsense while loading
-      if (errMsg.length() == 0) {
-        primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
-        statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
-        numberingOffset = 1;  //determines with which number renumbering of the list starts.
-        numberingStepSize = 1;
-        numberingDigits = 0;   //zero is [auto]
+      statusBar.showMessage(MessageFormat.format(language.getString("trying.to.open.0"), fileOrFolder.toString()));
 
-        setItems(mediaFileList.getFileList());
-        selectRowByPath(fileOrFolder);
-
-        fileHistory.putOpenedFileToHistory(fileOrFolder);
-      }
-      registerStatisticsPanel();
-
-
-      //register a file watcher for watching out for changes to this folder from external applications
+      String errMsg = mediaFileList.openFolder(fileOrFolder);
       try {
-        //register stops the old thread and starts an new for the new folder to register
-        fileChangeWatcher.registerFolderToWatch(mediaFileList.getCurrentFolderName(), fileTableView);   //openFolder (above) already has set the currentFolderName
-      } catch (Exception e) {
-        //in Case of error the function does not exist to update the folder in background..so what...
-      }
+        getSelectionModel().clearSelection();  //prevent the selection listener from doing nonsense while loading
+        if (errMsg.length() == 0) {
+          primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
+          statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
+          numberingOffset = 1;  //determines with which number renumbering of the list starts.
+          numberingStepSize = 1;
+          numberingDigits = 0;   //zero is [auto]
 
-    } finally {
-      if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
-      if (errMsg.length() > 0) {
-        statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), fileOrFolder.toString()));
+          setItems(mediaFileList.getFileList());
+          selectRowByPath(fileOrFolder);
+
+          fileHistory.putOpenedFileToHistory(fileOrFolder);
+        }
+        registerStatisticsPanel();
+
+
+        //register a file watcher for watching out for changes to this folder from external applications
+        try {
+          //register stops the old thread and starts an new for the new folder to register
+          fileChangeWatcher.registerFolderToWatch(mediaFileList.getCurrentFolderName(), fileTableView);   //openFolder (above) already has set the currentFolderName
+        } catch (Exception e) {
+          //in Case of error the function does not exist to update the folder in background..so what...
+        }
+
+      } finally {
+        if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
+        if (errMsg.length() > 0) {
+          statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), fileOrFolder.toString()));
+        }
       }
     }
   }
@@ -699,17 +709,14 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   }
 
   /**
-   * reopen the same folder again for discarding all changes
+   * reopen the same folder again for discarding all changes and try to select the same file again
    * If there are unsaved changes a message box asks "if sure"
    */
   public void reOpenFolder() {
-    if (askIfContinueUnsavedChanges()) {
-
-      if (getFocusModel().getFocusedItem() != null)//if currently something selected
-        openFolder(((MediaFile) getFocusModel().getFocusedItem()).getFileOnDisk()); //the file will be selected again if possible
-      else
-        openFolder(mediaFileList.getCurrentFolder()); //the first file will be selected
-    }
+    if (getFocusModel().getFocusedItem() != null)//if currently something selected
+      openFolder(((MediaFile) getFocusModel().getFocusedItem()).getFileOnDisk(), true); //the file will be selected again if possible
+    else
+      openFolder(mediaFileList.getCurrentFolder(), true); //the first file will be selected
   }
 
   /**

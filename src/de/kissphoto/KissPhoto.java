@@ -70,7 +70,7 @@ import java.awt.*;
  * <p>
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.8.15"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.8.16"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;

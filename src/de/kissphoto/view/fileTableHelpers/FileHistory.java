@@ -128,7 +128,7 @@ public class FileHistory {
       item.setOnAction(new EventHandler<ActionEvent>() {
         @Override
         public void handle(ActionEvent event) {
-          fileTableView.openFolder(entry);
+          fileTableView.openFolder(entry, true);
         }
       });
 
