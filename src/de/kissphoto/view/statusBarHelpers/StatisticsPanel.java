@@ -7,6 +7,7 @@ import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 
 import java.util.ResourceBundle;
 
@@ -53,7 +54,8 @@ public class StatisticsPanel extends HBox {
     showDeletedNumber(0);
 
     setSpacing(0);
-    getChildren().addAll(filesLabel, selectedLabel, deletedLabel, modifiedLabel);
+    //remember: align right, therefore the standard entries last
+    getChildren().addAll(deletedLabel, modifiedLabel, selectedLabel, filesLabel);
   }
 
   public void connectUndeleteDialog(FileTableView fileTableView) {
@@ -70,7 +72,8 @@ public class StatisticsPanel extends HBox {
 
   public void showFilesNumber(int filesNumber) {
     filesLabel.setText(" " + filesCaption + filesNumber + " ");
-    filesLabel.setPrefWidth(StringHelper.computeTextWidth(filesLabel.getFont(), filesLabel.getText(), 0.0D) + 5);
+    //filesLabel.setPrefWidth(StringHelper.computeTextWidth(filesLabel.getFont(), filesLabel.getText(), 0.0D) + 5);
+    filesLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);
   }
 
   public void showSelectedNumber(int selectedNumber) {
@@ -78,7 +81,7 @@ public class StatisticsPanel extends HBox {
       selectedLabel.setText(" " + selectedCaption + selectedNumber + " ");
       selectedLabel.setVisible(true);
       selectedLabel.setPrefWidth(StringHelper.computeTextWidth(selectedLabel.getFont(), selectedLabel.getText(), 0.0D) + 5);
-      //selectedLabel.setMinWidth(Region.USE_PREF_SIZE);
+      //selectedLabel.setMinWidth(Region.USE_COMPUTED_SIZE);
     } else {
       selectedLabel.setVisible(false);
       selectedLabel.setPrefWidth(0);
@@ -90,6 +93,7 @@ public class StatisticsPanel extends HBox {
       modifiedLabel.setText(" " + modifiedCaption + modifiedNumber + " ");
       modifiedLabel.setVisible(true);
       modifiedLabel.setPrefWidth(StringHelper.computeTextWidth(modifiedLabel.getFont(), modifiedLabel.getText(), 0.0D) + 5);
+      //modifiedLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);
     } else {
       modifiedLabel.setVisible(false);
       modifiedLabel.setPrefWidth(0);
@@ -101,6 +105,7 @@ public class StatisticsPanel extends HBox {
       deletedLabel.setText(" " + deletedCaption + deletedNumber + " ");
       deletedLabel.setVisible(true);
       deletedLabel.setPrefWidth(StringHelper.computeTextWidth(deletedLabel.getFont(), deletedLabel.getText(), 0.0D) + 5);
+      //deletedLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);
     } else {
       deletedLabel.setVisible(false);
       deletedLabel.setPrefWidth(0);
