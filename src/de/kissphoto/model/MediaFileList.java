@@ -33,6 +33,7 @@ import java.util.ResourceBundle;
  * @modified: 2014-06-04 open with invalid file but valid path will open the path (directory)
  * @modified: 2014-06-05 java.io operations changed into java.nio, onFolderChanged optimized (events for no longer existing tmp-files are ignored)
  * @modified: 2014-06-07 getContent interface to cache simplified
+ * @modified: 2017-10-30 support lossless rotation and flipping of ImageFiles, saving moved to mediaFileListSavingTask to enable ProgressBar (with rotation it can take long!)
  */
 public class MediaFileList {
   private static final String NO_SUCH_FILE_OR_DIRECTORY = "no.such.file.or.directory";  //should extend ObservableList, but JavaFx only provides FactoryClasses. Therefore it contains an Observable List only
@@ -219,79 +220,91 @@ public class MediaFileList {
   }
 
   /**
-   * All changes to the media files contained in currently loaded file list (folder)
-   * are written to disk: Renaming, TimeStamp-Changes or changes to EXIF-info (todo)
-   * <p/>
-   * Strategy for renaming:
-   * temporarily filename can occur, if filnames are only different in their counter an renumbering was performed
-   * Therefore 2 steps are made:
-   * <ul>
-   * <li>first loop over files: try to rename, if fail apply an intermediate name which is unlikely to be double
-   * <li>second loop over files: try to rename again from the intermediate name
-   * </ul>
-   * If the second loop also is not successful (e.g. the fail was because of invalid name or write protect) the
-   * file remains unchanged and it's status is marked as "rename error" (see MediaFile.performRename())
-   *
-   * @return if successful (true) or if errors occurred (false)
+   * count the mediaFiles in the handed list, which are instances of ImageFile
+   * typically the selection of FileTableView is handed to this counting routine
+   * @param selectedFiles
+   * @return number of ImageFiles
    */
-  public boolean saveCurrentFolder() {
-    boolean successful = true;
-    boolean secondLoopNecessary = false;
+  public int getImageFileCount(ObservableList<MediaFile> selectedFiles) {
+    int count = 0;
 
-    try {
-      //first delete all files from disk which are in deletedFileList
-      //(do it first to avoid renaming problems, if another file has got the name of a deleted file in between)
-      ObservableList<MediaFile> deletedListCopy = FXCollections.observableArrayList(deletedFileList); //copy list for iteration
-      for (MediaFile mediaFile : deletedListCopy) {
-        mediaCache.flush(mediaFile);
-        try {
-          //perform deletion on disk
-          if (mediaFile.performDeleteFile())
-            //if successful
-            deletedFileList.remove(mediaFile);    //delete from list with files to delete (the undelete list ;-)
-            //it already has been immediately deleted from the view when moving to deletion list, so not necessary to delete from fileList
-          else
-            successful = false;
-
-        } catch (Exception e) {
-          successful = false;
-        }
-      }
-
-      //first loop for rename and the only loop for all other changes
-      for (MediaFile mediaFile : fileList) {
-        //rename
-        if (mediaFile.isFilenameChanged()) {
-          //Media files with players need to flush their cache because media becomes invalid if underlying filename changes
-          if (mediaFile.getClass() == MovieFile.class) {
-            mediaFile.flushMediaContent();
-          }
-          if (mediaFile.performRename() == MediaFile.SECOND_RUN) { //if renaming was not successful it has been renamed into an intermediate name
-            secondLoopNecessary = true;        //in a second loop this can be resolved
-          }
-        }
-        //time-stamp
-        if (mediaFile.isTimeStampChanged()) {
-          if (!mediaFile.performSetTimeStamp()) {
-            successful = false;
-          }
-        }
-      }
-
-      if (secondLoopNecessary) {
-        for (MediaFile mediaFile : fileList) {
-          if (mediaFile.isFilenameChanged()) {
-            if (mediaFile.performRename() != MediaFile.SUCCESSFUL) {
-              successful = false;
-            }
-          }
-        }
-      }
-
-    } catch (Exception e) {
-      successful = false; //especially when security exceptions occur
+    for (MediaFile mediaFile : selectedFiles) {
+      if (mediaFile instanceof ImageFile) count++;
     }
-    return successful;
+
+    return count;
+  }
+
+  /**
+   * perform the handed rotateOperation to all selected Images
+   * Only Images are affected - all other selected files are ignored
+   *
+   * @param selectedFiles
+   * @param rotateOperation to perform
+   */
+  public synchronized void rotateSelectedFiles(ObservableList<MediaFile> selectedFiles, ImageFileRotater.RotateOperation rotateOperation) {
+    for (MediaFile mediaFile : selectedFiles) {
+      if (mediaFile instanceof ImageFile)
+        ((ImageFile) mediaFile).rotate(rotateOperation);
+    }
+  }
+
+  /**
+   * perform flipping (mirroring) of all selected Images
+   * Only Images are affected - all other selected files are ignored
+   *
+   * @param selectedFiles
+   * @param horizontally  = true: mirror horizontally, false: mirror vertically
+   */
+  public synchronized void flipSelectedFiles(ObservableList<MediaFile> selectedFiles, boolean horizontally) {
+    for (MediaFile mediaFile : selectedFiles) {
+      if (mediaFile instanceof ImageFile) {
+        if (horizontally)
+          ((ImageFile) mediaFile).flipHorizontally();
+        else
+          ((ImageFile) mediaFile).flipVertically();
+      }
+    }
+  }
+
+  /**
+   * set orientation of the image according EXIF orientation (set rotation and flipping) of all selected JPEG-Images
+   * Only JPEG-Images are affected - all other selected files are ignored
+   *
+   * @param selectedFiles
+   */
+  public synchronized void setOrientationAccordingExif(ObservableList<MediaFile> selectedFiles) {
+    for (MediaFile mediaFile : selectedFiles) {
+      if (mediaFile instanceof ImageFile)
+        ((ImageFile) mediaFile).setOrientationAccordingExif();
+    }
+  }
+
+  /**
+   * this is only an example how saving can be performed in principle
+   * more sophisticated (interruptable and showing progress)
+   * an progressBar can be bound
+   */
+  public void saveCurrentFolder() {
+    MediaFileListSavingTask savingTask = getNewSavingTask();
+    startSavingTask(savingTask);
+  }
+
+  /**
+   * Build a Task for saving all changes of mediaFileList
+   * and hand it to the GUI. Now the GUI has the chance to connect a progressBar with the progressProperty of the task
+   * before it starts it using startSavingTask();
+   *
+   * @return a task that will save all changes
+   */
+  public MediaFileListSavingTask getNewSavingTask() {
+    return new MediaFileListSavingTask(deletedFileList, fileList, getUnsavedChanges(), mediaCache);
+  }
+
+  public void startSavingTask(MediaFileListSavingTask mediaFileListSavingTask) {
+    Thread th = new Thread(mediaFileListSavingTask);
+    th.setDaemon(true); //cancel with end of kissPhoto (latest)
+    th.start();
   }
 
   /**

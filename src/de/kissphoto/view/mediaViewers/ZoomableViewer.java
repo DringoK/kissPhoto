@@ -10,7 +10,7 @@ import javafx.geometry.Rectangle2D;
  *
  * @author Dr. Ingo Kreuz
  * @date 2016-11-06
- * @modified:
+ * @modified: 2018-10-11  bugfixing: zoom rotated images
  */
 
 public interface ZoomableViewer {
@@ -35,6 +35,6 @@ public interface ZoomableViewer {
   void installResizeHandler();
 
   //--------- Zooming in MediaContent View: hand over zoom factor between the viewers
-  //zoom so that the media fits directly in the viewer (delete viewport)
+  //zoom so that the media fits directly into the viewer (delete viewport)
   void zoomToFit();
 }

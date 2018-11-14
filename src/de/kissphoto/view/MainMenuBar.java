@@ -3,6 +3,7 @@ package de.kissphoto.view;
 
 import de.kissphoto.helper.GlobalSettings;
 import de.kissphoto.helper.I18Support;
+import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.view.dialogs.AboutDialog;
 import de.kissphoto.view.dialogs.ExternalEditorsDialog;
 import de.kissphoto.view.dialogs.LanguageDialog;
@@ -36,6 +37,7 @@ import java.util.ResourceBundle;
  * @modified: 2017-10-13 added AutoFill(Down) Menu-Item to edit menu + Default Column Widths to View menu
  * @modified: 2017-10-15 see also PlayerViewer: handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
  * @modified: 2017-10-21 FileHistory-Support added and reopen removed (because equal to ctrl-1)
+ * @modified: 2017-10-29 Flipping and Rotation of JPEG-Images added (imageMenu)
  */
 public class MainMenuBar extends MenuBar {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -48,6 +50,7 @@ public class MainMenuBar extends MenuBar {
   private Menu fileMenu = new Menu(language.getString("fileMenu"));
   private Menu editMenu = new Menu(language.getString("editMenu"));
   private Menu viewMenu = new Menu(language.getString("viewMenu"));
+  private Menu imageMenu = new Menu(language.getString("image"));
   private Menu playerMenu = new Menu(language.getString("player"));
   private Menu extrasMenu = new Menu(language.getString("extrasMenu"));
   private Menu helpMenu = new Menu(language.getString("helpMenu"));
@@ -75,6 +78,7 @@ public class MainMenuBar extends MenuBar {
     createFileMenu();
     createEditMenu();
     createViewMenu();
+    createImageMenu();
     createPlayerMenu();
     createExtrasMenu();
     createHelpMenu();
@@ -385,6 +389,71 @@ public class MainMenuBar extends MenuBar {
     getMenus().add(viewMenu);
   }
 
+  private void createImageMenu() {
+    MenuItem exifOrientationItem = new MenuItem("Rotate and Flip JPEG according EXIF (lossless)");
+    exifOrientationItem.setAccelerator(new KeyCodeCombination(KeyCode.J, KeyCombination.CONTROL_DOWN));
+    exifOrientationItem.setOnAction(new EventHandler<ActionEvent>() {
+      @Override
+      public void handle(ActionEvent event) {
+        fileTableView.setOrientationAccordingExif();
+      }
+    });
+    imageMenu.getItems().addAll(exifOrientationItem, new SeparatorMenuItem());
+
+    MenuItem rotateRightItem = new MenuItem(language.getString("rotate.jpeg.90.right.lossless"));
+    rotateRightItem.setAccelerator(new KeyCodeCombination(KeyCode.R));
+    rotateRightItem.setOnAction(new EventHandler<ActionEvent>() {
+      @Override
+      public void handle(ActionEvent event) {
+        fileTableView.rotateSelectedFiles(ImageFileRotater.RotateOperation.ROTATE90);
+      }
+    });
+    imageMenu.getItems().add(rotateRightItem);
+
+    MenuItem rotateLeftItem = new MenuItem(language.getString("rotate.jpeg.90.left.lossless"));
+    rotateLeftItem.setAccelerator(new KeyCodeCombination(KeyCode.L));
+    rotateLeftItem.setOnAction(new EventHandler<ActionEvent>() {
+      @Override
+      public void handle(ActionEvent event) {
+        fileTableView.rotateSelectedFiles(ImageFileRotater.RotateOperation.ROTATE270);
+      }
+    });
+    imageMenu.getItems().add(rotateLeftItem);
+
+    MenuItem rotate180Item = new MenuItem(language.getString("rotate.jpeg.180.lossless"));
+    rotate180Item.setAccelerator(new KeyCodeCombination(KeyCode.T));
+    rotate180Item.setOnAction(new EventHandler<ActionEvent>() {
+      @Override
+      public void handle(ActionEvent event) {
+        fileTableView.rotateSelectedFiles(ImageFileRotater.RotateOperation.ROTATE180);
+      }
+    });
+    imageMenu.getItems().addAll(rotate180Item, new SeparatorMenuItem());
+
+    MenuItem flipHItem = new MenuItem(language.getString("flip.jpeg.horizontally.lossless"));
+    flipHItem.setAccelerator(new KeyCodeCombination(KeyCode.H));
+    flipHItem.setOnAction(new EventHandler<ActionEvent>() {
+      @Override
+      public void handle(ActionEvent event) {
+        fileTableView.flipSelectedFiles(true);
+      }
+    });
+    imageMenu.getItems().add(flipHItem);
+
+    MenuItem flipVItem = new MenuItem(language.getString("flip.jpeg.vertically.lossless"));
+    flipVItem.setAccelerator(new KeyCodeCombination(KeyCode.V));
+    flipVItem.setOnAction(new EventHandler<ActionEvent>() {
+      @Override
+      public void handle(ActionEvent event) {
+        fileTableView.flipSelectedFiles(false);
+      }
+    });
+    imageMenu.getItems().add(flipVItem);
+
+
+    getMenus().add(imageMenu);
+
+  }
   private void createPlayerMenu() {
     CheckMenuItem autoPlayItem = new CheckMenuItem(language.getString(PlayerViewer.AUTO_PLAY));
     autoPlayItem.setSelected(true);

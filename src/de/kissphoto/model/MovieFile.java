@@ -80,6 +80,13 @@ public class MovieFile extends MediaFilePlayable {
     }
   }
 
+  @Override
+  public MediaFile.SaveResult saveChanges() {
+    //Media files with players need to flush their cache because media becomes invalid if underlying filename changes
+    if (isFilenameChanged()) flushMediaContent();
+    return super.saveChanges();
+  }
+
   /**
    * save the external editor's pathnames to GlobalSettings
    *

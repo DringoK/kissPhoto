@@ -121,7 +121,12 @@ public class FileHistory {
     mainMenuItem.getItems().clear();
     int i = 1;
     for (Path entry : recentlyOpenedList) {
-      item = new MenuItem("..." + File.separator + entry.getParent().getFileName().toString() + File.separator); //the folder name
+      Path p = entry.getParent().getFileName(); //get the parent directory
+      if (p == null)
+        item = new MenuItem(entry.getParent().toString());  //complete path (=root) if there is no parent
+      else
+        item = new MenuItem("..." + File.separator + p.getFileName().toString() + File.separator); //only ... + containing directory
+
       if (i < 10)  //add accelerator (ctrl+1, ctrl+2, ...) only for the first 9 (because there are no more number keys ;-)
         item.setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(i)), KeyCombination.CONTROL_DOWN));
 

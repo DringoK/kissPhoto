@@ -1,5 +1,7 @@
 package de.kissphoto.model;
 
+import com.drew.imaging.FileType;
+import com.drew.imaging.FileTypeDetector;
 import de.kissphoto.helper.AppStarter;
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.helper.StringHelper;
@@ -8,6 +10,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -25,8 +29,7 @@ import java.util.ResourceBundle;
  * It defines all functions for parsing the filename, renaming, changing timestamp, EXIF, ...
  * </p>
  * <p>Note:
- * Changes to MediaFiles are not directly written to the disk
- * before "saving" is executed by calling the "perform..." methods.
+ * Changes to MediaFiles are not directly written to the disk before "saving" is executed by calling the "perform..." methods.
  * </p>
  *
  * @Author: ikreuz
@@ -37,6 +40,7 @@ import java.util.ResourceBundle;
  * @modified: 2014-06-22 extra column for the counter's separator (the character after the counter)
  * @modified: 2014-07-05 bug found why separator column didn't reflect changes in the property over the model: separatorProperty() had wrong capitalization
  * @modified: 2016-06-12 performDelete will now no longer delete but move to subfolder "deleted" (localized, e.g. german "aussortiert")
+ * @modified: 2018-10-21 support rotation in general (for subclasses which provide a MediaFileRotater sybling)
  */
 public abstract class MediaFile implements Comparable<MediaFile> {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -60,6 +64,11 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   protected Path fileOnDisk;   //including physical filename on Disk...to be renamed
   protected MediaFileList parent; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
   protected Object content = null;
+
+  //planned operation when saved next time: first rotate then flip vertical then horizontal!!!
+  protected MediaFileRotater.RotateOperation rotateOperation = MediaFileRotater.RotateOperation.ROTATE0;
+  protected boolean flipHorizontally = false;
+  protected boolean flipVertically = false;
 
   private StringProperty status = new SimpleStringProperty();
 
@@ -172,6 +181,23 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     } else {
       separator.set("");
     }
+  }
+
+  /**
+   * Filetype
+   *
+   * @return
+   */
+  public FileType getMediaType() {
+    try {
+      FileInputStream fileInputStream = new FileInputStream(fileOnDisk.toFile());
+      BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+      FileType fileType = FileTypeDetector.detectFileType(bufferedInputStream);
+      return fileType;
+    } catch (Exception e) {  //FileNotFoundException or IOException
+      return FileType.Unknown;
+    }
+
   }
 
   /**
@@ -425,7 +451,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static final int SECOND_RUN = 1;
   public static final int RENAME_ERROR = 2;
 
-  public int performRename() {
+  private int performRename() {
     int result;
 
     try {
@@ -457,7 +483,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    *
    * @return: true if successful
    */
-  public boolean performSetTimeStamp() {
+  private boolean performSetTimeStamp() {
     try {
       FileTime newTimeStamp = FileTime.fromMillis(dateFormatter.parse(modifiedDate.get()).getTime());
       Files.setLastModifiedTime(fileOnDisk, newTimeStamp);
@@ -505,6 +531,51 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
+  public enum SaveResult {ERROR, NEEDS_2ND_TRY, SUCCESSFUL}
+
+  /**
+   * tries to save all Changes
+   * all derived classes will add changes which the additionally allow (e.g. ImageFiles allow rotation)
+   *
+   * @return SaveResult.ERROR if an error occured or SaveResult.NEEDS_2ND_TRY if an intermediate name has been used while renaming
+   */
+  public SaveResult saveChanges() {
+    boolean secondTryNecessary = false;
+    boolean successful = true;
+
+    //transform
+    if (isTransformed()) {
+      successful = performTransformation();
+
+      //above transformation has changed timestamp in filesystem
+      setTimeStampChanged(true); //to reset to the previous timestamp if it was not already timeStampChanged
+    }
+
+
+    //rename
+    if (isFilenameChanged()) {
+      int renameResult = performRename();
+      if (renameResult == MediaFile.SECOND_RUN) { //if renaming was not successful it has been renamed into an intermediate name
+        secondTryNecessary = true;                //in a second loop this can be resolved
+      } else if (renameResult == MediaFile.RENAME_ERROR) {
+        successful = false;
+      }
+    }
+    //time-stamp
+    if (isTimeStampChanged()) {
+      if (!performSetTimeStamp()) {
+        successful = false;
+      }
+    }
+
+    if (secondTryNecessary) //second trial has priority to keep consistence
+      return SaveResult.NEEDS_2ND_TRY;
+    else if (!successful)
+      return SaveResult.ERROR;    //error has priority
+    else
+      return SaveResult.SUCCESSFUL;
+  }
+
   /**
    * status is a single character representing the most important boolean error flag of this File
    * e.g. "C" =conflicting name
@@ -533,7 +604,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * keep property synchronous with the boolean flags
    * to display it in the table
    */
-  private void updateStatusProperty() {
+  protected void updateStatusProperty() {
     statusProperty().set(statusFlagsToString());
   }
 
@@ -559,6 +630,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   /**
    * Flush the media content to free memory
    * This method is called from MediaCache which implements the cache strategy
+   * and whenever the file changes(e.g. after rotating an Jpeg on disk)
    *
    * @return the memory size in bytes that will be free now (approximately)
    */
@@ -608,7 +680,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   }
 
   public boolean isChanged() {
-    return (filenameChanged || timeStampChanged);
+    return (filenameChanged || timeStampChanged || isTransformed());
   }
 
   public boolean isFilenameChanged() {
@@ -624,7 +696,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     return timeStampChanged;
   }
 
-  private void setTimeStampChanged(boolean value) {
+  protected void setTimeStampChanged(boolean value) {
     timeStampChanged = value;
     updateStatusProperty();
   }
@@ -833,36 +905,160 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     //create specialized MediaFile-object based on extension
     String filename = file.getFileName().toString().toLowerCase();
     if ((filename.endsWith(".jpg")) ||
-        (filename.endsWith(".jp2")) ||
-        (filename.endsWith(".png")) ||
-        (filename.endsWith(".tiff")) ||
-        (filename.endsWith(".tif")) ||
-        //not yet supported by Java-Fx but useful for loading external editor (nothing will be displayed (black))
-        (filename.endsWith(".ico"))) {
+      (filename.endsWith(".jp2")) ||
+      (filename.endsWith(".png")) ||
+      (filename.endsWith(".tiff")) ||
+      (filename.endsWith(".tif")) ||
+      //not yet supported by Java-Fx but useful for loading external editor (nothing will be displayed (black))
+      (filename.endsWith(".ico"))) {
       return new ImageFile(file, parent);
     } else {
       if ((filename.endsWith(".mp4")) ||  //MPEG-4 Part 14
-          (filename.endsWith(".mts")) ||  //mmpg-4 Part 14 from Digi-Cam
-          (filename.endsWith(".hls")) ||  //http live stream
-          (filename.endsWith(".flv")) ||   //flash video
-          (filename.endsWith(".fxm")) ||   //fx media
-          //not yet supported by Java-Fx, but useful for loading external editor (will not be played)
-          (filename.endsWith(".mp2")) ||   //mpeg2
-          (filename.endsWith(".vob")) ||   //video object = mpeg2 file on a dvd
-          (filename.endsWith(".mov")) ||  //Apple's movie format
+        (filename.endsWith(".mts")) ||  //mmpg-4 Part 14 from Digi-Cam
+        (filename.endsWith(".hls")) ||  //http live stream
+        (filename.endsWith(".flv")) ||   //flash video
+        (filename.endsWith(".fxm")) ||   //fx media
+        //not yet supported by Java-Fx, but useful for loading external editor (will not be played)
+        (filename.endsWith(".mp2")) ||   //mpeg2
+        (filename.endsWith(".vob")) ||   //video object = mpeg2 file on a dvd
+        (filename.endsWith(".mov")) ||  //Apple's movie format
 
-          //in this version audio is treated like video (black area is displayed, but sound is played)
-          (filename.endsWith(".wav")) ||   //Waveform Audio Format
-          (filename.endsWith(".aiff")) ||  //Audio Interchange File Format
-          (filename.endsWith(".aif")) ||   //Audio Interchange File Format
-          (filename.endsWith(".mp3")) ||   //MPEG-1, 2, 2.5 raw audio stream possibly with ID3 metadata v2.3 or v2.4
-          (filename.endsWith(".m4a"))) {   //mp-4 audio only
+        //in this version audio is treated like video (black area is displayed, but sound is played)
+        (filename.endsWith(".wav")) ||   //Waveform Audio Format
+        (filename.endsWith(".aiff")) ||  //Audio Interchange File Format
+        (filename.endsWith(".aif")) ||   //Audio Interchange File Format
+        (filename.endsWith(".mp3")) ||   //MPEG-1, 2, 2.5 raw audio stream possibly with ID3 metadata v2.3 or v2.4
+        (filename.endsWith(".m4a"))) {   //mp-4 audio only
         return new MovieFile(file, parent);
       } else {
         return new OtherFile(file, parent);
       }
     }
   }
+
+  /*
+   *--------------------------------------------- Rotation stuff --------------------------------
+   */
+
+  /**
+   * if the subclass of MediaFile provides a specific MediaFileRotater then
+   *
+   * @return true else false
+   */
+  public boolean canRotate() {
+    return (getMediaFileRotater() != null);
+  }
+
+  /**
+   * should be overwritten in the subclass if a specific mediaFileRotater ist available
+   *
+   * @return
+   */
+  public MediaFileRotater getMediaFileRotater() {
+    return null;
+  }
+
+  /**
+   * orientation is changed if the resulting rotation since last save() is
+   * 90 or 270 degree
+   *
+   * @return if orientation has change since last save()
+   */
+  public boolean isOrientationChanged() {
+    return rotateOperation == ImageFileRotater.RotateOperation.ROTATE90
+      || rotateOperation == ImageFileRotater.RotateOperation.ROTATE270;
+  }
+
+  /**
+   * plan a rotation
+   * the handed operation is added on previously planned rotation operation and then optimized
+   *
+   * @param operation 90 degree-wise clockwise
+   */
+  public void rotate(MediaFileRotater.RotateOperation operation) {
+    if (canRotate()) { //only if the specific MediaFile type supports rotation
+      boolean wasOrientationChanged = isOrientationChanged(); //remember state before transformation
+
+      int rotation = (rotateOperation.ordinal() + operation.ordinal()) % 4; //modulo 4 because 360=90*4
+      rotateOperation = MediaFileRotater.RotateOperation.values()[rotation];
+
+      //as rotation is performed first in saveChanges() when rotation changes orientation flipping V/H must be exchanged
+      if (wasOrientationChanged != isOrientationChanged()) {
+        boolean temp = flipHorizontally;
+        flipHorizontally = flipVertically;
+        flipVertically = temp;
+      }
+      updateStatusProperty();
+    }
+  }
+
+  /**
+   * plan a flip operation
+   * the handed operation is added on previously planned flip operations
+   */
+  public void flipHorizontally() {
+    if (canRotate()) { //only if the specific MediaFile type supports rotation
+      flipHorizontally = !flipHorizontally;
+      updateStatusProperty();
+    }
+  }
+
+  /**
+   * plan a flip operation
+   * the handed operation is added on previously planned flip operations
+   */
+  public void flipVertically() {
+    if (canRotate()) { //only if the specific MediaFile type supports rotation
+      flipVertically = !flipVertically;
+      updateStatusProperty();
+    }
+  }
+
+  /**
+   * the default operation is empty
+   * so this method needs to be overwritten when a specific MediaFileRotater is provided
+   *
+   * @return successful
+   */
+  private boolean performTransformation() {
+    //reset planned operations
+    boolean successful = true;
+
+    if (canRotate()) { //only if the specific MediaFile type supports rotation
+      successful = getMediaFileRotater().transform(this, rotateOperation, flipHorizontally, flipVertically);
+
+
+      //reset planned operations
+      rotateOperation = ImageFileRotater.RotateOperation.ROTATE0;
+      flipHorizontally = false;
+      flipVertically = false;
+
+      updateStatusProperty();
+      flushMediaContent(); //the imagefile needs to be read again
+    }
+
+    return successful;
+  }
+
+  public ImageFileRotater.RotateOperation getRotateOperation() {
+    return rotateOperation;
+  }
+
+  public boolean isRotated() {
+    return rotateOperation != ImageFileRotater.RotateOperation.ROTATE0;
+  }
+
+  public boolean isFlippedHorizontally() {
+    return flipHorizontally;
+  }
+
+  public boolean isFlippedVertically() {
+    return flipVertically;
+  }
+
+  public boolean isTransformed() {
+    return isRotated() || isFlippedHorizontally() || isFlippedVertically();}
+
 
   /*
    *------------------------------------------------- Logic for External Editors --------------------------------

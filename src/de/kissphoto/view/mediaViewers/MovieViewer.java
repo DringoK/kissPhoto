@@ -43,13 +43,19 @@ public class MovieViewer extends PlayerViewer implements ZoomableViewer {
    */
   public MovieViewer(final MediaContentView contentView) {
     super(contentView);   //mediaContentView of father class is now = contentView
+    //binding is automatically when placed in a StackPane (mediaStackPane is a StackPane)
+    //prefHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
+    //prefWidthProperty().bind(mediaContentView.getMediaStackPaneWidthProperty());
+
     mediaView = new MediaView();
+    mediaView.setPreserveRatio(true);
+
     //note: playerControls defined and initialized in PlayerViewer (fatherclass)
     getChildren().addAll(mediaView, playerControls);
 
-    mediaView.setPreserveRatio(true);
-    mediaView.fitHeightProperty().bind(mediaContentView.heightProperty());
-    mediaView.fitWidthProperty().bind(mediaContentView.widthProperty());
+    //binding sizes is not automatically when placed in a StackPane (mediaStackPane is a StackPane) only centering is automatic!
+    mediaView.fitHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
+    mediaView.fitWidthProperty().bind(mediaContentView.getMediaStackPaneWidthProperty());
 
     setFocusTraversable(true);
 

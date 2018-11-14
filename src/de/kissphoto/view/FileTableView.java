@@ -5,8 +5,10 @@ import de.kissphoto.ctrl.FileChangeWatcher;
 import de.kissphoto.ctrl.FileChangeWatcherEventListener;
 import de.kissphoto.helper.GlobalSettings;
 import de.kissphoto.helper.I18Support;
+import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MediaFileList;
+import de.kissphoto.model.MediaFileListSavingTask;
 import de.kissphoto.view.dialogs.*;
 import de.kissphoto.view.fileTableHelpers.FileHistory;
 import de.kissphoto.view.fileTableHelpers.TextFieldCellFactory;
@@ -16,6 +18,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -27,6 +30,7 @@ import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -44,25 +48,26 @@ import java.util.ResourceBundle;
  * <p/>
  *
  * @author Ingo
- * @date: 06.09.12
- * @modified: 2014-05-02 I18Support, Cursor in Edit-Mode over lines, reopen added etc
- * @modified: 2014-05-25 find/replace markup works now
- * @modified: 2014-06-02 WAIT-mouse cursor shown during loading a directory now
- * @modified: 2014-06-05 java.io operations changed into java.nio
- * @modified: 2014-06-07 getContent interface to cache simplified
- * @modified: 2014-06-22 extra column for the counter's separator (the character after the counter)
- * @modified: 2016-06-12 shift-ctrl up/down for moving files now also works in windows 10
- * @modified: 2016-11-01 RestrictedTextField stores connection to FileTable locally, so that passing editing threads store the correct table cell
- * @modified: 2017-10-14 bugfixing and new functionality copyDescriptionDown() + store Column-Widths
- * @modified: 2017-10-20 space-bar is now play/pause additionally if not in edit mode
- * @modified: 2017-10-22 file-open history (Open recent) support
- * @modified: 2017-10-24 statistics in statusBar support
+ * Date: 06.09.12
+ * 2014-05-02 I18Support, Cursor in Edit-Mode over lines, reopen added etc
+ * 2014-05-25 find/replace markup works now
+ * 2014-06-02 WAIT-mouse cursor shown during loading a directory now
+ * 2014-06-05 java.io operations changed into java.nio
+ * 2014-06-07 getContent interface to cache simplified
+ * 2014-06-22 extra column for the counter's separator (the character after the counter)
+ * 2016-06-12 shift-ctrl up/down for moving files now also works in windows 10
+ * 2016-11-01 RestrictedTextField stores connection to FileTable locally, so that passing editing threads store the correct table cell
+ * 2017-10-14 bugfixing and new functionality copyDescriptionDown() + store Column-Widths
+ * 2017-10-20 space-bar is now play/pause additionally if not in edit mode
+ * 2017-10-22 file-open history (Open recent) support
+ * 2017-10-24 statistics in statusBar support
+ * 2017-10-30 saving uses ProgressBar now because saving of rotated images can last long...
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
   //---- views linking
   private final Stage primaryStage;  //main window
-  protected final StatusBar statusBar;  //messages
+  private final StatusBar statusBar;  //messages
   protected MediaContentView mediaContentView; //mediaContentView to show media if selection changes
 
   //---- the content to be displayed
@@ -70,7 +75,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
   //---- listen if an external program changes the currently loaded folder
   private FileChangeWatcher fileChangeWatcher = new FileChangeWatcher();  //check for external changes to an opened folder
-  protected MediaFile lastSelection = null;
+  private MediaFile lastSelection = null;
 
   //------------- IDs for GlobalSettings for FileTableView
   private static final String LAST_FILE_OPENED = "lastFileOpened";
@@ -155,7 +160,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    * @param statusBar        link to statusBar for showing information/errors
    * @param globalSettings   access to setting e.g. last disk folder used
    */
-  public FileTableView(Stage primaryStage, final MediaContentView mediaContentView, StatusBar statusBar, GlobalSettings globalSettings) {
+  public FileTableView(@NotNull Stage primaryStage, final MediaContentView mediaContentView, StatusBar statusBar, GlobalSettings globalSettings) {
     this.primaryStage = primaryStage;
     this.mediaContentView = mediaContentView;
     this.statusBar = statusBar;
@@ -721,29 +726,55 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
   /**
    * save all changes which the user has applied to the file table to the disk
-   * (rename, time stamp, ...)
+   * (rename, time stamp, rotate, flip, ...)
    */
   public synchronized void saveFolder() {
-    fileChangeWatcher.pauseWatching();  //ignore own changes
+
+    fileChangeWatcher.pauseWatching();  //ignore own changes in filesystem
     MediaFile currentFile = (MediaFile) getFocusModel().getFocusedItem();
 
-    //if currentFile isChanged then stop players to enable renaming
-    boolean successful = false;
-    if (currentFile != null && currentFile.isChanged()) {
-      mediaContentView.getMovieViewer().resetPlayer(); //stop players and disconnect from file to enable renaming
-      successful = mediaFileList.saveCurrentFolder();
-      mediaContentView.setMedia(currentFile, null); //continue playing
-    } else //if current file is not to be changed then leave player as it is (i.e. also do not interrupt playing)
-      successful = mediaFileList.saveCurrentFolder();
+    //if currentFile isChanged then stop players to enable renaming (keep it simple: do it always while saving)
+    mediaContentView.getMovieViewer().resetPlayer(); //stop players and disconnect from file to enable renaming
 
-    fileChangeWatcher.continueWatching();
+    //use a savingTask for saving so that the UI can update in between (e.g. showing the progressBar)
+    MediaFileListSavingTask savingTask = mediaFileList.getNewSavingTask();
+    statusBar.getProgressProperty().bind(savingTask.progressProperty());
+    statusBar.showProgressBar();
+    statusBar.showMessage(MessageFormat.format(language.getString("saving.0.changes"), getUnsavedChanges()));
 
-    if (successful) {
-      statusBar.showMessage(language.getString("changes.successfully.written.to.disk"));
-    } else {
-      statusBar.showError(language.getString("errors.occurred.during.saving.check.status.column.for.details") + ": " + MediaFile.STATUSFLAGS_HELPTEXT);
-    }
+    //define what happens when task has finished
+    savingTask.addEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED,
+      new EventHandler<WorkerStateEvent>() {
 
+        @Override
+        public void handle(WorkerStateEvent t) {
+          mediaContentView.setMedia(currentFile, null); //continue playing
+
+          fileChangeWatcher.continueWatching();
+
+          statusBar.clearProgress();
+          int errorCount = savingTask.getValue();
+
+          if (errorCount > 0) {
+            statusBar.showError(errorCount + " " + language.getString("errors.occurred.during.saving.check.status.column.for.details") + ": " + MediaFile.STATUSFLAGS_HELPTEXT);
+          } else {
+            statusBar.showMessage(language.getString("changes.successfully.written.to.disk"));
+          }
+        }
+      });
+
+    //and start the task in a new thread
+    mediaFileList.startSavingTask(savingTask);
+
+    //here is how a cancel button could be implemented (not yet used as saving should no be interrupted)
+//    Button cancelButton = new Button("Cancel");
+//    cancelButton.setOnAction(new EventHandler<ActionEvent>() {
+//      @Override
+//      public void handle(ActionEvent event) {
+//        cancelButton.setDisable(true);
+//        savingTask.cancel(true);  //mayInterruptIfRunning really true? think over...
+//      }
+//    });
   }
 
   /**
@@ -1164,6 +1195,53 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     statusBar.showMessage(MessageFormat.format(language.getString("0.file.s.marked.for.deletion.files.can.be.recovered.using.edit.undelete.until.next.save"), deletionList.size()));
     if (unDeleteMenuItem != null)
       unDeleteMenuItem.setDisable(mediaFileList.getDeletedFileList().size() < 1); //enable Menu for undeletion if applicable
+  }
+
+  /**
+   * show a dialog where the user can select
+   * flipping
+   * rotating images
+   * or orient according to exif orientation
+   * Only Images are affected all other selected files are ignored
+   */
+  public synchronized void transformSelectedImagesWithDialog() {
+    //get number of images in selection
+    int imageFilesCount = mediaFileList.getImageFileCount(getSelectionModel().getSelectedItems());
+    //show dialog
+    //perform transformation
+  }
+
+  /**
+   * perform the handed rotateOperation to all selected Images
+   * Only Images are affected - all other selected files are ignored
+   *
+   * @param rotateOperation
+   */
+  public synchronized void rotateSelectedFiles(ImageFileRotater.RotateOperation rotateOperation) {
+    int imageFilesCount = mediaFileList.getImageFileCount(getSelectionModel().getSelectedItems());
+    mediaFileList.rotateSelectedFiles(getSelectionModel().getSelectedItems(), rotateOperation);
+    mediaContentView.showRotationAndFlippingPreview();
+    statusBar.showMessage(MessageFormat.format(language.getString("0.images.rotated"), imageFilesCount));
+  }
+
+  /**
+   * perform flipping (mirroring) of all selected Images
+   * Only Images are affected - all other selected files are ignored
+   *
+   * @param horizontally = true: mirror horizontally, false: mirror vertically
+   */
+  public synchronized void flipSelectedFiles(boolean horizontally) {
+    int imageFilesCount = mediaFileList.getImageFileCount(getSelectionModel().getSelectedItems());
+    mediaFileList.flipSelectedFiles(getSelectionModel().getSelectedItems(), horizontally);
+    mediaContentView.showRotationAndFlippingPreview();
+    statusBar.showMessage(MessageFormat.format(language.getString("0.images.flipped"), imageFilesCount));
+  }
+
+  public synchronized void setOrientationAccordingExif() {
+    int imageFilesCount = mediaFileList.getImageFileCount(getSelectionModel().getSelectedItems());
+    mediaFileList.setOrientationAccordingExif(getSelectionModel().getSelectedItems());
+    mediaContentView.showRotationAndFlippingPreview();
+    statusBar.showMessage(MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), imageFilesCount));
   }
 
   private ObservableList<Integer> getCopyOfSelectedIndicesSortedAndUnique() {

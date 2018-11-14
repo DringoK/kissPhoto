@@ -53,24 +53,31 @@ import java.awt.*;
  * todo wenn nicht Vollbild, dann bei Cursor hoch/runter Fokus auf Tabelle
  * todo Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
  * todo Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
- * todo Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch l&ouml;schen k&ouml;nnen
+ * todo Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch löschen können
+ * todo Fokus auf Hauptfenster nach Dialog (falls F5/Multimonitor)
+ * todo Drehen auf JPG begrenzen
+ * todo Verzeichniswechsel Str-2 1346FT-View IndexOut of bounds 7>7
+ * todo Verzeichniswechsel: Dateien:0
+ * todo Strg-1: Erneut Öffnen (Bild behalten)
  * planned features:
  * ======================
  * todo JPG drehen. Z.B. http://mediachest.sourceforge.net/mediautil/
- * todo Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN hei&szlig;en, sonst Warnung
- * todo EXIF anzeigen
+ * todo Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN heißen, sonst Warnung
+ * todo EXIF anzeigen über metadata-extractor, schreiben evtl über http://sourceforge.net/projects/image-tagger/
  * todo EXIF-Info über Umbenennen (=ändern!!!) in Dateinamen etc. reinholen
  * todo Datum ändern, auch EXIF
  * todo alle EXIF ändern
  * nice to haves:
  * ===============
- * <p>
+ * todo doch nochmal schauen, ob die Updates vom FileWatcher nicht verwendet werden können. Siehe JavaFX Task: A Task Which Returns Partial Results
  * todo 2014-05-24: auto column width using field.setPrefWidth(TextUtils.computeTextWidth(field.getFont(), field.getText(), 0.0D) + 10);
  * todo Nice to have: Undo-History
- * <p>
+ * known bugs: (without solution)
+ * ==============================
+ * when an image is rotated but not yet saved PhotoViewer rotates it's ImageView but does not use all the available space (ok again when saved an ImageView is not rotated)
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.8.16"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.18.09"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;

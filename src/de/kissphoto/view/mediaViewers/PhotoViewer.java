@@ -1,11 +1,13 @@
 package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.helper.I18Support;
+import de.kissphoto.model.ImageFile;
 import de.kissphoto.view.MediaContentView;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -32,12 +34,14 @@ import java.util.ResourceBundle;
  * @modified: 2014-06-02: mouse shape improved and animated (closedHand/openHand)
  * @modified: 2016-11-06: ViewportZoomerMover extracted for all viewport zooming and moving operations (now identical to movieViewer's)
  * @modified: 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
+ * @modified: 2018-10-11: Support preview of rotation/mirroring
  */
 public class PhotoViewer extends ImageView implements ZoomableViewer {
   private static ResourceBundle language = I18Support.languageBundle;
 
-  private MediaContentView mediaContentView;
+  private MediaContentView mediaContentView;  //link back to the containing Pane
   private ViewportZoomer viewportZoomer;
+  private ImageFile imageFile; //remember link to the file object to access current rotation
 
   /**
    * constructor to initialize the viewer
@@ -47,8 +51,9 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
     this.mediaContentView = contentView;
     setPreserveRatio(true);
 
-    fitHeightProperty().bind(mediaContentView.heightProperty());
-    fitWidthProperty().bind(mediaContentView.widthProperty());
+    //binding sizes is not automatically when placed in a StackPane (mediaStackPane is a StackPane) only centering is automatic!
+    fitHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
+    fitWidthProperty().bind(mediaContentView.getMediaStackPaneWidthProperty());
 
     setFocusTraversable(true);
 
@@ -62,16 +67,23 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
 
   //----------------------- Implement ZoomableViewer Interface ----------------------------
 
+  /**
+   * gets visible width of displayed image
+   */
+
   @Override
   public double getMediaWidth() {
     return getImage().getWidth();
   }
 
+  /**
+   * gets visible height of displayed image
+   */
+
   @Override
   public double getMediaHeight() {
     return getImage().getHeight();
   }
-
   @Override
   public void zoomToFit() {
     viewportZoomer.zoomToFit();
@@ -142,5 +154,14 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
       }
     });
   }
+
+  public void setImageFile(ImageFile imageFile) {
+    this.imageFile = imageFile;
+    Image image = (Image) imageFile.getCachedMediaContent();
+    if (image == null) image = (Image) imageFile.getMediaContent();  //in undelete dialog don't use cache!
+
+    setImage(image);
+  }
+
 
 }

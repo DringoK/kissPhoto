@@ -1,12 +1,16 @@
 package de.kissphoto.view;
 
 import de.kissphoto.helper.I18Support;
+import de.kissphoto.model.ImageFile;
+import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.model.MediaFile;
+import de.kissphoto.model.MediaFileRotater;
 import de.kissphoto.view.mediaViewers.AttributesViewer;
 import de.kissphoto.view.mediaViewers.MovieViewer;
 import de.kissphoto.view.mediaViewers.OtherViewer;
 import de.kissphoto.view.mediaViewers.PhotoViewer;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -47,6 +51,7 @@ import java.util.ResourceBundle;
  * @modified: 2017-10-08 all viewers' size is bound now to MediaContentView's size, so that zooming works correctly.
  *                       zooming is resetted now whenever the media changes (handing over zooming is "too clever" i.e. not "KISS"
  *                       Double Click switches Full-Screen Mode
+ * @modified: 2018-10-21 Support rotation of media >in principle< i.e. if currentMediaFile.canRotate() by rotating mediaStackPane
  */
 public class MediaContentView extends Pane {
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
@@ -67,9 +72,13 @@ public class MediaContentView extends Pane {
   //private AudioViewer...      //todo
   private AttributesViewer attrViewer = new AttributesViewer(this);
 
+  StackPane mediaStackPane = new StackPane(); //the viewers lie one above the other, so fading will (in future) be possible even from photo to video clip ...
+
   //every viewer has these items. For enabling/disabling keep a reference to all of them
   static private ObservableList<MenuItem> showOnNextScreenItems = FXCollections.observableArrayList();
   static private ObservableList<MenuItem> fullScreenItems = FXCollections.observableArrayList();
+
+  ImageFileRotater.RotateOperation currentRotation = MediaFileRotater.RotateOperation.ROTATE0;
 
 
   /**
@@ -93,32 +102,24 @@ public class MediaContentView extends Pane {
 
   private void init(Stage owner) {
     this.owner = owner;
-    //width/height-binding of the pane is no necessary because it lies in a splitPane which does binding automatically
+    //width/height-binding of the pane is not necessary because it lies in a splitPane which does binding automatically
     setStyle("-fx-background-color: black;");
 
     attrViewer.setVisible(false); //initially attributes are not visible
 
     //--all MediaViewers are collected in a StackPane
-    StackPane stackPane = new StackPane(); //the viewers lie one above the other, so fading will (in future) be possible even from photo to video clip ...)
-    stackPane.prefHeightProperty().bind(heightProperty());
-    stackPane.prefWidthProperty().bind(widthProperty());
+    mediaStackPane.prefHeightProperty().bind(heightProperty());
+    mediaStackPane.prefWidthProperty().bind(widthProperty());
+    mediaStackPane.setStyle("-fx-background-color: blue;");
 
+    //note: binding sizes not necessary because binding ist automatic with StackPane (mediaStackPane is a StackPane)
     photoViewer = new PhotoViewer(this);
-    photoViewer.fitHeightProperty().bind(heightProperty());
-    photoViewer.fitWidthProperty().bind(widthProperty());
-
     movieViewer = new MovieViewer(this);
-    movieViewer.prefHeightProperty().bind(heightProperty());
-    movieViewer.prefWidthProperty().bind(widthProperty());
-
     otherViewer = new OtherViewer(this);
-    otherViewer.prefHeightProperty().bind(heightProperty());
-    otherViewer.prefWidthProperty().bind(widthProperty());
-
-    stackPane.getChildren().addAll(photoViewer, movieViewer, otherViewer);
+    mediaStackPane.getChildren().addAll(photoViewer, movieViewer, otherViewer);
 
     //add contents to mediaContentView
-    getChildren().addAll(stackPane, attrViewer); //the attr. Viewer lies over all other viewers, but not in stack Pane (because it would fill the whole screen :-(
+    getChildren().addAll(mediaStackPane, attrViewer); //the attr. Viewer lies over all other viewers, but not in stack Pane (because it would fill the whole screen :-(
 
     setOnScroll(new EventHandler<ScrollEvent>() {
       @Override
@@ -246,6 +247,24 @@ public class MediaContentView extends Pane {
   }
 
   /**
+   * for binding viewers size to mediaStackPane
+   *
+   * @return height property of mediaStackPane
+   */
+  public ReadOnlyDoubleProperty getMediaStackPaneHeightProperty() {
+    return mediaStackPane.prefHeightProperty();
+  }
+
+  /**
+   * for binding viewers size to mediaStackPane
+   *
+   * @return width property of mediaStackPane
+   */
+  public ReadOnlyDoubleProperty getMediaStackPaneWidthProperty() {
+    return mediaStackPane.prefWidthProperty();
+  }
+
+  /**
    * call this before setting mediaContentView to null (e.g. when ending full screen mode)
    * e.g. to cleanUp all playerViewers
    */
@@ -257,6 +276,92 @@ public class MediaContentView extends Pane {
   public void setFileTableView(FileTableView fileTableView) {
 
     this.fileTableView = fileTableView;
+  }
+
+  /**
+   *
+   */
+
+  private void changeWidthHeightBindingIfNecessary() {
+    //if currently ROTATE0 or ROTATE180 but currentMediaFile's rotation is ROTATE90 or ROTATE270 then switch binding of height and width
+    if ((currentRotation == MediaFileRotater.RotateOperation.ROTATE0 ||
+      currentRotation == MediaFileRotater.RotateOperation.ROTATE180)
+      && (currentMediaFile.getRotateOperation() == MediaFileRotater.RotateOperation.ROTATE90 ||
+      currentMediaFile.getRotateOperation() == MediaFileRotater.RotateOperation.ROTATE270)
+    ) {
+      mediaStackPane.prefHeightProperty().unbind();
+      mediaStackPane.prefWidthProperty().unbind();
+      mediaStackPane.prefHeightProperty().bind(widthProperty());
+      mediaStackPane.prefWidthProperty().bind(heightProperty());
+    }
+
+    //if currently ROTATE90 or ROTATE270 but currentMediaFile's rotation is ROTATE0 or ROTATE180 then restore binding of height and width
+    if ((currentRotation == MediaFileRotater.RotateOperation.ROTATE90 ||
+      currentRotation == MediaFileRotater.RotateOperation.ROTATE270)
+      && (currentMediaFile.getRotateOperation() == MediaFileRotater.RotateOperation.ROTATE0 ||
+      currentMediaFile.getRotateOperation() == MediaFileRotater.RotateOperation.ROTATE180)
+    ) {
+      mediaStackPane.prefHeightProperty().unbind();
+      mediaStackPane.prefWidthProperty().unbind();
+      mediaStackPane.prefHeightProperty().bind(heightProperty());
+      mediaStackPane.prefWidthProperty().bind(widthProperty());
+    }
+  }
+
+  /**
+   * perform unsaved/planned transformation as a preview by rotating/flipping the mediaStackPane
+   */
+  public void showRotationAndFlippingPreview() {
+    if (currentMediaFile.getRotateOperation() != currentRotation) {  //do only rotate the view if rotation has changed
+      changeWidthHeightBindingIfNecessary();
+
+      mediaStackPane.translateXProperty().unbind();
+      mediaStackPane.translateYProperty().unbind();
+
+      switch (currentMediaFile.getRotateOperation()) {
+        case ROTATE0:
+          mediaStackPane.setRotate(0);
+          //top left of media is top left of mediaContentView
+          mediaStackPane.setTranslateX(0);
+          mediaStackPane.setTranslateY(0);
+          break;
+
+        case ROTATE90:
+          mediaStackPane.setRotate(90);
+          //top left of media is top right of mediaContentView
+          //mediaStackPane.translateXProperty().bind(widthProperty().divide(2));
+          //mediaStackPane.translateYProperty().bind(heightProperty().divide(2));
+          break;
+
+        case ROTATE180:
+          mediaStackPane.setRotate(180);
+          //top left of media is top left of mediaContentView
+          mediaStackPane.setTranslateX(0);
+          mediaStackPane.setTranslateY(0);
+          //top left of media is bottom right of mediaContentView
+          //translateXProperty().bind(widthProperty());
+          //translateYProperty().bind(heightProperty());
+          break;
+
+        case ROTATE270:
+          mediaStackPane.setRotate(270);
+          mediaStackPane.setTranslateX(0);
+          mediaStackPane.setTranslateY(0);
+          //top left of media is bottom left of mediaContentView
+          //translateXProperty().bind(heightProperty());
+          //setTranslateY(0);
+          break;
+      }
+      currentRotation = currentMediaFile.getRotateOperation();
+
+    }
+
+    //finally execute flipping
+    if (currentMediaFile.isFlippedHorizontally()) mediaStackPane.setScaleX(-1);
+    else setScaleX(1);
+
+    if (currentMediaFile.isFlippedVertically()) mediaStackPane.setScaleY(-1);
+    else setScaleY(1);
   }
 
   /**
@@ -284,7 +389,7 @@ public class MediaContentView extends Pane {
       if (currentMedia != null) {
         if (currentMedia.getClass() == Image.class) {
           //-------- if photo ---------
-          photoViewer.setImage((Image) currentMedia);
+          photoViewer.setImageFile((ImageFile) mediaFile);
           photoViewer.setVisible(true);
           movieViewer.setVisible(false);
           otherViewer.setVisible(false);
@@ -317,6 +422,8 @@ public class MediaContentView extends Pane {
       movieViewer.setVisible(false);
       otherViewer.setVisible(true);
     }
+
+    showRotationAndFlippingPreview();
 
     //maintain the fullScreenStage's media also, if it is displayed currently
     if (fullScreenStage != null && fullScreenStage.isShowing()) {

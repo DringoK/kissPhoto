@@ -1,10 +1,14 @@
 package de.kissphoto.model;
 
+
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
+import de.ingo.writableMetadata.WritableEntry;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -12,13 +16,15 @@ import java.nio.file.Path;
 /**
  * This is a MediaFile that can have tags
  * I use metadata-extractor to read the tags
+ * see: https://github.com/drewnoakes/metadata-extractor/releases
+ *
  *
  * @Author: ikreuz
  * @Date: 2014-06-10
- * @modified:
+ * @modified: 2017-10-28 updated to latest meatadata-extractor version. Now I use source instead of jar because drew noaks does not deliver jar for latest version
  */
 public abstract class MediaFileTagged extends MediaFile {
-
+  ObservableList<WritableEntry> exifChanges = FXCollections.observableArrayList();
   Metadata metadata;                 //see http://code.google.com/p/metadata-extractor/wiki/GettingStarted
 
   protected MediaFileTagged(Path file, MediaFileList parent) {
@@ -72,4 +78,20 @@ public abstract class MediaFileTagged extends MediaFile {
     else
       return null;
   }
+
+  /**
+   * sets the orientation in EXIF base directory (without affecting the image data)
+   * This method just puts the update to the list of changes
+   * All changes can be written to the file using safeExifChanges()
+   *
+   * @param orientation
+   */
+  public void setExifOrientation(int orientation) {
+
+  }
+
+  public void saveExifChanges() {
+
+  }
+
 }
