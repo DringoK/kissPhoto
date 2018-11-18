@@ -190,9 +190,9 @@ public class ImageFile extends MediaFileTagged {
     int orientation = 1;
     try {
       orientation = jpegDirectory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
-      System.out.println("Orientation:" + orientation);
+      //System.out.println("Orientation:" + orientation);
     } catch (MetadataException me) {
-      System.out.println("Orientation Exception: " + me);
+      //System.out.println("Orientation Exception: " + me);
       orientation = -1;
     }
     return orientation;
@@ -255,5 +255,6 @@ public class ImageFile extends MediaFileTagged {
         flipVertically = false;
         break;
     }
+    updateStatusProperty();
   }
 }

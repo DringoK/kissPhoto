@@ -119,7 +119,7 @@ public class FileHistory {
   private void putRecentlyOpenedListIntoMenu() {
     MenuItem item;
     mainMenuItem.getItems().clear();
-    int i = 1;
+    int i = 0;
     for (Path entry : recentlyOpenedList) {
       Path p = entry.getParent().getFileName(); //get the parent directory
       if (p == null)
@@ -127,7 +127,7 @@ public class FileHistory {
       else
         item = new MenuItem("..." + File.separator + p.getFileName().toString() + File.separator); //only ... + containing directory
 
-      if (i < 10)  //add accelerator (ctrl+1, ctrl+2, ...) only for the first 9 (because there are no more number keys ;-)
+      if (i < 10)  //add accelerator (ctrl+0, ctrl+1, ...) only for the first 10 (because there are not more number keys ;-)
         item.setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(i)), KeyCombination.CONTROL_DOWN));
 
       item.setOnAction(new EventHandler<ActionEvent>() {

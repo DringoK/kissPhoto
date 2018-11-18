@@ -1,7 +1,7 @@
 package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.view.MediaContentView;
-import de.kissphoto.view.mediaViewers.helper.PlayerViewer;
+import de.kissphoto.view.helper.PlayerViewer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -53,9 +53,8 @@ public class MovieViewer extends PlayerViewer implements ZoomableViewer {
     //note: playerControls defined and initialized in PlayerViewer (fatherclass)
     getChildren().addAll(mediaView, playerControls);
 
-    //binding sizes is not automatically when placed in a StackPane (mediaStackPane is a StackPane) only centering is automatic!
-    mediaView.fitHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
-    mediaView.fitWidthProperty().bind(mediaContentView.getMediaStackPaneWidthProperty());
+    mediaView.fitHeightProperty().bind(prefHeightProperty());
+    mediaView.fitWidthProperty().bind(prefWidthProperty());
 
     setFocusTraversable(true);
 

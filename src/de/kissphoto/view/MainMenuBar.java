@@ -8,7 +8,7 @@ import de.kissphoto.view.dialogs.AboutDialog;
 import de.kissphoto.view.dialogs.ExternalEditorsDialog;
 import de.kissphoto.view.dialogs.LanguageDialog;
 import de.kissphoto.view.dialogs.WriteFolderStructureCSVDialog;
-import de.kissphoto.view.mediaViewers.helper.PlayerViewer;
+import de.kissphoto.view.helper.PlayerViewer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -38,6 +38,7 @@ import java.util.ResourceBundle;
  * @modified: 2017-10-15 see also PlayerViewer: handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
  * @modified: 2017-10-21 FileHistory-Support added and reopen removed (because equal to ctrl-1)
  * @modified: 2017-10-29 Flipping and Rotation of JPEG-Images added (imageMenu)
+ * @modified: 2018-11-17 Image menu only active if an image is selected
  */
 public class MainMenuBar extends MenuBar {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -73,8 +74,6 @@ public class MainMenuBar extends MenuBar {
     this.versionString = versionString;
     this.globalSettings = globalSettings;
 
-    this.prefWidthProperty().bind(primaryStage.widthProperty());
-
     createFileMenu();
     createEditMenu();
     createViewMenu();
@@ -82,6 +81,8 @@ public class MainMenuBar extends MenuBar {
     createPlayerMenu();
     createExtrasMenu();
     createHelpMenu();
+    //imageMenu is active only if an image is selected, i.w. if the PhotoViewer is visible
+    imageMenu.disableProperty().bind(mediaContentView.getPhotoViewer().visibleProperty().not());
   }
 
   /**

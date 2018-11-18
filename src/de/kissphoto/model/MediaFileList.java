@@ -2,6 +2,7 @@ package de.kissphoto.model;
 
 import de.kissphoto.ctrl.CounterPositionHeuristic;
 import de.kissphoto.helper.I18Support;
+import de.kissphoto.helper.PathHelpers;
 import de.kissphoto.helper.StringHelper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,7 +18,7 @@ import java.util.ResourceBundle;
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br>
  * This list reflects a directory of the hard disc interpreted as a list of MediaFiles
  * <ul>
- * <li>It is a list of MediaFile objects.
+ * <li>It contains a list of MediaFile objects.
  * <li>It uses a heuristic to guess which number of the file names is the counting one ("the nth")
  * <li>It supports auto numbering of the mediaFiles
  * <li>and with that also changing the order in the folder (when viewed sorted for filename later on with any tool)
@@ -112,13 +113,8 @@ public class MediaFileList {
     if (fileOrFolder == null) {
       return language.getString(NO_SUCH_FILE_OR_DIRECTORY);  //------>preliminary exit
     }
+    folder = PathHelpers.extractFolder(fileOrFolder);
 
-    //determine folder
-    if (Files.isDirectory(fileOrFolder)) {
-      folder = fileOrFolder;
-    } else {
-      folder = fileOrFolder.getParent();
-    }
     if (folder == null || !Files.exists(folder))
       return MessageFormat.format(language.getString(NO_SUCH_FILE_OR_DIRECTORY), fileOrFolder.toAbsolutePath());  //------>preliminary exit
 

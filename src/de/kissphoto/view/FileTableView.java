@@ -5,6 +5,7 @@ import de.kissphoto.ctrl.FileChangeWatcher;
 import de.kissphoto.ctrl.FileChangeWatcherEventListener;
 import de.kissphoto.helper.GlobalSettings;
 import de.kissphoto.helper.I18Support;
+import de.kissphoto.helper.PathHelpers;
 import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MediaFileList;
@@ -62,6 +63,7 @@ import java.util.ResourceBundle;
  * 2017-10-22 file-open history (Open recent) support
  * 2017-10-24 statistics in statusBar support
  * 2017-10-30 saving uses ProgressBar now because saving of rotated images can last long...
+ * 2018-11-17 OpenRecentFile(0) now keeps the selection (like ReopenCurrentFolder earlier), keep caret position when moving up/down (bugfix)
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
@@ -135,7 +137,6 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   //----- link to MenuItems to enable/disable
   private MenuItem unDeleteMenuItem = null;  //Main menu will pass a link to it's unDeleteMenuItem, so deletion routines can control if disabled or not
   private MenuItem pasteMenuItem = null;     //Main menu will pass a link to it's pasteMenuItem, so copy/cut routines can control if disabled or not
-  private MenuItem reOpenMenuItem = null;    //Main menu will pass a link to it's reOpenMenuItem, so open routine can control if disabled or not
 
   //----- Define Cell Factory and EditEventHandler
   //will be the identical for all columns (except statusColumn, see FileTableView constructor)
@@ -143,9 +144,6 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   CellEditCommitEventHandler cellEditCommitEventHandler = new CellEditCommitEventHandler();
 
   //----- Enable keeping Cursor-Postion while editing when chaning line
-  private static final int CARET_POS_INVALID = -1;
-
-  private int lastCaretPosition = CARET_POS_INVALID; //negative = reserved values, zero or positive: last position of caret in InputField while editing
   private boolean selectSearchResultOnNextStartEdit = false;  //during SearchNext searchRec Cursor needs to be set on StartEdit
 
   private boolean renameDialogActive = false;
@@ -622,35 +620,50 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    * if the file-object is a folder then the folder is opened and the first file is focused
    *
    * @param fileOrFolder file object representing a file or folder
-   * @param askForUnsavedChanges if true and ansaved changes are pending then a dialog opens, if false the caller must care itself for it
+   * @param askForUnsavedChanges if true and unsaved changes are pending then a dialog opens, if false the caller must care itself for it
    */
   public synchronized void openFolder(final Path fileOrFolder, boolean askForUnsavedChanges) {
-    boolean openCanContinue = true;
-    if (askForUnsavedChanges)
-      openCanContinue = askIfContinueUnsavedChanges();
+    if (!askForUnsavedChanges || askIfContinueUnsavedChanges()) {
+      //detect a reopen
+      //if current directory is same as fileOrFolder change it to the current selection
+      Path newFileOrFolder = null;
 
-    if (openCanContinue) {
+      boolean reopened = (mediaFileList.getCurrentFolder() != null) && mediaFileList.getCurrentFolder().equals(PathHelpers.extractFolder(fileOrFolder)); //same folder
+      if (reopened)
+        newFileOrFolder = ((MediaFile) getFocusModel().getFocusedItem()).getFileOnDisk(); //--> reopen current selection
+      else
+        newFileOrFolder = fileOrFolder;  //normal open
+
+      final FileTableView fileTableView = this; //for handing over to the runLater event
+
       final Scene primaryScene = primaryStage.getScene();
       if (primaryScene != null)
         primaryScene.setCursor(Cursor.WAIT); //can be null during openInitialFolder() called from main()
-      final FileTableView fileTableView = this; //for handing over to the runLater event
 
       statusBar.showMessage(MessageFormat.format(language.getString("trying.to.open.0"), fileOrFolder.toString()));
 
-      String errMsg = mediaFileList.openFolder(fileOrFolder);
+
+      String errMsg = "";
       try {
         getSelectionModel().clearSelection();  //prevent the selection listener from doing nonsense while loading
+        errMsg = mediaFileList.openFolder(newFileOrFolder);
+
         if (errMsg.length() == 0) {
           primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
-          statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
+          if (reopened)
+            statusBar.showMessage(MessageFormat.format(language.getString("0.reopend"), mediaFileList.getCurrentFolderName()));
+          else
+            statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
+
+          statusBar.showFilesNumber(mediaFileList.getFileList().size());
           numberingOffset = 1;  //determines with which number renumbering of the list starts.
           numberingStepSize = 1;
           numberingDigits = 0;   //zero is [auto]
 
           setItems(mediaFileList.getFileList());
-          selectRowByPath(fileOrFolder);
+          selectRowByPath(newFileOrFolder);
 
-          fileHistory.putOpenedFileToHistory(fileOrFolder);
+          fileHistory.putOpenedFileToHistory(newFileOrFolder);
         }
         registerStatisticsPanel();
 
@@ -666,7 +679,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       } finally {
         if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
         if (errMsg.length() > 0) {
-          statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), fileOrFolder.toString()));
+          statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), newFileOrFolder.toString()));
         }
       }
     }
@@ -756,7 +769,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
           int errorCount = savingTask.getValue();
 
           if (errorCount > 0) {
-            statusBar.showError(errorCount + " " + language.getString("errors.occurred.during.saving.check.status.column.for.details") + ": " + MediaFile.STATUSFLAGS_HELPTEXT);
+            statusBar.showError(MessageFormat.format(language.getString("errors.occurred.during.saving.check.status.column.for.details"), getUnsavedChanges(), MediaFile.STATUSFLAGS_HELPTEXT));
           } else {
             statusBar.showMessage(language.getString("changes.successfully.written.to.disk"));
           }
@@ -1070,6 +1083,18 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   }
 
   /**
+   * @return the mediaFile which is one line above the selected mediaFile or null if current media file is the first
+   */
+  public MediaFile getAboveMediaFile() {
+    int selection = getSelectionModel().getSelectedIndex();
+
+    if (selection == 0)
+      return null;
+    else
+      return mediaFileList.getFileList().get(selection - 1);
+  }
+
+  /**
    * auto fill from first selected lines to the other selected lines
    *
    * if multiple lines are selected
@@ -1195,20 +1220,6 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     statusBar.showMessage(MessageFormat.format(language.getString("0.file.s.marked.for.deletion.files.can.be.recovered.using.edit.undelete.until.next.save"), deletionList.size()));
     if (unDeleteMenuItem != null)
       unDeleteMenuItem.setDisable(mediaFileList.getDeletedFileList().size() < 1); //enable Menu for undeletion if applicable
-  }
-
-  /**
-   * show a dialog where the user can select
-   * flipping
-   * rotating images
-   * or orient according to exif orientation
-   * Only Images are affected all other selected files are ignored
-   */
-  public synchronized void transformSelectedImagesWithDialog() {
-    //get number of images in selection
-    int imageFilesCount = mediaFileList.getImageFileCount(getSelectionModel().getSelectedItems());
-    //show dialog
-    //perform transformation
   }
 
   /**
@@ -1368,6 +1379,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       if (newNumber.intValue() >= 0) { //only if selection is valid
         fileTableView.lastSelection = fileTableView.mediaFileList.getFileList().get(newNumber.intValue());
         fileTableView.mediaContentView.setMedia(fileTableView.mediaFileList.getFileList().get(newNumber.intValue()), null);
+
       } else {
         if (fileTableView.mediaFileList.getFileList().size() <= 0) {
           //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
@@ -1620,10 +1632,6 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     this.pasteMenuItem = pasteMenuItem;
   }
 
-  public void setReOpenMenuItem(MenuItem reOpenMenuItem) {
-    this.reOpenMenuItem = reOpenMenuItem;
-  }
-
   public FileHistory getFileHistory() {
     return fileHistory;
   }
@@ -1672,23 +1680,6 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   //how many lines are currently in the table
   public int getRowCount() {
     return mediaFileList.getFileList().size();
-  }
-
-  //used by Cell to store last Cursor-Position of this TableView when editing and changing lines
-  public int getLastCaretPosition() {
-    return lastCaretPosition;
-  }
-
-  public void setLastCaretPosition(int lastCaretPosition) {
-    this.lastCaretPosition = lastCaretPosition;
-  }
-
-  public boolean isLastCaretPositionValid() {
-    return (lastCaretPosition != CARET_POS_INVALID);
-  }
-
-  public void invalidateLastCaretPosition() {
-    lastCaretPosition = CARET_POS_INVALID;
   }
 
   //used by Cell to determine if startEdit was called by Searching-Routing and therefore Searchresult should be highlighted

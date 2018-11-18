@@ -5,12 +5,12 @@ import de.kissphoto.model.ImageFile;
 import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MediaFileRotater;
+import de.kissphoto.view.helper.RotatablePaneLayouter;
 import de.kissphoto.view.mediaViewers.AttributesViewer;
 import de.kissphoto.view.mediaViewers.MovieViewer;
 import de.kissphoto.view.mediaViewers.OtherViewer;
 import de.kissphoto.view.mediaViewers.PhotoViewer;
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -49,8 +49,8 @@ import java.util.ResourceBundle;
  * @modified: 2014-06-09 moviePlayer support added
  * @modified: 2016-11-06 FullScreenStage moved to separate class (was inner class before)
  * @modified: 2017-10-08 all viewers' size is bound now to MediaContentView's size, so that zooming works correctly.
- *                       zooming is resetted now whenever the media changes (handing over zooming is "too clever" i.e. not "KISS"
- *                       Double Click switches Full-Screen Mode
+ * zooming is resetted now whenever the media changes (handing over zooming is "too clever" i.e. not "KISS"
+ * Double Click switches Full-Screen Mode
  * @modified: 2018-10-21 Support rotation of media >in principle< i.e. if currentMediaFile.canRotate() by rotating mediaStackPane
  */
 public class MediaContentView extends Pane {
@@ -108,18 +108,24 @@ public class MediaContentView extends Pane {
     attrViewer.setVisible(false); //initially attributes are not visible
 
     //--all MediaViewers are collected in a StackPane
-    mediaStackPane.prefHeightProperty().bind(heightProperty());
-    mediaStackPane.prefWidthProperty().bind(widthProperty());
-    mediaStackPane.setStyle("-fx-background-color: blue;");
-
-    //note: binding sizes not necessary because binding ist automatic with StackPane (mediaStackPane is a StackPane)
     photoViewer = new PhotoViewer(this);
+    photoViewer.fitWidthProperty().bind(mediaStackPane.widthProperty());
+    photoViewer.fitHeightProperty().bind(mediaStackPane.heightProperty());
     movieViewer = new MovieViewer(this);
+    movieViewer.prefWidthProperty().bind(mediaStackPane.widthProperty());
+    movieViewer.prefHeightProperty().bind(mediaStackPane.heightProperty());
     otherViewer = new OtherViewer(this);
     mediaStackPane.getChildren().addAll(photoViewer, movieViewer, otherViewer);
 
+    //the layouter can perform mediaStackPane.resize() even if it is rotated
+    //centering/resizing is performed without further binding of its content
+    RotatablePaneLayouter rotatablePaneLayouter = new RotatablePaneLayouter(mediaStackPane);
+    //but the layouter has to be bound to its father (this)
+    rotatablePaneLayouter.prefHeightProperty().bind(heightProperty());
+    rotatablePaneLayouter.prefWidthProperty().bind(widthProperty());
+
     //add contents to mediaContentView
-    getChildren().addAll(mediaStackPane, attrViewer); //the attr. Viewer lies over all other viewers, but not in stack Pane (because it would fill the whole screen :-(
+    getChildren().addAll(rotatablePaneLayouter, attrViewer); //the attr. Viewer lies over all other viewers, but not in stack Pane (because it would fill the whole screen :-(
 
     setOnScroll(new EventHandler<ScrollEvent>() {
       @Override
@@ -247,24 +253,6 @@ public class MediaContentView extends Pane {
   }
 
   /**
-   * for binding viewers size to mediaStackPane
-   *
-   * @return height property of mediaStackPane
-   */
-  public ReadOnlyDoubleProperty getMediaStackPaneHeightProperty() {
-    return mediaStackPane.prefHeightProperty();
-  }
-
-  /**
-   * for binding viewers size to mediaStackPane
-   *
-   * @return width property of mediaStackPane
-   */
-  public ReadOnlyDoubleProperty getMediaStackPaneWidthProperty() {
-    return mediaStackPane.prefWidthProperty();
-  }
-
-  /**
    * call this before setting mediaContentView to null (e.g. when ending full screen mode)
    * e.g. to cleanUp all playerViewers
    */
@@ -278,102 +266,46 @@ public class MediaContentView extends Pane {
     this.fileTableView = fileTableView;
   }
 
-  /**
-   *
-   */
-
-  private void changeWidthHeightBindingIfNecessary() {
-    //if currently ROTATE0 or ROTATE180 but currentMediaFile's rotation is ROTATE90 or ROTATE270 then switch binding of height and width
-    if ((currentRotation == MediaFileRotater.RotateOperation.ROTATE0 ||
-      currentRotation == MediaFileRotater.RotateOperation.ROTATE180)
-      && (currentMediaFile.getRotateOperation() == MediaFileRotater.RotateOperation.ROTATE90 ||
-      currentMediaFile.getRotateOperation() == MediaFileRotater.RotateOperation.ROTATE270)
-    ) {
-      mediaStackPane.prefHeightProperty().unbind();
-      mediaStackPane.prefWidthProperty().unbind();
-      mediaStackPane.prefHeightProperty().bind(widthProperty());
-      mediaStackPane.prefWidthProperty().bind(heightProperty());
-    }
-
-    //if currently ROTATE90 or ROTATE270 but currentMediaFile's rotation is ROTATE0 or ROTATE180 then restore binding of height and width
-    if ((currentRotation == MediaFileRotater.RotateOperation.ROTATE90 ||
-      currentRotation == MediaFileRotater.RotateOperation.ROTATE270)
-      && (currentMediaFile.getRotateOperation() == MediaFileRotater.RotateOperation.ROTATE0 ||
-      currentMediaFile.getRotateOperation() == MediaFileRotater.RotateOperation.ROTATE180)
-    ) {
-      mediaStackPane.prefHeightProperty().unbind();
-      mediaStackPane.prefWidthProperty().unbind();
-      mediaStackPane.prefHeightProperty().bind(heightProperty());
-      mediaStackPane.prefWidthProperty().bind(widthProperty());
-    }
-  }
 
   /**
    * perform unsaved/planned transformation as a preview by rotating/flipping the mediaStackPane
    */
   public void showRotationAndFlippingPreview() {
-    if (currentMediaFile.getRotateOperation() != currentRotation) {  //do only rotate the view if rotation has changed
-      changeWidthHeightBindingIfNecessary();
+    switch (currentMediaFile.getRotateOperation()) {
+      case ROTATE0:
+        mediaStackPane.setRotate(0);
+        break;
 
-      mediaStackPane.translateXProperty().unbind();
-      mediaStackPane.translateYProperty().unbind();
+      case ROTATE90:
+        mediaStackPane.setRotate(90);
+        break;
 
-      switch (currentMediaFile.getRotateOperation()) {
-        case ROTATE0:
-          mediaStackPane.setRotate(0);
-          //top left of media is top left of mediaContentView
-          mediaStackPane.setTranslateX(0);
-          mediaStackPane.setTranslateY(0);
-          break;
+      case ROTATE180:
+        mediaStackPane.setRotate(180);
+        break;
 
-        case ROTATE90:
-          mediaStackPane.setRotate(90);
-          //top left of media is top right of mediaContentView
-          //mediaStackPane.translateXProperty().bind(widthProperty().divide(2));
-          //mediaStackPane.translateYProperty().bind(heightProperty().divide(2));
-          break;
-
-        case ROTATE180:
-          mediaStackPane.setRotate(180);
-          //top left of media is top left of mediaContentView
-          mediaStackPane.setTranslateX(0);
-          mediaStackPane.setTranslateY(0);
-          //top left of media is bottom right of mediaContentView
-          //translateXProperty().bind(widthProperty());
-          //translateYProperty().bind(heightProperty());
-          break;
-
-        case ROTATE270:
-          mediaStackPane.setRotate(270);
-          mediaStackPane.setTranslateX(0);
-          mediaStackPane.setTranslateY(0);
-          //top left of media is bottom left of mediaContentView
-          //translateXProperty().bind(heightProperty());
-          //setTranslateY(0);
-          break;
-      }
-      currentRotation = currentMediaFile.getRotateOperation();
-
+      case ROTATE270:
+        mediaStackPane.setRotate(270);
+        break;
     }
 
     //finally execute flipping
     if (currentMediaFile.isFlippedHorizontally()) mediaStackPane.setScaleX(-1);
-    else setScaleX(1);
+    else mediaStackPane.setScaleX(1);
 
     if (currentMediaFile.isFlippedVertically()) mediaStackPane.setScaleY(-1);
-    else setScaleY(1);
+    else mediaStackPane.setScaleY(1);
   }
 
   /**
    * put media/image into the appropriate viewer and set it visible (and all others invisible)
    * if null is passed all internal views are set to invisible (= nothing is shown)
-   *
+   * <p>
    * if a lastPlayerPos!=null has been passed and a Player-Media becomes active then
    * the Media is seeked to this position as soon as it is loaded (see PlayerViewer.setMedia())
    *
    * @param lastPlayerPos null=no effect, not null=try to seek the position for player media
-   * @param mediaFile is the mediaFile of which it's content is to be shown
-   *
+   * @param mediaFile     is the mediaFile of which it's content is to be shown
    */
   public void setMedia(MediaFile mediaFile, Duration lastPlayerPos) {
     //reset all probably playing players
@@ -393,6 +325,7 @@ public class MediaContentView extends Pane {
           photoViewer.setVisible(true);
           movieViewer.setVisible(false);
           otherViewer.setVisible(false);
+
 
           photoViewer.zoomToFit();
         } else if (currentMedia.getClass() == Media.class) {
@@ -430,6 +363,7 @@ public class MediaContentView extends Pane {
       fullScreenStage.getMediaContentView().setMedia(mediaFile, lastPlayerPos);
     }
   }
+
   /**
    * select previous line in fileTableView
    * the selectionChangeListener there will load the previous media then
@@ -807,7 +741,7 @@ public class MediaContentView extends Pane {
     });
 
     contextMenu.getItems().addAll(new SeparatorMenuItem(), showAttrItem, showPrefixItem, showCounterItem,
-        showExtensionItem, showFileDateItem);
+      showExtensionItem, showFileDateItem);
 
     contextMenu.setOnShowing(new EventHandler<WindowEvent>() {
       @Override
@@ -845,6 +779,10 @@ public class MediaContentView extends Pane {
 
   public MovieViewer getMovieViewer() {
     return movieViewer;
+  }
+
+  public PhotoViewer getPhotoViewer() {
+    return photoViewer;
   }
 
   public Stage getOwner() {

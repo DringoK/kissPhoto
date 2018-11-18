@@ -1,5 +1,15 @@
 package de.kissphoto.model;
-
+/**
+ * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br>
+ * Here is the task defined to save the changes. Especially because rotation of images might be slow
+ * (the complete file needs to be rewritten) saving might take a long time. This task ensures that the
+ * GUI will not freeze.
+ * The task communicates with the progress bar in the status bar and respects cancelling
+ *
+ * @author: Dr. Ingo Kreuz
+ * @date: 2018-09-22
+ * @modified: 2018-11-17 housekeeping
+ */
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

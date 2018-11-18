@@ -1,6 +1,6 @@
 package de.kissphoto;
 
-import de.kissphoto.view.mediaViewers.helper.RotatablePaneLayouter;
+import de.kissphoto.view.helper.RotatablePaneLayouter;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -10,6 +10,13 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+/**
+ * example program for RotatablePaneLayouter. I ve posted this solution on StackOverflow:
+ * https://stackoverflow.com/questions/53109791/fitting-rotated-imageview-into-application-window-scene
+ *
+ * @author Dr. Ingo Kreuz
+ * @date 2018 11 17
+ */
 public class RotationTest extends Application {
 
   public static void main(String[] args) {

@@ -34,7 +34,7 @@ import java.awt.*;
  * <li>auto numbering: file order can be changed, file numbering will follow
  * <li>file date maintaining
  * <li>mass renaming for filenames, EXIF-Info and time-stamps
- * <li>runnable on all PC platforms which support Java
+ * <li>runnable on all PC platforms which support JavaFX
  * <li>The viewer treats movie clips like moving photos (like in Harry Potter ;-)
  * </ul>
  *
@@ -43,6 +43,7 @@ import java.awt.*;
  * @modified: 2014-04-29
  * @modified: 2014-07-05 loading initialFileOrFolder after stage.show() to show messages during slow network access
  * @modified: 2017-10-02 main window is moved into visible part of screen after startup (e.g. if resolution changed or 2nd screen has been disabled)
+ * @modified: 2018-11-17 rotation of images is now supported, improved inCell-editing (caretPosition, Tab-Support)
  * <p>
  * Bugs:
  * ======================
@@ -55,13 +56,9 @@ import java.awt.*;
  * todo Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
  * todo Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch löschen können
  * todo Fokus auf Hauptfenster nach Dialog (falls F5/Multimonitor)
- * todo Drehen auf JPG begrenzen
- * todo Verzeichniswechsel Str-2 1346FT-View IndexOut of bounds 7>7
  * todo Verzeichniswechsel: Dateien:0
- * todo Strg-1: Erneut Öffnen (Bild behalten)
  * planned features:
  * ======================
- * todo JPG drehen. Z.B. http://mediachest.sourceforge.net/mediautil/
  * todo Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN heißen, sonst Warnung
  * todo EXIF anzeigen über metadata-extractor, schreiben evtl über http://sourceforge.net/projects/image-tagger/
  * todo EXIF-Info über Umbenennen (=ändern!!!) in Dateinamen etc. reinholen
@@ -70,14 +67,10 @@ import java.awt.*;
  * nice to haves:
  * ===============
  * todo doch nochmal schauen, ob die Updates vom FileWatcher nicht verwendet werden können. Siehe JavaFX Task: A Task Which Returns Partial Results
- * todo 2014-05-24: auto column width using field.setPrefWidth(TextUtils.computeTextWidth(field.getFont(), field.getText(), 0.0D) + 10);
  * todo Nice to have: Undo-History
- * known bugs: (without solution)
- * ==============================
- * when an image is rotated but not yet saved PhotoViewer rotates it's ImageView but does not use all the available space (ok again when saved an ImageView is not rotated)
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.18.09"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.18.11"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;

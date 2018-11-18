@@ -10,7 +10,6 @@ import javafx.scene.Node;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 
 /**
@@ -32,9 +31,13 @@ import javafx.scene.input.KeyEvent;
  *
  * @author Ingo
  * @date: 2016-11-04
- * @modified:
+ * @modified: 2018-11-17 Ctrl-U now copies information from the line above in edit mode,
+ *                       (Shift) TAB moves to next (prev) column
+ *                       fixed: keeping caret position fixed
  */
 class TextFieldCell extends TableCell<MediaFile, String> {
+  static int lastCaretPosition = 0; //this is to save the caretPosition when moving up/down lines in editMode
+  static boolean lastCaretPositionValid = false;
   RestrictedInputField inputField;
   Boolean escPressed = false;
   Boolean stayInEditMode = false; //will be true while moving from one line to the next with cursor-keys up/down
@@ -62,7 +65,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
         positionCaretOrSelect();
 
         ((FileTableView) getTableColumn().getTableView()).resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
-        ((FileTableView) getTableColumn().getTableView()).invalidateLastCaretPosition(); //also consume last caret position
+        lastCaretPositionValid = false; //also consume last caret position
       }
     });
   }
@@ -78,10 +81,10 @@ class TextFieldCell extends TableCell<MediaFile, String> {
         inputField.selectAll();
       ((FileTableView) getTableColumn().getTableView()).getPrimaryStage().requestFocus();  //put focus from dialog to main window
 
-      // or select same Caret Position than in last row
-    } else if (((FileTableView) getTableColumn().getTableView()).isLastCaretPositionValid()) {
+      // or select same Caret Position as in last row
+    } else if (lastCaretPositionValid) {
       inputField.deselect();
-      inputField.positionCaret(((FileTableView) getTableColumn().getTableView()).getLastCaretPosition()); //move to last text cursor position in the new row
+      inputField.positionCaret(lastCaretPosition); //move to last text cursor position in the new row
 
       //select all
     } else {
@@ -157,8 +160,8 @@ class TextFieldCell extends TableCell<MediaFile, String> {
     FileTableView fileTableView = (FileTableView) getTableColumn().getTableView();
 
     if ((editingColumn == fileTableView.getPrefixColumn()) ||
-        (editingColumn == fileTableView.getDescriptionColumn()) ||
-        (editingColumn == fileTableView.getExtensionColumn())) {
+      (editingColumn == fileTableView.getDescriptionColumn()) ||
+      (editingColumn == fileTableView.getExtensionColumn())) {
       inputField = new FileNameTextField(getString(), fileTableView.getPrimaryStage());
     } else if ((editingColumn == fileTableView.getCounterColumn())) {
       inputField = new NumberTextField(getString(), fileTableView.getPrimaryStage());
@@ -184,24 +187,140 @@ class TextFieldCell extends TableCell<MediaFile, String> {
       ;
     });
 
-    ((Node) inputField).setOnKeyPressed(new EventHandler<KeyEvent>() {
+    //use EventFilter instead of setOnKeyPressed. Otherwise Up/Dn would first execute their default behaviour (home/end) before onKeyPressed is fired
+    ((Node) inputField).addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
       @Override
       public void handle(KeyEvent event) {
-        if (event.getCode() == KeyCode.ENTER) { //Enter will commit edit and stay in line
-          commitEdit(inputField.getText());
-          fileTableView.invalidateLastCaretPosition();  //the next selection should not remember the old position of the text cursor
-          event.consume();
-        } else if (event.getCode() == KeyCode.ESCAPE) {
-          escPressed = true;
-          fileTableView.invalidateLastCaretPosition(); //the next selection should not remember the old position of the text cursor
-          //normal processing of ESC (CancelEdit) --> no event.consume()
-        } else if (event.getCode() == KeyCode.UP) {
-          moveCaretUpOrDown(true);
-          event.consume();
-        } else if (event.getCode() == KeyCode.DOWN) {
-          moveCaretUpOrDown(false);
-          event.consume();
+        switch (event.getCode()) {
+          case ENTER: //Enter will commit edit and stay in line
+            commitEdit(inputField.getText());
+            lastCaretPositionValid = false; //the next selection should not remember the old position of the text cursor
+            event.consume();
+            break;
+          case ESCAPE:
+            escPressed = true;
+            lastCaretPositionValid = false; //the next selection should not remember the old position of the text cursor
+            //normal processing of ESC (CancelEdit) --> no event.consume()
+            break;
+          case TAB:
+            if (event.isShiftDown())
+              selectPrevColumn();
+            else
+              selectNextColumn();
+            break;
+          case UP:
+            moveCaretUpOrDown(true);
+            event.consume();
+            break;
+          case DOWN:
+            moveCaretUpOrDown(false);
+            event.consume();
+            break;
+          case U:
+            if (event.isControlDown()) copyDescriptionDown();
+            break;
         }
+      }
+
+      /**
+       * ctrl-U tries to copy the information from the line above
+       * overwriting all information in the current edit-Cell
+       * if currently editing the first line (there is nothing above) nothing happens
+       */
+      private void copyDescriptionDown() {
+        MediaFile aboveMediaFile = fileTableView.getAboveMediaFile();
+
+        if (aboveMediaFile != null) { //only if not alread in the first line
+          if (getTableColumn() == fileTableView.getPrefixColumn()) {
+            inputField.setText(aboveMediaFile.getPrefix());
+          } else if (getTableColumn() == fileTableView.getCounterColumn()) {
+            inputField.setText(aboveMediaFile.getCounter());
+          } else if (getTableColumn() == fileTableView.getDescriptionColumn()) {
+            inputField.setText(aboveMediaFile.getDescription());
+          } else if (getTableColumn() == fileTableView.getExtensionColumn()) {
+            inputField.setText(aboveMediaFile.getExtension());
+          } else if (getTableColumn() == fileTableView.getFileDateColumn()) {
+            inputField.setText(aboveMediaFile.getModifiedDate());
+          }
+        }
+
+      }
+
+      /**
+       * commitedit, jump to beginning of next cell and start edit there
+       */
+      private void selectNextColumn() {
+        int currentLine = fileTableView.getSelectionModel().getSelectedIndex();
+
+        stayInEditMode = true; //for commitEdit of old column
+        commitEdit(inputField.getText());
+        lastCaretPosition = 0; //place caret at the beginning of next column
+        lastCaretPositionValid = true;
+
+        stayInEditMode = false;
+
+        TableColumn nextColumn;
+        if (getTableColumn() == fileTableView.getPrefixColumn()) {
+          nextColumn = fileTableView.getCounterColumn();
+        } else if (getTableColumn() == fileTableView.getCounterColumn()) {
+          nextColumn = fileTableView.getSeparatorColumn();
+        } else if (getTableColumn() == fileTableView.getSeparatorColumn()) {
+          nextColumn = fileTableView.getDescriptionColumn();
+        } else if (getTableColumn() == fileTableView.getDescriptionColumn()) {
+          nextColumn = fileTableView.getExtensionColumn();
+        } else if (getTableColumn() == fileTableView.getExtensionColumn()) {
+          nextColumn = fileTableView.getFileDateColumn();
+        } else if (getTableColumn() == fileTableView.getFileDateColumn()) {
+          nextColumn = fileTableView.getPrefixColumn();  //circle: jump from last to first column
+        } else {
+          //default
+          nextColumn = fileTableView.getDescriptionColumn();
+        }
+
+        Platform.runLater(new Runnable() {
+          @Override
+          public void run() {
+            fileTableView.edit(currentLine, nextColumn);
+          }
+        });
+      }
+
+      /**
+       * commit edit, jump to end of previous cell and start edit there
+       */
+      private void selectPrevColumn() {
+        int currentLine = fileTableView.getSelectionModel().getSelectedIndex();
+
+        stayInEditMode = true; //for commitEdit of old column
+        commitEdit(inputField.getText());
+        lastCaretPosition = Integer.MAX_VALUE; //place caret at the end of previous column
+        lastCaretPositionValid = true;
+        stayInEditMode = false;
+
+        TableColumn prevColumn;
+        if (getTableColumn() == fileTableView.getPrefixColumn()) {
+          prevColumn = fileTableView.getFileDateColumn(); //circle: jump from first to last column
+        } else if (getTableColumn() == fileTableView.getCounterColumn()) {
+          prevColumn = fileTableView.getPrefixColumn();
+        } else if (getTableColumn() == fileTableView.getSeparatorColumn()) {
+          prevColumn = fileTableView.getCounterColumn();
+        } else if (getTableColumn() == fileTableView.getDescriptionColumn()) {
+          prevColumn = fileTableView.getSeparatorColumn();
+        } else if (getTableColumn() == fileTableView.getExtensionColumn()) {
+          prevColumn = fileTableView.getDescriptionColumn();
+        } else if (getTableColumn() == fileTableView.getFileDateColumn()) {
+          prevColumn = fileTableView.getExtensionColumn();
+        } else {
+          //default
+          prevColumn = fileTableView.getDescriptionColumn();
+        }
+
+        Platform.runLater(new Runnable() {
+          @Override
+          public void run() {
+            fileTableView.edit(currentLine, prevColumn);
+          }
+        });
       }
 
       /**
@@ -215,20 +334,20 @@ class TextFieldCell extends TableCell<MediaFile, String> {
         int currentLineEdited = fileTableView.getSelectionModel().getSelectedIndex();
 
         stayInEditMode = true; //for commitEdit of old row
+        lastCaretPosition = inputField.getCaretPosition(); //remember last caretPosition so that it can be used again in next/prev line
+        lastCaretPositionValid = true;
         if (up) {
           if (currentLineEdited > 0) {
-            ((FileTableView) getTableColumn().getTableView()).setLastCaretPosition(inputField.getCaretPosition());
             commitEdit(inputField.getText());
             currentLineEdited--;
           }
         } else {    //down
           if (currentLineEdited < fileTableView.getRowCount() - 1) {
-            ((FileTableView) getTableColumn().getTableView()).setLastCaretPosition(inputField.getCaretPosition());
             commitEdit(inputField.getText());
             currentLineEdited++;
           }
         }
-        stayInEditMode = false; 
+        stayInEditMode = false;
 
         fileTableView.scrollViewportToIndex(currentLineEdited);
         fileTableView.getSelectionModel().focus(currentLineEdited);

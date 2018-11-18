@@ -534,8 +534,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public enum SaveResult {ERROR, NEEDS_2ND_TRY, SUCCESSFUL}
 
   /**
-   * tries to save all Changes
-   * all derived classes will add changes which the additionally allow (e.g. ImageFiles allow rotation)
+   * tries to write all changes to disk
    *
    * @return SaveResult.ERROR if an error occured or SaveResult.NEEDS_2ND_TRY if an intermediate name has been used while renaming
    */
@@ -1057,8 +1056,8 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   }
 
   public boolean isTransformed() {
-    return isRotated() || isFlippedHorizontally() || isFlippedVertically();}
-
+    return isRotated() || isFlippedHorizontally() || isFlippedVertically();
+  }
 
   /*
    *------------------------------------------------- Logic for External Editors --------------------------------

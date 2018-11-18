@@ -51,10 +51,7 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
     this.mediaContentView = contentView;
     setPreserveRatio(true);
 
-    //binding sizes is not automatically when placed in a StackPane (mediaStackPane is a StackPane) only centering is automatic!
-    fitHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
-    fitWidthProperty().bind(mediaContentView.getMediaStackPaneWidthProperty());
-
+    //binding is performed in MediaContentView
     setFocusTraversable(true);
 
     viewportZoomer = new ViewportZoomer(this); //installs also the eventHandlers and contextMenu

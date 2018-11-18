@@ -78,8 +78,9 @@ public abstract class RestrictedTextField extends TextField implements Restricte
       public void handle(KeyEvent event) {
         boolean invalidCharFound = false;
 
-        //clipboard
-        if (event.isControlDown() && (event.getCode() == KeyCode.V)) {
+        //clipboard  or copy from line above
+        if (event.isControlDown() && (event.getCode() == KeyCode.V) ||
+          (event.isControlDown() && (event.getCode() == KeyCode.U))) {
           String err = verifyClipboardInsertion(); //abstract method to be overwritten by implementing classes
           if (!err.isEmpty()) {
             tooltip.setText(err);
