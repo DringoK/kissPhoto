@@ -681,8 +681,15 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         if (errMsg.length() > 0) {
           statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), newFileOrFolder.toString()));
         }
+        //empty directory?
+        if (mediaFileList.getFileList().size() < 1) {
+          //clear any visible image shown before
+          fileTableView.mediaContentView.setMedia(null, null);
+        }
       }
     }
+    requestFocus(); //if full-screen is active then after a dialog the main window should be active again
+    primaryStage.requestFocus();
   }
 
   /**
@@ -1004,6 +1011,8 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         mediaFileList.renumber(start, numberingStepSize, numberingDigits, getSelectionModel().getSelectedIndices());
       }
     }
+    requestFocus(); //if full-screen is active then after a dialog the main window should be active again
+    primaryStage.requestFocus();
   }
 
   /**
@@ -1016,6 +1025,8 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     //---show dialog
     findReplaceDialog.showModal();
+    requestFocus(); //if full-screen is active then after a dialog the main window should be active again
+    primaryStage.requestFocus();
   }
 
   /**
@@ -1080,6 +1091,8 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       renameDialogActive = false;
     }
     refresh();
+    requestFocus(); //if full-screen is active then after a dialog the main window should be active again
+    primaryStage.requestFocus();
   }
 
   /**
@@ -1312,7 +1325,9 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       statusBar.showError(language.getString("no.files.marked.for.deletion.therefore.nothing.to.un.delete"));
     }
     if (unDeleteMenuItem != null) unDeleteMenuItem.setDisable(mediaFileList.getDeletedFileList().size() < 1);
-    setNeedsLayout(true);
+    requestLayout();
+    requestFocus(); //if full-screen is active then after a dialog the main window should be active again
+    primaryStage.requestFocus();
   }
 
   /**
@@ -1414,14 +1429,16 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
 
   /**
-   * make index visible (don't know why this is not already done by the focus method above and why scrollTo() doesn't work
+   * make index visible
+   * The scrollTo()-Method of TableView is similar but "jumps" to the middle of the visible region time by time.
+   * Especially while in edit mode this leads to losing the focus, i.e. the cell in edit mode is different to the focussed cell :-(
+   * The viewPort trick has been found on StackOverflow :-)
    * <p/>
    * Always try to show an extra line before/after the line 'index'
    *
    * @param index line to scroll to become visible in viewport
    */
   public void scrollViewportToIndex(int index) {
-//    scrollTo(index);
     try {
       if (flow != null) {  //the flow is not valid before it is drawn for the first time. Should be always done after loading a directory ;-)
         if (index > 0 && (index - 1) < flow.getFirstVisibleCell().getIndex()) {

@@ -47,23 +47,18 @@ import java.awt.*;
  * <p>
  * Bugs:
  * ======================
- * todo FileTableView.scrollViewportToIndex überdenken: scrollt z.B. nicht zum letzten File, falls das gelöscht wurde
- * todo audio abspielen (m4a, mp3, wav): Player nicht ausblenden!
- * todo ??? statt commitEdit lieber "nächsteZeile"; in FileTableView implementieren, die ggf "nächsteZeile" von Cell aufruft
- * todo Hinweis in Bild auf rechte Maustaste als Hint, damit man auf die Idee kommt es anzuklicken (nur wenn nicht Vollbild?!?)
- * todo wenn nicht Vollbild, dann bei Cursor hoch/runter Fokus auf Tabelle
- * todo Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
- * todo Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
- * todo Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch löschen können
- * todo Fokus auf Hauptfenster nach Dialog (falls F5/Multimonitor)
- * todo Verzeichniswechsel: Dateien:0
  * planned features:
  * ======================
+ * todo Player in MediaPane hochheben und mit Burger-Menü (=rechtsklick) ergänzen (Burger immer sichtbar, auch für Photo, nicht ausblenden solange Maus darüber, nicht ausblenden bei Musik)
+ * todo   audio abspielen (m4a, mp3, wav): Player nicht ausblenden!
+ * todo Meta-Daten anzeigen. Fenster ausblendbar
+ * todo Multi-Edit-Dialog: Hilfe nur auf Knopfdruck ("Hilfe zu %p %d..."), Aufruf Nummerieren-Dialog rein, EXIF-Kommentar rein (der bekommt %k, damit Übernahme möglich)
+ * todo   Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
+ * todo   Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
+ * todo   Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch löschen können
+ * todo Zeit-Dialog: Übernehmen von Ändern, Exif, Digitalisierung Stunden/Minuten dazu/abziehen(anwenden immer auf alles andere)
  * todo Auto/One Click Grundformatierung: "Drehen", "Nummerierien", "Space"(, sonst nix)", falls die Bilder noch DSCN heißen, sonst Warnung
- * todo EXIF anzeigen über metadata-extractor, schreiben evtl über http://sourceforge.net/projects/image-tagger/
- * todo EXIF-Info über Umbenennen (=ändern!!!) in Dateinamen etc. reinholen
- * todo Datum ändern, auch EXIF
- * todo alle EXIF ändern
+ * todo EXIF schreiben evtl über http://sourceforge.net/projects/image-tagger/
  * nice to haves:
  * ===============
  * todo doch nochmal schauen, ob die Updates vom FileWatcher nicht verwendet werden können. Siehe JavaFX Task: A Task Which Returns Partial Results

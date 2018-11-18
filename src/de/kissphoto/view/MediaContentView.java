@@ -269,8 +269,11 @@ public class MediaContentView extends Pane {
 
   /**
    * perform unsaved/planned transformation as a preview by rotating/flipping the mediaStackPane
+   * if the currentMediaFile == null then nothing happens
    */
   public void showRotationAndFlippingPreview() {
+    if (currentMediaFile == null) return;
+
     switch (currentMediaFile.getRotateOperation()) {
       case ROTATE0:
         mediaStackPane.setRotate(0);
@@ -355,8 +358,8 @@ public class MediaContentView extends Pane {
       movieViewer.setVisible(false);
       otherViewer.setVisible(true);
     }
-
     showRotationAndFlippingPreview();
+
 
     //maintain the fullScreenStage's media also, if it is displayed currently
     if (fullScreenStage != null && fullScreenStage.isShowing()) {
