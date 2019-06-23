@@ -529,7 +529,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     // a unusual problem is here
     // no own variables are initialized here
     // but super's constructor calls our method read, which is using
-    // uninitialized local variables, so they are moved to parent
+    // uninitialized local variables, so they are moved to mediaFileList
   }
 
   /**

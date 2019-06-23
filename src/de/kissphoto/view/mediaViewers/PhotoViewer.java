@@ -155,8 +155,12 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
   public void setImageFile(ImageFile imageFile) {
     this.imageFile = imageFile;
     Image image = (Image) imageFile.getCachedMediaContent();
-    if (image == null) image = (Image) imageFile.getMediaContent();  //in undelete dialog don't use cache!
+    if (image == null)
+      image = (Image) imageFile.getMediaContent();  //in undelete dialog don't use cache or give a retry if cache failed
 
+    if (image != null) {
+      if (image.isError()) System.out.println("isError=true");
+    }
     setImage(image);
   }
 

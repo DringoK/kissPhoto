@@ -52,6 +52,7 @@ import java.util.ResourceBundle;
  * zooming is resetted now whenever the media changes (handing over zooming is "too clever" i.e. not "KISS"
  * Double Click switches Full-Screen Mode
  * @modified: 2018-10-21 Support rotation of media >in principle< i.e. if currentMediaFile.canRotate() by rotating mediaStackPane
+ * @modified: 2019-06-22 Rotation-Preview now also shown on full screen Media Content ("second screen")
  */
 public class MediaContentView extends Pane {
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
@@ -298,6 +299,12 @@ public class MediaContentView extends Pane {
 
     if (currentMediaFile.isFlippedVertically()) mediaStackPane.setScaleY(-1);
     else mediaStackPane.setScaleY(1);
+
+    //maintain the fullScreenStage's media also, if it is displayed currently
+    if (fullScreenStage != null && fullScreenStage.isShowing()) {
+      fullScreenStage.getMediaContentView().showRotationAndFlippingPreview();
+    }
+
   }
 
   /**
@@ -316,7 +323,8 @@ public class MediaContentView extends Pane {
 
     if (mediaFile != null) {  //if nothing is handed over then display standard view ("sorry cannot display"...) e.g. from init of undelete dialog
       currentMedia = mediaFile.getCachedMediaContent();
-      if (currentMedia == null) currentMedia = mediaFile.getMediaContent();  //in undelete dialog don't use cache!
+      if (currentMedia == null)
+        currentMedia = mediaFile.getMediaContent();  //in undelete dialog don't use cache or Cache result was invalid (then retry)
 
       currentMediaFile = mediaFile;
       attrViewer.setMedia(mediaFile);
@@ -573,8 +581,11 @@ public class MediaContentView extends Pane {
   public void toggleFullScreenAndNormal() {
     if (fullScreenStage == null && !owner.isFullScreen()) { //only if not already in fullScreen-Mode
       showFullScreen();
+      showFullScreenOnNextScreen(true); //if multiple screens are available use the "next" initially
+      fileTableView.getStatusBar().showMessage(language.getString("esc.to.end.full.screen.tab.to.shift.full.screen.panel.between.screens"));
     } else {
       endFullScreen();
+      fileTableView.getStatusBar().clearMessage();
     }
   }
 

@@ -14,6 +14,7 @@ import java.nio.file.Path;
  * @Author: Ingo
  * @Date: 2012-09-02
  * @modified: 2014-06-05 java.io operations changed into java.nio
+ * @modified: 2019-06-22 mediaCache corrections: getMediaContentException() added
  */
 public class OtherFile extends MediaFile {
   public OtherFile(Path otherFile, MediaFileList parent) {
@@ -22,6 +23,11 @@ public class OtherFile extends MediaFile {
 
   @Override
   public Object getMediaContent() {
+    return null;
+  }
+
+  @Override
+  public Exception getMediaContentException() {
     return null;
   }
 

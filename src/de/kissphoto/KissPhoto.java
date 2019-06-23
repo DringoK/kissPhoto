@@ -35,7 +35,7 @@ import java.awt.*;
  * <li>file date maintaining
  * <li>mass renaming for filenames, EXIF-Info and time-stamps
  * <li>runnable on all PC platforms which support JavaFX
- * <li>The viewer treats movie clips like moving photos (like in Harry Potter ;-)
+ * <li>The viewer treats movie clips like moving photos (like in Harry Potter's newspapers ;-)
  * </ul>
  *
  * @Author: Ingo Kreuz<br>
@@ -44,6 +44,7 @@ import java.awt.*;
  * @modified: 2014-07-05 loading initialFileOrFolder after stage.show() to show messages during slow network access
  * @modified: 2017-10-02 main window is moved into visible part of screen after startup (e.g. if resolution changed or 2nd screen has been disabled)
  * @modified: 2018-11-17 rotation of images is now supported, improved inCell-editing (caretPosition, Tab-Support)
+ * @modified: 2019-06-23 release candidate: fixes in Cache Algo, fixed issues with "second screen"/fullscreen, Strg-j menu internationalized, jpeg (with e) supported
  * <p>
  * Bugs:
  * ======================
@@ -65,7 +66,7 @@ import java.awt.*;
  * todo Nice to have: Undo-History
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.18.11"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.19.06"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;

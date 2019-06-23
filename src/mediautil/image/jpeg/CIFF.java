@@ -143,7 +143,7 @@ public class CIFF extends AbstractImageInfo<LLJTran> {
     // an unusual problem is here
     // no own variables are initialized here
     // but super's constructor calls our method read, which is using
-    // uninitialized local variables, so they are moved to parent
+    // uninitialized local variables, so they are moved to mediaFileList
   }
 
   public String getFormat() {

@@ -54,7 +54,7 @@ public class FindReplaceDialog extends KissDialog {
   boolean startedSearchFromFirstLine = false; //if true at the end of a search/replace all without selection user will be asked if to continue from the start
 
   int firstCounter = 0; //if replaceAll is continued from the beginning the first counter-result is added to the final result
-  //link to parent window for getting selection etc
+  //link to mediaFileList window for getting selection etc
   FileTableView fileTableView;
 
   public FindReplaceDialog(Stage owner, final FileTableView fileTableView) {

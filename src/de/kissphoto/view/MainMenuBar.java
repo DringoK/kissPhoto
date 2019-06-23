@@ -391,7 +391,7 @@ public class MainMenuBar extends MenuBar {
   }
 
   private void createImageMenu() {
-    MenuItem exifOrientationItem = new MenuItem("Rotate and Flip JPEG according EXIF (lossless)");
+    MenuItem exifOrientationItem = new MenuItem(language.getString("rotate.and.flip.jpeg.according.exif.lossless"));
     exifOrientationItem.setAccelerator(new KeyCodeCombination(KeyCode.J, KeyCombination.CONTROL_DOWN));
     exifOrientationItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override

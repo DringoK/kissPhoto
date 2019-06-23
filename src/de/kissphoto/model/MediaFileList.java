@@ -88,7 +88,7 @@ public class MediaFileList {
   /**
    * open a folder by reading the specified directory into MediaFile objects
    * organized as an array list
-   * If the passed name is a file the parent directory is opened
+   * If the passed name is a file the mediaFileList directory is opened
    * If the file/directory is null or does not exist at all an error-string is returned
    *
    * @param fileOrFolderName the folder to be opened
@@ -102,7 +102,7 @@ public class MediaFileList {
   /**
    * open a folder by reading the specified directory into MediaFile objects
    * organized as an array list
-   * If the file is a file the parent directory is opened
+   * If the file is a file the mediaFileList directory is opened
    * If the file/directory is null or does not exist at all an error-string is returned
    *
    * @param fileOrFolder the file or folder to be loaded

@@ -121,9 +121,9 @@ public class FileHistory {
     mainMenuItem.getItems().clear();
     int i = 0;
     for (Path entry : recentlyOpenedList) {
-      Path p = entry.getParent().getFileName(); //get the parent directory
+      Path p = entry.getParent().getFileName(); //get the mediaFileList directory
       if (p == null)
-        item = new MenuItem(entry.getParent().toString());  //complete path (=root) if there is no parent
+        item = new MenuItem(entry.getParent().toString());  //complete path (=root) if there is no mediaFileList
       else
         item = new MenuItem("..." + File.separator + p.getFileName().toString() + File.separator); //only ... + containing directory
 

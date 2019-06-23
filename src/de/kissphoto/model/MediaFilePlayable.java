@@ -9,7 +9,7 @@ import java.nio.file.Path;
  *
  * @Author: ikreuz
  * @Date: 2014-06-10
- * @modified:
+ * @modified: 2019-06-22 mediaCache corrections: getMediaContentException() added
  */
 public abstract class MediaFilePlayable extends MediaFileTagged {
   protected MediaFilePlayable(Path file, MediaFileList parent) {
@@ -18,7 +18,7 @@ public abstract class MediaFilePlayable extends MediaFileTagged {
 
   @Override
   public Object getMediaContent() {
-    if (content == null) {
+    if (!isMediaContentValid()) {
       try {
         content = new Media(fileOnDisk.toFile().toURI().toString());
       } catch (Exception e) {
@@ -28,6 +28,12 @@ public abstract class MediaFilePlayable extends MediaFileTagged {
     }
     return content;
   }
+
+  @Override
+  public Exception getMediaContentException() {
+    return null;
+  }
+
 
   @Override
   public long getContentApproxMemSize() {

@@ -20,6 +20,7 @@ import java.nio.file.Path;
  * modified:
  * 2014-06-05 java.io operations changed into java.nio
  * 2017-10-28 support of rotation for jpg files
+ * 2019-06-22 mediaCache corrections: getMediaContentException() added
  */
 public class ImageFile extends MediaFileTagged {
   //Exif orientation constants
@@ -39,13 +40,56 @@ public class ImageFile extends MediaFileTagged {
     super(imageFile, parent);
   }
 
+  /**
+   * implement getMediaContent() for ImageFiles.
+   * by loading the image specified by "FileOnDisk" property
+   *
+   * @return Image if successful or null if not
+   * note: if null is returned possibly MediaCache needs to be maintained to free memory..and retried again
+   */
   @Override
   public Object getMediaContent() {
-    if (content == null) {  //if not already loaded
-      content = new Image(fileOnDisk.toUri().toString(), true);  //true=load in Background
+    Image image = (Image) content;
+    //if (image!=null) System.out.println("Progress=" + image.getProgress()); //if you access network files and scroll very fast values != 100% are observed ;-)
+
+    if (!isMediaContentValid()) {  //if not already loaded
+      try {
+        content = new Image(fileOnDisk.toUri().toString(), true);  //true=load in Background
+      } catch (Exception e) {
+        //will not occur with backgroundLoading: image.getException will get the exception
+        System.out.println("Exception while loading:");
+        e.printStackTrace();
+      }
+    } else {
+      //System.out.println("in Cache :-)...Error="+ image.isError() + " Exception=" + image.getException());
+
+      if (image.isError()) {
+        //image.getException().printStackTrace();
+        content = null; //the loaded image is invalid. Calling method can retry, when null is returned
+      }
     }
     return content;
   }
+
+  /**
+   * implement getMediaContentException for ImageFiles
+   * to get any exception that occurred while loading.
+   * A content is valid if:  (content != null) && (getMediaContentException() == null)
+   *
+   * @return null if no exception has occurred or content empty, anException if error occurred while loading
+   */
+  @Override
+  public Exception getMediaContentException() {
+    Image image = (Image) content;
+    if (image != null)
+      if (image.isError())
+        return image.getException(); //image but not valid
+      else
+        return null; //valid image --> no exception
+    else
+      return null; //no image --> no exception
+  }
+
 
   @Override
   public MediaFileRotater getMediaFileRotater() {

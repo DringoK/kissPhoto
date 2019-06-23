@@ -41,6 +41,7 @@ import java.util.ResourceBundle;
  * @modified: 2014-07-05 bug found why separator column didn't reflect changes in the property over the model: separatorProperty() had wrong capitalization
  * @modified: 2016-06-12 performDelete will now no longer delete but move to subfolder "deleted" (localized, e.g. german "aussortiert")
  * @modified: 2018-10-21 support rotation in general (for subclasses which provide a MediaFileRotater sybling)
+ * @modified: 2019-06-22 cache issue fixed: isMediaContentValid() and getMediaContentException() added
  */
 public abstract class MediaFile implements Comparable<MediaFile> {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -62,7 +63,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static final int COL_NO_FILEDATE = 5;
 
   protected Path fileOnDisk;   //including physical filename on Disk...to be renamed
-  protected MediaFileList parent; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
+  protected MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
   protected Object content = null;
 
   //planned operation when saved next time: first rotate then flip vertical then horizontal!!!
@@ -96,10 +97,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * @param file   the file that will be wrapped by this class or its subclasses
    *               constructor generates an internal File object
    *               and stores a parsed editable copy of the filename internally
-   * @param parent double linked: link to the mediaFileList where the mediaFile resides in
+   * @param mediaFileList double linked: link to the mediaFileList where the mediaFile resides in
    */
-  public MediaFile(Path file, MediaFileList parent) {
-    this.parent = parent;
+  public MediaFile(Path file, MediaFileList mediaFileList) {
+    this.mediaFileList = mediaFileList;
     this.fileOnDisk = file;
 
     parseFilename(fileOnDisk.getFileName().toString());
@@ -136,7 +137,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     int found = 0; //count numbers found
     int numberPosStart = 0;
     int numberPosEnd = 0;
-    while ((i < pureFilename.length()) && (found < parent.getCounterPosition())) {
+    while ((i < pureFilename.length()) && (found < mediaFileList.getCounterPosition())) {
       //find begin of next number
       while ((i < pureFilename.length()) && (!Character.isDigit(filename.charAt(i)))) {
         i++;
@@ -152,7 +153,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
         numberPosEnd = i; //same for end of string or non-digit found: this is the position after the end digit of the number (substring() expects this)
       }
     }
-    if (found >= parent.getCounterPosition()) {
+    if (found >= mediaFileList.getCounterPosition()) {
       prefix.set(pureFilename.substring(0, numberPosStart));
       counter.set(pureFilename.substring(numberPosStart, numberPosEnd));
       description.set(pureFilename.substring(numberPosEnd));
@@ -615,8 +616,24 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    */
   public abstract Object getMediaContent();
 
+  /**
+   * @return true if Media Content is valid, false if not loaded or Exception occured while loaded
+   */
+  public boolean isMediaContentValid() {
+    return ((content != null) && (getMediaContentException() == null));
+  }
+
+  /**
+   * Non abstract Media-Types overwrite this method
+   * to get any exception that occured while loading.
+   * A content is valid if:  (content != null) && (getMediaContentException() == null)
+   *
+   * @return null if no exception has occurred or content empty, anException if error occurred while loading
+   */
+  public abstract Exception getMediaContentException();
+
   public Object getCachedMediaContent() {
-    return parent.getCachedMediaContent(this);
+    return mediaFileList.getCachedMediaContent(this);
   }
 
   /**
@@ -897,20 +914,21 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * http://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html#SupportedMediaTypes
    *
    * @param file   to be investigated and wrapped by MediaFile
-   * @param parent every MediaFile knows about the list it is contained in
+   * @param parentList every MediaFile knows about the list it is contained in
    * @return subclass of MediaFile
    */
-  public static MediaFile createMediaFile(Path file, MediaFileList parent) {
+  public static MediaFile createMediaFile(Path file, MediaFileList parentList) {
     //create specialized MediaFile-object based on extension
     String filename = file.getFileName().toString().toLowerCase();
     if ((filename.endsWith(".jpg")) ||
+      (filename.endsWith(".jpeg")) ||
       (filename.endsWith(".jp2")) ||
       (filename.endsWith(".png")) ||
       (filename.endsWith(".tiff")) ||
       (filename.endsWith(".tif")) ||
       //not yet supported by Java-Fx but useful for loading external editor (nothing will be displayed (black))
       (filename.endsWith(".ico"))) {
-      return new ImageFile(file, parent);
+      return new ImageFile(file, parentList);
     } else {
       if ((filename.endsWith(".mp4")) ||  //MPEG-4 Part 14
         (filename.endsWith(".mts")) ||  //mmpg-4 Part 14 from Digi-Cam
@@ -928,9 +946,9 @@ public abstract class MediaFile implements Comparable<MediaFile> {
         (filename.endsWith(".aif")) ||   //Audio Interchange File Format
         (filename.endsWith(".mp3")) ||   //MPEG-1, 2, 2.5 raw audio stream possibly with ID3 metadata v2.3 or v2.4
         (filename.endsWith(".m4a"))) {   //mp-4 audio only
-        return new MovieFile(file, parent);
+        return new MovieFile(file, parentList);
       } else {
-        return new OtherFile(file, parent);
+        return new OtherFile(file, parentList);
       }
     }
   }

@@ -217,7 +217,11 @@ class TextFieldCell extends TableCell<MediaFile, String> {
             event.consume();
             break;
           case U:
-            if (event.isControlDown()) copyDescriptionDown();
+            if (event.isControlDown()) {
+              copyDescriptionDown();
+              inputField.deselect();
+              inputField.positionCaret(inputField.getLength()); //[end]: move caret to the end
+            }
             break;
         }
       }

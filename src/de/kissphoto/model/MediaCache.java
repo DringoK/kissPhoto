@@ -25,11 +25,12 @@ import java.lang.management.MemoryUsage;
  * @modified: 2014-04-18: Preload can be disabled temporarily e.g. while moving files in fileTable view
  * @modified: 2014-05-04: MediaFiles (links) instead of indices are stored, because indices can be changed by the user
  * @modified: 2014-05-25: MIN_FREE_MEM_SIZE is kept instead of a fixed number of maximum cache elements
- * @modified: 2014-06-07 getContent interface to cache simplified, min Free memory from oldHeap is only used (@see getAvailableMem)
+ * @modified: 2014-06-07: getContent interface to cache simplified, min Free memory from oldHeap is only used (@see getAvailableMem)
+ * @modified: 2019-06-22: corrections to cache algo: make robust against wrong estimations by caring about exceptions
  */
 public class MediaCache {
-  private static final int MB = 1000000;  //this accurate enough ;-)
-  private static final int MIN_FREE_MEM_SIZE = 150 * MB;
+  private static final long MB = 1 << 20;      //=2^20
+  private static final long MIN_FREE_MEM_SIZE = 300 * MB;
   private MediaFileList mediaList;   //link to the original data
 
   private ObservableList<MediaFile> cacheBuffer;
@@ -102,15 +103,11 @@ public class MediaCache {
   }
 
   /**
-   * An media-list index is added into the cache. If the cache is full the oldest entry is deleted (and content flushed)
-   * The media content will not be loaded by this method
-   * It just remembers, that it had been requested and getContent asked MediaFile to load/store and pass the content
-   * but it flushes old media from memory
-   * Check if the index already was in Cache (using 'isInCache") otherwise it will be in Cache double :-(
-   *
-   * @param mediaFile the element to put in the cache
+   * If the cache is full
+   * i.e. less memory available then MIN_FREE_MEM_SIZE
+   * then the oldest entries are deleted (and content flushed)
    */
-  private void addCacheElementAndFlushOldest(MediaFile mediaFile) {
+  private void maintainCacheSizeByFlushingOldest() {
     //flushing cached content does not have direct effect on getAvailableMem (until gc() has run)
     //therefore we add a "guessed" value for every MediaFile that has been flushed to the getAvailableMem()
     //to forecast the effect of flushing and to determine how many mediaFiles need to be flushed until MIN_FREE_MEM_SIZE
@@ -122,11 +119,10 @@ public class MediaCache {
     while (getAvailableMem() + approxMemFreed <= MIN_FREE_MEM_SIZE && cacheBuffer.size() > 0) {//size = 0 means: to less memory for caching at all
       approxMemFreed = approxMemFreed + cacheBuffer.get(0).flushMediaContent(); //begin of the list contains the oldest element
       cacheBuffer.remove(0);
+      //System.out.println("flushing --> cache Buffer Size = " + cacheBuffer.size() + " approxMemFreed=" + approxMemFreed + " availMem="+getAvailableMem());
     }
     env.gc();
-
-    //store the new element in the Cache
-    cacheBuffer.add(mediaFile); //add to the end of the list (the newest)
+    //System.out.println("available mem after gc=" + getAvailableMem());
   }
 
   /**
@@ -170,27 +166,30 @@ public class MediaCache {
    * @return the according MediaFile.Content which is thereby maintained in the cache
    */
   private Object getCachedMediaContent(int index, MediaFile mediaFile) {
-    //load content or access the stored content
-    if (!isInCache(mediaFile)) {
-      addCacheElementAndFlushOldest(mediaFile); //and remember that it is now in memory
-    }
-    Object content = mediaFile.getMediaContent(); //only load if currently null otherwise the content is returned directly
+    maintainCacheSizeByFlushingOldest();
+
+    Object content = mediaFile.getMediaContent(); //get cached content or load if necessary
+    //store the new element in the Cache
+    if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile); //add to the end of the list (as the "newest")
+
 
     if (enablePreload) {
       //preload previous media if necessary async in background
       if (index > 0) { //if there exists a 'previous'
         mediaFile = mediaList.getFileList().get(index - 1);
-        if (!isInCache(mediaFile)) {
+        if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
+          //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough
           mediaFile.getMediaContent();
-          addCacheElementAndFlushOldest(mediaFile); //and remember that it is now in memory
+          if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile);//and remember that it is now in memory
         }
       }
       //preload next media if necessary async. in background
       if (index < mediaList.getFileList().size() - 1) { //if there exists a 'next'
         mediaFile = mediaList.getFileList().get(index + 1);
-        if (!isInCache(mediaFile)) {
+        if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
+          //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough
           mediaFile.getMediaContent();
-          addCacheElementAndFlushOldest(mediaFile); //and remember that it is now in memory
+          if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile);//and remember that it is now in memory
         }
       }
     }
