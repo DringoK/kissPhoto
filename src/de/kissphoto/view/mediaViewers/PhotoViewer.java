@@ -35,6 +35,7 @@ import java.util.ResourceBundle;
  * @modified: 2016-11-06: ViewportZoomerMover extracted for all viewport zooming and moving operations (now identical to movieViewer's)
  * @modified: 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
  * @modified: 2018-10-11: Support preview of rotation/mirroring
+ * @modified: 2019-07-07: Cache problems fixed
  */
 public class PhotoViewer extends ImageView implements ZoomableViewer {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -152,16 +153,17 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
     });
   }
 
+  /**
+   * set the internal property imageFile and show the imageFile.image
+   * If imageFile==null nothing happens
+   *
+   * @param imageFile imageFile.image to be displayed
+   */
   public void setImageFile(ImageFile imageFile) {
     this.imageFile = imageFile;
-    Image image = (Image) imageFile.getCachedMediaContent();
-    if (image == null)
-      image = (Image) imageFile.getMediaContent();  //in undelete dialog don't use cache or give a retry if cache failed
-
-    if (image != null) {
-      if (image.isError()) System.out.println("isError=true");
+    if (imageFile != null) {
+      setImage((Image) imageFile.getMediaContent());
     }
-    setImage(image);
   }
 
 

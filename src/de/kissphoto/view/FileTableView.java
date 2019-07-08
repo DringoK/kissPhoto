@@ -64,6 +64,7 @@ import java.util.ResourceBundle;
  * 2017-10-24 statistics in statusBar support
  * 2017-10-30 saving uses ProgressBar now because saving of rotated images can last long...
  * 2018-11-17 OpenRecentFile(0) now keeps the selection (like ReopenCurrentFolder earlier), keep caret position when moving up/down (bugfix)
+ * 2019-07-07 chooseFileOrFolder sends extra refresh() for tableView to prevent from be shown as empty, cache problems fixed
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
@@ -266,6 +267,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       }
     });
 
+
     //--------- install mouse-handler --------------
     setOnMouseClicked(new EventHandler<MouseEvent>() {
       @Override
@@ -321,10 +323,51 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       }
     });
     //Install Selection Listener to show selected media
-    this.getSelectionModel().selectedIndexProperty().addListener(new SelectedLineNumberChangeListener(this));
+    //this.getSelectionModel().selectedIndexProperty().addListener(new SelectedLineNumberChangeListener(this));
+    this.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+      @Override
+      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+        //set selected media in mediaContentView (or null if not valid)
+        if (newValue.intValue() >= 0) { //only if selection is valid
+          lastSelection = mediaFileList.getFileList().get(newValue.intValue());
+          mediaContentView.setMedia(mediaFileList.getFileList().get(newValue.intValue()), null);
+
+        } else {
+          if (mediaFileList.getFileList().size() <= 0) {
+            //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
+            //keep lastSelection, so the sortOrderChange-Listener can restore selection
+
+            //invalid selection
+            mediaContentView.setMedia(null, null);
+            lastSelection = null;
+          }
+        }
+      }
+    });
+
+    //Install Listener for invalid Cache content
+    mediaFileList.getMediaFileThatNeedsReloadProperty().addListener(new ChangeListener() {
+      @Override
+      public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+        MediaFile mediaFileToReload = (MediaFile) newValue;
+        //System.out.println("FileTableView: invalidation detected: " + mediaFileToReload.getFileOnDisk());
+
+        int currentlySelectedLine = getSelectionModel().getFocusedIndex();
+        //if this is the currently shown media then reload
+        if ((currentlySelectedLine >= 0) && (currentlySelectedLine == mediaFileList.getFileList().indexOf(mediaFileToReload))) {
+          //System.out.println("FileTableView: ----------> current media invalidated: Line: " + currentlySelectedLine);
+          mediaContentView.setMedia(mediaFileList.getFileList().get(currentlySelectedLine), null);
+        }
+      }
+    });
 
     //set default sorting
-    resetSortOrder();
+    Platform.runLater(new Runnable() {
+      @Override
+      public void run() {
+        resetSortOrder();
+      }
+    });
   }
 
   /**
@@ -382,7 +425,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     try {
       Path currentFile = mediaFileList.getFileList().get(getSelectionModel().getFocusedIndex()).getFileOnDisk();
-      fileHistory.refreshOpenedFileInHistory(currentFile); //todo: aktuell gewählte Datei anhängen
+      fileHistory.refreshOpenedFileInHistory(currentFile);
     } catch (Exception e) {
       //if there is no focused file, then do not update the selection but keep it as it was when the folder opened
     }
@@ -688,6 +731,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         }
       }
     }
+    refresh();
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
     primaryStage.requestFocus();
   }
@@ -1374,37 +1418,6 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       getSelectionModel().select(lastSelection);
       getFocusModel().focus(getSelectionModel().getSelectedIndex());
       scrollViewportToIndex(getFocusModel().getFocusedIndex());
-    }
-  }
-
-  /**
-   * SelectedLineNumberChangeListener
-   * for setting mediaContentView.setMedia for the selected line
-   */
-  private static class SelectedLineNumberChangeListener implements ChangeListener<Number> {
-    private FileTableView fileTableView; //link back to the fileTableView which has installed the Listener
-
-    public SelectedLineNumberChangeListener(FileTableView fileTableView) {
-      this.fileTableView = fileTableView;
-    }
-
-    @Override
-    public void changed(ObservableValue<? extends Number> observableValue, Number oldNumber, Number newNumber) {
-      //set selected media in mediaContentView (or null if not valid)
-      if (newNumber.intValue() >= 0) { //only if selection is valid
-        fileTableView.lastSelection = fileTableView.mediaFileList.getFileList().get(newNumber.intValue());
-        fileTableView.mediaContentView.setMedia(fileTableView.mediaFileList.getFileList().get(newNumber.intValue()), null);
-
-      } else {
-        if (fileTableView.mediaFileList.getFileList().size() <= 0) {
-          //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
-          //keep lastSelection, so the sortOrderChange-Listener can restore selection
-
-          //invalid selection
-          fileTableView.mediaContentView.setMedia(null, null);
-          fileTableView.lastSelection = null;
-        }
-      }
     }
   }
 

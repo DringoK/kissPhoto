@@ -1,6 +1,7 @@
 package de.kissphoto.model;
 
 import de.kissphoto.helper.GlobalSettings;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.collections.ObservableList;
 
 import java.nio.file.Path;
@@ -36,6 +37,10 @@ public class OtherFile extends MediaFile {
     return 0;  //content of other file is never loaded, freeing from cache has no effect on memory consumption
   }
 
+  @Override
+  public ReadOnlyDoubleProperty getContentProgressProperty() {
+    return null;
+  }
   /*
    *------------------------------------------------- Logic for External Editors --------------------------------
    * re-implement these methods for all siblings of MediaFile, because every child of MediaFile needs different editors and constants

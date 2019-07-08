@@ -11,6 +11,8 @@ import de.kissphoto.view.mediaViewers.MovieViewer;
 import de.kissphoto.view.mediaViewers.OtherViewer;
 import de.kissphoto.view.mediaViewers.PhotoViewer;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -53,6 +55,7 @@ import java.util.ResourceBundle;
  * Double Click switches Full-Screen Mode
  * @modified: 2018-10-21 Support rotation of media >in principle< i.e. if currentMediaFile.canRotate() by rotating mediaStackPane
  * @modified: 2019-06-22 Rotation-Preview now also shown on full screen Media Content ("second screen")
+ * @modified: 2019-07-07: Cache problems fixed
  */
 public class MediaContentView extends Pane {
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
@@ -317,9 +320,13 @@ public class MediaContentView extends Pane {
    * @param lastPlayerPos null=no effect, not null=try to seek the position for player media
    * @param mediaFile     is the mediaFile of which it's content is to be shown
    */
+  private MediaFile lastMediaFileBoundtoProgress = null;
+  private ChangeListener lastListener = null;
+
   public void setMedia(MediaFile mediaFile, Duration lastPlayerPos) {
     //reset all probably playing players
     movieViewer.resetPlayer();
+    clearProgress();
 
     if (mediaFile != null) {  //if nothing is handed over then display standard view ("sorry cannot display"...) e.g. from init of undelete dialog
       currentMedia = mediaFile.getCachedMediaContent();
@@ -330,6 +337,7 @@ public class MediaContentView extends Pane {
       attrViewer.setMedia(mediaFile);
 
       if (currentMedia != null) {
+
         if (currentMedia.getClass() == Image.class) {
           //-------- if photo ---------
           photoViewer.setImageFile((ImageFile) mediaFile);
@@ -360,6 +368,8 @@ public class MediaContentView extends Pane {
         movieViewer.setVisible(false);
         otherViewer.setVisible(true);
       }
+
+      showProgressBarForMediaFile(mediaFile);
     } else {
       //mediaFile is null
       photoViewer.setVisible(false);
@@ -372,6 +382,30 @@ public class MediaContentView extends Pane {
     //maintain the fullScreenStage's media also, if it is displayed currently
     if (fullScreenStage != null && fullScreenStage.isShowing()) {
       fullScreenStage.getMediaContentView().setMedia(mediaFile, lastPlayerPos);
+    }
+  }
+
+  protected void clearProgress() {
+    if (lastListener != null && lastMediaFileBoundtoProgress != null && lastMediaFileBoundtoProgress.getContentProgressProperty() != null)
+      lastMediaFileBoundtoProgress.getContentProgressProperty().removeListener(lastListener);
+    lastListener = null;
+
+    fileTableView.getStatusBar().clearProgress();
+    lastMediaFileBoundtoProgress = null;
+  }
+
+  private void showProgressBarForMediaFile(MediaFile mediaFile) {
+    if (mediaFile.getContentProgressProperty() != null) {
+      //show Progressbar only if media not already completely loaded
+      if (mediaFile.getContentProgressProperty().doubleValue() < 1.0) {
+        StatusBar statusBar = fileTableView.getStatusBar();
+
+        statusBar.getProgressProperty().bind(mediaFile.getContentProgressProperty());
+        statusBar.showProgressBar();
+        lastMediaFileBoundtoProgress = mediaFile;
+        lastListener = new ProgressChangeListener(this);
+        mediaFile.getContentProgressProperty().addListener(lastListener);
+      }
     }
   }
 
@@ -811,4 +845,23 @@ public class MediaContentView extends Pane {
     return currentMediaFile;
   }
 
+
+  /**
+   * ProgressChangeListner cannot be an anonymous class because it has to be rememered where it has been activated
+   * so that it can be stopped before the next media is loaded an connected to the progress bar
+   * see showProgressBar() and clearProgress()
+   */
+  private static class ProgressChangeListener implements ChangeListener<Number> {
+    private final MediaContentView mediaContentView; //link back to the calling object
+
+    public ProgressChangeListener(MediaContentView mediaContentView) {
+      this.mediaContentView = mediaContentView;
+    }
+
+    @Override
+    public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+      if (newValue.doubleValue() >= 0.99)
+        mediaContentView.clearProgress();
+    }
+  }
 }

@@ -1,5 +1,6 @@
 package de.kissphoto.model;
 
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.scene.media.Media;
 
 import java.nio.file.Path;
@@ -38,5 +39,10 @@ public abstract class MediaFilePlayable extends MediaFileTagged {
   @Override
   public long getContentApproxMemSize() {
     return 40000000; //40MB for a player (tried out)
+  }
+
+  @Override
+  public ReadOnlyDoubleProperty getContentProgressProperty() {
+    return null; //no progress available for playable media
   }
 }

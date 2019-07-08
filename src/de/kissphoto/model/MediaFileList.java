@@ -4,6 +4,7 @@ import de.kissphoto.ctrl.CounterPositionHeuristic;
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.helper.PathHelpers;
 import de.kissphoto.helper.StringHelper;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
@@ -47,6 +48,8 @@ public class MediaFileList {
   private CounterPositionHeuristic heuristic = new CounterPositionHeuristic();
   private int counterPosition = 0; //effectively used position (nth number in filenames)entered by user or guessed by heuristic
   private MediaCache mediaCache = new MediaCache(this); //implements a Cache strategy: which content should be preloaded, which can be flushed
+  private SimpleObjectProperty mediaFileThatNeedsReload = new SimpleObjectProperty(); //MediaContentView can subscribe to detect cache became invalid e.g. because backgroundloading failed
+
   private boolean respectFolderChanges = true;         //false while changing the loaded folder (saveCurrentFolder)
   private SearchRec searchRec = new SearchRec();
 
@@ -450,14 +453,6 @@ public class MediaFileList {
     return fileList;
   }
 
-  /**
-   * get the content (e.g. the image), if possible from the cache
-   *
-   * @param index index of the mediaFile in mediaFileList
-   */
-  public Object getCachedMediaContent(int index) {
-    return mediaCache.getCachedMediaContent(index);
-  }
 
   /**
    * get the content (e.g. the image), if possible from the cache
@@ -465,7 +460,16 @@ public class MediaFileList {
    * @param mediaFile in mediaFileList
    */
   public Object getCachedMediaContent(MediaFile mediaFile) {
-    return mediaCache.getCachedMediaContent(mediaFile);
+    //prevent from infinite load-retry
+    if (mediaFile != null) {
+      if (mediaFile.getLoadRetryCounter() < MediaFile.MAX_LOAD_RETRIES)
+        return mediaCache.getCachedMediaContent(mediaFile);
+      else
+        return null;
+    } else {
+      return null;
+    }
+
   }
 
   /**
@@ -500,6 +504,28 @@ public class MediaFileList {
    */
   public void disablePreLoad() {
     mediaCache.disablePreLoad();
+  }
+
+  /**
+   * remove a mediaFile from cache, e.g. because it became invalid and needs reload
+   * (e.g. an ImageFile loads in background, and the errorHandler calls this method if an error occurred while background loading)
+   *
+   * @param mediaFile
+   */
+  public void flushFromCache(MediaFile mediaFile) {
+    mediaCache.flush(mediaFile);
+    //System.out.println("MediaFileList: flushed from cache: " + mediaFile.fileOnDisk);
+    mediaFileThatNeedsReload.set(mediaFile);   //inform all registered listeners (e.g. in FileTableView)
+  }
+
+  /**
+   * Get the property holding the last mediaFile that became invalid in the cache.
+   * This can happen e.g. for ImageFiles when background loading failed
+   *
+   * @return mediaFileThatNeedsReload
+   */
+  public SimpleObjectProperty getMediaFileThatNeedsReloadProperty() {
+    return mediaFileThatNeedsReload;
   }
 
   /**

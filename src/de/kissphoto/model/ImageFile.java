@@ -3,6 +3,9 @@ package de.kissphoto.model;
 import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import de.kissphoto.helper.GlobalSettings;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 
@@ -21,6 +24,7 @@ import java.nio.file.Path;
  * 2014-06-05 java.io operations changed into java.nio
  * 2017-10-28 support of rotation for jpg files
  * 2019-06-22 mediaCache corrections: getMediaContentException() added
+ * 2019-07-07: Cache problems fixed
  */
 public class ImageFile extends MediaFileTagged {
   //Exif orientation constants
@@ -41,8 +45,9 @@ public class ImageFile extends MediaFileTagged {
   }
 
   /**
-   * implement getMediaContent() for ImageFiles.
+   * implement getMediaContent() (abstract in MediaFile) for ImageFiles.
    * by loading the image specified by "FileOnDisk" property
+   * (called by MediaCache to fill Cache, but also from PhotoViewer as a shortcut, still respecting cache policy
    *
    * @return Image if successful or null if not
    * note: if null is returned possibly MediaCache needs to be maintained to free memory..and retried again
@@ -50,26 +55,50 @@ public class ImageFile extends MediaFileTagged {
   @Override
   public Object getMediaContent() {
     Image image = (Image) content;
-    //if (image!=null) System.out.println("Progress=" + image.getProgress()); //if you access network files and scroll very fast values != 100% are observed ;-)
+    ImageFile thisImageFile = this;
 
-    if (!isMediaContentValid()) {  //if not already loaded
+    if (!isMediaContentValid()) {  //if not already loaded or image in cache is invalid
       try {
-        content = new Image(fileOnDisk.toUri().toString(), true);  //true=load in Background
+        loadRetryCounter++;
+        //System.out.println("getMediaContent loading " + fileOnDisk);
+        image = new Image(fileOnDisk.toUri().toString(), true);  //true=load in Background
+        //install error-listener for background-loading
+        image.errorProperty().addListener(new ChangeListener<Boolean>() {
+          @Override
+          public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+            mediaFileList.flushFromCache(thisImageFile);
+          }
+        });
+        image.progressProperty().addListener(new ChangeListener<Number>() {
+          @Override
+          public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+            if (newValue.doubleValue() >= 1.0) {     //if image loaded completely then retryCounter can be reset
+              loadRetryCounter = 0;
+            }
+          }
+        });
       } catch (Exception e) {
         //will not occur with backgroundLoading: image.getException will get the exception
-        System.out.println("Exception while loading:");
-        e.printStackTrace();
       }
     } else {
-      //System.out.println("in Cache :-)...Error="+ image.isError() + " Exception=" + image.getException());
-
-      if (image.isError()) {
-        //image.getException().printStackTrace();
-        content = null; //the loaded image is invalid. Calling method can retry, when null is returned
-      }
+      //System.out.println(fileOnDisk.toString() + "in Cache :-)...Error="+ image.isError() + " Exception=" + image.getException());
     }
+
+    content = image;
     return content;
   }
+
+  /**
+   * @return if content != null return the images progressProperty else null
+   */
+  @Override
+  public ReadOnlyDoubleProperty getContentProgressProperty() {
+    if (content != null)
+      return ((Image) content).progressProperty();
+    else
+      return null;
+  }
+
 
   /**
    * implement getMediaContentException for ImageFiles
@@ -81,12 +110,14 @@ public class ImageFile extends MediaFileTagged {
   @Override
   public Exception getMediaContentException() {
     Image image = (Image) content;
-    if (image != null)
-      if (image.isError())
-        return image.getException(); //image but not valid
+    if (image != null) {
+      if (image.getException() != null)
+        return image.getException();   //image but not valid
+      else if (image.isError())
+        return new Exception("image.IsError"); //image but not valid
       else
         return null; //valid image --> no exception
-    else
+    } else
       return null; //no image --> no exception
   }
 

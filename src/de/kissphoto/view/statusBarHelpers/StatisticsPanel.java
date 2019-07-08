@@ -21,7 +21,7 @@ import java.util.ResourceBundle;
  *
  * @author Dr. Ingo Kreuz
  * @date: 2017-10-24
- * @modified:
+ * @modified: 2019-07-07 inserted missing spaces after ":"
  */
 
 public class StatisticsPanel extends HBox {
@@ -32,10 +32,10 @@ public class StatisticsPanel extends HBox {
   private final static String modifiedCaption = language.getString("modifiedStatistic");
   private final static String deletedCaption = language.getString("deletedStatistic");
 
-  private Label filesLabel = new Label(filesCaption + "0");
-  private Label selectedLabel = new Label(selectedCaption + "0");
-  private Label modifiedLabel = new Label(modifiedCaption + "0");
-  private Label deletedLabel = new Label(deletedCaption + "0");
+  private Label filesLabel = new Label(filesCaption + " 0");
+  private Label selectedLabel = new Label(selectedCaption + " 0");
+  private Label modifiedLabel = new Label(modifiedCaption + " 0");
+  private Label deletedLabel = new Label(deletedCaption + " 0");
 
   /**
    * @constructor
@@ -71,14 +71,14 @@ public class StatisticsPanel extends HBox {
   }
 
   public void showFilesNumber(int filesNumber) {
-    filesLabel.setText(" " + filesCaption + filesNumber + " ");
+    filesLabel.setText(" " + filesCaption + " " + filesNumber + " ");
     //filesLabel.setPrefWidth(StringHelper.computeTextWidth(filesLabel.getFont(), filesLabel.getText(), 0.0D) + 5);
     filesLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);
   }
 
   public void showSelectedNumber(int selectedNumber) {
     if (selectedNumber > 1) {
-      selectedLabel.setText(" " + selectedCaption + selectedNumber + " ");
+      selectedLabel.setText(" " + selectedCaption + " " + selectedNumber + " ");
       selectedLabel.setVisible(true);
       selectedLabel.setPrefWidth(StringHelper.computeTextWidth(selectedLabel.getFont(), selectedLabel.getText(), 0.0D) + 5);
       //selectedLabel.setMinWidth(Region.USE_COMPUTED_SIZE);
@@ -90,7 +90,7 @@ public class StatisticsPanel extends HBox {
 
   public void showModifiedNumber(int modifiedNumber) {
     if (modifiedNumber > 0) {
-      modifiedLabel.setText(" " + modifiedCaption + modifiedNumber + " ");
+      modifiedLabel.setText(" " + modifiedCaption + " " + modifiedNumber + " ");
       modifiedLabel.setVisible(true);
       modifiedLabel.setPrefWidth(StringHelper.computeTextWidth(modifiedLabel.getFont(), modifiedLabel.getText(), 0.0D) + 5);
       //modifiedLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);
@@ -102,7 +102,7 @@ public class StatisticsPanel extends HBox {
 
   public void showDeletedNumber(int deletedNumber) {
     if (deletedNumber > 0) {
-      deletedLabel.setText(" " + deletedCaption + deletedNumber + " ");
+      deletedLabel.setText(" " + deletedCaption + " " + deletedNumber + " ");
       deletedLabel.setVisible(true);
       deletedLabel.setPrefWidth(StringHelper.computeTextWidth(deletedLabel.getFont(), deletedLabel.getText(), 0.0D) + 5);
       //deletedLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);

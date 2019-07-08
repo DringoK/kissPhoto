@@ -6,6 +6,7 @@ import de.kissphoto.helper.AppStarter;
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.helper.StringHelper;
 import de.kissphoto.view.inputFields.SeparatorInputField;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
@@ -92,6 +93,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
   //helpers
   private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+  //prevent from infinite loop if (background) loading fails permanently (currently supported by ImageFile Background loading
+  protected int loadRetryCounter = 0;
+  public final static int MAX_LOAD_RETRIES = 3;
 
   /**
    * @param file   the file that will be wrapped by this class or its subclasses
@@ -617,7 +622,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public abstract Object getMediaContent();
 
   /**
-   * @return true if Media Content is valid, false if not loaded or Exception occured while loaded
+   * @return true if Media Content is valid, false if not loaded or Exception occurred while loading
    */
   public boolean isMediaContentValid() {
     return ((content != null) && (getMediaContentException() == null));
@@ -632,9 +637,15 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    */
   public abstract Exception getMediaContentException();
 
+  public int getLoadRetryCounter() {
+    return loadRetryCounter;
+  }
+
   public Object getCachedMediaContent() {
     return mediaFileList.getCachedMediaContent(this);
   }
+
+  public abstract ReadOnlyDoubleProperty getContentProgressProperty();
 
   /**
    * For maintenance of the MediaCache a guess is necessary how much memory becomes available if the MediaFile is removed from cache and memory

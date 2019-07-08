@@ -27,6 +27,7 @@ import java.lang.management.MemoryUsage;
  * @modified: 2014-05-25: MIN_FREE_MEM_SIZE is kept instead of a fixed number of maximum cache elements
  * @modified: 2014-06-07: getContent interface to cache simplified, min Free memory from oldHeap is only used (@see getAvailableMem)
  * @modified: 2019-06-22: corrections to cache algo: make robust against wrong estimations by caring about exceptions
+ * @modified: 2019-07-07: improvement of exception handling: subscribing to Error-Property
  */
 public class MediaCache {
   private static final long MB = 1 << 20;      //=2^20
@@ -125,22 +126,6 @@ public class MediaCache {
     //System.out.println("available mem after gc=" + getAvailableMem());
   }
 
-  /**
-   * get the MediaContent out of the Cache if possible. If not fill the Cache from disk by accessing MediaFileList
-   * (passed in the constructor).
-   *
-   * @param index of the Media in MediaFileList (as shown in FileTableView)
-   * @return the according MediaFile.Content which is thereby maintained in the cache
-   */
-  public Object getCachedMediaContent(int index) {
-    //load content or access the stored content
-    if (index >= 0 && index < mediaList.getFileList().size()) { //can be out of bounce e.g. if filelist is empty (-1=no selection)
-      MediaFile mediaFile = mediaList.getFileList().get(index);
-      return getCachedMediaContent(index, mediaFile);
-    } else {
-      return null;
-    }
-  }
 
   /**
    * get the MediaContent out of the Cache if possible. If not fill the Cache from disk by accessing MediaFileList
@@ -176,6 +161,8 @@ public class MediaCache {
     if (enablePreload) {
       //preload previous media if necessary async in background
       if (index > 0) { //if there exists a 'previous'
+        maintainCacheSizeByFlushingOldest();
+
         mediaFile = mediaList.getFileList().get(index - 1);
         if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
           //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough
@@ -185,6 +172,8 @@ public class MediaCache {
       }
       //preload next media if necessary async. in background
       if (index < mediaList.getFileList().size() - 1) { //if there exists a 'next'
+        maintainCacheSizeByFlushingOldest();
+
         mediaFile = mediaList.getFileList().get(index + 1);
         if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
           //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough
