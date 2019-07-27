@@ -9,6 +9,12 @@
           <option name="description" value="Manage your Photos and Videos&#13;&#10;But keep it simple....stupid ;-)&#13;&#10;- Labelling, numbering and sorting of files&#13;&#10;- Show Photo and Video Series" />
           <option name="height" value="768" />
           <option name="htmlPlaceholderId" value="" />
+          <option name="icons">
+            <JavaFxApplicationIcons>
+              <option name="linuxIcon" value="$PROJECT_DIR$/resources/images/KissPhotoIcon.png" />
+              <option name="windowsIcon" value="$PROJECT_DIR$/resources/images/KissPhotoIcon.ico" />
+            </JavaFxApplicationIcons>
+          </option>
           <option name="title" value="kissPhoto" />
           <option name="vendor" value="Dr. Ingo Kreuz" />
           <option name="version" value="" />
@@ -245,7 +251,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_9" default="false" project-jdk-name="10" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="false" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectRunConfigurationManager">

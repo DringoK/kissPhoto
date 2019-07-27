@@ -32,6 +32,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 
+import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
 /**
@@ -325,63 +326,68 @@ public class MediaContentView extends Pane {
 
   public void setMedia(MediaFile mediaFile, Duration lastPlayerPos) {
     //reset all probably playing players
-    movieViewer.resetPlayer();
-    clearProgress();
+    try {
+      movieViewer.resetPlayer();
+      clearProgress();
 
-    if (mediaFile != null) {  //if nothing is handed over then display standard view ("sorry cannot display"...) e.g. from init of undelete dialog
-      currentMedia = mediaFile.getCachedMediaContent();
-      if (currentMedia == null)
-        currentMedia = mediaFile.getMediaContent();  //in undelete dialog don't use cache or Cache result was invalid (then retry)
+      if (mediaFile != null) {  //if nothing is handed over then display standard view ("sorry cannot display"...) e.g. from init of undelete dialog
+        currentMedia = mediaFile.getCachedMediaContent();
+        if (currentMedia == null)
+          currentMedia = mediaFile.getMediaContent();  //in undelete dialog don't use cache or Cache result was invalid (then retry)
 
-      currentMediaFile = mediaFile;
-      attrViewer.setMedia(mediaFile);
+        currentMediaFile = mediaFile;
+        attrViewer.setMedia(mediaFile);
 
-      if (currentMedia != null) {
+        if (currentMedia != null) {
 
-        if (currentMedia.getClass() == Image.class) {
-          //-------- if photo ---------
-          photoViewer.setImageFile((ImageFile) mediaFile);
-          photoViewer.setVisible(true);
-          movieViewer.setVisible(false);
-          otherViewer.setVisible(false);
+          if (currentMedia.getClass() == Image.class) {
+            //-------- if photo ---------
+            photoViewer.setImageFile((ImageFile) mediaFile);
+            photoViewer.setVisible(true);
+            movieViewer.setVisible(false);
+            otherViewer.setVisible(false);
 
 
-          photoViewer.zoomToFit();
-        } else if (currentMedia.getClass() == Media.class) {
-          //--------if movie -----------
-          if (fullScreenStage == null) //only show film in foreground window (here if there is no fullscreen stage or in fullscreen stage)
+            photoViewer.zoomToFit();
+          } else if (currentMedia.getClass() == Media.class) {
+            //--------if movie -----------
+            if (fullScreenStage == null) //only show film in foreground window (here if there is no fullscreen stage or in fullscreen stage)
+              System.out.println("MediaContentView: movieViewer.setMedia " + (Media) currentMedia + " Pos: " + lastPlayerPos);
             movieViewer.setMedia((Media) currentMedia, lastPlayerPos);
-          photoViewer.setVisible(false);
-          movieViewer.setVisible(true);
-          otherViewer.setVisible(false);
+            photoViewer.setVisible(false);
+            movieViewer.setVisible(true);
+            otherViewer.setVisible(false);
 
-          movieViewer.zoomToFit();
+            movieViewer.zoomToFit();
+          } else {
+            //------- if unsupported Media type -------
+            photoViewer.setVisible(false);
+            movieViewer.setVisible(false);
+            otherViewer.setVisible(true);
+          }
         } else {
-          //------- if unsupported Media type -------
+          //current Media is null
           photoViewer.setVisible(false);
           movieViewer.setVisible(false);
           otherViewer.setVisible(true);
         }
+
+        showProgressBarForMediaFile(mediaFile);
       } else {
-        //current Media is null
+        //mediaFile is null
         photoViewer.setVisible(false);
         movieViewer.setVisible(false);
         otherViewer.setVisible(true);
       }
-
-      showProgressBarForMediaFile(mediaFile);
-    } else {
-      //mediaFile is null
-      photoViewer.setVisible(false);
-      movieViewer.setVisible(false);
-      otherViewer.setVisible(true);
-    }
-    showRotationAndFlippingPreview();
+      showRotationAndFlippingPreview();
 
 
-    //maintain the fullScreenStage's media also, if it is displayed currently
-    if (fullScreenStage != null && fullScreenStage.isShowing()) {
-      fullScreenStage.getMediaContentView().setMedia(mediaFile, lastPlayerPos);
+      //maintain the fullScreenStage's media also, if it is displayed currently
+      if (fullScreenStage != null && fullScreenStage.isShowing()) {
+        fullScreenStage.getMediaContentView().setMedia(mediaFile, lastPlayerPos);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 
@@ -391,6 +397,7 @@ public class MediaContentView extends Pane {
     lastListener = null;
 
     fileTableView.getStatusBar().clearProgress();
+    fileTableView.getStatusBar().clearMessage();
     lastMediaFileBoundtoProgress = null;
   }
 
@@ -400,6 +407,7 @@ public class MediaContentView extends Pane {
       if (mediaFile.getContentProgressProperty().doubleValue() < 1.0) {
         StatusBar statusBar = fileTableView.getStatusBar();
 
+        statusBar.showMessage(MessageFormat.format(language.getString("loading.0"), mediaFile.getResultingFilename()));
         statusBar.getProgressProperty().bind(mediaFile.getContentProgressProperty());
         statusBar.showProgressBar();
         lastMediaFileBoundtoProgress = mediaFile;

@@ -215,9 +215,12 @@ public class PlayerViewer extends StackPane {
    * @param seekPosition if not null it is tried to seek this position as soon as the playable media is loaded/visible
    */
   public void setMedia(Media media, Duration seekPosition) {
+    System.out.println("PlayerViewer.setMedia: resetPlayer");
     resetPlayer();
+    System.out.println("PlayerViewer.setMedia: new MediaPlayer");
     mediaPlayer = new MediaPlayer(media);
 
+    System.out.println("PlayerViewer.setMedia: setOnReady");
     mediaPlayer.setOnReady(new Runnable() {
       @Override
       public void run() {
@@ -239,6 +242,7 @@ public class PlayerViewer extends StackPane {
         });
       }
     });
+    System.out.println("PlayerViewer.setMedia: setOnEndOfMedia");
     mediaPlayer.setOnEndOfMedia(new Runnable() {
       @Override
       public void run() {
@@ -249,6 +253,7 @@ public class PlayerViewer extends StackPane {
     });
 
     //install listener for player status to update play/pause/inactive, stop active/inactive
+    System.out.println("PlayerViewer.setMedia: statusProperty");
     mediaPlayer.statusProperty().addListener(new ChangeListener<MediaPlayer.Status>() {
       @Override
       public void changed(ObservableValue<? extends MediaPlayer.Status> observable, MediaPlayer.Status oldValue, MediaPlayer.Status newValue) {
