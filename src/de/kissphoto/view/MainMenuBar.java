@@ -310,7 +310,7 @@ public class MainMenuBar extends MenuBar {
     final MenuItem moveUpItem = new MenuItem(language.getString("move.upMenu"));
     //shift-alt ok: compatible with windows: alt+??=menu, shift-alt-arrow = move, compatible with ubuntu: shift-alt used for changing windows
     //here only for displaying the shortcut. It must be set additionally directly in FileTableView constructor to override standard use of Shift-Ctrl-Up/Down=extend selection
-    moveUpItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, KeyCombination.SHIFT_DOWN, KeyCombination.ALT_DOWN));
+    moveUpItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
     moveUpItem.setOnAction(new EventHandler<ActionEvent>() {
       public void handle(ActionEvent event) {
         event.consume();
@@ -320,7 +320,7 @@ public class MainMenuBar extends MenuBar {
     editMenu.getItems().add(moveUpItem);
 
     final MenuItem moveDnItem = new MenuItem(language.getString("move.downMenu"));
-    moveDnItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, KeyCombination.SHIFT_DOWN, KeyCombination.ALT_DOWN));
+    moveDnItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
     moveDnItem.setOnAction(new EventHandler<ActionEvent>() {
       public void handle(ActionEvent event) {
         event.consume();

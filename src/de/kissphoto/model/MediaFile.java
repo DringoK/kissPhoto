@@ -621,6 +621,12 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    */
   public abstract Object getMediaContent();
 
+  //Default implementation for cancelling any background loading
+  public void cancelBackgroundLoading() {
+    //do nothing as default
+    //overwritten e.g. in ImageFile
+  }
+
   /**
    * @return true if Media Content is valid, false if not loaded or Exception occurred while loading
    */

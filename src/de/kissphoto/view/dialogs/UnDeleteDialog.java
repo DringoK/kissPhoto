@@ -23,7 +23,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 /**
- * This is the Dialog Window for Renumbering
+ * This is the Dialog Window for UnDeletion
  *
  * @author: Dr. Ingo kreuz
  * @date: 2012-10-05

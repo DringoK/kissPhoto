@@ -46,6 +46,7 @@ import java.awt.*;
  * @modified: 2018-11-17 rotation of images is now supported, improved inCell-editing (caretPosition, Tab-Support)
  * @modified: 2019-06-23 release candidate: fixes in Cache Algo, fixed issues with "second screen"/fullscreen, Strg-j menu internationalized, jpeg (with e) supported
  * @modified: 2019-07-07: Cache problems fixed
+ * @modified: 2019-11-01: move up/down key handling improved, scrolling in FileTable improved, preview in UnDeleteDialog repaired, Cache speed improved (e.g. Background Loading Cancelling), reload File History repaired
  * <p>
  * Bugs:
  * ======================
@@ -67,7 +68,7 @@ import java.awt.*;
  * todo Nice to have: Undo-History
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.19.07_18"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.19.11"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;

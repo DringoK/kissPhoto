@@ -154,15 +154,22 @@ public class MediaCache {
     maintainCacheSizeByFlushingOldest();
 
     Object content = mediaFile.getMediaContent(); //get cached content or load if necessary
-    //store the new element in the Cache
-    if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile); //add to the end of the list (as the "newest")
-
+    //store the new element in the Cache list
+    if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile); //add to the end of the list (as the latest/"newest")
 
     if (enablePreload) {
+      //Cancel any background loadings except next/previous
+      if (index > 1) {//if there is a previous/previous
+        mediaFile = mediaList.getFileList().get(index - 2);
+        if (mediaFile != null) mediaFile.cancelBackgroundLoading();
+      }
+      if (index < mediaList.getFileList().size() - 2) { //if there exists a 'next next'
+        mediaFile = mediaList.getFileList().get(index + 2);
+        if (mediaFile != null) mediaFile.cancelBackgroundLoading();
+      }
+
       //preload previous media if necessary async in background
       if (index > 0) { //if there exists a 'previous'
-        maintainCacheSizeByFlushingOldest();
-
         mediaFile = mediaList.getFileList().get(index - 1);
         if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
           //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough
@@ -172,8 +179,6 @@ public class MediaCache {
       }
       //preload next media if necessary async. in background
       if (index < mediaList.getFileList().size() - 1) { //if there exists a 'next'
-        maintainCacheSizeByFlushingOldest();
-
         mediaFile = mediaList.getFileList().get(index + 1);
         if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
           //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough

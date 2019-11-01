@@ -353,7 +353,11 @@ class TextFieldCell extends TableCell<MediaFile, String> {
         }
         stayInEditMode = false;
 
-        fileTableView.scrollViewportToIndex(currentLineEdited);
+        if (up)
+          fileTableView.scrollViewportToIndex(currentLineEdited, FileTableView.Alignment.TOP);
+        else
+          fileTableView.scrollViewportToIndex(currentLineEdited, FileTableView.Alignment.BOTTOM);
+
         fileTableView.getSelectionModel().focus(currentLineEdited);
         fileTableView.getSelectionModel().clearAndSelect(currentLineEdited, editingColumn);
 

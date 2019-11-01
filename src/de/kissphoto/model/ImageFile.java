@@ -60,7 +60,7 @@ public class ImageFile extends MediaFileTagged {
     if (!isMediaContentValid()) {  //if not already loaded or image in cache is invalid
       try {
         loadRetryCounter++;
-        //System.out.println("getMediaContent loading " + fileOnDisk);
+        //System.out.println("RetryCounter="+loadRetryCounter + "  getMediaContent loading " + fileOnDisk);
         image = new Image(fileOnDisk.toUri().toString(), true);  //true=load in Background
         //install error-listener for background-loading
         image.errorProperty().addListener(new ChangeListener<Boolean>() {
@@ -86,6 +86,12 @@ public class ImageFile extends MediaFileTagged {
 
     content = image;
     return content;
+  }
+
+  @Override
+  public void cancelBackgroundLoading() {
+    super.cancelBackgroundLoading();
+    if (content != null) ((Image) content).cancel();
   }
 
   /**

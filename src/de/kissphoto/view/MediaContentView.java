@@ -352,7 +352,6 @@ public class MediaContentView extends Pane {
           } else if (currentMedia.getClass() == Media.class) {
             //--------if movie -----------
             if (fullScreenStage == null) //only show film in foreground window (here if there is no fullscreen stage or in fullscreen stage)
-              System.out.println("MediaContentView: movieViewer.setMedia " + (Media) currentMedia + " Pos: " + lastPlayerPos);
             movieViewer.setMedia((Media) currentMedia, lastPlayerPos);
             photoViewer.setVisible(false);
             movieViewer.setVisible(true);
@@ -392,17 +391,20 @@ public class MediaContentView extends Pane {
   }
 
   protected void clearProgress() {
-    if (lastListener != null && lastMediaFileBoundtoProgress != null && lastMediaFileBoundtoProgress.getContentProgressProperty() != null)
-      lastMediaFileBoundtoProgress.getContentProgressProperty().removeListener(lastListener);
-    lastListener = null;
+    //if the mediaContenView is part of undeleteDialog there is no progress to be shown
+    if (fileTableView != null) {
+      if (lastListener != null && lastMediaFileBoundtoProgress != null && lastMediaFileBoundtoProgress.getContentProgressProperty() != null)
+        lastMediaFileBoundtoProgress.getContentProgressProperty().removeListener(lastListener);
+      lastListener = null;
 
-    fileTableView.getStatusBar().clearProgress();
-    fileTableView.getStatusBar().clearMessage();
-    lastMediaFileBoundtoProgress = null;
+      fileTableView.getStatusBar().clearProgress();
+      fileTableView.getStatusBar().clearMessage();
+      lastMediaFileBoundtoProgress = null;
+    }
   }
 
   private void showProgressBarForMediaFile(MediaFile mediaFile) {
-    if (mediaFile.getContentProgressProperty() != null) {
+    if (fileTableView != null && mediaFile.getContentProgressProperty() != null) {  //fileTableView=null for UndeleteDialog
       //show Progressbar only if media not already completely loaded
       if (mediaFile.getContentProgressProperty().doubleValue() < 1.0) {
         StatusBar statusBar = fileTableView.getStatusBar();
@@ -423,14 +425,14 @@ public class MediaContentView extends Pane {
    * (if there is no current selection (e.g. empty filelist) or no connection to the fileTableView (e.g. in undeleteDialog) nothing will happen)
    */
   public void showPreviousMedia() {
-    boolean fileTableViewHadFocus = fileTableView.isFocused();
-
     if (fileTableView == null || fileTableView.getSelectionModel() == null) return;
+
+    boolean fileTableViewHadFocus = fileTableView.isFocused();
 
     int currentSelection = fileTableView.getSelectionModel().getSelectedIndex();
     if (currentSelection > 0) {
       fileTableView.getSelectionModel().clearAndSelect(currentSelection - 1);
-      fileTableView.scrollViewportToIndex(currentSelection - 1);
+      fileTableView.scrollViewportToIndex(currentSelection - 1, FileTableView.Alignment.TOP);
     }
 
     //above selection might steel focus from mediaContentView if changed from movie to image
@@ -450,13 +452,14 @@ public class MediaContentView extends Pane {
    * (if there is no current selection (e.g. empty filelist) or no connection to the fileTableView (e.g. in undeleteDialog) nothing will happen)
    */
   public void showNextMedia() {
-    boolean fileTableViewHadFocus = fileTableView.isFocused();
     if (fileTableView == null || fileTableView.getSelectionModel() == null) return;
+
+    boolean fileTableViewHadFocus = fileTableView.isFocused();
 
     int currentSelection = fileTableView.getSelectionModel().getSelectedIndex();
     if (currentSelection < fileTableView.getMediaFileList().getFileList().size() - 1) {
       fileTableView.getSelectionModel().clearAndSelect(currentSelection + 1);
-      fileTableView.scrollViewportToIndex(currentSelection + 1);
+      fileTableView.scrollViewportToIndex(currentSelection + 1, FileTableView.Alignment.BOTTOM);
     }
 
     //above selection might steel focus from mediaContentView if changed from movie to image
@@ -529,13 +532,13 @@ public class MediaContentView extends Pane {
 
     if (lineNumber <= 0) {
       fileTableView.getSelectionModel().clearAndSelect(0); //first element
-      fileTableView.scrollViewportToIndex(0);
+      fileTableView.scrollViewportToIndex(0, FileTableView.Alignment.TOP);
     } else if (lineNumber < fileTableView.getMediaFileList().getFileList().size()) {
       fileTableView.getSelectionModel().clearAndSelect(lineNumber - 1); //-1 because list is zero-based human entry is 1-based
-      fileTableView.scrollViewportToIndex(lineNumber - 1);
+      fileTableView.scrollViewportToIndex(lineNumber - 1, FileTableView.Alignment.CENTER);
     } else {
       fileTableView.getSelectionModel().clearAndSelect(fileTableView.getMediaFileList().getFileList().size() - 1); //last element
-      fileTableView.scrollViewportToIndex(fileTableView.getMediaFileList().getFileList().size() - 1);
+      fileTableView.scrollViewportToIndex(fileTableView.getMediaFileList().getFileList().size() - 1, FileTableView.Alignment.BOTTOM);
     }
   }
 
@@ -612,7 +615,7 @@ public class MediaContentView extends Pane {
       }
       for (MenuItem item : showOnNextScreenItems) item.setDisable(true);
 
-      fileTableView.requestFocus();
+      if (fileTableView != null) fileTableView.requestFocus();    //null if in UnDeleteDialog
     }
     //if in fullScreenMode (seen from the full-Screen-window itself)
     if (primaryMediaContentView != null) {
@@ -624,10 +627,12 @@ public class MediaContentView extends Pane {
     if (fullScreenStage == null && !owner.isFullScreen()) { //only if not already in fullScreen-Mode
       showFullScreen();
       showFullScreenOnNextScreen(true); //if multiple screens are available use the "next" initially
-      fileTableView.getStatusBar().showMessage(language.getString("esc.to.end.full.screen.tab.to.shift.full.screen.panel.between.screens"));
+      //note: fileTableView = null if in UnDeleteDialog (i.e. no progressBar)
+      if (fileTableView != null)
+        fileTableView.getStatusBar().showMessage(language.getString("esc.to.end.full.screen.tab.to.shift.full.screen.panel.between.screens"));
     } else {
       endFullScreen();
-      fileTableView.getStatusBar().clearMessage();
+      if (fileTableView != null) fileTableView.getStatusBar().clearMessage();
     }
   }
 
@@ -825,7 +830,10 @@ public class MediaContentView extends Pane {
    * @return true if fileTableView is currently in CellEdit-Mode or Multi-edit-Mode
    */
   public boolean isFileTableViewInEditMode() {
-    return fileTableView.isEditMode();
+    if (fileTableView != null) //is null in UndeleteDialog
+      return fileTableView.isEditMode();
+    else
+      return false;
   }
 
 

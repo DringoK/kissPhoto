@@ -15,6 +15,7 @@
               <option name="windowsIcon" value="$PROJECT_DIR$/resources/images/KissPhotoIcon.ico" />
             </JavaFxApplicationIcons>
           </option>
+          <option name="nativeBundle" value="exe" />
           <option name="title" value="kissPhoto" />
           <option name="vendor" value="Dr. Ingo Kreuz" />
           <option name="version" value="" />
@@ -87,22 +88,7 @@
     <version value="1.0" />
   </component>
   <component name="JavadocGenerationManager">
-    <option name="OUTPUT_DIRECTORY" />
-    <option name="OPTION_SCOPE" value="protected" />
-    <option name="OPTION_HIERARCHY" value="true" />
-    <option name="OPTION_NAVIGATOR" value="true" />
-    <option name="OPTION_INDEX" value="true" />
-    <option name="OPTION_SEPARATE_INDEX" value="true" />
-    <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
-    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
-    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
-    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
-    <option name="OPTION_DEPRECATED_LIST" value="true" />
     <option name="OTHER_OPTIONS" value="" />
-    <option name="HEAP_SIZE" />
-    <option name="LOCALE" />
-    <option name="OPEN_IN_BROWSER" value="true" />
-    <option name="OPTION_INCLUDE_LIBS" value="false" />
   </component>
   <component name="Palette2">
     <group name="Swing">
@@ -246,6 +232,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/kissPhoto.iml" filepath="$PROJECT_DIR$/kissPhoto.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../VLCJ/src/main/main.iml" filepath="$PROJECT_DIR$/../VLCJ/src/main/main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../VLCJ/src/test/test.iml" filepath="$PROJECT_DIR$/../VLCJ/src/test/test.iml" />
     </modules>
   </component>
   <component name="ProjectResources">
@@ -290,7 +278,12 @@
   </component>
   <component name="libraryTable">
     <library name="lib">
-      <CLASSES />
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/lib/caprica/vlcj-natives/4.1.0/vlcj-natives-4.1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/caprica/vlcj-osx-stubs/1.0.0/vlcj-osx-stubs-1.0.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/caprica/native-streams/1.0.0/native-streams-1.0.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/caprica/vlcj/4.0.6/vlcj-4.0.6.jar!/" />
+      </CLASSES>
       <JAVADOC />
       <SOURCES />
     </library>

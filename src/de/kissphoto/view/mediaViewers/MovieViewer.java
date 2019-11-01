@@ -75,9 +75,7 @@ public class MovieViewer extends PlayerViewer implements ZoomableViewer {
    * @param seekPosition if not null it is tried to seek this position as soon as the movie is loaded/visible
    */
   public void setMedia(Media media, Duration seekPosition) {
-    System.out.println("MovieViewer.setMedia");
     super.setMedia(media, seekPosition);
-    System.out.println("MovieViewer.setMediaPlayer");
     mediaView.setMediaPlayer(mediaPlayer);
   }
 

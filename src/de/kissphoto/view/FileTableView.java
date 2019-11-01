@@ -66,6 +66,7 @@ import java.util.ResourceBundle;
  * 2017-10-30 saving uses ProgressBar now because saving of rotated images can last long...
  * 2018-11-17 OpenRecentFile(0) now keeps the selection (like ReopenCurrentFolder earlier), keep caret position when moving up/down (bugfix)
  * 2019-07-07 chooseFileOrFolder sends extra refresh() for tableView to prevent from be shown as empty, cache problems fixed
+ * 2019-11-01 moving viewport completely rewritten and Alignment is new parameter. Behavior is now as expected with extra lines :-), move/up down keys improved
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
@@ -151,6 +152,9 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   private boolean renameDialogActive = false;
   private FileHistory fileHistory = null;
 
+  static boolean isActivateMenu = false; //(see setOnKeyPressed/released) prevent collision of Menu Activation and File Moving
+
+
   /**
    * constructor will try to open the passed file or foldername
    * if there is no such file or folder an empty list is shown
@@ -161,12 +165,12 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    * @param globalSettings   access to setting e.g. last disk folder used
    */
   public FileTableView(@NotNull Stage primaryStage, final MediaContentView mediaContentView, StatusBar statusBar, GlobalSettings globalSettings) {
+    //remember connections to main window etc
     this.primaryStage = primaryStage;
     this.mediaContentView = mediaContentView;
     this.statusBar = statusBar;
     this.globalSettings = globalSettings;
     fileHistory = new FileHistory(globalSettings, this);
-
 
     this.setMinSize(100.0, 100.0);
 
@@ -174,6 +178,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     setEditable(false); //Edit Event shall not be handled by TableView's default, but by the main menu bar
     getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
+    //create Table
     //status: readonly Column to show status flags
     statusColumn = new TableColumn(language.getString("status"));
     statusColumn.setPrefWidth(STATUS_COL_DEFAULT_WIDTH);
@@ -252,51 +257,56 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       }
     });
 
-    //---------- install key-handlers --------------
-    setOnKeyPressed(new EventHandler<KeyEvent>() {
+    //---------- install event handlers --------------
+    installKeyHandlers(mediaContentView);
+    installMouseHandlers();
+    getViewPort();
+    installDragDropHandlers(primaryStage);
+    installSelectionHandler(mediaContentView);
+    installInvalidCacheHandler(mediaContentView);
+  }
+
+  private void installInvalidCacheHandler(MediaContentView mediaContentView) {
+    mediaFileList.getMediaFileThatNeedsReloadProperty().addListener(new ChangeListener() {
       @Override
-      public void handle(KeyEvent keyEvent) {
-        //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
-        if ((keyEvent.getCode() == KeyCode.F2) && !keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
-          keyEvent.consume();
-          rename();
-        } else if ((keyEvent.getCode() == KeyCode.SPACE) && !keyEvent.isControlDown() && !keyEvent.isShiftDown()
-            && !isEditMode() && mediaContentView.getMovieViewer().isVisible()) {
-          keyEvent.consume();
-          mediaContentView.getMovieViewer().togglePlayPause();
+      public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+        MediaFile mediaFileToReload = (MediaFile) newValue;
+        //System.out.println("FileTableView: invalidation detected: " + mediaFileToReload.getFileOnDisk());
+
+        int currentlySelectedLine = getSelectionModel().getFocusedIndex();
+        //if this is the currently shown media then reload
+        if ((currentlySelectedLine >= 0) && (currentlySelectedLine == mediaFileList.getFileList().indexOf(mediaFileToReload))) {
+          //System.out.println("FileTableView: ----------> current media invalidated: Line: " + currentlySelectedLine);
+          mediaContentView.setMedia(mediaFileList.getFileList().get(currentlySelectedLine), null);
         }
       }
     });
+  }
 
-
-    //--------- install mouse-handler --------------
-    setOnMouseClicked(new EventHandler<MouseEvent>() {
+  private void installSelectionHandler(MediaContentView mediaContentView) {
+    this.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
       @Override
-      public void handle(MouseEvent event) {
-        if (event.getClickCount() > 1) { //if double clicked
-          rename();
+      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+        //set selected media in mediaContentView (or null if not valid)
+        if (newValue.intValue() >= 0) { //only if selection is valid
+          lastSelection = mediaFileList.getFileList().get(newValue.intValue());
+          mediaContentView.setMedia(mediaFileList.getFileList().get(newValue.intValue()), null);
+
+        } else {
+          if (mediaFileList.getFileList().size() <= 0) {
+            //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
+            //keep lastSelection, so the sortOrderChange-Listener can restore selection
+
+            //invalid selection
+            mediaContentView.setMedia(null, null);
+            lastSelection = null;
+          }
         }
       }
     });
+  }
 
-    //this is a solution for getting the viewport (flow) seen on http://stackoverflow.com/questions/17268529/javafx-tableview-keep-selected-row-in-current-view
-    skinProperty().addListener(new ChangeListener<Skin>() {
-      @Override
-      public void changed(ObservableValue<? extends Skin> ov, Skin t, Skin t1) {
-        if (t1 == null) {
-          return;
-        }
-
-        TableViewSkin tvs = (TableViewSkin) t1;
-        ObservableList<Node> kids = tvs.getChildren();
-
-        if (kids == null || kids.isEmpty()) {
-          return;
-        }
-        flow = (VirtualFlow) kids.get(1);
-      }
-    });
-
+  private void installDragDropHandlers(@NotNull Stage primaryStage) {
     primaryStage.getScene().setOnDragOver(new EventHandler<DragEvent>() {
       @Override
       public void handle(DragEvent dragEvent) {
@@ -323,50 +333,57 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         dragEvent.consume();
       }
     });
-    //Install Selection Listener to show selected media
-    //this.getSelectionModel().selectedIndexProperty().addListener(new SelectedLineNumberChangeListener(this));
-    this.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+  }
+
+  private void getViewPort() {
+    //this is a solution for getting the viewport (flow) seen on http://stackoverflow.com/questions/17268529/javafx-tableview-keep-selected-row-in-current-view
+    skinProperty().addListener(new ChangeListener<Skin>() {
       @Override
-      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        //set selected media in mediaContentView (or null if not valid)
-        if (newValue.intValue() >= 0) { //only if selection is valid
-          lastSelection = mediaFileList.getFileList().get(newValue.intValue());
-          mediaContentView.setMedia(mediaFileList.getFileList().get(newValue.intValue()), null);
+      public void changed(ObservableValue<? extends Skin> ov, Skin t, Skin t1) {
+        if (t1 == null) {
+          return;
+        }
 
-        } else {
-          if (mediaFileList.getFileList().size() <= 0) {
-            //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
-            //keep lastSelection, so the sortOrderChange-Listener can restore selection
+        TableViewSkin tvs = (TableViewSkin) t1;
+        ObservableList<Node> kids = tvs.getChildren();
 
-            //invalid selection
-            mediaContentView.setMedia(null, null);
-            lastSelection = null;
-          }
+        if (kids == null || kids.isEmpty()) {
+          return;
+        }
+        flow = (VirtualFlow) kids.get(1);
+      }
+    });
+  }
+
+  private void installMouseHandlers() {
+    setOnMouseClicked(new EventHandler<MouseEvent>() {
+      @Override
+      public void handle(MouseEvent event) {
+        if (event.getClickCount() > 1) { //if double clicked
+          rename();
         }
       }
     });
+  }
 
-    //Install Listener for invalid Cache content
-    mediaFileList.getMediaFileThatNeedsReloadProperty().addListener(new ChangeListener() {
-      @Override
-      public void changed(ObservableValue observable, Object oldValue, Object newValue) {
-        MediaFile mediaFileToReload = (MediaFile) newValue;
-        //System.out.println("FileTableView: invalidation detected: " + mediaFileToReload.getFileOnDisk());
-
-        int currentlySelectedLine = getSelectionModel().getFocusedIndex();
-        //if this is the currently shown media then reload
-        if ((currentlySelectedLine >= 0) && (currentlySelectedLine == mediaFileList.getFileList().indexOf(mediaFileToReload))) {
-          //System.out.println("FileTableView: ----------> current media invalidated: Line: " + currentlySelectedLine);
-          mediaContentView.setMedia(mediaFileList.getFileList().get(currentlySelectedLine), null);
-        }
+  private void installKeyHandlers(MediaContentView mediaContentView) {
+    setOnKeyPressed(keyEvent -> {
+      //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
+      if ((keyEvent.getCode() == KeyCode.F2) && !keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
+        keyEvent.consume();
+        rename();
+      } else if ((keyEvent.getCode() == KeyCode.SPACE) && !keyEvent.isControlDown() && !keyEvent.isShiftDown()
+        && !isEditMode() && mediaContentView.getMovieViewer().isVisible()) {
+        keyEvent.consume();
+        mediaContentView.getMovieViewer().togglePlayPause();
       }
-    });
-
-    //set default sorting
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        resetSortOrder();
+      //overwrite standard functionality (selection) view ctrl-shift up/down with file moving
+      else if ((keyEvent.getCode() == KeyCode.DOWN) && keyEvent.isControlDown() && keyEvent.isShiftDown()) {
+        moveSelectedFilesDown();
+        keyEvent.consume();
+      } else if ((keyEvent.getCode() == KeyCode.UP) && keyEvent.isControlDown() && keyEvent.isShiftDown()) {
+        moveSelectedFilesUp();
+        keyEvent.consume();
       }
     });
   }
@@ -531,7 +548,12 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       found = (i >= 0);
       if (found) {
         this.getSelectionModel().clearAndSelect(i);
-        this.scrollViewportToIndex(i);
+        Platform.runLater(new Runnable() {
+          @Override
+          public void run() {
+            scrollViewportToIndex(i, Alignment.CENTER);
+          }
+        });
       }
     }
     return found;
@@ -621,9 +643,9 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   public void selectRowByPath(final Path file) {
     if (!selectRowByPath(file.getFileName().toString())) { //try to open the selected file, if the selection was a folder it is not found
       getSelectionModel().selectFirst();    //then select the first element
-      scrollViewportToIndex(0);
+      scrollViewportToIndex(0, Alignment.TOP);
     } else {
-      scrollViewportToIndex(getSelectionModel().getSelectedIndex()); //if file found and selected then make the selection visible
+      scrollViewportToIndex(getSelectionModel().getSelectedIndex(), Alignment.CENTER); //if file found and selected then make the selection visible
     }
   }
 
@@ -668,11 +690,20 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    */
   public synchronized void openFolder(final Path fileOrFolder, boolean askForUnsavedChanges) {
     if (!askForUnsavedChanges || askIfContinueUnsavedChanges()) {
+
+      //update history-entry of current selection
+      if (lastSelection != null) {
+        fileHistory.refreshOpenedFileInHistory(lastSelection.getFileOnDisk());
+      }
+
+      lastSelection = null;  //invalidate the remembering (which is e.g. for resort)
+
+      Path newFileOrFolder = null;
       //detect a reopen
       //if current directory is same as fileOrFolder change it to the current selection
-      Path newFileOrFolder = null;
 
       boolean reopened = (mediaFileList.getCurrentFolder() != null) && mediaFileList.getCurrentFolder().equals(PathHelpers.extractFolder(fileOrFolder)); //same folder
+
       if (reopened)
         newFileOrFolder = ((MediaFile) getFocusModel().getFocusedItem()).getFileOnDisk(); //--> reopen current selection
       else
@@ -735,6 +766,15 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     refresh();
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
     primaryStage.requestFocus();
+
+    //set default sorting
+    Platform.runLater(new Runnable() {
+      @Override
+      public void run() {
+        resetSortOrder();
+      }
+    });
+
   }
 
   /**
@@ -930,7 +970,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
           }
           //set new focus (has been changed by select() calls)
           getFocusModel().focus(focusIndex - 1);
-          scrollViewportToIndex(getFocusModel().getFocusedIndex());
+          scrollViewportToIndex(getFocusModel().getFocusedIndex(), Alignment.TOP);
         }
       } finally {
         mediaFileList.enablePreLoad();
@@ -973,7 +1013,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
           //set new focus (has been changed by select() calls)
           getFocusModel().focus(focusIndex + 1);
-          scrollViewportToIndex(getFocusModel().getFocusedIndex());
+          scrollViewportToIndex(getFocusModel().getFocusedIndex(), Alignment.BOTTOM);
         }
       } finally {
         mediaFileList.enablePreLoad();
@@ -1273,7 +1313,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
     if (newSelectionIndex >= 0) {
       getSelectionModel().select(newSelectionIndex);
       if (mediaFileList.getFileList().size() > 0) getFocusModel().focus(newSelectionIndex);
-      scrollViewportToIndex(newSelectionIndex);
+      scrollViewportToIndex(newSelectionIndex, Alignment.CENTER);
     }
     statusBar.showMessage(MessageFormat.format(language.getString("0.file.s.marked.for.deletion.files.can.be.recovered.using.edit.undelete.until.next.save"), deletionList.size()));
     if (unDeleteMenuItem != null)
@@ -1406,6 +1446,9 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
     getSelectionModel().clearSelection();
     getSelectionModel().select(currentFile);
+
+    int index = getSelectionModel().getSelectedIndex();
+    if (index >= 0) scrollViewportToIndex(index, Alignment.CENTER);
   }
 
   /**
@@ -1418,7 +1461,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       getSelectionModel().clearSelection();
       getSelectionModel().select(lastSelection);
       getFocusModel().focus(getSelectionModel().getSelectedIndex());
-      scrollViewportToIndex(getFocusModel().getFocusedIndex());
+      scrollViewportToIndex(getFocusModel().getFocusedIndex(), Alignment.CENTER);
     }
   }
 
@@ -1442,32 +1485,75 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   }
 
 
+  public enum Alignment {TOP, CENTER, BOTTOM}
+
+  ;
   /**
    * make index visible
    * The scrollTo()-Method of TableView is similar but "jumps" to the middle of the visible region time by time.
    * Especially while in edit mode this leads to losing the focus, i.e. the cell in edit mode is different to the focussed cell :-(
    * The viewPort trick has been found on StackOverflow :-)
    * <p/>
-   * Always try to show an extra line before/after the line 'index'
+   * Always try to show two extra lines before/after the line 'index'
+   * if index is already visible nothing happens
    *
-   * @param index line to scroll to become visible in viewport
+   * @param indexToShow line to scroll to become visible in viewport
+   * @param alignment should the line -index- be aligned top, centered or bottom
    */
-  public void scrollViewportToIndex(int index) {
+  public void scrollViewportToIndex(int indexToShow, Alignment alignment) {
     try {
-      if (flow != null) {  //the flow is not valid before it is drawn for the first time. Should be always done after loading a directory ;-)
-        if (index > 0 && (index - 1) < flow.getFirstVisibleCell().getIndex()) {
-          flow.scrollTo(index - 1); //one line before the selected line should remain visible
-        } else if (index < (mediaFileList.getFileList().size() - 1) && (index + 1) > flow.getLastVisibleCell().getIndex()) {
-          flow.scrollTo(index + 1);
-        } else if (index <= 0 && flow.getFirstVisibleCell().getIndex() > 0) {
-          flow.scrollTo(0);
-        } else if (index >= (mediaFileList.getFileList().size() - 1)) {
-          flow.scrollTo(index);
+      if (flow != null) {  //the flow is not valid before it is drawn for the first time. Will be the case every time after loading a directory ;-)
+
+        //calculate how many extra lines make sense
+        int height = flow.getLastVisibleCellWithinViewPort().getIndex() - flow.getFirstVisibleCellWithinViewPort().getIndex() + 1;
+
+        int extraLines = 2;
+        if (height < 3) extraLines = 0;
+        else if (height < 5) extraLines = 1;
+        else extraLines = 2;
+
+        //do nothing if already visible (including extra lines)
+        int firstLineWithExtraLines = flow.getFirstVisibleCellWithinViewPort().getIndex() + extraLines;
+        if (firstLineWithExtraLines > mediaFileList.getFileList().size() - 1)
+          firstLineWithExtraLines = mediaFileList.getFileList().size() - 1;
+        if (firstLineWithExtraLines < 0) firstLineWithExtraLines = 0;
+
+        int lastLineWithExtraLines = flow.getLastVisibleCellWithinViewPort().getIndex() - extraLines;
+        if (lastLineWithExtraLines < 0) lastLineWithExtraLines = 0;
+
+        if (indexToShow >= firstLineWithExtraLines && indexToShow <= lastLineWithExtraLines) {
+          //nothing needs to be done
+        } else {
+          int index = 0; //the resulting index where to jump to
+          //calculate index to be shown as first line according alignment
+          switch (alignment) {
+            case TOP:
+              index = indexToShow - extraLines;
+              break;
+            case CENTER:
+              index = indexToShow - (height / 2);
+              break;
+            case BOTTOM:
+              index = indexToShow - height + extraLines + 1;
+              break;
+          }
+          if (index > mediaFileList.getFileList().size() - 1) index = mediaFileList.getFileList().size() - 1;
+          if (index < 0) index = 0;
+
+          flow.scrollTo(index);     //the new first line
         }
-        flow.scrollTo(index); //in the end show the desired line in any case
+      } else {
+        //retry until there is a Viewport available
+        Platform.runLater(new Runnable() {
+          @Override
+          public void run() {
+            System.out.println("retry " + indexToShow);
+            scrollViewportToIndex(indexToShow, alignment);
+          }
+        });
       }
     } catch (Exception e) {
-      //if scrolling is not possible the don't do it (e.g. during Viewport is built newly because of opening an new folder
+      //if scrolling is not possible then don't do it (e.g. during Viewport is built newly because of opening an new folder
     }
   }
 
@@ -1553,7 +1639,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       getSelectionModel().clearAndSelect(foundIndex, foundCol);
 
       //make it visible
-      scrollViewportToIndex(foundIndex);
+      scrollViewportToIndex(foundIndex, Alignment.CENTER);
 
       Platform.runLater(new Runnable() {
         @Override
@@ -1629,7 +1715,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       getSelectionModel().clearSelection();
       for (MediaFile mediaFile : searchRec.selection) getSelectionModel().select(mediaFile);
 
-      scrollViewportToIndex(getMediaFileList().getFileList().indexOf(searchRec.selection.get(0)));
+      scrollViewportToIndex(getMediaFileList().getFileList().indexOf(searchRec.selection.get(0)), Alignment.CENTER);
       getFocusModel().focus(getMediaFileList().getFileList().indexOf(searchRec.selection.get(0)));
     }
     statusBar.clearMessage();
@@ -1662,7 +1748,6 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
   public void setPasteMenuItem(MenuItem pasteMenuItem) {
     this.pasteMenuItem = pasteMenuItem;
   }
-
   public FileHistory getFileHistory() {
     return fileHistory;
   }
