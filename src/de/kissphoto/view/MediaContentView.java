@@ -6,10 +6,7 @@ import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MediaFileRotater;
 import de.kissphoto.view.helper.RotatablePaneLayouter;
-import de.kissphoto.view.mediaViewers.AttributesViewer;
-import de.kissphoto.view.mediaViewers.MovieViewer;
-import de.kissphoto.view.mediaViewers.OtherViewer;
-import de.kissphoto.view.mediaViewers.PhotoViewer;
+import de.kissphoto.view.mediaViewers.*;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -32,6 +29,8 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
@@ -116,9 +115,22 @@ public class MediaContentView extends Pane {
     photoViewer = new PhotoViewer(this);
     photoViewer.fitWidthProperty().bind(mediaStackPane.widthProperty());
     photoViewer.fitHeightProperty().bind(mediaStackPane.heightProperty());
-    movieViewer = new MovieViewer(this);
-    movieViewer.prefWidthProperty().bind(mediaStackPane.widthProperty());
-    movieViewer.prefHeightProperty().bind(mediaStackPane.heightProperty());
+
+
+    //videos cannot play on Daimler-Installations
+    try {
+      if (InetAddress.getLocalHost().getHostName().startsWith("CMTC")) {
+        movieViewer = new MovieViewerDummy(this);
+      } else {
+        movieViewer = new MovieViewerFX(this);
+        movieViewer.prefWidthProperty().bind(mediaStackPane.widthProperty());
+        movieViewer.prefHeightProperty().bind(mediaStackPane.heightProperty());
+      }
+    } catch (UnknownHostException e) {
+      movieViewer = new MovieViewerDummy(this);
+      e.printStackTrace();
+    }
+
     otherViewer = new OtherViewer(this);
     mediaStackPane.getChildren().addAll(photoViewer, movieViewer, otherViewer);
 
@@ -575,7 +587,7 @@ public class MediaContentView extends Pane {
 
     if (fullScreenStage == null && !owner.isFullScreen()) { //only if not already in fullScreen-Mode
       if (movieViewer.isVisible()) {
-        currentPlayerPosition = movieViewer.getMediaPlayer().getCurrentTime();
+        currentPlayerPosition = movieViewer.getCurrentTime();
         movieViewer.resetPlayer(); //stop playback if running, because it will be started full screen
       }
 
@@ -599,8 +611,8 @@ public class MediaContentView extends Pane {
     //only if in fullScreen-Mode (seen from the main view)
     if (fullScreenStage != null) {
       attrViewer.copyState(fullScreenStage.mediaContentView.getAttrViewer()); //synchronize normal and full screen attributesViewers
-      if (fullScreenStage.mediaContentView.getMovieViewer().isVisible()) {
-        currentPlayerPosition = fullScreenStage.getMediaContentView().getMovieViewer().getMediaPlayer().getCurrentTime();
+      if (fullScreenStage.mediaContentView.getMovieViewer() != null && fullScreenStage.mediaContentView.getMovieViewer().isVisible()) {
+        currentPlayerPosition = fullScreenStage.getMediaContentView().getMovieViewer().getCurrentTime();
         fullScreenStage.mediaContentView.getMovieViewer().resetPlayer();
       }
       fullScreenStage.close();

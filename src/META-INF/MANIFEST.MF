@@ -1,3 +1,5 @@
 Manifest-Version: 1.0
+Implementation-Title: KissPhoto
+Permissions: sandbox
+Implementation-Vendor: Dr. Ingo Kreuz
 Main-Class: de.kissphoto.KissPhoto
-

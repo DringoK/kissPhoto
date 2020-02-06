@@ -1,32 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ArtifactManager">
-    <artifact type="javafx" build-on-make="true" name="kissPhoto">
+    <artifact type="jar" name="kissPhoto">
       <output-path>$PROJECT_DIR$/out/artifacts/kissPhoto</output-path>
-      <properties id="javafx-properties">
-        <options>
-          <option name="appClass" value="de.kissphoto.KissPhoto" />
-          <option name="description" value="Manage your Photos and Videos&#13;&#10;But keep it simple....stupid ;-)&#13;&#10;- Labelling, numbering and sorting of files&#13;&#10;- Show Photo and Video Series" />
-          <option name="height" value="768" />
-          <option name="htmlPlaceholderId" value="" />
-          <option name="icons">
-            <JavaFxApplicationIcons>
-              <option name="linuxIcon" value="$PROJECT_DIR$/resources/images/KissPhotoIcon.png" />
-              <option name="windowsIcon" value="$PROJECT_DIR$/resources/images/KissPhotoIcon.ico" />
-            </JavaFxApplicationIcons>
-          </option>
-          <option name="nativeBundle" value="exe" />
-          <option name="title" value="kissPhoto" />
-          <option name="vendor" value="Dr. Ingo Kreuz" />
-          <option name="version" value="" />
-          <option name="width" value="1024" />
-        </options>
-      </properties>
-      <root id="root">
-        <element id="archive" name="kissPhoto.jar">
-          <element id="module-output" name="kissPhoto" />
-          <element id="extracted-dir" path="$PROJECT_DIR$/lib/mediautil-1.0/mediautil-1.0.jar" path-in-jar="/" />
-          <element id="extracted-dir" path="$PROJECT_DIR$/lib/metadata-extractor/xmpcore-5.1.2.jar" path-in-jar="/" />
+      <root id="archive" name="kissPhoto.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" />
+        </element>
+        <element id="module-output" name="kissPhoto" />
+        <element id="archive" name="xmpcore.jar">
+          <element id="module-output" name="xmpcore" />
+        </element>
+        <element id="archive" name="metadata.jar">
+          <element id="module-output" name="metadata-extractor" />
+        </element>
+        <element id="directory" name="javafx-sdk">
+          <element id="dir-copy" path="$PROJECT_DIR$/lib/javafx-sdk-13.0.1" />
         </element>
       </root>
     </artifact>
@@ -232,21 +221,21 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/kissPhoto.iml" filepath="$PROJECT_DIR$/kissPhoto.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../VLCJ/src/main/main.iml" filepath="$PROJECT_DIR$/../VLCJ/src/main/main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../VLCJ/src/test/test.iml" filepath="$PROJECT_DIR$/../VLCJ/src/test/test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../metadata-extractor/metadata-extractor.iml" filepath="$PROJECT_DIR$/../metadata-extractor/metadata-extractor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../xmpcore/xmpcore.iml" filepath="$PROJECT_DIR$/../xmpcore/xmpcore.iml" />
     </modules>
   </component>
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="false" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="false" project-jdk-name="11.05 corretto" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectRunConfigurationManager">
     <configuration default="false" name="kissphoto" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="de.kissphoto.KissPhoto" />
       <module name="kissPhoto" />
-      <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg" />
+      <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg --module-path out\production;lib\javafx-sdk-13.0.1\lib" />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="" />
         <option name="TRANSPORT" value="0" />
@@ -275,17 +264,30 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../metadata-extractor" vcs="Git" />
   </component>
   <component name="libraryTable">
-    <library name="lib">
+    <library name="JavaFX13">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/lib/caprica/vlcj-natives/4.1.0/vlcj-natives-4.1.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/caprica/vlcj-osx-stubs/1.0.0/vlcj-osx-stubs-1.0.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/caprica/native-streams/1.0.0/native-streams-1.0.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/caprica/vlcj/4.0.6/vlcj-4.0.6.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.web.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.swing.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.media.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.graphics.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.fxml.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.controls.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.base.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx-swt.jar!/" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES />
+      <SOURCES>
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.base" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.controls" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.fxml" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.graphics" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.media" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.swing" />
+        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.web" />
+      </SOURCES>
     </library>
   </component>
 </project>

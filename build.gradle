@@ -1,0 +1,36 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+
+version = '2.1.1'
+
+sourceSets {
+    main {
+        java.srcDirs = ['src']
+        resources.srcDirs = ['resources']
+    }
+}
+
+buildscript {
+    repositories {
+        mavenLocal()
+        jcenter()
+    }
+}
+
+compileJava {
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
+
+    options.encoding = 'UTF-8'
+}
+
+dependencies {
+    compile 'com.adobe.xmp:xmpcore:6.0.6'
+    testCompile 'junit:junit:4.12'
+}
+
+wrapper {
+    gradleVersion = '3.3'
+}
+

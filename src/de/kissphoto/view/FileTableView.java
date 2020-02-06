@@ -1,8 +1,7 @@
 package de.kissphoto.view;
 
 
-import com.sun.javafx.scene.control.skin.TableViewSkin;
-import com.sun.javafx.scene.control.skin.VirtualFlow;
+import com.drew.lang.annotations.NotNull;
 import de.kissphoto.KissPhoto;
 import de.kissphoto.ctrl.FileChangeWatcher;
 import de.kissphoto.ctrl.FileChangeWatcherEventListener;
@@ -29,10 +28,11 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.skin.TableViewSkin;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -1505,7 +1505,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       if (flow != null) {  //the flow is not valid before it is drawn for the first time. Will be the case every time after loading a directory ;-)
 
         //calculate how many extra lines make sense
-        int height = flow.getLastVisibleCellWithinViewPort().getIndex() - flow.getFirstVisibleCellWithinViewPort().getIndex() + 1;
+        int height = flow.getLastVisibleCell().getIndex() - flow.getFirstVisibleCell().getIndex() + 1;
 
         int extraLines = 2;
         if (height < 3) extraLines = 0;
@@ -1513,12 +1513,12 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
         else extraLines = 2;
 
         //do nothing if already visible (including extra lines)
-        int firstLineWithExtraLines = flow.getFirstVisibleCellWithinViewPort().getIndex() + extraLines;
+        int firstLineWithExtraLines = flow.getFirstVisibleCell().getIndex() + extraLines;
         if (firstLineWithExtraLines > mediaFileList.getFileList().size() - 1)
           firstLineWithExtraLines = mediaFileList.getFileList().size() - 1;
         if (firstLineWithExtraLines < 0) firstLineWithExtraLines = 0;
 
-        int lastLineWithExtraLines = flow.getLastVisibleCellWithinViewPort().getIndex() - extraLines;
+        int lastLineWithExtraLines = flow.getLastVisibleCell().getIndex() - extraLines;
         if (lastLineWithExtraLines < 0) lastLineWithExtraLines = 0;
 
         if (indexToShow >= firstLineWithExtraLines && indexToShow <= lastLineWithExtraLines) {

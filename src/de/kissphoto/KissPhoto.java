@@ -68,7 +68,7 @@ import java.awt.*;
  * todo Nice to have: Undo-History
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.19.11"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.19.11_2"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;
@@ -259,6 +259,7 @@ public class KissPhoto extends Application {
       initialFileOrFolder = args[0]; //first parameter is treated as file or folder to open
     } else {
       initialFileOrFolder = "";
+
     }
 
     Application.launch(args);
