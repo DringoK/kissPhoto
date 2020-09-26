@@ -231,9 +231,9 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../adobe-xmp-core/adobe-xmp-core.iml" filepath="$PROJECT_DIR$/../adobe-xmp-core/adobe-xmp-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/adobe-xmp-core.iml" filepath="$PROJECT_DIR$/adobe-xmp-core.iml" />
       <module fileurl="file://$PROJECT_DIR$/kissPhoto.iml" filepath="$PROJECT_DIR$/kissPhoto.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../metadata-extractor/metadata-extractor.iml" filepath="$PROJECT_DIR$/../metadata-extractor/metadata-extractor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/metadata-extractor.iml" filepath="$PROJECT_DIR$/metadata-extractor.iml" />
     </modules>
   </component>
   <component name="ProjectResources">
@@ -244,18 +244,9 @@
   </component>
   <component name="ProjectRunConfigurationManager">
     <configuration default="false" name="kissphoto" type="Application" factoryName="Application">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <option name="MAIN_CLASS_NAME" value="de.kissphoto.KissPhoto" />
-      <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg" />
-      <option name="PROGRAM_PARAMETERS" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="ENABLE_SWING_INSPECTOR" value="false" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
       <module name="kissPhoto" />
-      <envs />
+      <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg --module-path out\production;lib\javafx-sdk-13.0.1\lib" />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="" />
         <option name="TRANSPORT" value="0" />
@@ -264,7 +255,9 @@
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Debug" />
       <ConfigurationWrapper RunnerId="Run" />
-      <method />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
     </configuration>
   </component>
   <component name="SvnBranchConfigurationManager">

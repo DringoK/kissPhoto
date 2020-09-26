@@ -11,7 +11,7 @@ In IntelliJ: VCS-Get from Version Control: paste location from <green button> ab
 Store in Directory beside kissPhoto
 In ProjectStructure
   add..Import Module as IntelliJ-Module to Project
-  Mark Sources and Tests as "not Sources" and "not Tests" (unklick the two buttons) in ProjectStructure while Modules/meta-data-extractor is selected
+  Mark Samples and Tests as "not Sources" and "not Tests" (unklick the two buttons) in ProjectStructure while Modules/meta-data-extractor is selected
   Add Dependency to Module MetaData-Extractor in kissPhoto
 Used for displaying full EXIF-attributes
 
