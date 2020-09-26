@@ -8,15 +8,8 @@
           <element id="file-copy" path="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" />
         </element>
         <element id="module-output" name="kissPhoto" />
-        <element id="archive" name="xmpcore.jar">
-          <element id="module-output" name="xmpcore" />
-        </element>
-        <element id="archive" name="metadata.jar">
-          <element id="module-output" name="metadata-extractor" />
-        </element>
-        <element id="directory" name="javafx-sdk">
-          <element id="dir-copy" path="$PROJECT_DIR$/lib/javafx-sdk-13.0.1" />
-        </element>
+        <element id="module-output" name="adobe-xmp-core" />
+        <element id="module-output" name="metadata-extractor" />
       </root>
     </artifact>
   </component>
@@ -203,6 +196,24 @@
   <component name="ProjectCodeStyleConfiguration">
     <option name="PREFERRED_PROJECT_CODE_STYLE" value="Default (1)" />
     <code_scheme name="Project" version="173">
+      <JetCodeStyleSettings>
+        <option name="PACKAGES_TO_USE_STAR_IMPORTS">
+          <value>
+            <package name="java.util" alias="false" withSubpackages="false" />
+            <package name="kotlinx.android.synthetic" alias="false" withSubpackages="true" />
+            <package name="io.ktor" alias="false" withSubpackages="true" />
+          </value>
+        </option>
+        <option name="PACKAGES_IMPORT_LAYOUT">
+          <value>
+            <package name="" alias="false" withSubpackages="true" />
+            <package name="java" alias="false" withSubpackages="true" />
+            <package name="javax" alias="false" withSubpackages="true" />
+            <package name="kotlin" alias="false" withSubpackages="true" />
+            <package name="" alias="true" withSubpackages="true" />
+          </value>
+        </option>
+      </JetCodeStyleSettings>
       <XML>
         <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
       </XML>
@@ -220,15 +231,15 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../adobe-xmp-core/adobe-xmp-core.iml" filepath="$PROJECT_DIR$/../adobe-xmp-core/adobe-xmp-core.iml" />
       <module fileurl="file://$PROJECT_DIR$/kissPhoto.iml" filepath="$PROJECT_DIR$/kissPhoto.iml" />
       <module fileurl="file://$PROJECT_DIR$/../metadata-extractor/metadata-extractor.iml" filepath="$PROJECT_DIR$/../metadata-extractor/metadata-extractor.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../xmpcore/xmpcore.iml" filepath="$PROJECT_DIR$/../xmpcore/xmpcore.iml" />
     </modules>
   </component>
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="false" project-jdk-name="11.05 corretto" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_15" default="false" project-jdk-name="15 bellsoft Liberica" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -263,31 +274,8 @@
     </option>
   </component>
   <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/../adobe-xmp-core" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../metadata-extractor" vcs="Git" />
-  </component>
-  <component name="libraryTable">
-    <library name="JavaFX13">
-      <CLASSES>
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.web.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.swing.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.media.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.graphics.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.fxml.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.controls.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx.base.jar!/" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/javafx-swt.jar!/" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES>
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.base" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.controls" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.fxml" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.graphics" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.media" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.swing" />
-        <root url="jar://$PROJECT_DIR$/lib/javafx-sdk-13.0.1/lib/src.zip!/javafx.web" />
-      </SOURCES>
-    </library>
   </component>
 </project>
