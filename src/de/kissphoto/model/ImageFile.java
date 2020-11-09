@@ -14,7 +14,7 @@ import java.nio.file.Path;
 /**
  * This is a special MediaFile, namely an image.
  * As a content in getCachedMediaContent() it delivers an Image-Object which will be loaded in background
- * It allows access to the Metadata (Exif, ITPC-Tags, ...)
+ * It allows access to the Metadata (Exif, IPTC-Tags, ...)
  * ImageFile supports lossless rotation (90 degrees wise) and flipping of jpg-Images
  * <p/>
  *
@@ -53,7 +53,7 @@ public class ImageFile extends MediaFileTagged {
    * note: if null is returned possibly MediaCache needs to be maintained to free memory..and retried again
    */
   @Override
-  public Object getMediaContent() {
+  public Object getSpecificMediaContent() {
     Image image = (Image) content;
     ImageFile thisImageFile = this;
 
@@ -79,6 +79,8 @@ public class ImageFile extends MediaFileTagged {
         });
       } catch (Exception e) {
         //will not occur with backgroundLoading: image.getException will get the exception
+        System.out.println("Exception gefunden in ImageFile.getMediaContent, wenn TIFF oder ICO versucht wird zu laden, weil nicht unterstützt von JavaFX");
+        e.printStackTrace();
       }
     } else {
       //System.out.println(fileOnDisk.toString() + "in Cache :-)...Error="+ image.isError() + " Exception=" + image.getException());
@@ -260,6 +262,7 @@ public class ImageFile extends MediaFileTagged {
 
   /**
    * the orientation read out of the jpegs exif directory
+   * if the file has no metadata (or is no jpeg) then return -1
    *
    * @return orientation or -1 if not readable
    */

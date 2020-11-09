@@ -1,6 +1,6 @@
 ![kissPhotoLogo](resources/images/KissPhotoSplash.jpg)
 
-# Used Libraries
+# Installation: Used Libraries
 
 ## MediaUtil
 
@@ -37,7 +37,42 @@ In ProjectStructure
 
 **Used from MetaData-Extractor**
 
-## Caprica VLC-Project
+## Caprica VLCJ-Project
 
-**Used from kissPhoto for using VLC as the Video Viewer :-)**
+https://github.com/caprica/vlcj
+Import from Github (push green Code-Button)  
+In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
+Store in Directory beside kissPhoto  
 
+In ProjectStructure
+* add..Import Module as IntelliJ-Module to Project
+* add Dependency to Module VLCJ in kissPhoto
+
+**Used from kissPhoto for using VLC as the Video Viewer if installed :-)**
+
+## Caprica VLCJ-Natives
+
+https://github.com/caprica/vlcj-natives.git
+Import from Github (push green Code-Button)  
+In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
+Store in Directory beside kissPhoto  
+
+In ProjectStructure
+* add..Import Module as IntelliJ-Module to Project
+* add Dependency to Module VLCJ-Natives in VLCJ
+
+**Used from VLCJ**
+
+## JNA-Platform
+Java Native Access
+
+https://github.com/java-native-access/jna.git
+Import from Github (push green Code-Button)  
+In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
+Store in Directory beside kissPhoto  
+
+In ProjectStructure
+* add..Import Module as IntelliJ-Module to Project
+* add Dependency to Module VLCJ-Natives in VLCJ
+
+**Used from VLCJ**

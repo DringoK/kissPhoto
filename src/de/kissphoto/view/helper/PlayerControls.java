@@ -34,9 +34,10 @@ import javafx.util.Duration;
  * with all controls at the bottom of it
  *
  * @author Dr. Ingo Kreuz
- * @date 2014-07-18
- * @modified: 2017-10-08 longer showing the Player, higher player
- * @modified: 2017-10-21 play/pause-symbol synchronized with player state
+ * @version  2014-07-18
+ * @version 2017-10-08 longer showing the Player, higher player
+ * @version 2017-10-21 play/pause-symbol synchronized with player state
+ * @version 2020-10-25 using new interface of PlayerViewer avoiding direct access to MediaPlayer (because FX and VLC implementation are different)
  */
 
 public class PlayerControls extends Pane {
@@ -46,7 +47,7 @@ public class PlayerControls extends Pane {
   private PlayPauseButton playPauseButton;
   private Slider progressSlider;
   private Text progressText;
-  private Duration duration;   //of the current media in playerViewer, used for scrollbar scaling and progressText
+  private Duration totalDuration;   //of the current media in playerViewer, used for scrollbar scaling and progressText
   private boolean wasPausedBeforeMousePressed = false;
 
   private PlayerControlsHiderThread playerControlsHiderThread;
@@ -151,14 +152,14 @@ public class PlayerControls extends Pane {
         //max -> width
         //pos -> x
         double pos = slider.getMax() / slider.getWidth() * mouseEvent.getX();
-        playerViewer.getMediaPlayer().seek(new Duration(pos));
+        playerViewer.seek(new Duration(pos));
       }
     });
 
     slider.valueProperty().addListener(new InvalidationListener() {
       public void invalidated(Observable ov) {
         if (slider.isValueChanging()) {
-          playerViewer.getMediaPlayer().seek(new Duration(slider.getValue()));
+          playerViewer.seek(new Duration(slider.getValue()));
         }
       }
     });
@@ -176,16 +177,22 @@ public class PlayerControls extends Pane {
    * if new Media was set to the player then this method should be called "onReady" of the player
    * to update the scale of the slider
    */
-  public void setSliderScaling() {
-    duration = playerViewer.getMediaPlayer().getTotalDuration();
-    progressSlider.setMax(duration.toMillis());
-    progressSlider.setBlockIncrement(duration.toMillis() / 10);
+  public void setSliderScaling(Duration totalDuration) {
+    if ((totalDuration != null) && (totalDuration.toMillis()>0)) {
+      progressSlider.setMax(totalDuration.toMillis());
+      progressSlider.setBlockIncrement(totalDuration.toMillis() / 10);
+      this.totalDuration = totalDuration;
+    }else{
+      this.totalDuration = Duration.ZERO;
+    }
   }
 
-  // update slider as video is progressing
+  // update slider as video is progressing if totalDuration and currentPos are valid
   public void showProgress(Duration currentPos) {
-    progressSlider.setValue(currentPos.toMillis());
-    progressText.setText(String.format("%s/%s", formatTime(currentPos), formatTime(duration)));
+    if (currentPos!=null && totalDuration!=null) {
+      progressSlider.setValue(currentPos.toMillis());
+      progressText.setText(String.format("%s/%s", formatTime(currentPos), formatTime(totalDuration)));
+    }
   }
 
   /**

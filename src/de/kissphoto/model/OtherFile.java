@@ -23,7 +23,7 @@ public class OtherFile extends MediaFile {
   }
 
   @Override
-  public Object getMediaContent() {
+  public Object getSpecificMediaContent() {
     return null;
   }
 

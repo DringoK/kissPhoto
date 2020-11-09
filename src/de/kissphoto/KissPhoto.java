@@ -52,6 +52,7 @@ import java.awt.*;
  * ======================
  * planned features:
  * ======================
+ * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger)
  * todo Player in MediaPane hochheben und mit Burger-Menü (=rechtsklick) ergänzen (Burger immer sichtbar, auch für Photo, nicht ausblenden solange Maus darüber, nicht ausblenden bei Musik)
  * todo   audio abspielen (m4a, mp3, wav): Player nicht ausblenden!
  * todo Meta-Daten anzeigen. Fenster ausblendbar
@@ -68,7 +69,7 @@ import java.awt.*;
  * todo Nice to have: Undo-History
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.19.11_2"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.20.10work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
 
   private static String initialFileOrFolder;
@@ -354,5 +355,11 @@ public class KissPhoto extends Application {
         fileTableView.openInitialFolder(initialFileOrFolder);
       }
     });
+  }
+
+  @Override
+  public final void stop(){
+    //release all external ressources e.g. VLC.dll
+    mediaContentView.cleanUp();
   }
 }

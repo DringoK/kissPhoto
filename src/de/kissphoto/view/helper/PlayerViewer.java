@@ -1,9 +1,9 @@
 package de.kissphoto.view.helper;
 
 import de.kissphoto.helper.I18Support;
+import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MediaContentView;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
+import de.kissphoto.view.mediaViewers.ZoomableViewer;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -15,7 +15,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.input.*;
 import javafx.scene.layout.StackPane;
-import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
@@ -26,17 +25,19 @@ import static javafx.scene.media.MediaPlayer.Status.PAUSED;
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
- * This Class is the base class for all viewer with MediaPlayers (i.e. MovieViewer (implemented) and AudioViewer (not yet implemented)
- * It basically consists of a MediaPlayer and PlayerControls.
+ * This Class is the base class for all viewer with MediaPlayers (i.e. MovieViewerFX (implemented) and MovieViewerVLC
+ * It basically consists of a MediaPlayer (to be defined in implementing subclasses) and PlayerControls.
  *
  * @author Dr. Ingo Kreuz
- * @date 2014-07-24
- * @modified: 2017-10-08 autoplay suspended while edit-mode/multi-edit-mode
- * @modified: 2017-10-15: handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
- * @modified: 2017-10-20: single click and space (if not zoomed) will toggle Play/Pause now additionally
+ * @since 2014-07-24
+ * @version 2020-11-02 media Viewers now determine itself if they can show/play a file (no longer the content view)
+ * @version 2020-10-25 made abstract and moved JavaFx-Player into MovieViewerFX, so than MovieViewerVLC could be added
+ * @version 2017-10-20 single click and space (if not zoomed) will toggle Play/Pause now additionally
+ * @version 2017-10-15 handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
+ * @version 2017-10-08 autoplay suspended while edit-mode/multi-edit-mode
  *
  */
-public class PlayerViewer extends StackPane {
+abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
   protected static ResourceBundle language = I18Support.languageBundle;
 
   //language file keys (used also in main menu)
@@ -45,21 +46,22 @@ public class PlayerViewer extends StackPane {
   public static final String AUTO_PLAY = "auto.play";
   public static final String STOP = "stop";
 
+  protected boolean paused = true;
+
   private static final KeyCodeCombination PLAY_PAUSE_KEY_CODE_COMBINATION = new KeyCodeCombination(KeyCode.P);
 
   //link to mainMenu items for controlling checking and disabling. Use same link for all instances of the player (i.e. also for full screen)
-  private static MenuItem mainMenuPlayPauseItem;
-  private static MenuItem mainMenuStopItem;
+  protected static MenuItem mainMenuPlayPauseItem;
+  protected static MenuItem mainMenuStopItem;
 
   //contextMenu items for controlling checking and disabling
   protected ContextMenu contextMenu = new ContextMenu();
-  private CheckMenuItem autoPlayItem;
-  private MenuItem playPauseItem;
-  private MenuItem stopItem;
+  protected CheckMenuItem autoPlayItem;
+  protected MenuItem playPauseItem;
+  protected MenuItem stopItem;
 
   protected MediaContentView mediaContentView; //link to the underlying mediaContentView (e.g.for binding sizes and for next media after endOfMedia)
 
-  protected MediaPlayer mediaPlayer;      //initialized in setMedia()
   protected PlayerControls playerControls;
 
   public SimpleBooleanProperty autoPlayProperty = new SimpleBooleanProperty(true); //play immediately and skip automatically to next media
@@ -148,6 +150,7 @@ public class PlayerViewer extends StackPane {
    */
   public void cleanUp() {
     playerControls.cleanUp();
+    releaseAll();
   }
 
 
@@ -208,72 +211,90 @@ public class PlayerViewer extends StackPane {
     });
   }
 
+
   /**
    * put the media (movie) into the MovieViewer and play it
    *
-   * @param media the media to show
+   * @param mediaFile containting the media to show
    * @param seekPosition if not null it is tried to seek this position as soon as the playable media is loaded/visible
+   * @return true if the file could be played, false if not
    */
-  public void setMedia(Media media, Duration seekPosition) {
-    resetPlayer();
-    mediaPlayer = new MediaPlayer(media);
-
-    mediaPlayer.setOnReady(new Runnable() {
-      @Override
-      public void run() {
-        if (seekPosition != null) mediaPlayer.seek(seekPosition);
-
-        if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode())
-          play();
-        else
-          pause();
-
-        // as the media is playing move the slider for progress
-        playerControls.setSliderScaling();
-        playerControls.showProgress(Duration.ZERO);
-
-        mediaPlayer.currentTimeProperty().addListener(new InvalidationListener() {
-          public void invalidated(Observable ov) {
-            if (mediaPlayer != null) playerControls.showProgress(mediaPlayer.getCurrentTime());
-          }
-        });
-      }
-    });
-    mediaPlayer.setOnEndOfMedia(new Runnable() {
-      @Override
-      public void run() {
-        if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode()) {
-          mediaContentView.showNextMedia();   //if already the last, showNextMedia() will do nothing and media will remain paused...
-        }
-      }
-    });
-
-    //install listener for player status to update play/pause/inactive, stop active/inactive
-    mediaPlayer.statusProperty().addListener(new ChangeListener<MediaPlayer.Status>() {
-      @Override
-      public void changed(ObservableValue<? extends MediaPlayer.Status> observable, MediaPlayer.Status oldValue, MediaPlayer.Status newValue) {
-        PlayerViewer.setMenuItemsForPlayerStatus(newValue, mainMenuStopItem, mainMenuPlayPauseItem);
-        PlayerViewer.setMenuItemsForPlayerStatus(newValue, stopItem, playPauseItem);
-        playerControls.setPlayPausedButtonForPlayerStatus(newValue);
-      }
-    });
-
-  }
+  abstract public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition);
 
   /**
    * reset the player: stop it and free all event Handlers
    */
-  public void resetPlayer() {
-    if (mediaPlayer != null) {
-      mediaPlayer.stop();
-      //mediaPlayer.currentTimeProperty().removeListener(progressListener);
-      mediaPlayer.setOnPaused(null);
-      mediaPlayer.setOnPlaying(null);
-      mediaPlayer.setOnReady(null);
-      mediaPlayer.dispose();
-      mediaPlayer = null;
+  abstract public void resetPlayer();
+
+  /**
+   * start player and adjust menuItems (disable/enable)
+   * if mediaPlayer is null (currently no media file displayed) nothing happens
+   */
+  abstract public void play();
+
+  /**
+   * start player and adjust menuItems (disable/enable)
+   * if mediaPlayer is null (currently no media file displayed) nothing happens
+   */
+  abstract public void pause();
+
+
+  /**
+   * stop, rewind
+   * adjust menuItems (disable/enable)
+   * if mediaPlayer is null (currently no media file displayed) nothing happens
+   */
+  abstract public void stop();
+
+  /**
+   * seek Position (Duration)
+   * if mediaPlayer is null (currently no media file displayed) nothin happens
+   * @param newPos position to jump to
+   */
+  abstract public void seek(Duration newPos);
+
+  /**
+   * get the current position of the media currently playing
+   * @return current position
+   */
+  abstract public Duration getCurrentTime();
+
+  /**
+   * if mediaPlayer is null (currently no media file displayed) Duration(0) is returned
+   * @return the total length of the currently loaded media
+   */
+  abstract public Duration getTotalDuration();
+
+  /**
+   * Call this method when closing the main program to release all external resources
+   */
+  abstract public void releaseAll();
+
+  /**
+   * exactly execute what keyboard "P" does: if paused then play and vice versa
+   */
+  public void togglePlayPause(){
+    if (paused)
+      play();
+    else
+      pause();
+
+  }
+
+  protected void skipToNextOnAutoPlay() {
+    if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode()) {
+      mediaContentView.showNextMedia();   //if already the last, showNextMedia() will do nothing and media will remain paused...
     }
   }
+
+  protected void setPlayerStatusInAllMenues(MediaPlayer.Status newPlayerStatus) {
+    PlayerViewer.setMenuItemsForPlayerStatus(newPlayerStatus, mainMenuStopItem, mainMenuPlayPauseItem);
+    PlayerViewer.setMenuItemsForPlayerStatus(newPlayerStatus, stopItem, playPauseItem);
+    playerControls.setPlayPausedButtonForPlayerStatus(newPlayerStatus);
+
+    paused = (newPlayerStatus== PAUSED);
+  }
+
 
   /**
    * toggle auto play. if movie viewer is currently visible then pause/play accordingly
@@ -289,47 +310,6 @@ public class PlayerViewer extends StackPane {
     }
   }
 
-  /**
-   * start player and adjust menuItems (disable/enable)
-   * if mediaPlayer is null (currently no media file displayed) nothing happens
-   */
-  public void play() {
-    if (mediaPlayer != null) {
-      mediaPlayer.play();
-    }
-  }
-
-  /**
-   * start player and adjust menuItems (disable/enable)
-   * if mediaPlayer is null (currently no media file displayed) nothing happens
-   */
-  public void pause() {
-    if (mediaPlayer != null) {
-      mediaPlayer.pause();
-    }
-  }
-
-  /**
-   * exactly execute what keyboard "P" does: if paused then play and vice versa
-   * if mediaPlayer is null (currently no media file displayed) nothing happens
-   */
-  public void togglePlayPause() {
-    if (mediaPlayer != null && mediaPlayer.getStatus() == PAUSED)
-      play();
-    else
-      pause();
-  }
-
-  /**
-   * stop, rewind
-   * adjust menuItems (disable/enable)
-   * if mediaPlayer is null (currently no media file displayed) nothing happens
-   */
-  public void stop() {
-    if (mediaPlayer != null) {
-      mediaPlayer.stop();
-    }
-  }
 
   //------------------------------- static helper for menu items ---------------------
   public static void setMenuItemsForPlayerStatus(MediaPlayer.Status newValue, MenuItem stopItem, MenuItem playPauseItem) {
@@ -363,10 +343,7 @@ public class PlayerViewer extends StackPane {
 
   //------------------------------- getters / setters ------------------------
   public boolean isPaused() {
-    return (mediaPlayer.getStatus() == PAUSED);
+    return paused;
   }
 
-  public MediaPlayer getMediaPlayer() {
-    return mediaPlayer;
-  }
 }

@@ -619,7 +619,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    *
    * @return the media content which is wrapped by the media File, e.g. an Image if MediaFile is an ImageFile
    */
-  public abstract Object getMediaContent();
+  public abstract Object getSpecificMediaContent();
 
   //Default implementation for cancelling any background loading
   public void cancelBackgroundLoading() {
@@ -647,8 +647,15 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     return loadRetryCounter;
   }
 
-  public Object getCachedMediaContent() {
-    return mediaFileList.getCachedMediaContent(this);
+  /**
+   * try to load MediaContent from Cache. If not possible load it with specific load-routine
+   * @return MediaContent or null if this was not possible
+   */
+  public Object getMediaContent() {
+    Object media = mediaFileList.getCachedMediaContent(this);
+    if (media==null)
+      getSpecificMediaContent();
+    return media;
   }
 
   public abstract ReadOnlyDoubleProperty getContentProgressProperty();
@@ -941,10 +948,12 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       (filename.endsWith(".jpeg")) ||
       (filename.endsWith(".jp2")) ||
       (filename.endsWith(".png")) ||
-      (filename.endsWith(".tiff")) ||
-      (filename.endsWith(".tif")) ||
-      //not yet supported by Java-Fx but useful for loading external editor (nothing will be displayed (black))
-      (filename.endsWith(".ico"))) {
+      (filename.endsWith(".bmp")) ||
+      (filename.endsWith(".gif")) ||
+      (filename.endsWith(".tiff")) ||   //not yet supported by Java-Fx ImageView but useful for loading external editor (nothing will be displayed (black))
+      (filename.endsWith(".tif")) ||    //not yet supported by Java-Fx ImageView but useful for loading external editor (nothing will be displayed (black))
+     (filename.endsWith(".ico"))) {     //not yet supported by Java-Fx ImageView but useful for loading external editor (nothing will be displayed (black))
+
       return new ImageFile(file, parentList);
     } else {
       if ((filename.endsWith(".mp4")) ||  //MPEG-4 Part 14
@@ -952,7 +961,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
         (filename.endsWith(".hls")) ||  //http live stream
         (filename.endsWith(".flv")) ||   //flash video
         (filename.endsWith(".fxm")) ||   //fx media
-        //not yet supported by Java-Fx, but useful for loading external editor (will not be played)
+        //not yet supported by Java-Fx, but with VLC and useful for loading external editor (will not be played)
         (filename.endsWith(".mp2")) ||   //mpeg2
         (filename.endsWith(".vob")) ||   //video object = mpeg2 file on a dvd
         (filename.endsWith(".mov")) ||  //Apple's movie format

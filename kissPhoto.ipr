@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ArtifactManager">
     <artifact type="jar" name="kissPhoto">
-      <output-path>$PROJECT_DIR$/out/artifacts/kissPhoto</output-path>
+      <output-path>$PROJECT_DIR$/out/artifacts</output-path>
       <root id="archive" name="kissPhoto.jar">
         <element id="directory" name="META-INF">
           <element id="file-copy" path="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" />
@@ -10,6 +10,7 @@
         <element id="module-output" name="kissPhoto" />
         <element id="module-output" name="adobe-xmp-core" />
         <element id="module-output" name="metadata-extractor" />
+        <element id="module-output" name="vlcj" />
       </root>
     </artifact>
   </component>
@@ -34,7 +35,6 @@
   <component name="InspectionProjectProfileManager">
     <profile version="1.0">
       <option name="myName" value="Project Default" />
-      <option name="myLocal" value="true" />
       <inspection_tool class="JavaDoc" enabled="true" level="WARNING" enabled_by_default="true">
         <option name="TOP_LEVEL_CLASS_OPTIONS">
           <value>
@@ -64,7 +64,9 @@
         <option name="IGNORE_JAVADOC_PERIOD" value="true" />
         <option name="IGNORE_DUPLICATED_THROWS" value="false" />
         <option name="IGNORE_POINT_TO_ITSELF" value="false" />
-        <option name="myAdditionalJavadocTags" value="constructor,constructor" />
+        <option name="myAdditionalJavadocTags" value="" />
+        <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+        <option name="REQUIRED_TAGS" value="@since@version@author" />
       </inspection_tool>
     </profile>
     <version value="1.0" />
@@ -234,12 +236,15 @@
       <module fileurl="file://$PROJECT_DIR$/adobe-xmp-core.iml" filepath="$PROJECT_DIR$/adobe-xmp-core.iml" />
       <module fileurl="file://$PROJECT_DIR$/kissPhoto.iml" filepath="$PROJECT_DIR$/kissPhoto.iml" />
       <module fileurl="file://$PROJECT_DIR$/metadata-extractor.iml" filepath="$PROJECT_DIR$/metadata-extractor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/vlcj.iml" filepath="$PROJECT_DIR$/vlcj.iml" />
+      <module fileurl="file://$PROJECT_DIR$/vlcj-javafx.iml" filepath="$PROJECT_DIR$/vlcj-javafx.iml" />
+      <module fileurl="file://$PROJECT_DIR$/vlcj-natives.iml" filepath="$PROJECT_DIR$/vlcj-natives.iml" />
     </modules>
   </component>
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_15" default="false" project-jdk-name="15 bellsoft Liberica" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_14" default="false" project-jdk-name="14 bellsoft Liberica" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -274,8 +279,16 @@
     </option>
   </component>
   <component name="VcsDirectoryMappings">
-    <mapping directory="$PROJECT_DIR$/../adobe-xmp-core" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../metadata-extractor" vcs="Git" />
+  </component>
+  <component name="libraryTable">
+    <library name="jna">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/../jna/dist/jna.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../jna/dist/jna-platform.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
   </component>
 </project>

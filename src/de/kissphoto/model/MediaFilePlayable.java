@@ -18,7 +18,7 @@ public abstract class MediaFilePlayable extends MediaFileTagged {
   }
 
   @Override
-  public Object getMediaContent() {
+  public Object getSpecificMediaContent() {
     if (!isMediaContentValid()) {
       try {
         content = new Media(fileOnDisk.toFile().toURI().toString());

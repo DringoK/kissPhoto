@@ -462,7 +462,7 @@ public class MainMenuBar extends MenuBar {
     autoPlayItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        mediaContentView.getMovieViewer().toggleAutoPlay();
+        mediaContentView.getPlayerViewer().toggleAutoPlay();
       }
     });
 
@@ -472,7 +472,7 @@ public class MainMenuBar extends MenuBar {
     playPauseItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        mediaContentView.getMovieViewer().togglePlayPause();
+        mediaContentView.getPlayerViewer().togglePlayPause();
       }
     });
 
@@ -482,16 +482,16 @@ public class MainMenuBar extends MenuBar {
     stopItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        mediaContentView.getMovieViewer().stop();
+        mediaContentView.getPlayerViewer().stop();
       }
     });
     playerMenu.getItems().addAll(autoPlayItem, playPauseItem, stopItem, new SeparatorMenuItem());
-    mediaContentView.getMovieViewer().registerMainMenuItems(playPauseItem, stopItem);
+    mediaContentView.getPlayerViewer().registerMainMenuItems(playPauseItem, stopItem);
 
     getMenus().add(playerMenu);
 
     //synchronize the autoPlay check with the players property
-    mediaContentView.getMovieViewer().autoPlayProperty.addListener(new ChangeListener<Boolean>() {
+    mediaContentView.getPlayerViewer().autoPlayProperty.addListener(new ChangeListener<Boolean>() {
       @Override
       public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
         autoPlayItem.setSelected(newValue);

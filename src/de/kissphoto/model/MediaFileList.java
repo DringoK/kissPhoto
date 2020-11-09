@@ -221,6 +221,7 @@ public class MediaFileList {
   /**
    * count the mediaFiles in the handed list, which are instances of ImageFile
    * typically the selection of FileTableView is handed to this counting routine
+   *
    * @param selectedFiles
    * @return number of ImageFiles
    */
@@ -243,8 +244,8 @@ public class MediaFileList {
    */
   public synchronized void rotateSelectedFiles(ObservableList<MediaFile> selectedFiles, ImageFileRotater.RotateOperation rotateOperation) {
     for (MediaFile mediaFile : selectedFiles) {
-      if (mediaFile instanceof ImageFile)
-        ((ImageFile) mediaFile).rotate(rotateOperation);
+//      if (mediaFile instanceof ImageFile) //rotate all despite only jpg images' rotation can be saved
+      ((ImageFile) mediaFile).rotate(rotateOperation);
     }
   }
 
@@ -257,12 +258,11 @@ public class MediaFileList {
    */
   public synchronized void flipSelectedFiles(ObservableList<MediaFile> selectedFiles, boolean horizontally) {
     for (MediaFile mediaFile : selectedFiles) {
-      if (mediaFile instanceof ImageFile) {
-        if (horizontally)
-          ((ImageFile) mediaFile).flipHorizontally();
-        else
-          ((ImageFile) mediaFile).flipVertically();
-      }
+//      if (mediaFile instanceof ImageFile) //rotate all despite only jpg images' rotation can be saved
+      if (horizontally)
+        ((ImageFile) mediaFile).flipHorizontally();
+      else
+        ((ImageFile) mediaFile).flipVertically();
     }
   }
 
@@ -274,8 +274,8 @@ public class MediaFileList {
    */
   public synchronized void setOrientationAccordingExif(ObservableList<MediaFile> selectedFiles) {
     for (MediaFile mediaFile : selectedFiles) {
-      if (mediaFile instanceof ImageFile)
-        ((ImageFile) mediaFile).setOrientationAccordingExif();
+//      if (mediaFile instanceof ImageFile) //rotate all despite only jpg images' rotation can be saved
+      ((ImageFile) mediaFile).setOrientationAccordingExif();
     }
   }
 

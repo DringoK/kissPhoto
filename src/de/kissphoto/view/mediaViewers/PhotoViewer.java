@@ -2,6 +2,7 @@ package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.model.ImageFile;
+import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MediaContentView;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -28,14 +29,15 @@ import java.util.ResourceBundle;
  * </ul>
  *
  * @author Dr. Ingo Kreuz
- * @date 2014-05-25
- * @modified: 2014-05-25: zooming, moving (panning) (keyboard only)
- * @modified: 2014-06-01: mouse support added
- * @modified: 2014-06-02: mouse shape improved and animated (closedHand/openHand)
- * @modified: 2016-11-06: ViewportZoomerMover extracted for all viewport zooming and moving operations (now identical to movieViewer's)
- * @modified: 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
- * @modified: 2018-10-11: Support preview of rotation/mirroring
- * @modified: 2019-07-07: Cache problems fixed
+ * @version 2014-05-25
+ * @version 2014-05-25: zooming, moving (panning) (keyboard only)
+ * @version 2014-06-01: mouse support added
+ * @version 2014-06-02: mouse shape improved and animated (closedHand/openHand)
+ * @version 2016-11-06: ViewportZoomerMover extracted for all viewport zooming and moving operations (now identical to movieViewer's)
+ * @version 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
+ * @version 2018-10-11: Support preview of rotation/mirroring
+ * @version 2019-07-07: Cache problems fixed
+ * @version 2020-11-02: Viewer now decides if it can show a media and returns true if so
  */
 public class PhotoViewer extends ImageView implements ZoomableViewer {
   private static ResourceBundle language = I18Support.languageBundle;
@@ -154,16 +156,35 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
   }
 
   /**
+   * determine if the mediaFile is an ImageFile that can be displayed by this viewer
+   * compatible if
+   * <ul>
+   *   <li>MediaContent is an Image File and</li>
+   *   <li>MediaContent can be loaded as an Image</li>
+   * </ul>
+   * <li>
+   *
+   * </li>
+   *
    * set the internal property imageFile and show the imageFile.image
    * If imageFile==null nothing happens
    *
-   * @param imageFile imageFile.image to be displayed
+   * @param mediaFile mediaFile to be displayed
+   * @return true if displaying was successful, false if mediaFile could not be displayed
    */
-  public void setImageFile(ImageFile imageFile) {
-    this.imageFile = imageFile;
-    if (imageFile != null) {
-      setImage((Image) imageFile.getMediaContent());
+  public boolean setMediaFileIfCompatible(MediaFile mediaFile) {
+    boolean compatible = (mediaFile != null) && (mediaFile.getClass() == ImageFile.class);
+
+    if (compatible){
+      this.imageFile = (ImageFile)mediaFile;
+      Image image = (Image) imageFile.getMediaContent();  //getMediaContent tries to put the content into an Image-Object and returns null if not possible
+      if (image != null) {
+        setImage(image);
+      } else {
+        compatible = false;
+      }
     }
+    return compatible;
   }
 
 

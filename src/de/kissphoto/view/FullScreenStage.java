@@ -14,16 +14,16 @@ import java.util.ResourceBundle;
  * **
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p>
- * This is the full screen version of MediaContentView
- * it is a full screen stage and contains a separate mediaContent View
+ * This is the full screen version of MediaContentView<br>
+ * It is a full screen stage and contains a separate mediaContentView<br>
  * The state of the mediaContentView of the main-Window (primaryMediaContentView) is copied into the full-screen mediaContentView
- * in the constructor
- * if ESC is pressed this stage is closed and destroyed
- *
- * @Author: Dr. Ingo Kreuz
- * @Date: 2016-011-06 moved from inner class of MediaContentView to separate class
- * @modified: 2016-11-06
- * @modified: 2017-10-08 currentPlayerPosition is handed over from main window
+ * in the constructor<br>
+ * if ESC is pressed this stage is closed and destroyed<br>
+ *<br>
+ * @Author Dr. Ingo Kreuz
+ * @Since 2016-11-06 moved from inner class of MediaContentView to separate class
+ * @Version 2017-10-08 currentPlayerPosition is handed over from main window
+ * @Version 2016-11-06
  */
 class FullScreenStage extends Stage {
   MediaContentView mediaContentView;
@@ -37,23 +37,29 @@ class FullScreenStage extends Stage {
    */
   public FullScreenStage(MediaContentView primaryMediaContentView, Duration currentPlayerPosition) {
     super();
-    initOwner(primaryMediaContentView.getOwner());
-    //initModality(Modality.APPLICATION_MODAL);
+    initOwner(primaryMediaContentView.getOwner()); //link to main Application, so that it will be closed together
 
+    //build GUI
     Group root = new Group();
-    Scene scene = new Scene(root, 1, 1, Color.BLACK);  //1,1 --> use min Size as set just before
+    Scene scene = new Scene(root, 1, 1, Color.BLACK);  //1,1 --> use min Size during build. Will be fullScreen.
     setScene(scene);
-    mediaContentView = new MediaContentView(this, primaryMediaContentView);
-    root.getChildren().add(mediaContentView);
+
+    //build new MediaContentView for fullScreen Stage and link it to main window / primaryMediaContentView
+    mediaContentView = new MediaContentView(this, primaryMediaContentView); //link to primaryMediaContentView
+
+    System.out.println("FullScreen-Constructor: primaryMediaContentView.currentPlayerPosition="+primaryMediaContentView.getPlayerViewer().getCurrentTime());
+    System.out.println("FullScreen-Constructor: handed currentPlayerPosition="+currentPlayerPosition);
     mediaContentView.setFileTableView(primaryMediaContentView.getFileTableView());
     mediaContentView.setMedia(primaryMediaContentView.getCurrentMediaFile(), currentPlayerPosition);
+    mediaContentView.getAttrViewer().copyState(primaryMediaContentView.getAttrViewer());
+
     mediaContentView.prefHeightProperty().bind(scene.heightProperty());
     mediaContentView.prefWidthProperty().bind(scene.widthProperty());
-    mediaContentView.getAttrViewer().copyState(primaryMediaContentView.getAttrViewer());
-    //setFullScreenExitKeyCombination(new KeyCodeCombination(KeyCode.DELETE, KeyCombination.CONTROL_DOWN)); //workaround: something but not ESC
+    root.getChildren().add(mediaContentView);
+
     setFullScreenExitKeyCombination(KeyCombination.NO_MATCH); //dont show hint
     //because: otherwise the ESC for the context menu would close the full screen at the same time
-    //ESC is - instead - handled by a KeyEvent-Listener which get no event if context-menu is closed with ESC
+    //ESC is - instead - handled by a KeyEvent-Listener which gets no event if context-menu is closed with ESC
     setFullScreenExitHint(language.getString("press.esc.to.exit.full.screen.mode"));
     setFullScreen(true);
   }

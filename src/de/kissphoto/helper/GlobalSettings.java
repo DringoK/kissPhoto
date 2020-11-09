@@ -17,8 +17,10 @@ import java.util.Properties;
  * load is invoked at startup in KissPhoto start method
  * store is invoked in KissPhoto in the setOnCloseRequest Event Handle
  * <p/>
- * User: Ingo
- * Date: 09.10.13
+ * @author Ingo
+ * @since 2013-10-09
+ * @version 2020-11-06 changed to XML format to support UTF-8 encoding
+ *
  */
 public class GlobalSettings extends Properties {
   private static final String PROPERTIES_FILENAME = "KissPhoto.settings";
@@ -32,7 +34,7 @@ public class GlobalSettings extends Properties {
    */
   public void load() {
     try {
-      load(new FileInputStream(PROPERTIES_FILENAME));
+      loadFromXML(new FileInputStream(PROPERTIES_FILENAME));
     } catch (Exception e) {
       //the default values will be set by the classes who use globalSettings for storing their Settings
     }
@@ -43,7 +45,7 @@ public class GlobalSettings extends Properties {
    */
   public void store() {
     try {
-      store(new FileOutputStream(PROPERTIES_FILENAME), null);
+      storeToXML(new FileOutputStream(PROPERTIES_FILENAME), null);
     } catch (Exception e) {
       //ignore if writing was not possible
     }

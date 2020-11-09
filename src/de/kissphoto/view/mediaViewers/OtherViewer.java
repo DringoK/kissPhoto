@@ -3,13 +3,15 @@ package de.kissphoto.view.mediaViewers;
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.view.MediaContentView;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
@@ -18,20 +20,25 @@ import java.util.ResourceBundle;
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
- * This Class implements a viewer for unknown ("other") files
+ * This Class implements a viewer for unknown ("other") files:
+ * - Black Background
+ * - Main Message "file format not supported" (can be switched off)
+ * - Additional Message (simple text)
  * <ul>
  * <li>just a text is displayed, saying, that nothing can be displayed ;-)
  * </ul>
  *
  * @author Dr. Ingo Kreuz
- * @date 2014-05-25
- * @changes: 2014-05-25:
- * @modified: 2017-10-08: minSize=0,0 added so that all other viewers can also be smaller (surrounding stackPane sets min size to smallest in stack)
+ * @since 2014-05-25
+ * @version 2020-11-08 Support for additional information why "this mediaFile cannot be shown" by any other viewer
+ * @version 2017-10-08 minSize=0,0 added so that all other viewers can also be smaller (surrounding stackPane sets min size to smallest in stack)
  */
-public class OtherViewer extends StackPane {
+public class OtherViewer extends VBox {
   private static ResourceBundle language = I18Support.languageBundle;
   private ContextMenu contextMenu = new ContextMenu();
-  private static Text message;
+
+  private Text message;
+  private Text additionalMessage;
 
   /**
    * constructor to initialize the viewer
@@ -71,11 +78,50 @@ public class OtherViewer extends StackPane {
     message.setEffect(iShadow);
     message.setFill(Color.GRAY);
     message.setFont(Font.font(null, FontWeight.BOLD, 24));
-    getChildren().addAll(message);
+    message.setVisible(false);
+
+    additionalMessage = new Text("");
+    additionalMessage.setFill(Color.GRAY);
+    additionalMessage.setFont(Font.font(null, FontPosture.ITALIC, 12));
+
+    setAlignment(Pos.CENTER);
+    getChildren().addAll(message, additionalMessage);
 
     //min size is by default the largest content (here the text)
     //but it must not prevent the StackPane in MediaContentView (which holds all Viewers) from getting smaller
     //As an effect the above text element might be cut
     setMinSize(0, 0);
   }
+
+  /**
+   * show or hide the main text "unsupported Media"
+   * @param visible
+   */
+  public void setMainMessageVisable(boolean visible){
+    message.setVisible(visible);
+    System.out.println("OtherViewer: message.visible=" + message.isVisible());
+  }
+
+  /**
+   * add an extra line of information, why media is unsupported or what can be done to show the media
+   * @param additionalText the information to show in an extra line, empty String ("") or null clears the additional message
+   */
+  public void setAdditionalMessage(String additionalText){
+    if (additionalText == null) {
+      additionalMessage.setText("");
+      System.out.println("clear additionalText");
+    } else {
+      additionalMessage.setText(additionalText);
+      System.out.println("add Text=" + additionalText);
+    }
+  }
+
+  /**
+   * resets to the basic view: main message visible and no additional message
+   */
+  public void resetView(){
+    message.setVisible(true);
+    additionalMessage.setText("");
+  }
+
 }

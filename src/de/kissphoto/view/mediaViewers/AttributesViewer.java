@@ -28,9 +28,12 @@ import javafx.scene.text.Text;
  * Which of the attributes are visible can be chosen by the user (standard: just description)
  *
  * @author Dr. Ingo Kreuz
- * @date 2014-06-01
- * @modified: 2014-06-01 changed from overlaying fullscreen panel to a small panel with bound position to the bottom border
- * otherwise mouse events would not be recognized from the underlying viewer
+ * @version
+ * <ul>
+ * <li>2020-11-06 bug fixing: handle empty mediaFile
+ * <li>2014-06-01 changed from overlaying fullscreen panel to a small panel with bound position to the bottom border
+ *            otherwise mouse events would not be recognized from the underlying viewer
+ * </ul>
  */
 public class AttributesViewer extends StackPane {
   MediaContentView mediaContentView; //link to the underlying ContentView (for resizing etc)
@@ -74,7 +77,7 @@ public class AttributesViewer extends StackPane {
   }
 
   public void setMedia(MediaFile mediaFile) {
-    this.mediaFile = mediaFile;
+    this.mediaFile = mediaFile;     //might be null e.g. if current directory is empty
     refreshText();
   }
 
@@ -82,11 +85,13 @@ public class AttributesViewer extends StackPane {
 
   private void refreshText() {
     String message = "";
-    if (displayPrefix) message = mediaFile.getPrefix() + sep;
-    if (displayCounter) message = message + mediaFile.getCounter() + sep;
-    message = message + mediaFile.getDescription() + sep;  //if visible: description can't be switched off...this is the master
-    if (displayExtension) message = message + mediaFile.getExtension() + sep;
-    if (displayFileDate) message = message + mediaFile.getModifiedDate();
+    if (mediaFile != null) {
+      if (displayPrefix) message = mediaFile.getPrefix() + sep;
+      if (displayCounter) message = message + mediaFile.getCounter() + sep;
+      message = message + mediaFile.getDescription() + sep;  //if visible: description can't be switched off...this is the master
+      if (displayExtension) message = message + mediaFile.getExtension() + sep;
+      if (displayFileDate) message = message + mediaFile.getModifiedDate();
+    }
     text.setText(message);
   }
 

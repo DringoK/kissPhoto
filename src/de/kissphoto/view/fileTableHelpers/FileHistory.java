@@ -24,9 +24,9 @@ import java.util.ResourceBundle;
  * The "recently opened files' list is managed here
  * <p/>
  *
- * @author: Dr Ingo Kreuz
- * @date: 2017-10-22
- * @modified:
+ * @author Dr Ingo Kreuz
+ * @since 2017-10-22
+ * @version  2017-10-22
  */
 public class FileHistory {
   private static final int MAX_ENTRIES = 9; //collect a maximum number of history entries

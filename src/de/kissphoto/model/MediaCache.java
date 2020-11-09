@@ -153,7 +153,7 @@ public class MediaCache {
   private Object getCachedMediaContent(int index, MediaFile mediaFile) {
     maintainCacheSizeByFlushingOldest();
 
-    Object content = mediaFile.getMediaContent(); //get cached content or load if necessary
+    Object content = mediaFile.getSpecificMediaContent(); //get cached content or load if necessary
     //store the new element in the Cache list
     if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile); //add to the end of the list (as the latest/"newest")
 
@@ -173,7 +173,7 @@ public class MediaCache {
         mediaFile = mediaList.getFileList().get(index - 1);
         if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
           //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough
-          mediaFile.getMediaContent();
+          mediaFile.getSpecificMediaContent();
           if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile);//and remember that it is now in memory
         }
       }
@@ -182,7 +182,7 @@ public class MediaCache {
         mediaFile = mediaList.getFileList().get(index + 1);
         if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
           //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough
-          mediaFile.getMediaContent();
+          mediaFile.getSpecificMediaContent();
           if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile);//and remember that it is now in memory
         }
       }

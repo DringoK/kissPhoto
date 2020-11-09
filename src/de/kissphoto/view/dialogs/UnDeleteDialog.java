@@ -74,10 +74,10 @@ public class UnDeleteDialog extends KissDialog {
             unDeleteSelectionBtn.fire();
             break;
           case P:
-            mediaContentView.getMovieViewer().togglePlayPause();
+            mediaContentView.getPlayerViewer().togglePlayPause();
             break;
           case S:
-            mediaContentView.getMovieViewer().stop();
+            mediaContentView.getPlayerViewer().stop();
             break;
           //no support for toggeling AutoPlay
           //no default
@@ -160,7 +160,7 @@ public class UnDeleteDialog extends KissDialog {
    * to avoid any uncontrolled background playing
    */
   public void stopPlayers() {
-    mediaContentView.getMovieViewer().resetPlayer();
+    mediaContentView.getPlayerViewer().resetPlayer();
   }
 
   /**

@@ -2,3 +2,7 @@
 /KissPhoto.settings
 /_Sync_KissPhoto_USBStick.ffs_gui
 /out/
+/bin/
+/build/
+/stackOverflow/
+/test/
