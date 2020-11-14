@@ -36,7 +36,7 @@ import javafx.util.Duration;
  *
  * @author Dr. Ingo Kreuz
  * @since 2014-06-09
- * @version 2020-10-25: JavaFX MediaPlayer moved into this class from MovieViewer, which is now abstract to enable MovieViewerVLCJ
+ * @version 2020-10-25: JavaFX MediaPlayer renamed from MovieViewer to MovieViewerFX, to enable MovieViewerVLCJ. Pause/End of File behavior improved
  * @version 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
  * @version 2016-11-06: ViewportZoomerMover extracted for all viewport zooming and moving operations (now identical to PhotoViewer's)
  */
@@ -45,6 +45,7 @@ public class MovieViewerFX extends PlayerViewer {
   private ViewportZoomer viewportZoomer;
 
   protected MediaPlayer mediaPlayer;      //initialized in setMedia()
+  private boolean finished; //true if the endOfMedia event had been detected, false if any other status has been detected
 
 
   /**
@@ -116,7 +117,12 @@ public class MovieViewerFX extends PlayerViewer {
       mediaPlayer.setOnEndOfMedia(new Runnable() {
         @Override
         public void run() {
-          skipToNextOnAutoPlay();
+          boolean skipped = skipToNextOnAutoPlay();
+          if (!skipped) {
+            //already at the end of the file list --> FXPlayer remains to be paused,but does not fire a StatusProperty Change event
+            setPlayerStatusInAllMenues(MediaPlayer.Status.PAUSED); //therefore sync the menues here likein change Event of Status
+            finished = true;
+          }
         }
       });
 
@@ -125,6 +131,7 @@ public class MovieViewerFX extends PlayerViewer {
         @Override
         public void changed(ObservableValue<? extends MediaPlayer.Status> observable, MediaPlayer.Status oldValue, MediaPlayer.Status newValue) {
           setPlayerStatusInAllMenues(newValue);
+          finished = false; //setEndOfMedia will set it to true, any other status indicates that it
         }
       });
 
@@ -140,7 +147,6 @@ public class MovieViewerFX extends PlayerViewer {
   public void resetPlayer(){
     if (mediaPlayer != null) {
       mediaPlayer.stop();
-      //mediaPlayer.currentTimeProperty().removeListener(progressListener);
       mediaPlayer.setOnPaused(null);
       mediaPlayer.setOnPlaying(null);
       mediaPlayer.setOnReady(null);
@@ -154,6 +160,7 @@ public class MovieViewerFX extends PlayerViewer {
    */
   public void play() {
     if (mediaPlayer != null) {
+      if (finished) seek(Duration.ZERO); //rewind
       mediaPlayer.play();
     }
   }
@@ -187,6 +194,10 @@ public class MovieViewerFX extends PlayerViewer {
   public void seek(Duration newPos){
     if (mediaPlayer != null){
       mediaPlayer.seek(newPos);
+      if (finished){
+        setPlayerStatusInAllMenues(mediaPlayer.getStatus()); //sync menues with status
+        finished=false; //seeking results in not being at the end of the media any more
+      }
     }
   }
   /**

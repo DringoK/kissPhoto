@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
  *
  * @author Dr. Ingo Kreuz
  * @since 2014-05-25
- * @version 2020-11-08 Support for additional information why "this mediaFile cannot be shown" by any other viewer
+ * @version 2020-11-12 Support for additional information why "this mediaFile cannot be shown" by any other viewer
  * @version 2017-10-08 minSize=0,0 added so that all other viewers can also be smaller (surrounding stackPane sets min size to smallest in stack)
  */
 public class OtherViewer extends VBox {
@@ -99,7 +99,6 @@ public class OtherViewer extends VBox {
    */
   public void setMainMessageVisable(boolean visible){
     message.setVisible(visible);
-    System.out.println("OtherViewer: message.visible=" + message.isVisible());
   }
 
   /**
@@ -109,10 +108,8 @@ public class OtherViewer extends VBox {
   public void setAdditionalMessage(String additionalText){
     if (additionalText == null) {
       additionalMessage.setText("");
-      System.out.println("clear additionalText");
     } else {
       additionalMessage.setText(additionalText);
-      System.out.println("add Text=" + additionalText);
     }
   }
 

@@ -13,8 +13,9 @@ import javafx.concurrent.Task;
  * The Thread can also be stopped with immediate hiding. This is e.g. used when skipped to the next media
  *
  * @author Dr. Ingo Kreuz
- * @date 2014-08-03
- * @modified: 2017-10-08 show the bar longer
+ * @since 2014-08-03
+ * @version 2020-11-11 possible to pause Thread (until mouse has left PlayerControls-Area -> see there)
+ * @version 2017-10-08 show the bar longer
  */
 public class PlayerControlsHiderThread {
   private Thread thread;
@@ -31,12 +32,18 @@ public class PlayerControlsHiderThread {
     hiderTask = new HiderTask();
     hiderTask.setPlayerControls(playerControls);
 
-    thread = new Thread(hiderTask, "FileWatcher");
+    thread = new Thread(hiderTask, "PlayerControlsHiderThread");
     thread.setDaemon(true); //close when main task is closed
     thread.start();
 
   }
 
+  public void pause(){
+    hiderTask.pause();
+  }
+  public void resume(){
+    hiderTask.resume();
+  }
   public void setShowTimeInMillis(int showTimeInMillis) {
     hiderTask.setShowTimeInMillis(showTimeInMillis);
   }
@@ -48,7 +55,9 @@ public class PlayerControlsHiderThread {
    * if it is already running the thread is resetted
    */
   public void showPlayerControls() {
-    playerControls.setVisible(true);
+    Platform.runLater(()->{
+      playerControls.setVisible(true);
+    });
 
     hiderTask.setDoHide(true);
     hiderTask.setDoArmTimer(true);
@@ -97,6 +106,7 @@ public class PlayerControlsHiderThread {
     protected boolean doArmTimer = false;   //if true the Thread will next goto sleep for a certain time and then do the next
     protected int showTimeInMillis = 1000;
     protected PlayerControls playerControls;
+    protected boolean paused = false;
 
     public void setDoHide(boolean doHide) {
       this.doHide = doHide;
@@ -114,6 +124,9 @@ public class PlayerControlsHiderThread {
       this.playerControls = playerControls;
     }
 
+    public void pause(){this.paused=true;}
+    public void resume(){this.paused=false;}
+
     @Override
     public Void call() {
       boolean interrupted = false;
@@ -121,14 +134,12 @@ public class PlayerControlsHiderThread {
       //System.out.println("start thread");
       while (!isCancelled()) { //run forever until program is ended
         try {
-          //perform what had been scheduled
-          if (!interrupted && doHide) {  //if interrupted then the timer just was reset
-            Platform.runLater(new Runnable() {
-              @Override
-              public void run() {
-                playerControls.setVisible(false);
-              }
-            });
+          //while paused do nothing but sleep
+          if (!paused) {
+            //perform what had been scheduled
+            if (!interrupted && doHide) {  //if interrupted then the timer just was reset
+              Platform.runLater(() -> playerControls.setVisible(false));
+            }
           }
 
           //prepare/wait for next loop

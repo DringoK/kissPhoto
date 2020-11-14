@@ -89,7 +89,7 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
    * @return if event has been handled
    */
   public boolean handleMouseMoved(MouseEvent event) {
-    playerControls.show();
+    playerControls.resetThreadAndShow();
     return true;
   }
 
@@ -121,8 +121,9 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
    */
   public boolean handleMouseClicked(MouseEvent event) {
     boolean handled = false;
+    //do not handle double-click i.e. this is full screen
     if (event.getClickCount() == 1 && lastMouseButtonWasPrimary && !lastMouseDownWasMouseDragged) {
-      togglePlayPause();
+      //togglePlayPause();// would interfere with the controlArea of playerControls
       handled = true;
       }
     lastMouseDownWasMouseDragged = false;
@@ -281,10 +282,16 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
 
   }
 
-  protected void skipToNextOnAutoPlay() {
+  /**
+   * if autoplay is active then try to skip to next media
+   * @return true if skipped, false if autoPlay is off or there was no next media (end of fileList)
+   */
+  protected boolean skipToNextOnAutoPlay() {
+    boolean skipped = false;
     if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode()) {
-      mediaContentView.showNextMedia();   //if already the last, showNextMedia() will do nothing and media will remain paused...
+      skipped=mediaContentView.showNextMedia();   //if already the last, showNextMedia() will do nothing and media will remain paused (FX) or finished (VLCJ)...
     }
+    return skipped;
   }
 
   protected void setPlayerStatusInAllMenues(MediaPlayer.Status newPlayerStatus) {

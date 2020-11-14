@@ -28,17 +28,17 @@ import java.util.ResourceBundle;
  * The main menu bar is defined here
  * <p/>
  *
- * @author: Ingo
- * @date: 2012-09-09
- * @modified: 2014-04-29 added about menu and no longer used the MenuItemBuilder (which is deprecated now)
- * @modified: 2014-05-02 (I18Support, Reopen added)
- * @modified: 2014-16-16 support for full screen mode added to view menu
- * @modified: 2015-10-04 moving changed to ctr-Cursor up/down: Shift-Alt-Cursor up/down does not work under Windows 10 (menu is activated instead)
- * @modified: 2017-10-13 added AutoFill(Down) Menu-Item to edit menu + Default Column Widths to View menu
- * @modified: 2017-10-15 see also PlayerViewer: handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
- * @modified: 2017-10-21 FileHistory-Support added and reopen removed (because equal to ctrl-1)
- * @modified: 2017-10-29 Flipping and Rotation of JPEG-Images added (imageMenu)
- * @modified: 2018-11-17 Image menu only active if an image is selected
+ * @author Ingo
+ * @since 2012-09-09
+ * @version 2018-11-17 Image menu only active if an image is selected
+ * @version 2017-10-29 Flipping and Rotation of JPEG-Images added (imageMenu)
+ * @version 2017-10-21 FileHistory-Support added and reopen removed (because equal to ctrl-1)
+ * @version 2017-10-15 see also PlayerViewer: handlers installed for mediaPlayer.StatusProperty and  autoPlayProperty to sync the player and the menus (main/context)
+ * @version 2017-10-13 added AutoFill(Down) Menu-Item to edit menu + Default Column Widths to View menu
+ * @version 2015-10-04 moving changed to ctr-Cursor up/down: Shift-Alt-Cursor up/down does not work under Windows 10 (menu is activated instead)
+ * @version 2014-16-16 support for full screen mode added to view menu
+ * @version 2014-05-02 (I18Support, Reopen added)
+ * @version 2014-04-29 added about menu and no longer used the MenuItemBuilder (which is deprecated now)
  */
 public class MainMenuBar extends MenuBar {
   private static ResourceBundle language = I18Support.languageBundle;

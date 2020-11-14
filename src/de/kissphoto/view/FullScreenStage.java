@@ -47,8 +47,6 @@ class FullScreenStage extends Stage {
     //build new MediaContentView for fullScreen Stage and link it to main window / primaryMediaContentView
     mediaContentView = new MediaContentView(this, primaryMediaContentView); //link to primaryMediaContentView
 
-    System.out.println("FullScreen-Constructor: primaryMediaContentView.currentPlayerPosition="+primaryMediaContentView.getPlayerViewer().getCurrentTime());
-    System.out.println("FullScreen-Constructor: handed currentPlayerPosition="+currentPlayerPosition);
     mediaContentView.setFileTableView(primaryMediaContentView.getFileTableView());
     mediaContentView.setMedia(primaryMediaContentView.getCurrentMediaFile(), currentPlayerPosition);
     mediaContentView.getAttrViewer().copyState(primaryMediaContentView.getAttrViewer());

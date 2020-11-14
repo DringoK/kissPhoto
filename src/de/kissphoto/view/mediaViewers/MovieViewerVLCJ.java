@@ -35,22 +35,18 @@ import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactor
  * @since 2020-10-25
  */
 public class MovieViewerVLCJ extends PlayerViewer {
-  protected MediaPlayerFactory mediaPlayerFactory = null; //prevent garbage collection by making also the factory a member (see vlcj docu)
-  protected EmbeddedMediaPlayer mediaPlayer = null;
-
   //treat the VLCJ-mediaPlayer's status compatible to FX-mediaPlayer: use the FX-constants
   protected final javafx.scene.media.MediaPlayer.Status PLAYING = javafx.scene.media.MediaPlayer.Status.PLAYING;
   protected final javafx.scene.media.MediaPlayer.Status PAUSED = javafx.scene.media.MediaPlayer.Status.PAUSED;
   protected final javafx.scene.media.MediaPlayer.Status STOPPED = javafx.scene.media.MediaPlayer.Status.STOPPED;
   protected final javafx.scene.media.MediaPlayer.Status STALLED = javafx.scene.media.MediaPlayer.Status.STALLED; //i.e. reset
-  javafx.scene.media.MediaPlayer.Status playerStatus = javafx.scene.media.MediaPlayer.Status.UNKNOWN;
-
+  protected MediaPlayerFactory mediaPlayerFactory = null; //prevent garbage collection by making also the factory a member (see vlcj docu)
+  protected EmbeddedMediaPlayer mediaPlayer = null;
   protected ImageView mediaView;
+  javafx.scene.media.MediaPlayer.Status playerStatus = javafx.scene.media.MediaPlayer.Status.UNKNOWN;
+  boolean wasReset = false; //after calling resetPlayer() e.g. skipToNextOnAutoPlay() should not be used
   private ViewportZoomer viewportZoomer;
   private boolean vlcAvailable;
-
-  boolean wasReset = false; //after calling resetPlayer() e.g. skipToNextOnAutoPlay() should not be used
-
 
   /**
    * constructor to initialize the viewer
@@ -191,9 +187,9 @@ public class MovieViewerVLCJ extends PlayerViewer {
     boolean compatible = true;
     try {
       if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode()) {
-        Platform.runLater(() -> mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString())); //start() blocks until playing in contrast to play()
+        mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
       } else {
-        Platform.runLater(() -> mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString()));
+        mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString());
       }
       wasReset = false;
     } catch (Exception e) {
@@ -258,14 +254,16 @@ public class MovieViewerVLCJ extends PlayerViewer {
    * seek Position (Duration)
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    *
-   * @param newPos position to jump to
+   * @param newPos position to jump to. null is treated like Duration.ZERO (rewind)
    */
   public void seek(Duration newPos) {
+    System.out.println("vlcj.seek("+newPos.toMillis()+") playerStatus = "+playerStatus);
+    if (playerStatus==STOPPED) play();
     if (isMediaValid()) {
-      Platform.runLater(() -> {
+      if (newPos==null)
+        mediaPlayer.controls().setTime(0,true);
+      else
         mediaPlayer.controls().setTime((long) newPos.toMillis(), true); //true=fast positioning
-      });
-
     }
   }
 
@@ -276,7 +274,7 @@ public class MovieViewerVLCJ extends PlayerViewer {
    */
   public Duration getCurrentTime() {
     if (isMediaValid()) {
-      return new Duration(mediaPlayer.status().position());
+      return new Duration(mediaPlayer.status().time());
     } else
       return Duration.UNKNOWN;    //e.g. MovieViewerDummy does not have a mediaPlayer so there is no duration in this case
   }

@@ -15,6 +15,7 @@ public class I18Support {
   public static final String LANGUAGE = "language";
 
   private static final String LANGUANGE_BUNDLE_NAME = "de.kissphoto.languages.kissphoto";
+  //private static final String LANGUANGE_BUNDLE_NAME = "resources.languages.kissphoto";
 
   public static ResourceBundle languageBundle = ResourceBundle.getBundle(LANGUANGE_BUNDLE_NAME, new Locale(ENGLISH));  //default is english
   public static String currentLanguage = ENGLISH;

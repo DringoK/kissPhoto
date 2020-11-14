@@ -1,5 +1,6 @@
 package de.kissphoto.view;
 
+import de.kissphoto.KissPhoto;
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.model.MediaFile;
@@ -84,14 +85,6 @@ public class MediaContentView extends Pane {
   private ChangeListener lastListener = null;
 
   /**
-   * @constructor
-   */
-  public MediaContentView(Stage owner) {
-    super();
-    init(owner);
-  }
-
-  /**
    * @param owner                   link to the stage which contains this mediaContentView
    * @param primaryMediaContentView link to the primaryMediaContentView (i.e. from full screen to "normal view"
    * @constructor this constructor is only used internally for linking back the full-Screen version to the primary MediaContentView (in primary Stage)
@@ -101,6 +94,15 @@ public class MediaContentView extends Pane {
     this.primaryMediaContentView = primaryMediaContentView;
     init(owner);
   }
+
+  /**
+   * @constructor
+   */
+  public MediaContentView(Stage owner) {
+    super();
+    init(owner);
+  }
+
 
   private void init(Stage owner) {
     this.owner = owner;
@@ -117,11 +119,14 @@ public class MediaContentView extends Pane {
 
     //find the best movie viewer for the system: 1:VLC, 2:JavaFX, 3:Dummy
     //try 1:VLC
-    try {
-      playerViewer = new MovieViewerVLCJ(this);
-    } catch (Exception e) {
-      playerViewer = null;
+    if (!KissPhoto.optionNoVLC) {
+      try {
+        playerViewer = new MovieViewerVLCJ(this);
+      } catch (Exception e) {
+        playerViewer = null;
+      }
     }
+
     if (playerViewer == null || !((MovieViewerVLCJ) playerViewer).isVlcAvailable()) {
       //try 2: JavaFX
       try {
@@ -359,27 +364,21 @@ public class MediaContentView extends Pane {
   public void syncMediaContentViews(MediaFile mediaFile, Object compatibleViewer) {
     currentMediaFile = mediaFile;
     attrViewer.setMedia(mediaFile);
-    System.out.println("MediaContentView.syncMedia file="+mediaFile + " Viewer=" + compatibleViewer + " isMain=" + isMainMediaContentView());
-    System.out.println("isPlayerViewer " + (compatibleViewer instanceof PlayerViewer));
 
     //----- empty directory
     if (compatibleViewer == null) {
-      System.out.println("sync empty");
       activateEmptyMediaViewer();
     }
     //----- Photo
     else if (compatibleViewer instanceof PhotoViewer) {
-      System.out.println("sync photo");
       photoViewer.setMediaFileIfCompatible(mediaFile);
       activatePhotoViewer();
     }
     //----- Playable File (Video or Audio) only shown in main Window
     else if (compatibleViewer instanceof PlayerViewer) {
-      System.out.println("sync player");
       activatePlayerOnOtherScreenHint();
       //----- Unsupported Media
     } else {
-      System.out.println("sync other");
       activateOtherMediaViewer();
     }
   }
@@ -404,7 +403,6 @@ public class MediaContentView extends Pane {
     if (mediaFile == currentMediaFile) return; //suppress multiple calls
 
     if (this.isMainMediaContentView()) {
-      System.out.println("MediaContentView.setMedia(" + mediaFile + "), fullScreen=" + this.isFullScreenMediaContentView());
       try {
         currentMediaFile = mediaFile;
         attrViewer.setMedia(mediaFile);
@@ -424,7 +422,7 @@ public class MediaContentView extends Pane {
           if (this.isFullScreenMediaContentView()) {
             primaryMediaContentView.showProgressBarForMediaFile(mediaFile); //progress still in main window :-)
             primaryMediaContentView.syncMediaContentViews(mediaFile, photoViewer);
-          }else{
+          } else {
             showProgressBarForMediaFile(mediaFile);
           }
 
@@ -460,7 +458,7 @@ public class MediaContentView extends Pane {
    * <br>
    * otherViewer is activated
    */
-  public void showPlayerError(){
+  public void showPlayerError() {
     activateOtherMediaViewer();
     if (this.isFullScreenMediaContentView())
       primaryMediaContentView.syncMediaContentViews(currentMediaFile, otherViewer);
@@ -507,9 +505,6 @@ public class MediaContentView extends Pane {
    * @param additionalMessage  extra information in a second line, or nothing if "" or null is provided
    */
   public void activateOtherMediaViewer(boolean mainMessageVisible, String additionalMessage) {
-    System.out.println("activateOtherMediaViewer: fullScreenStage=" + isFullScreenMediaContentView()
-      + " mainVisible = " + mainMessageVisible
-      + " addMessage = " + additionalMessage);
     otherViewer.setMainMessageVisable(mainMessageVisible);
     otherViewer.setAdditionalMessage(additionalMessage);
 
@@ -520,9 +515,8 @@ public class MediaContentView extends Pane {
   }
 
   public void activatePlayerOnOtherScreenHint() {
-    System.out.println("MediaContentView.activatePlayerOnOtherScreenHint() fullScreen= "+this.isFullScreenMediaContentView());
     otherViewer.setMainMessageVisable(false);
-    otherViewer.setAdditionalMessage("Media File is being played in Fullscreen Window");  ////////////////////////////////////////////////////////////////////
+    otherViewer.setAdditionalMessage(language.getString("media.file.is.being.played.in.fullscreen.window"));
 
     photoViewer.setVisible(false);
     playerViewer.setVisible(false);
@@ -603,27 +597,33 @@ public class MediaContentView extends Pane {
    * select next line in fileTableView
    * the selectionChangeListener there will load the next media then
    * (if there is no current selection (e.g. empty filelist) or no connection to the fileTableView (e.g. in undeleteDialog) nothing will happen)
+   *
+   * @return true if skipped to next Media, false if already at the end of the list
    */
-  public void showNextMedia() {
-    if (fileTableView == null || fileTableView.getSelectionModel() == null) return;
+  public boolean showNextMedia() {
+    boolean skipped = false;
 
-    boolean fileTableViewHadFocus = fileTableView.isFocused();
+    if (fileTableView != null && fileTableView.getSelectionModel() != null) {
 
-    int currentSelection = fileTableView.getSelectionModel().getSelectedIndex();
-    if (currentSelection < fileTableView.getMediaFileList().getFileList().size() - 1) {
-      fileTableView.getSelectionModel().clearAndSelect(currentSelection + 1);
-      fileTableView.scrollViewportToIndex(currentSelection + 1, FileTableView.Alignment.BOTTOM);
-    }
+      boolean fileTableViewHadFocus = fileTableView.isFocused();
 
-    //above selection might steel focus from mediaContentView if changed from movie to image
-    if (!fileTableViewHadFocus) Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        playerViewer.requestFocus();   //whatever is visible gets the focus back
-        otherViewer.requestFocus();
-        photoViewer.requestFocus();
+      int currentSelection = fileTableView.getSelectionModel().getSelectedIndex();
+      if (currentSelection < fileTableView.getMediaFileList().getFileList().size() - 1) { //if not already at the end of the fileTableView's list
+        fileTableView.getSelectionModel().clearAndSelect(currentSelection + 1);
+        fileTableView.scrollViewportToIndex(currentSelection + 1, FileTableView.Alignment.BOTTOM);
+        skipped = true;
       }
-    });
+
+      //above selection might steel focus from mediaContentView if changed from movie to image
+      if (!fileTableViewHadFocus) Platform.runLater(() -> {
+        //whatever is visible --> get the focus back
+        requestFocus();
+//        if (playerViewer.isVisible()) playerViewer.requestFocus();
+//        else if (otherViewer.isVisible()) otherViewer.requestFocus();
+//        else if (photoViewer.isVisible()) photoViewer.requestFocus();
+      });
+    }
+    return skipped;
   }
 
   /**
@@ -724,7 +724,7 @@ public class MediaContentView extends Pane {
    * Any Players will be stopped in main window, but the position is handed over into full screen
    */
   public void showFullScreen() {
-    if (!isFullScreenMediaContentView() && fullScreenStage==null) { //only if not already in fullScreen-Mode
+    if (!isFullScreenMediaContentView() && fullScreenStage == null) { //only if not already in fullScreen-Mode
 
       Duration currentPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
 
@@ -748,19 +748,22 @@ public class MediaContentView extends Pane {
   }
 
   public void endFullScreen() {
-    Duration currentPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
+    Duration fullScreenPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
 
     //only if in fullScreen-Mode (seen from the main window's view)
     if (fullScreenStage != null) {
       attrViewer.copyState(fullScreenStage.mediaContentView.getAttrViewer()); //synchronize normal and full screen attributesViewers
       if (fullScreenStage.mediaContentView.getPlayerViewer() != null && fullScreenStage.mediaContentView.getPlayerViewer().isVisible()) {
-        currentPlayerPosition = fullScreenStage.getMediaContentView().getPlayerViewer().getCurrentTime();
+        fullScreenPlayerPosition = fullScreenStage.getMediaContentView().getPlayerViewer().getCurrentTime();
         fullScreenStage.mediaContentView.getPlayerViewer().resetPlayer();
       }
       fullScreenStage.close();
       fullScreenStage.getMediaContentView().cleanUp();
       fullScreenStage = null;
-      setMedia(currentMediaFile, currentPlayerPosition); //sync normal view with previous full screen view
+
+      MediaFile mediaFile = currentMediaFile; //save it
+      currentMediaFile = null; //reset it, so that setMedia will have an effect, otherwise re-setting it would be prevented
+      setMedia(mediaFile, fullScreenPlayerPosition); //sync normal view with previous full screen view, restore currentMediaFile
 
       //enabling/disabling of fullScreen items in all context menus (of all viewers)
       for (MenuItem item : fullScreenItems) {

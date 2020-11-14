@@ -22,6 +22,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.awt.*;
+import java.util.ResourceBundle;
 
 
 /**
@@ -29,24 +30,27 @@ import java.awt.*;
  * ===========================================<p>
  * The main KISS ideas of the application are
  * <ul>
- * <li> photo management and photo show without installation or database
- * <li>self containing: all information is in the picture files, filenames or directory names
- * <li>auto numbering: file order can be changed, file numbering will follow
- * <li>file date maintaining
- * <li>mass renaming for filenames, EXIF-Info and time-stamps
- * <li>runnable on all PC platforms which support JavaFX
- * <li>The viewer treats movie clips like moving photos (like in Harry Potter's newspapers ;-)
+ * <li>Rename files like in words in a wordprocesser's table: move around with the cursor, search and replace + batch rename and renumbering</li>
+ * <li>photo management and photo show without installation or database</li>
+ * <li>self containing: all information is in the picture files, filenames or directory names</li>
+ * <li>auto numbering: file order can be changed, file numbering will follow</li>
+ * <li>file date maintaining</li>
+ * <li>mass renaming for filenames, EXIF-Info and time-stamps</li>
+ * <li>runnable on all PC platforms which support JavaFX</li>
+ * <li>The viewer treats movie clips like moving photos (like in Harry Potter's newspapers ;-)</li>
+ * <li>optional seamless vlc support: play virtually all playable files if vlc is installed on the system additionally</li>
  * </ul>
  *
- * @Author: Ingo Kreuz<br>
- * @version: see KISS_PHOTO_VERSION constant below
- * @modified: 2014-04-29
- * @modified: 2014-07-05 loading initialFileOrFolder after stage.show() to show messages during slow network access
- * @modified: 2017-10-02 main window is moved into visible part of screen after startup (e.g. if resolution changed or 2nd screen has been disabled)
- * @modified: 2018-11-17 rotation of images is now supported, improved inCell-editing (caretPosition, Tab-Support)
- * @modified: 2019-06-23 release candidate: fixes in Cache Algo, fixed issues with "second screen"/fullscreen, Strg-j menu internationalized, jpeg (with e) supported
- * @modified: 2019-07-07: Cache problems fixed
- * @modified: 2019-11-01: move up/down key handling improved, scrolling in FileTable improved, preview in UnDeleteDialog repaired, Cache speed improved (e.g. Background Loading Cancelling), reload File History repaired
+ * @author Ingo Kreuz<br>
+ * @version see KISS_PHOTO_VERSION constant below
+ * @since 2014-04-29
+ * @version 2020-11-11 vlcj integrated
+ * @version 2019-11-01 move up/down key handling improved, scrolling in FileTable improved, preview in UnDeleteDialog repaired, Cache speed improved (e.g. Background Loading Cancelling), reload File History repaired
+ * @version 2019-07-07 Cache problems fixed
+ * @version 2019-06-23 release candidate: fixes in Cache Algo, fixed issues with "second screen"/fullscreen, Strg-j menu internationalized, jpeg (with e) supported
+ * @version 2018-11-17 rotation of images is now supported, improved inCell-editing (caretPosition, Tab-Support)
+ * @version 2017-10-02 main window is moved into visible part of screen after startup (e.g. if resolution changed or 2nd screen has been disabled)
+ * @version 2014-07-05 loading initialFileOrFolder after stage.show() to show messages during slow network access
  * <p>
  * Bugs:
  * ======================
@@ -69,10 +73,14 @@ import java.awt.*;
  * todo Nice to have: Undo-History
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.20.10work in progress"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.20.11work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
+  private static ResourceBundle language = null;
 
+  //set in void main(args) = in static context, so the need to be static
   private static String initialFileOrFolder;
+  public static boolean optionNoVLC = false; //if -noVLC is provided then prevent from searching for and using of vlc
+  private static boolean optionHelp = false; //-Help will println a short helptext
 
   private MainMenuBar mainMenuBar;
   private FileTableView fileTableView;
@@ -101,7 +109,133 @@ public class KissPhoto extends Application {
   private static final String MAIN_SPLIT_PANE_DIVIDER_POSITION = "mainSplitPane_DividerPosition";
   private static final String DETAILS_AREA_DIVIDER_POSITION = "detailsArea_DividerPosition";
 
+  /**
+   * Entry point
+   * @param args the command line arguments handed by command shell:<br>
+   *             [filename] (file or folder): will be opened<br>
+   *             -noVLC: prevent the search for and use of vlc (for testing or to save resources)
+   *             -help: a short help text about parameters
+   */
+  public static void main(String[] args) {
+    if (args.length >= 1) {
+      //if first parameter would contain "-" then it was an option and no fileOrFoler is provided
+      //first argument is fileOrFolder to open if it does not contain a "-"
+      if (!args[0].contains("-")) {
+        initialFileOrFolder = args[0]; //first parameter is treated as file or folder to open
+      }
 
+      //search for options
+      for (int i=0;i<args.length;i++){
+        if (args[i].equalsIgnoreCase("-noVLC")) optionNoVLC=true;
+        else if (args[i].equalsIgnoreCase("-help")) optionHelp=true;
+      }
+
+    } else {
+      initialFileOrFolder = "";
+    }
+
+    Application.launch(args);
+  }
+
+  @Override
+  public void start(Stage stage) {
+    globalSettings.load();
+
+    try {
+      I18Support.setLanguage(globalSettings.getProperty(I18Support.LANGUAGE));
+    } catch (Exception e) {
+      //keep default language if property or settings file could not be found
+    }
+    language = I18Support.languageBundle;      //not before now assign language: after setLanguage() has been executed
+
+    if (optionHelp) System.out.println(language.getString("program.parameter.help.text"));
+
+    primaryStage = stage;  //make this parameter value available in event Handler (see setOnClosedEvent)
+    primaryStage.setTitle(KISS_PHOTO + KISS_PHOTO_VERSION);
+    Group root = new Group();
+    scene = new Scene(root, default_width, default_height);
+    primaryStage.setScene(scene);
+
+    stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/KissPhotoIcon.jpg")));
+
+    //Create the View-Areas
+    statusBar = new StatusBar();
+    statusBar.showMessage("");
+    mediaContentView = new MediaContentView(primaryStage); //Area for showing Media
+
+    fileTableView = new FileTableView(primaryStage, mediaContentView, statusBar, globalSettings); //File table and directory
+    statusBar.connectUndeleteDialog(fileTableView);
+    mediaContentView.setFileTableView(fileTableView);
+
+    mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION, globalSettings);
+    mainMenuBar.addRecentlyMenu(fileTableView.getFileHistory().getRecentlyFilesMenu());
+    // Left and right split pane
+    mainSplitPane.prefWidthProperty().bind(scene.widthProperty());
+    mainSplitPane.prefHeightProperty().bind(scene.heightProperty());
+    mainSplitPane.setDividerPosition(0, MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS);
+
+    // File Details: Upper (picture/player) and lower (EXIF) split pane
+    detailsArea.setOrientation(Orientation.VERTICAL);
+    detailsArea.prefHeightProperty().bind(scene.heightProperty());
+    detailsArea.prefWidthProperty().bind(scene.widthProperty());
+    //todo: folgende Zeile aktivieren, sobald MetadataView in detailsArea eingefügt ist
+    detailsArea.setDividerPosition(0, DETAILS_AREA_DEFAULT_DIVIDER_POS);
+
+    detailsArea.getItems().addAll(mediaContentView);
+
+    mainSplitPane.getItems().addAll(fileTableView, detailsArea);
+
+    //root-Area
+    final BorderPane rootArea = new BorderPane();
+    rootArea.prefHeightProperty().bind(scene.heightProperty());
+    rootArea.prefWidthProperty().bind(scene.widthProperty());
+
+    rootArea.setTop(mainMenuBar);
+    rootArea.setCenter(mainSplitPane);
+    rootArea.setBottom(statusBar);
+    root.getChildren().add(rootArea);
+
+
+    primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+      public void handle(final WindowEvent event) {
+
+        //--ask for unsaved changes
+        if (!fileTableView.askIfContinueUnsavedChanges()) {
+          event.consume(); // Consuming the close event prevents the application from closing
+        } else {
+          storeLastMainWindowSettings(); //--save current window sizes to settings file
+          globalSettings.store(); //all settings not only Windows-Settings
+
+          fileTableView.stopWatcherThread();
+        }
+      }
+    });
+
+    ExternalEditorsDialog.initializeAllSupportedMediaFileClasses(globalSettings);
+
+    //close the splash screen that might be provided by java -splash:file.jpg  or manifest SplashScreen-Image: images/splash.gif
+    final SplashScreen splash = SplashScreen.getSplashScreen();
+    if (splash != null) splash.close();
+
+    restoreLastMainWindowSettings();
+    primaryStage.show();  //show main window before opening files to show messages while loading
+
+
+    //wait until resizing has been performed and scene width has followed stage width
+    Platform.runLater(new Runnable() {
+      @Override
+      public void run() {
+        ensureStageToBeVisible(primaryStage);
+        fileTableView.openInitialFolder(initialFileOrFolder);
+      }
+    });
+  }
+
+  @Override
+  public final void stop(){
+    //release all external ressources e.g. VLC.dll
+    mediaContentView.cleanUp();
+  }
   /**
    * Store last main window settings from Global-Settings properties file
    * assumes:
@@ -247,119 +381,5 @@ public class KissPhoto extends Application {
     if (stage.getHeight() > maxY) {
       stage.setHeight(maxY + decoWidth); //maxY already includes lower decoWidth, add upper decoWidth
     }
-  }
-
-
-  /**
-   * * @param args the command line arguments handed by command shell
-   *      
-   */
-  public static void main(String[] args) {
-
-    if (args.length >= 1) {
-      initialFileOrFolder = args[0]; //first parameter is treated as file or folder to open
-    } else {
-      initialFileOrFolder = "";
-
-    }
-
-    Application.launch(args);
-  }
-
-  @Override
-  public void start(Stage stage) {
-    globalSettings.load();
-
-    try {
-      I18Support.setLanguage(globalSettings.getProperty(I18Support.LANGUAGE));
-    } catch (Exception e) {
-      //leave default language if property or settings file could not be found
-    }
-
-    primaryStage = stage;  //make this parameter value available in event Handler (see setOnClosedEvent)
-    primaryStage.setTitle(KISS_PHOTO + KISS_PHOTO_VERSION);
-    Group root = new Group();
-    scene = new Scene(root, default_width, default_height);
-    primaryStage.setScene(scene);
-
-    stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/KissPhotoIcon.jpg")));
-
-    //Create the View-Areas
-    statusBar = new StatusBar();
-    statusBar.showMessage("");
-    mediaContentView = new MediaContentView(primaryStage); //Area for showing Media
-
-    fileTableView = new FileTableView(primaryStage, mediaContentView, statusBar, globalSettings); //File table and directory
-    statusBar.connectUndeleteDialog(fileTableView);
-    mediaContentView.setFileTableView(fileTableView);
-
-    mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION, globalSettings);
-    mainMenuBar.addRecentlyMenu(fileTableView.getFileHistory().getRecentlyFilesMenu());
-    // Left and right split pane
-    mainSplitPane.prefWidthProperty().bind(scene.widthProperty());
-    mainSplitPane.prefHeightProperty().bind(scene.heightProperty());
-    mainSplitPane.setDividerPosition(0, MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS);
-
-    // File Details: Upper (picture/player) and lower (EXIF) split pane
-    detailsArea.setOrientation(Orientation.VERTICAL);
-    detailsArea.prefHeightProperty().bind(scene.heightProperty());
-    detailsArea.prefWidthProperty().bind(scene.widthProperty());
-    //todo: folgende Zeile aktivieren, sobald MetadataView in detailsArea eingefügt ist
-    detailsArea.setDividerPosition(0, DETAILS_AREA_DEFAULT_DIVIDER_POS);
-
-    detailsArea.getItems().addAll(mediaContentView);
-
-    mainSplitPane.getItems().addAll(fileTableView, detailsArea);
-
-    //root-Area
-    final BorderPane rootArea = new BorderPane();
-    rootArea.prefHeightProperty().bind(scene.heightProperty());
-    rootArea.prefWidthProperty().bind(scene.widthProperty());
-
-    rootArea.setTop(mainMenuBar);
-    rootArea.setCenter(mainSplitPane);
-    rootArea.setBottom(statusBar);
-    root.getChildren().add(rootArea);
-
-
-    primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-      public void handle(final WindowEvent event) {
-
-        //--ask for unsaved changes
-        if (!fileTableView.askIfContinueUnsavedChanges()) {
-          event.consume(); // Consuming the close event prevents the application from closing
-        } else {
-          storeLastMainWindowSettings(); //--save current window sizes to settings file
-          globalSettings.store(); //all settings not only Windows-Settings
-
-          fileTableView.stopWatcherThread();
-        }
-      }
-    });
-
-    ExternalEditorsDialog.initializeAllSupportedMediaFileClasses(globalSettings);
-
-    //close the splash screen that might be provided by java -splash:file.jpg  or manifest SplashScreen-Image: images/splash.gif
-    final SplashScreen splash = SplashScreen.getSplashScreen();
-    if (splash != null) splash.close();
-
-    restoreLastMainWindowSettings();
-    primaryStage.show();  //show main window before opening files to show messages while loading
-
-
-    //wait until resizing has been performed and scene width has followed stage width
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        ensureStageToBeVisible(primaryStage);
-        fileTableView.openInitialFolder(initialFileOrFolder);
-      }
-    });
-  }
-
-  @Override
-  public final void stop(){
-    //release all external ressources e.g. VLC.dll
-    mediaContentView.cleanUp();
   }
 }

@@ -11,6 +11,7 @@
         <element id="module-output" name="adobe-xmp-core" />
         <element id="module-output" name="metadata-extractor" />
         <element id="module-output" name="vlcj" />
+        <element id="library" level="project" name="jna" />
       </root>
     </artifact>
   </component>
@@ -251,6 +252,7 @@
     <configuration default="false" name="kissphoto" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="de.kissphoto.KissPhoto" />
       <module name="kissPhoto" />
+      <option name="PROGRAM_PARAMETERS" value="-noVLCdoch" />
       <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg --module-path out\production;lib\javafx-sdk-13.0.1\lib" />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="" />

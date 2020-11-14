@@ -35,9 +35,10 @@ import javafx.util.Duration;
  *
  * @author Dr. Ingo Kreuz
  * @version  2014-07-18
- * @version 2017-10-08 longer showing the Player, higher player
- * @version 2017-10-21 play/pause-symbol synchronized with player state
+ * @version 2020-11-11 bugfixing event handling + Keep it visible while mouse is in control area
  * @version 2020-10-25 using new interface of PlayerViewer avoiding direct access to MediaPlayer (because FX and VLC implementation are different)
+ * @version 2017-10-21 play/pause-symbol synchronized with player state
+ * @version 2017-10-08 longer showing the Player, higher player
  */
 
 public class PlayerControls extends Pane {
@@ -74,7 +75,8 @@ public class PlayerControls extends Pane {
     BorderPane.setMargin(playPauseButton, insets);
     progressSlider = createSlider();
     BorderPane.setAlignment(progressSlider, Pos.CENTER);
-    progressText = createProgressText();
+    progressText = new Text();
+    progressText.setFill(Color.WHITE);
     BorderPane.setAlignment(progressText, Pos.CENTER_RIGHT);
     BorderPane.setMargin(progressText, insets);
 
@@ -85,24 +87,34 @@ public class PlayerControls extends Pane {
     controlArea.setCursor(Cursor.DEFAULT);
     getChildren().add(controlArea);
 
-    //------------------- process events ---------------------------------
+    //------------------- handle events ---------------------------------
 
-    setOnMouseMoved(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        show(); //reset show time
-      }
+    //------- showing/hiding controlArea using
+    setOnMouseMoved(mouseEvent -> {
+      resetThreadAndShow(); //reset show time
+      mouseEvent.consume();   //if no control in the playerControl has consumed the event yet, do not let go through, preventing playerViewer to interfere with play/pause there
+    });
+
+    controlArea.setOnMouseEntered(mouseEvent->{
+      setVisible(true);
+      playerControlsHiderThread.pause();
+
+    });
+    controlArea.setOnMouseExited(mouseEvent->{
+      playerControlsHiderThread.resume();
+
     });
 
 
     // pause media and swap button with play button
     playPauseButton.setOnMousePressed(new EventHandler<MouseEvent>() {
-      public void handle(MouseEvent me) {
-        if (playPauseButton.isPaused())
-          playerViewer.pause();
-        else
+      public void handle(MouseEvent mouseEvent) {
+        if (playPauseButton.isPaused()) {
           playerViewer.play();
-
+        }else {
+          playerViewer.pause();
+        }
+        mouseEvent.consume();
       }
     });
 
@@ -126,29 +138,11 @@ public class PlayerControls extends Pane {
     final Slider slider = new Slider();
     slider.setSnapToTicks(false);
 
-
-    slider.setOnMousePressed(new EventHandler<MouseEvent>() {
-      // pause temporarily so that the slider's value listener can react on the mouse click. OnMouseReleased will resume
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        wasPausedBeforeMousePressed = playerViewer.isPaused();
-        playerViewer.pause();
-
-        //do not consume, so the value listener of the slider is firing next
-      }
-    });
-
-    slider.setOnMouseReleased(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        if (!wasPausedBeforeMousePressed) playerViewer.play();
-        wasPausedBeforeMousePressed = false;
-      }
-    });
-
+    //click needs initiate player.seek which again moves the slider to the clicked position
     slider.setOnMouseClicked(new EventHandler<MouseEvent>() {
       @Override
       public void handle(MouseEvent mouseEvent) {
+        mouseEvent.consume();
         //max -> width
         //pos -> x
         double pos = slider.getMax() / slider.getWidth() * mouseEvent.getX();
@@ -156,6 +150,7 @@ public class PlayerControls extends Pane {
       }
     });
 
+    //Slider has been dragged with mouse
     slider.valueProperty().addListener(new InvalidationListener() {
       public void invalidated(Observable ov) {
         if (slider.isValueChanging()) {
@@ -165,12 +160,6 @@ public class PlayerControls extends Pane {
     });
 
     return slider;
-  }
-
-  private Text createProgressText() {
-    Text text = new Text();
-    text.setFill(Color.WHITE);
-    return text;
   }
 
   /**
@@ -250,7 +239,7 @@ public class PlayerControls extends Pane {
   /**
    * show the PlayerControls for some time using the playerControlsHiderThread to hide it automatically after some time
    */
-  void show() {
+  void resetThreadAndShow() {
     playerControlsHiderThread.showPlayerControls();
   }
 
