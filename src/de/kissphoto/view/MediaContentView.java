@@ -5,9 +5,10 @@ import de.kissphoto.helper.I18Support;
 import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MediaFileRotater;
-import de.kissphoto.view.helper.PlayerViewer;
-import de.kissphoto.view.helper.RotatablePaneLayouter;
 import de.kissphoto.view.mediaViewers.*;
+import de.kissphoto.view.viewerHelpers.PlayerControls;
+import de.kissphoto.view.viewerHelpers.PlayerViewer;
+import de.kissphoto.view.viewerHelpers.RotatablePaneLayouter;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -46,8 +47,8 @@ import java.util.ResourceBundle;
  * @version 2020-11-02 change viewer strategy: every viewer decides by it's own if it is compatible with the media
  */
 public class MediaContentView extends Pane {
-  public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
   private static ResourceBundle language = I18Support.languageBundle;
+  public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
 
   //every viewer has these items. For enabling/disabling keep a reference to all of them
   static private ObservableList<MenuItem> showOnNextScreenItems = FXCollections.observableArrayList();
@@ -91,8 +92,10 @@ public class MediaContentView extends Pane {
    */
   protected MediaContentView(Stage owner, MediaContentView primaryMediaContentView) {
     super();
+    this.owner = owner;
+
     this.primaryMediaContentView = primaryMediaContentView;
-    init(owner);
+    init();
   }
 
   /**
@@ -100,12 +103,12 @@ public class MediaContentView extends Pane {
    */
   public MediaContentView(Stage owner) {
     super();
-    init(owner);
+    this.owner = owner;
+    init();
   }
 
 
-  private void init(Stage owner) {
-    this.owner = owner;
+  private void init() {
     //width/height-binding of the pane is not necessary because it lies in a splitPane which does binding automatically
     setStyle("-fx-background-color: black;");
 
@@ -189,10 +192,10 @@ public class MediaContentView extends Pane {
         switch (keyEvent.getCode()) {
           //moving in fileTableView
           case HOME:
-            showMedia(1);
+            showMediaInLineNumber(1);
             break;
           case END:
-            showMedia(Integer.MAX_VALUE);
+            showMediaInLineNumber(Integer.MAX_VALUE);
             break;
           case UP:  //only used if the current zoomable viewer does not consume it for moving
           case PAGE_UP: //works always
@@ -594,6 +597,33 @@ public class MediaContentView extends Pane {
   }
 
   /**
+   * Dependent on repeatMode and playListMode in PlayerControls
+   * repeat Media, select next media
+   * repeat Playlist, or halt at the end
+   */
+  public void showNextOrRepeatMedia() {
+    PlayerControls playerControls = playerViewer.getPlayerControls();
+    if (playerControls.isPlayListMode() && !fileTableView.isEditMode()) {   //while editing a line in filetable changing the line would steel the cursor
+      boolean skipped = showNextMedia();
+      if (!skipped) {  //end of list reached
+        if (playerControls.isRepeatMode()) {
+          showMediaInLineNumber(0);
+        }
+        //else do nothing, media remains halted
+      }
+
+    } else {
+      //not isPlayListMode()  or in FileTableView's EditMode
+      if (playerControls.isRepeatMode()) {
+        Platform.runLater(()->{
+          playerViewer.rewindAndPlayWhenFinished();
+        });
+      }
+      //else do nothing, media remains to be finished
+    }
+  }
+
+  /**
    * select next line in fileTableView
    * the selectionChangeListener there will load the next media then
    * (if there is no current selection (e.g. empty filelist) or no connection to the fileTableView (e.g. in undeleteDialog) nothing will happen)
@@ -605,25 +635,70 @@ public class MediaContentView extends Pane {
 
     if (fileTableView != null && fileTableView.getSelectionModel() != null) {
 
-      boolean fileTableViewHadFocus = fileTableView.isFocused();
-
       int currentSelection = fileTableView.getSelectionModel().getSelectedIndex();
       if (currentSelection < fileTableView.getMediaFileList().getFileList().size() - 1) { //if not already at the end of the fileTableView's list
+        showMediaInLineNumber(currentSelection + 1);
         fileTableView.getSelectionModel().clearAndSelect(currentSelection + 1);
         fileTableView.scrollViewportToIndex(currentSelection + 1, FileTableView.Alignment.BOTTOM);
         skipped = true;
       }
-
-      //above selection might steel focus from mediaContentView if changed from movie to image
-      if (!fileTableViewHadFocus) Platform.runLater(() -> {
-        //whatever is visible --> get the focus back
-        requestFocus();
-//        if (playerViewer.isVisible()) playerViewer.requestFocus();
-//        else if (otherViewer.isVisible()) otherViewer.requestFocus();
-//        else if (photoViewer.isVisible()) photoViewer.requestFocus();
-      });
     }
     return skipped;
+  }
+
+  /**
+   * jump to a line number in fileTableView
+   * if the line number is smaller than 0 the first line is selected
+   * if the line number is greater than the length of fileTableView the last element is selected
+   *
+   * @param lineNumber the line to jump to (zero based! i.e. first line is zero, last line is getFileList().size()-1)
+   */
+  public void showMediaInLineNumber(int lineNumber) {
+    if (fileTableView == null || fileTableView.getSelectionModel() == null) return;
+
+    boolean fileTableViewHadFocus = fileTableView.isFocused();
+
+    if (lineNumber <= 0) {
+      fileTableView.getSelectionModel().clearAndSelect(0); //first element
+      fileTableView.scrollViewportToIndex(0, FileTableView.Alignment.TOP);
+    } else if (lineNumber < fileTableView.getMediaFileList().getFileList().size()) {
+      fileTableView.getSelectionModel().clearAndSelect(lineNumber);
+      fileTableView.scrollViewportToIndex(lineNumber, FileTableView.Alignment.CENTER);
+    } else {
+      fileTableView.getSelectionModel().clearAndSelect(fileTableView.getMediaFileList().getFileList().size() - 1); //last element
+      fileTableView.scrollViewportToIndex(fileTableView.getMediaFileList().getFileList().size() - 1, FileTableView.Alignment.BOTTOM);
+    }
+
+    //above selection might steel focus from mediaContentView if changed from movie to image
+    if (!fileTableViewHadFocus) Platform.runLater(() -> {
+      //whatever is visible --> get the focus back
+      requestFocus();
+    });
+
+  }
+
+  /**
+   * if digits are typed they are collected by this method
+   *
+   * @param digit a single digit (0..9) as an int
+   */
+  private void collectDigit(int digit) {
+    if (enteredLineNumber < 0) //new number
+      enteredLineNumber = digit;
+    else //new digit for a existing entry
+      enteredLineNumber = enteredLineNumber * 10 + digit;
+  }
+
+  /**
+   * show the media in the line number of fileTableView that has been entered previously by the user
+   * and that has been collected using collectDigit()
+   * if no number has been entered before (i.e. enteredLineNumber<0) then nothing will happen
+   */
+  private void showMediaForEnteredLineNumber() {
+    if (enteredLineNumber > 0) { //only if a valid number has been entered before
+      showMediaInLineNumber(enteredLineNumber - 1); //-1 because list is zero-based human entry is 1-based
+      enteredLineNumber = -1;  //consume the number
+    }
   }
 
   /**
@@ -673,51 +748,6 @@ public class MediaContentView extends Pane {
     }
   }
 
-  /**
-   * jump to a line number in fileTableView
-   * if the line number is smaller than 0 the first line is selected
-   * if the line number is greater than the length of fileTableView the last element is selected
-   *
-   * @param lineNumber the line to jump to (one based, i.e. 1 jumps to first line (which has internal index 0))
-   */
-  public void showMedia(int lineNumber) {
-    if (fileTableView == null || fileTableView.getSelectionModel() == null) return;
-
-    if (lineNumber <= 0) {
-      fileTableView.getSelectionModel().clearAndSelect(0); //first element
-      fileTableView.scrollViewportToIndex(0, FileTableView.Alignment.TOP);
-    } else if (lineNumber < fileTableView.getMediaFileList().getFileList().size()) {
-      fileTableView.getSelectionModel().clearAndSelect(lineNumber - 1); //-1 because list is zero-based human entry is 1-based
-      fileTableView.scrollViewportToIndex(lineNumber - 1, FileTableView.Alignment.CENTER);
-    } else {
-      fileTableView.getSelectionModel().clearAndSelect(fileTableView.getMediaFileList().getFileList().size() - 1); //last element
-      fileTableView.scrollViewportToIndex(fileTableView.getMediaFileList().getFileList().size() - 1, FileTableView.Alignment.BOTTOM);
-    }
-  }
-
-  /**
-   * if digits are typed they are collected by this method
-   *
-   * @param digit a single digit (0..9) as an int
-   */
-  private void collectDigit(int digit) {
-    if (enteredLineNumber < 0) //new number
-      enteredLineNumber = digit;
-    else //new digit for a existing entry
-      enteredLineNumber = enteredLineNumber * 10 + digit;
-  }
-
-  /**
-   * show the media in the line number of fileTableView that has been entered previously by the user
-   * and that has been collected using collectDigit()
-   * if no number has been entered before (i.e. enteredLineNumber<0) then nothing will happen
-   */
-  private void showMediaForEnteredLineNumber() {
-    if (enteredLineNumber > 0) { //only if a valid number has been entered before
-      showMedia(enteredLineNumber);
-      enteredLineNumber = -1;  //consume the number
-    }
-  }
 
   /**
    * open an additional MediaContentView in a full screen stage (window).
@@ -847,7 +877,7 @@ public class MediaContentView extends Pane {
     homeItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        showMedia(1);
+        showMediaInLineNumber(1);
         actionEvent.consume();
       }
     });
@@ -857,7 +887,7 @@ public class MediaContentView extends Pane {
     endItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        showMedia(Integer.MAX_VALUE);
+        showMediaInLineNumber(Integer.MAX_VALUE);
         actionEvent.consume();
       }
     });

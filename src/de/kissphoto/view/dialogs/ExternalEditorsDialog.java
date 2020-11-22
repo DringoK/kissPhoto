@@ -1,6 +1,5 @@
 package de.kissphoto.view.dialogs;
 
-import de.kissphoto.helper.GlobalSettings;
 import de.kissphoto.helper.StringHelper;
 import de.kissphoto.model.ImageFile;
 import de.kissphoto.model.MediaFile;
@@ -34,11 +33,12 @@ import java.io.File;
  * i.e. only this dialog centrally "knows" the subclasses of MediaFile
  * <p/>
  *
- * @author: Ingo Kreuz
- * @date: 2014-05-07
- * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
- * @modified: 2016-11-01 RestrictedTextField no longer tries to store connection to FileTable locally
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Ingo Kreuz
+ * @since 2014-05-07
+ * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
+ * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @version 2016-11-01 RestrictedTextField no longer tries to store connection to FileTable locally
+ * @version 2014-06-16 multi screen support: center on main window instead of main screen
  */
 public class ExternalEditorsDialog extends KissDialog {
   private static final String KISSPHOTO_SPECIFY_EXTERNAL_EDITORS = "kissphoto.specify.external.editors";
@@ -213,7 +213,7 @@ public class ExternalEditorsDialog extends KissDialog {
    *
    * @return true if the dialog has been closed with OK_BOOL, else false
    */
-  public boolean showModal(GlobalSettings globalSettings) {
+  public boolean showModal() {
     modalResult_bool = false;
 
     imageFileEditorTextField1.setText(ImageFile.getExternalMainEditorPath());
@@ -229,7 +229,7 @@ public class ExternalEditorsDialog extends KissDialog {
     showAndWait();
 
     if (modalResult_bool) {
-      saveExternalEditorPaths(globalSettings);
+      saveExternalEditorPaths();
     }
     return modalResult_bool;
   }
@@ -237,25 +237,21 @@ public class ExternalEditorsDialog extends KissDialog {
   /**
    * save the text field's content to global settings
    * and change the settings in the MediaFile subclasses
-   *
-   * @param globalSettings link to the settings file
    */
-  public void saveExternalEditorPaths(GlobalSettings globalSettings) {
-    ImageFile.setExternalEditorPaths(imageFileEditorTextField1.getText(), imageFileEditorTextField2.getText(), globalSettings);
-    MovieFile.setExternalEditorPaths(movieFileEditorTextField1.getText(), movieFileEditorTextField2.getText(), globalSettings);
-    OtherFile.setExternalEditorPaths(otherFileEditorTextField1.getText(), otherFileEditorTextField2.getText(), globalSettings);
+  public void saveExternalEditorPaths() {
+    ImageFile.setExternalEditorPaths(imageFileEditorTextField1.getText(), imageFileEditorTextField2.getText());
+    MovieFile.setExternalEditorPaths(movieFileEditorTextField1.getText(), movieFileEditorTextField2.getText());
+    OtherFile.setExternalEditorPaths(otherFileEditorTextField1.getText(), otherFileEditorTextField2.getText());
   }
 
   /**
    * Main class must call this for reloading the the external editors
    * for all supported subclasses of MediaFile
-   *
-   * @param globalSettings link to the settings file
    */
-  public static void initializeAllSupportedMediaFileClasses(GlobalSettings globalSettings) {
-    ImageFile.loadExternalEditorPaths(globalSettings);
-    MovieFile.loadExternalEditorPaths(globalSettings);
-    OtherFile.loadExternalEditorPaths(globalSettings);
+  public static void initializeAllSupportedMediaFileClasses() {
+    ImageFile.loadExternalEditorPaths();
+    MovieFile.loadExternalEditorPaths();
+    OtherFile.loadExternalEditorPaths();
   }
 
   /**

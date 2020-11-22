@@ -1,16 +1,18 @@
 package de.kissphoto.model;
 
-import de.kissphoto.helper.GlobalSettings;
+import de.kissphoto.KissPhoto;
 import javafx.collections.ObservableList;
 
 import java.nio.file.Path;
 
 /**
- * Currently a dummy class that will later on represent movie clips
+ * MovieFiles are PlayableMediaFiles
+ * Here just the External Editors are managed for this kind of files
  *
- * @Author: ikreuz
- * @Date: 2012-08-28
- * @modified: 2014-06-05 java.io operations changed into java.nio
+ * @Author ikreuz
+ * @since 2012-08-28
+ * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
+ * @version 2014-06-05 java.io operations changed into java.nio
  */
 public class MovieFile extends MediaFilePlayable {
 
@@ -29,13 +31,11 @@ public class MovieFile extends MediaFilePlayable {
 
   /**
    * load the external editor's pathnames from globalSettings
-   *
-   * @param globalSettings link to globalSettings
    */
-  public static void loadExternalEditorPaths(GlobalSettings globalSettings) {
+  public static void loadExternalEditorPaths() {
     try {
-      MovieFile.externalMainEditorPath = globalSettings.getProperty(MovieFile.class.getSimpleName() + MAIN_EDITOR);
-      MovieFile.external2ndEditorPath = globalSettings.getProperty(MovieFile.class.getSimpleName() + SECOND_EDITOR);
+      MovieFile.externalMainEditorPath = KissPhoto.globalSettings.getProperty(MovieFile.class.getSimpleName() + MAIN_EDITOR);
+      MovieFile.external2ndEditorPath = KissPhoto.globalSettings.getProperty(MovieFile.class.getSimpleName() + SECOND_EDITOR);
     } catch (Exception e) {
       //nothing to do in case of exception --> editors will remain inactive
       //until a value is added via ExternalEditorsDialog
@@ -47,9 +47,8 @@ public class MovieFile extends MediaFilePlayable {
    *
    * @param newExternalMainEditorPath the path to the external main editor
    * @param newExternal2ndEditorPath  the path to the external second editor
-   * @param globalSettings            link to globalSettings
    */
-  public static void setExternalEditorPaths(String newExternalMainEditorPath, String newExternal2ndEditorPath, GlobalSettings globalSettings) {
+  public static void setExternalEditorPaths(String newExternalMainEditorPath, String newExternal2ndEditorPath) {
     if (newExternalMainEditorPath != null)
       MovieFile.externalMainEditorPath = newExternalMainEditorPath;
     else
@@ -60,7 +59,7 @@ public class MovieFile extends MediaFilePlayable {
     else
       MovieFile.external2ndEditorPath = "";
 
-    saveExternalEditorPaths(globalSettings);
+    saveExternalEditorPaths();
   }
 
   /**
@@ -89,14 +88,12 @@ public class MovieFile extends MediaFilePlayable {
 
   /**
    * save the external editor's pathnames to GlobalSettings
-   *
-   * @param globalSettings link to globalSettings
    */
-  protected static void saveExternalEditorPaths(GlobalSettings globalSettings) {
+  protected static void saveExternalEditorPaths() {
     if (MovieFile.externalMainEditorPath != null)
-      globalSettings.setProperty(MovieFile.class.getSimpleName() + MAIN_EDITOR, MovieFile.externalMainEditorPath);
+      KissPhoto.globalSettings.setProperty(MovieFile.class.getSimpleName() + MAIN_EDITOR, MovieFile.externalMainEditorPath);
     if (MovieFile.external2ndEditorPath != null)
-      globalSettings.setProperty(MovieFile.class.getSimpleName() + SECOND_EDITOR, MovieFile.external2ndEditorPath);
+      KissPhoto.globalSettings.setProperty(MovieFile.class.getSimpleName() + SECOND_EDITOR, MovieFile.external2ndEditorPath);
   }
 
   public static String getExternalMainEditorPath() {

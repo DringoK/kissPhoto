@@ -2,7 +2,7 @@ package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MediaContentView;
-import de.kissphoto.view.helper.PlayerViewer;
+import de.kissphoto.view.viewerHelpers.PlayerViewer;
 import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.ImageView;
@@ -42,9 +42,11 @@ public class MovieViewerVLCJ extends PlayerViewer {
   protected final javafx.scene.media.MediaPlayer.Status STALLED = javafx.scene.media.MediaPlayer.Status.STALLED; //i.e. reset
   protected MediaPlayerFactory mediaPlayerFactory = null; //prevent garbage collection by making also the factory a member (see vlcj docu)
   protected EmbeddedMediaPlayer mediaPlayer = null;
-  protected ImageView mediaView;
+  protected ImageView mediaImageView;
+
   javafx.scene.media.MediaPlayer.Status playerStatus = javafx.scene.media.MediaPlayer.Status.UNKNOWN;
   boolean wasReset = false; //after calling resetPlayer() e.g. skipToNextOnAutoPlay() should not be used
+  boolean repeatTrackWhenStopped = false; //flag set in rewindAndPlayWhenFinished to trigger restart in STOPPED-Event
   private ViewportZoomer viewportZoomer;
   private boolean vlcAvailable;
 
@@ -70,7 +72,6 @@ public class MovieViewerVLCJ extends PlayerViewer {
         @Override
         public void mediaPlayerReady(MediaPlayer mediaPlayer) {
           Platform.runLater(() -> {
-            System.out.println("mediaPlayerReady");
             //show progress as soon as totalDuration is available
             playerControls.setSliderScaling(getTotalDuration());
             playerControls.showProgress(Duration.ZERO);
@@ -80,37 +81,39 @@ public class MovieViewerVLCJ extends PlayerViewer {
         @Override
         public void playing(MediaPlayer mediaPlayer) {
           Platform.runLater(() -> {
-            System.out.println("playing");
             playerStatus = PLAYING;
             setPlayerStatusInAllMenues(PLAYING);
+            finished = false;
           });
         }
 
         @Override
         public void paused(MediaPlayer mediaPlayer) {
           Platform.runLater(() -> {
-            System.out.println("paused");
             playerStatus = PAUSED;
-            setPlayerStatusInAllMenues(PAUSED);
           });
         }
 
         @Override
         public void stopped(MediaPlayer mediaPlayer) {
           Platform.runLater(() -> {
-            System.out.println("stopped");
             if (wasReset)
               playerStatus = STALLED;
             else
               playerStatus = STOPPED;
-            setPlayerStatusInAllMenues(STOPPED);
+            if (!finished) setPlayerStatusInAllMenues(STOPPED); //when not finished because stop will then not change the user intend-> do not reflect in GUI
+
+            if (repeatTrackWhenStopped){     //see rewindAndPlayWhenFinished()
+              play();
+              repeatTrackWhenStopped = false;
+            }
           });
+
         }
 
         @Override
         public void timeChanged(MediaPlayer mediaPlayer, long newTime) {
           Platform.runLater(() -> {
-            System.out.print(".");
             playerControls.showProgress(new Duration(newTime));
           });
         }
@@ -118,11 +121,8 @@ public class MovieViewerVLCJ extends PlayerViewer {
         @Override
         public void finished(MediaPlayer mediaPlayer) {
           Platform.runLater(() -> {
-            System.out.println("finished");
-            //activate next media only
-            // - if no other viewer has reset the player
-            // - if not stopped because of last file in list
-            if (!wasReset && playerStatus != STOPPED) skipToNextOnAutoPlay();
+            finished = true;
+            mediaContentView.showNextOrRepeatMedia();
           });
         }
 
@@ -130,7 +130,6 @@ public class MovieViewerVLCJ extends PlayerViewer {
         public void error(MediaPlayer mediaPlayer) {
           //vlcj finds out that a media is not playable asynchronously. That's why we have to switch to the according viewer as soon as we find out that it is not compatible
           Platform.runLater(() -> {
-            System.out.println("error");
             wasReset = true;
             mediaContentView.showPlayerError();
           });
@@ -139,18 +138,17 @@ public class MovieViewerVLCJ extends PlayerViewer {
 
 
       //initialize all the rest for kissPhoto
-      mediaView = new ImageView(); //with VLCJ an ImageView is used for rendering ie. to copy Pixels to
-      mediaView.setPreserveRatio(true);
+      mediaImageView = new ImageView(); //with VLCJ an ImageView is used for rendering ie. to copy Pixels to
+      mediaImageView.setPreserveRatio(true);
 
       //connect vlcj callback to the mediaView
-      mediaPlayer.videoSurface().set(videoSurfaceForImageView(this.mediaView));
-      mediaPlayer.controls().setPosition(0.4f);
+      mediaPlayer.videoSurface().set(videoSurfaceForImageView(this.mediaImageView));
 
       //note: playerControls defined and initialized in PlayerViewer (fatherclass)
-      getChildren().addAll(mediaView, playerControls);
+      getChildren().addAll(mediaImageView, playerControls);
 
-      mediaView.fitHeightProperty().bind(prefHeightProperty());
-      mediaView.fitWidthProperty().bind(prefWidthProperty());
+      mediaImageView.fitHeightProperty().bind(prefHeightProperty());
+      mediaImageView.fitWidthProperty().bind(prefWidthProperty());
 
       setFocusTraversable(true);
 
@@ -174,23 +172,26 @@ public class MovieViewerVLCJ extends PlayerViewer {
     return vlcAvailable;
   }
 
+  public javafx.scene.media.MediaPlayer.Status getStatus(){
+    return playerStatus;
+  }
+
 
   /**
-   * put the media (movie) into the MovieViewer and play it
+   * put the media (movie) into the MovieViewer and play it if "playing" was active before or pause it if not
    *
    * @param mediaFile    the mediaFile containing the media to show
    * @param seekPosition if not null it is tried to seek this position as soon as the movie is loaded/visible
    */
   @Override
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
-    System.out.println("MovieViewerVLCJ.setMediaFileIfCompatible " + mediaFile);
     boolean compatible = true;
     try {
-      if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode()) {
-        mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
-      } else {
+      if (playerControls.isUserHasPaused())
         mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString());
-      }
+      else
+        mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
+
       wasReset = false;
     } catch (Exception e) {
       //e.printStackTrace();
@@ -205,7 +206,6 @@ public class MovieViewerVLCJ extends PlayerViewer {
    * reset the player: stop it and free all event Handlers
    */
   public void resetPlayer() {
-    System.out.println("resetPlayer");
     if (!wasReset) { //prevent from double reset
       stop();
       playerStatus = STALLED;
@@ -214,13 +214,22 @@ public class MovieViewerVLCJ extends PlayerViewer {
   }
 
   /**
+   * start player from the beginning to implement repeat track
+   */
+  @Override
+  public void rewindAndPlayWhenFinished() {
+    repeatTrackWhenStopped = true;  //after finished wait for being stopped and trigger restart there
+    //bug in vlc(j): sometimes (seldom) "finished" is not followed by "stopped". manual/additional start() here does not change anything :-(
+  }
+
+  /**
    * start player and adjust menuItems (disable/enable)
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    */
   public void play() {
-    System.out.println("play");
     if (isMediaValid()) {
       wasReset = false;
+      finished = false;
       mediaPlayer.controls().play(); //implementation in vlcj is asynchronous
     }
   }
@@ -230,9 +239,14 @@ public class MovieViewerVLCJ extends PlayerViewer {
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    */
   public void pause() {
-    System.out.println("pause");
     if (isMediaValid()) {
+      if (finished){
+        //seek(new Duration(0.4)); //rewind not necessary because VLC is in status STOPPED.
+        // No event is fired to update GUI because playerStatus=stopped when finished
+        playerControls.showProgress(Duration.ZERO);
+      }
       wasReset = false;
+      finished = false;
       mediaPlayer.controls().pause(); //implementation in vlcj is asynchronous
     }
   }
@@ -243,7 +257,6 @@ public class MovieViewerVLCJ extends PlayerViewer {
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    */
   public void stop() {
-    System.out.println("stop");
     if (isMediaValid()) {
       wasReset = false;
       mediaPlayer.controls().stop(); //implementation in vlcj is asynchronous
@@ -257,13 +270,16 @@ public class MovieViewerVLCJ extends PlayerViewer {
    * @param newPos position to jump to. null is treated like Duration.ZERO (rewind)
    */
   public void seek(Duration newPos) {
-    System.out.println("vlcj.seek("+newPos.toMillis()+") playerStatus = "+playerStatus);
-    if (playerStatus==STOPPED) play();
+    if (finished){
+      play(); // finished=false; //seeking results in not being at the end of the media any more
+    }
     if (isMediaValid()) {
       if (newPos==null)
         mediaPlayer.controls().setTime(0,true);
       else
         mediaPlayer.controls().setTime((long) newPos.toMillis(), true); //true=fast positioning
+
+
     }
   }
 
@@ -312,12 +328,12 @@ public class MovieViewerVLCJ extends PlayerViewer {
 
   @Override
   public Rectangle2D getViewport() {
-    return mediaView.getViewport();
+    return mediaImageView.getViewport();
   }
 
   @Override
   public void setViewport(Rectangle2D value) {
-    mediaView.setViewport(value);
+    mediaImageView.setViewport(value);
   }
 
   @Override
@@ -338,12 +354,12 @@ public class MovieViewerVLCJ extends PlayerViewer {
 
   @Override
   public double getFitWidth() {
-    return mediaView.getFitWidth();
+    return mediaImageView.getFitWidth();
   }
 
   @Override
   public double getFitHeight() {
-    return mediaView.getFitHeight();
+    return mediaImageView.getFitHeight();
   }
 
   @Override

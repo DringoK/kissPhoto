@@ -1,6 +1,6 @@
 package de.kissphoto.view.dialogs;
 
-import de.kissphoto.helper.GlobalSettings;
+import de.kissphoto.KissPhoto;
 import de.kissphoto.helper.I18Support;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -24,14 +24,13 @@ import javafx.stage.StageStyle;
  * Changes are written to the settings file only and effects are only applied after a restart
  * <p/>
  *
- * @author: Ingo
- * @date: 2014-05-02
- * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Ingo
+ * @since 2014-05-02
+ * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
+ * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @version 2014-06-16 multi screen support: center on main window instead of main screen
  */
 public class LanguageDialog extends KissDialog {
-  private static GlobalSettings globalSettings;
-
   static final int borderSize = 8;
 
   RadioButton btn_en;
@@ -41,12 +40,10 @@ public class LanguageDialog extends KissDialog {
    * constructor to create the dialog
    *
    * @param owner          the window who owns this modal dialog
-   * @param globalSettings link to global settings for saving the selected language for the next start of kissPhoto
    */
-  public LanguageDialog(Stage owner, GlobalSettings globalSettings) {
+  public LanguageDialog(Stage owner) {
     super(owner);
     initStyle(StageStyle.DECORATED);
-    LanguageDialog.globalSettings = globalSettings;
 
     setOpacity(0.8);
     setTitle(language.getString("kissphoto.select.language"));
@@ -138,8 +135,8 @@ public class LanguageDialog extends KissDialog {
     showAndWait();
 
     if (modalResult_bool) {  //OK_BOOL=true ;-)
-      if (btn_de.isSelected()) globalSettings.setProperty(I18Support.LANGUAGE, I18Support.GERMAN);
-      if (btn_en.isSelected()) globalSettings.setProperty(I18Support.LANGUAGE, I18Support.ENGLISH);
+      if (btn_de.isSelected()) KissPhoto.globalSettings.setProperty(I18Support.LANGUAGE, I18Support.GERMAN);
+      if (btn_en.isSelected()) KissPhoto.globalSettings.setProperty(I18Support.LANGUAGE, I18Support.ENGLISH);
     }
 
     return modalResult_bool;

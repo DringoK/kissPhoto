@@ -1,14 +1,13 @@
 package de.kissphoto.view;
 
 
-import de.kissphoto.helper.GlobalSettings;
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.view.dialogs.AboutDialog;
 import de.kissphoto.view.dialogs.ExternalEditorsDialog;
 import de.kissphoto.view.dialogs.LanguageDialog;
 import de.kissphoto.view.dialogs.WriteFolderStructureCSVDialog;
-import de.kissphoto.view.helper.PlayerViewer;
+import de.kissphoto.view.viewerHelpers.PlayerViewer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -30,6 +29,7 @@ import java.util.ResourceBundle;
  *
  * @author Ingo
  * @since 2012-09-09
+ * @version 2020-11-19 globalSettings is now global (static in Kissphoto)  and therefore no longer necessary in this class (formerly just passed through)
  * @version 2018-11-17 Image menu only active if an image is selected
  * @version 2017-10-29 Flipping and Rotation of JPEG-Images added (imageMenu)
  * @version 2017-10-21 FileHistory-Support added and reopen removed (because equal to ctrl-1)
@@ -56,23 +56,19 @@ public class MainMenuBar extends MenuBar {
   private Menu extrasMenu = new Menu(language.getString("extrasMenu"));
   private Menu helpMenu = new Menu(language.getString("helpMenu"));
 
-  private GlobalSettings globalSettings; //link to global settings for LanguageDialog
-
   /**
    * create the main menu bar and install all shortcuts/handlers
    *
    * @param primaryStage   link to the main window
    * @param fileTableView  link for calling of most of the methods, i.e. Filetable.open etc.
    * @param versionString  link for the about Dialog
-   * @param globalSettings link needed in LanguageDialog
    */
-  public MainMenuBar(Stage primaryStage, FileTableView fileTableView, MediaContentView mediaContentView, String versionString, GlobalSettings globalSettings) {
+  public MainMenuBar(Stage primaryStage, FileTableView fileTableView, MediaContentView mediaContentView, String versionString) {
     super();
     this.primaryStage = primaryStage;
     this.fileTableView = fileTableView;
     this.mediaContentView = mediaContentView;
     this.versionString = versionString;
-    this.globalSettings = globalSettings;
 
     createFileMenu();
     createEditMenu();
@@ -472,7 +468,7 @@ public class MainMenuBar extends MenuBar {
     playPauseItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        mediaContentView.getPlayerViewer().togglePlayPause();
+        mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
       }
     });
 
@@ -511,7 +507,7 @@ public class MainMenuBar extends MenuBar {
 
       public void handle(ActionEvent event) {
         event.consume();
-        if (languageDialog == null) languageDialog = new LanguageDialog(primaryStage, globalSettings);
+        if (languageDialog == null) languageDialog = new LanguageDialog(primaryStage);
         languageDialog.showModal();
       }
     });
@@ -522,7 +518,7 @@ public class MainMenuBar extends MenuBar {
       public void handle(ActionEvent event) {
         event.consume();
         if (externalEditorsDialog == null) externalEditorsDialog = new ExternalEditorsDialog(primaryStage);
-        externalEditorsDialog.showModal(globalSettings);
+        externalEditorsDialog.showModal();
       }
     });
     extrasMenu.getItems().add(externalEditorsItem);

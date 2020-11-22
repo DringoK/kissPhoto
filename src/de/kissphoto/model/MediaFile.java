@@ -804,7 +804,11 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   }
 
   public int getCounterValue() {
-    return Integer.parseInt(getCounter());
+    try {
+      return Integer.parseInt(getCounter());
+    }catch(Exception e){ //if numbering is empty an exception has to be caught
+      return 0;
+    }
   }
 
   public StringProperty counterProperty() { //TableView binds the property over it's name during runtime with that method

@@ -3,12 +3,13 @@ package de.kissphoto.view.mediaViewers;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MovieFile;
 import de.kissphoto.view.MediaContentView;
-import de.kissphoto.view.helper.PlayerViewer;
+import de.kissphoto.view.viewerHelpers.PlayerViewer;
 import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -78,12 +79,17 @@ public class MovieViewerDummy extends PlayerViewer {
 
   }
 
-  /**
-   * put the media (movie) into the MovieViewer and play it
-   *
-   * @param mediaFile    the mediaFile containing the media to show
-   * @param seekPosition if not null it is tried to seek this position as soon as the movie is loaded/visible
-   */
+  public javafx.scene.media.MediaPlayer.Status getStatus(){
+    return MediaPlayer.Status.UNKNOWN;
+  }
+
+
+    /**
+     * put the media (movie) into the MovieViewer and play it
+     *
+     * @param mediaFile    the mediaFile containing the media to show
+     * @param seekPosition if not null it is tried to seek this position as soon as the movie is loaded/visible
+     */
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
     return (mediaFile.getClass() == MovieFile.class);
   }
@@ -93,6 +99,14 @@ public class MovieViewerDummy extends PlayerViewer {
    */
   @Override
   public void resetPlayer() {
+    //nothing to do in dummy player
+  }
+
+  /**
+   * start player from the beginning to implement repeat track
+   */
+  @Override
+  public void rewindAndPlayWhenFinished() {
     //nothing to do in dummy player
   }
 

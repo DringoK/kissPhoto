@@ -5,7 +5,6 @@ import com.drew.lang.annotations.NotNull;
 import de.kissphoto.KissPhoto;
 import de.kissphoto.ctrl.FileChangeWatcher;
 import de.kissphoto.ctrl.FileChangeWatcherEventListener;
-import de.kissphoto.helper.GlobalSettings;
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.helper.PathHelpers;
 import de.kissphoto.model.ImageFileRotater;
@@ -50,24 +49,24 @@ import java.util.ResourceBundle;
  * <p/>
  *
  * @author Ingo
- * @since 06.09.12
- * @version 2014-05-02 I18Support, Cursor in Edit-Mode over lines, reopen added etc
- * @version 2014-05-25 find/replace markup works now
- * @version 2014-06-02 WAIT-mouse cursor shown during loading a directory now
- * @version 2014-06-05 java.io operations changed into java.nio
- * @version 2014-06-07 getContent interface to cache simplified
- * @version 2014-06-22 extra column for the counter's separator (the character after the counter)
- * @version 2016-06-12 shift-ctrl up/down for moving files now also works in windows 10
- * @version 2016-11-01 RestrictedTextField stores connection to FileTable locally, so that passing editing threads store the correct table cell
- * @version 2017-10-14 bugfixing and new functionality copyDescriptionDown() + store Column-Widths
- * @version 2017-10-20 space-bar is now play/pause additionally if not in edit mode
- * @version 2017-10-22 file-open history (Open recent) support
- * @version 2017-10-24 statistics in statusBar support
- * @version 2017-10-30 saving uses ProgressBar now because saving of rotated images can last long...
- * @version 2018-11-17 OpenRecentFile(0) now keeps the selection (like ReopenCurrentFolder earlier), keep caret position when moving up/down (bugfix)
- * @version 2019-07-07 chooseFileOrFolder sends extra refresh() for tableView to prevent from be shown as empty, cache problems fixed
+ * @since 2012-09-06
+ * @version 2020-11-019 bug fixing: empty directories and reloading invalid directories, GlobalSettings made global (static)
  * @version 2019-11-01 moving viewport completely rewritten and Alignment is new parameter. Behavior is now as expected with extra lines :-), move/up down keys improved
- * @version 2020-11-06 bug fixing: empty directories and reloading invalid directories
+ * @version 2019-07-07 chooseFileOrFolder sends extra refresh() for tableView to prevent from be shown as empty, cache problems fixed
+ * @version 2018-11-17 OpenRecentFile(0) now keeps the selection (like ReopenCurrentFolder earlier), keep caret position when moving up/down (bugfix)
+ * @version 2017-10-30 saving uses ProgressBar now because saving of rotated images can last long...
+ * @version 2017-10-24 statistics in statusBar support
+ * @version 2017-10-22 file-open history (Open recent) support
+ * @version 2017-10-20 space-bar is now play/pause additionally if not in edit mode
+ * @version 2017-10-14 bugfixing and new functionality copyDescriptionDown() + store Column-Widths
+ * @version 2016-11-01 RestrictedTextField stores connection to FileTable locally, so that passing editing threads store the correct table cell
+ * @version 2016-06-12 shift-ctrl up/down for moving files now also works in windows 10
+ * @version 2014-06-22 extra column for the counter's separator (the character after the counter)
+ * @version 2014-06-07 getContent interface to cache simplified
+ * @version 2014-06-05 java.io operations changed into java.nio
+ * @version 2014-06-02 WAIT-mouse cursor shown during loading a directory now
+ * @version 2014-05-25 find/replace markup works now
+ * @version 2014-05-02 I18Support, Cursor in Edit-Mode over lines, reopen added etc
  */
 
 public class FileTableView extends TableView implements FileChangeWatcherEventListener {
@@ -85,7 +84,6 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
 
   //------------- IDs for GlobalSettings for FileTableView
   private static final String LAST_FILE_OPENED = "lastFileOpened";
-  private final GlobalSettings globalSettings;
 
   protected VirtualFlow flow;  //viewport vor scrolling
 
@@ -163,15 +161,13 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    * @param primaryStage     link back to main window
    * @param mediaContentView link to the view where media is displayed if focus changes
    * @param statusBar        link to statusBar for showing information/errors
-   * @param globalSettings   access to setting e.g. last disk folder used
    */
-  public FileTableView(@NotNull Stage primaryStage, final MediaContentView mediaContentView, StatusBar statusBar, GlobalSettings globalSettings) {
+  public FileTableView(@NotNull Stage primaryStage, final MediaContentView mediaContentView, StatusBar statusBar) {
     //remember connections to main window etc
     this.primaryStage = primaryStage;
     this.mediaContentView = mediaContentView;
     this.statusBar = statusBar;
-    this.globalSettings = globalSettings;
-    fileHistory = new FileHistory(globalSettings, this);
+    fileHistory = new FileHistory(KissPhoto.globalSettings, this);
 
     this.setMinSize(100.0, 100.0);
 
@@ -376,7 +372,7 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
       } else if ((keyEvent.getCode() == KeyCode.SPACE) && !keyEvent.isControlDown() && !keyEvent.isShiftDown()
         && !isEditMode() && mediaContentView.getPlayerViewer().isVisible()) {
         keyEvent.consume();
-        mediaContentView.getPlayerViewer().togglePlayPause();
+        mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
       }
       //overwrite standard functionality (selection) view ctrl-shift up/down with file moving
       else if ((keyEvent.getCode() == KeyCode.DOWN) && keyEvent.isControlDown() && keyEvent.isShiftDown()) {
@@ -433,13 +429,13 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    * - stage not null
    */
   public void storeLastSettings() {
-    globalSettings.setProperty(STATUS_COL_WIDTH, Double.toString(statusColumn.getWidth()));
-    globalSettings.setProperty(PREFIX_COL_WIDTH, Double.toString(prefixColumn.getWidth()));
-    globalSettings.setProperty(COUNTER_COL_WIDTH, Double.toString(counterColumn.getWidth()));
-    globalSettings.setProperty(SEPARATOR_COL_WIDTH, Double.toString(separatorColumn.getWidth()));
-    globalSettings.setProperty(DESCRIPTION_COL_WIDTH, Double.toString(descriptionColumn.getWidth()));
-    globalSettings.setProperty(EXTENSION_COL_WIDTH, Double.toString(extensionColumn.getWidth()));
-    globalSettings.setProperty(FILEDATE_COL_WIDTH, Double.toString(fileDateColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(STATUS_COL_WIDTH, Double.toString(statusColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(PREFIX_COL_WIDTH, Double.toString(prefixColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(COUNTER_COL_WIDTH, Double.toString(counterColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(SEPARATOR_COL_WIDTH, Double.toString(separatorColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(DESCRIPTION_COL_WIDTH, Double.toString(descriptionColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(EXTENSION_COL_WIDTH, Double.toString(extensionColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(FILEDATE_COL_WIDTH, Double.toString(fileDateColumn.getWidth()));
 
 
     try {
@@ -459,37 +455,37 @@ public class FileTableView extends TableView implements FileChangeWatcherEventLi
    */
   public void restoreLastSettings() {
     try {
-      statusColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(STATUS_COL_WIDTH)));
+      statusColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(STATUS_COL_WIDTH)));
     } catch (Exception e) {
       primaryStage.setX(STATUS_COL_DEFAULT_WIDTH);
     }
     try {
-      prefixColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(PREFIX_COL_WIDTH)));
+      prefixColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(PREFIX_COL_WIDTH)));
     } catch (Exception e) {
       primaryStage.setX(PREFIX_COL_DEFAULT_WIDTH);
     }
     try {
-      counterColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(COUNTER_COL_WIDTH)));
+      counterColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(COUNTER_COL_WIDTH)));
     } catch (Exception e) {
       primaryStage.setX(COUNTER_COL_DEFAULT_WIDTH);
     }
     try {
-      separatorColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(SEPARATOR_COL_WIDTH)));
+      separatorColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(SEPARATOR_COL_WIDTH)));
     } catch (Exception e) {
       primaryStage.setX(SEPARATOR_COL_DEFAULT_WIDTH);
     }
     try {
-      descriptionColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(DESCRIPTION_COL_WIDTH)));
+      descriptionColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(DESCRIPTION_COL_WIDTH)));
     } catch (Exception e) {
       primaryStage.setX(DESCRIPTION_COL_DEFAULT_WIDTH);
     }
     try {
-      extensionColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(EXTENSION_COL_WIDTH)));
+      extensionColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(EXTENSION_COL_WIDTH)));
     } catch (Exception e) {
       primaryStage.setX(EXTENSION_COL_DEFAULT_WIDTH);
     }
     try {
-      fileDateColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(FILEDATE_COL_WIDTH)));
+      fileDateColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(FILEDATE_COL_WIDTH)));
     } catch (Exception e) {
       primaryStage.setX(FILEDATE_COL_DEFAULT_WIDTH);
     }

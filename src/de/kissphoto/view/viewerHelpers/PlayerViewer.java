@@ -1,4 +1,4 @@
-package de.kissphoto.view.helper;
+package de.kissphoto.view.viewerHelpers;
 
 import de.kissphoto.helper.I18Support;
 import de.kissphoto.model.MediaFile;
@@ -9,6 +9,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -19,9 +20,6 @@ import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
 import java.util.ResourceBundle;
-
-import static javafx.scene.media.MediaPlayer.Status.PAUSED;
-
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
@@ -46,7 +44,7 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
   public static final String AUTO_PLAY = "auto.play";
   public static final String STOP = "stop";
 
-  protected boolean paused = true;
+  protected boolean finished; //true if the endOfMedia event had been detected, false if any other status has been detected
 
   private static final KeyCodeCombination PLAY_PAUSE_KEY_CODE_COMBINATION = new KeyCodeCombination(KeyCode.P);
 
@@ -69,6 +67,8 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
   protected boolean lastMouseButtonWasPrimary = false;
   protected boolean lastMouseDownWasMouseDragged = false;
 
+  //
+
 
   /**
    * @param mediaContentView remember the view where this viewer resides in
@@ -79,6 +79,8 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
 
     this.mediaContentView = mediaContentView;
     playerControls = new PlayerControls(this);
+    setAlignment(playerControls, Pos.TOP_CENTER);
+    //will be added to this StackPane in the implementing subclasses on top of their mediaView
 
     //visible only while hovering
     playerControls.setVisible(false);
@@ -139,7 +141,7 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
   public boolean handleKeyPressed(KeyEvent event) {
     boolean handled = false;
     if (event.getCode() == KeyCode.SPACE && !(event.isShiftDown() || event.isControlDown())) { //space without shift or ctrl
-      togglePlayPause();
+      playerControls.togglePlayPause();
       handled = true;
     }
     return handled;
@@ -188,7 +190,7 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
     playPauseItem.setOnAction(new EventHandler<ActionEvent>() {
       @Override
       public void handle(ActionEvent actionEvent) {
-        togglePlayPause();
+        playerControls.togglePlayPause();
       }
     });
 
@@ -212,11 +214,16 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
     });
   }
 
-
   /**
-   * put the media (movie) into the MovieViewer and play it
    *
-   * @param mediaFile containting the media to show
+   * @return the status of the media player of this PlayerViewer
+   */
+  abstract public javafx.scene.media.MediaPlayer.Status getStatus();
+
+/**
+   * put the media (movie) into the MovieViewer and play it if "playing" was active before or pause it if not
+   *
+   * @param mediaFile containing the media to show
    * @param seekPosition if not null it is tried to seek this position as soon as the playable media is loaded/visible
    * @return true if the file could be played, false if not
    */
@@ -232,6 +239,11 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    */
   abstract public void play();
+
+  /**
+   * start player from the beginning to implement repeat track
+   */
+  abstract public void rewindAndPlayWhenFinished();
 
   /**
    * start player and adjust menuItems (disable/enable)
@@ -271,35 +283,14 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
    */
   abstract public void releaseAll();
 
-  /**
-   * exactly execute what keyboard "P" does: if paused then play and vice versa
-   */
-  public void togglePlayPause(){
-    if (paused)
-      play();
-    else
-      pause();
-
-  }
-
-  /**
-   * if autoplay is active then try to skip to next media
-   * @return true if skipped, false if autoPlay is off or there was no next media (end of fileList)
-   */
-  protected boolean skipToNextOnAutoPlay() {
-    boolean skipped = false;
-    if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode()) {
-      skipped=mediaContentView.showNextMedia();   //if already the last, showNextMedia() will do nothing and media will remain paused (FX) or finished (VLCJ)...
-    }
-    return skipped;
+  public PlayerControls getPlayerControls(){
+    return playerControls;
   }
 
   protected void setPlayerStatusInAllMenues(MediaPlayer.Status newPlayerStatus) {
     PlayerViewer.setMenuItemsForPlayerStatus(newPlayerStatus, mainMenuStopItem, mainMenuPlayPauseItem);
     PlayerViewer.setMenuItemsForPlayerStatus(newPlayerStatus, stopItem, playPauseItem);
     playerControls.setPlayPausedButtonForPlayerStatus(newPlayerStatus);
-
-    paused = (newPlayerStatus== PAUSED);
   }
 
 
@@ -346,11 +337,6 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
         playPauseItem.setDisable(false);
         break;
     }
-  }
-
-  //------------------------------- getters / setters ------------------------
-  public boolean isPaused() {
-    return paused;
   }
 
 }

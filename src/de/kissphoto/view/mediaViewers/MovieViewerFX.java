@@ -3,9 +3,7 @@ package de.kissphoto.view.mediaViewers;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MovieFile;
 import de.kissphoto.view.MediaContentView;
-import de.kissphoto.view.helper.PlayerViewer;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
+import de.kissphoto.view.viewerHelpers.PlayerViewer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -45,7 +43,6 @@ public class MovieViewerFX extends PlayerViewer {
   private ViewportZoomer viewportZoomer;
 
   protected MediaPlayer mediaPlayer;      //initialized in setMedia()
-  private boolean finished; //true if the endOfMedia event had been detected, false if any other status has been detected
 
 
   /**
@@ -78,13 +75,20 @@ public class MovieViewerFX extends PlayerViewer {
     installKeyboardHandlers();
   }
 
-  /**
-   * put the media (movie) into the MovieViewer and play it
-   *
-   * @param mediaFile     mediaFile containing the media to show
-   * @param seekPosition if not null it is tried to seek this position as soon as the movie is loaded/visible
-   * @return true if the file could be played, false if not
-   */
+  public javafx.scene.media.MediaPlayer.Status getStatus(){
+    if (mediaPlayer!= null)
+      return mediaPlayer.getStatus();
+    else
+      return MediaPlayer.Status.UNKNOWN;
+  }
+
+    /**
+     * put the media (movie) into the MovieViewer and play it if "playing" was active before or pause it if not
+     *
+     * @param mediaFile     mediaFile containing the media to show
+     * @param seekPosition if not null it is tried to seek this position as soon as the movie is loaded/visible
+     * @return true if the file could be played, false if not
+     */
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
     resetPlayer();
 
@@ -93,46 +97,31 @@ public class MovieViewerFX extends PlayerViewer {
       Media media = (Media)mediaFile.getMediaContent();  //if it cannot be put into a Media object it can not be played --> catch
       mediaPlayer = new MediaPlayer(media);
 
-      mediaPlayer.setOnReady(new Runnable() {
-        @Override
-        public void run() {
-          if (autoPlayProperty.get() && !mediaContentView.isFileTableViewInEditMode())
-            play();
-          else
-            pause();
+      mediaPlayer.setOnReady(() -> {
+        if (playerControls.isUserHasPaused())
+          pause();
+        else
+          play();
 
-          // as the media is playing move the slider for progress
-          playerControls.setSliderScaling(mediaPlayer.getTotalDuration());
-          playerControls.showProgress(Duration.ZERO);
+        // as the media is playing move the slider for progress
+        playerControls.setSliderScaling(mediaPlayer.getTotalDuration());
+        playerControls.showProgress(Duration.ZERO);
 
-          mediaPlayer.currentTimeProperty().addListener(new InvalidationListener() {
-            public void invalidated(Observable ov) {
-              if (mediaPlayer != null) playerControls.showProgress(mediaPlayer.getCurrentTime());
-            }
-          });
+        mediaPlayer.currentTimeProperty().addListener(ov -> {
+          if (mediaPlayer != null) playerControls.showProgress(mediaPlayer.getCurrentTime());
+        });
 
-          if (seekPosition != null) seek(seekPosition);
-        }
+        if (seekPosition != null) seek(seekPosition);
       });
-      mediaPlayer.setOnEndOfMedia(new Runnable() {
-        @Override
-        public void run() {
-          boolean skipped = skipToNextOnAutoPlay();
-          if (!skipped) {
-            //already at the end of the file list --> FXPlayer remains to be paused,but does not fire a StatusProperty Change event
-            setPlayerStatusInAllMenues(MediaPlayer.Status.PAUSED); //therefore sync the menues here likein change Event of Status
-            finished = true;
-          }
-        }
+      mediaPlayer.setOnEndOfMedia(() -> {
+        finished = true;
+        mediaContentView.showNextOrRepeatMedia();
       });
 
       //install listener for player status to update play/pause/inactive, stop active/inactive
-      mediaPlayer.statusProperty().addListener(new ChangeListener<MediaPlayer.Status>() {
-        @Override
-        public void changed(ObservableValue<? extends MediaPlayer.Status> observable, MediaPlayer.Status oldValue, MediaPlayer.Status newValue) {
-          setPlayerStatusInAllMenues(newValue);
-          finished = false; //setEndOfMedia will set it to true, any other status indicates that it
-        }
+      mediaPlayer.statusProperty().addListener((observable, oldValue, newValue) -> {
+        setPlayerStatusInAllMenues(newValue);
+        finished = false; //setEndOfMedia will set it to true
       });
 
       mediaView.setMediaPlayer(mediaPlayer);
@@ -154,13 +143,21 @@ public class MovieViewerFX extends PlayerViewer {
       mediaPlayer = null;
     }
   }
+
+  /**
+   * start player from the beginning to implement repeat track
+   */
+  @Override
+  public void rewindAndPlayWhenFinished() {
+    seek(Duration.ZERO);//rewind
+  }
+
   /**
    * start player and adjust menuItems (disable/enable)
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    */
   public void play() {
     if (mediaPlayer != null) {
-      if (finished) seek(Duration.ZERO); //rewind
       mediaPlayer.play();
     }
   }
@@ -171,6 +168,10 @@ public class MovieViewerFX extends PlayerViewer {
    */
   public void pause() {
     if (mediaPlayer != null) {
+      if (finished){
+        seek(Duration.ZERO); //rewind
+        finished = false;
+      }
       mediaPlayer.pause();
     }
   }
@@ -188,16 +189,21 @@ public class MovieViewerFX extends PlayerViewer {
 
   /**
    * seek Position (Duration)
-   * if mediaPlayer is null (currently no media file displayed) nothin happens
-   * @param newPos position to jump to
+   * if mediaPlayer is null (currently no media file displayed) nothing happens
+   * @param newPos position to jump to. null is treated like Duration.Zero (rewind)
    */
   public void seek(Duration newPos){
     if (mediaPlayer != null){
-      mediaPlayer.seek(newPos);
+      if (newPos==null)
+        mediaPlayer.seek(Duration.ZERO);
+      else
+        mediaPlayer.seek(newPos);
+
       if (finished){
         setPlayerStatusInAllMenues(mediaPlayer.getStatus()); //sync menues with status
         finished=false; //seeking results in not being at the end of the media any more
       }
+      if (playerControls.isUserHasPaused()) mediaPlayer.pause();     //FX player keeps PLAYING status even if finished
     }
   }
   /**

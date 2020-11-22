@@ -74,7 +74,7 @@ public class UnDeleteDialog extends KissDialog {
             unDeleteSelectionBtn.fire();
             break;
           case P:
-            mediaContentView.getPlayerViewer().togglePlayPause();
+            mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
             break;
           case S:
             mediaContentView.getPlayerViewer().stop();

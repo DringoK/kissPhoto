@@ -1,4 +1,4 @@
-package de.kissphoto.view.helper;
+package de.kissphoto.view.viewerHelpers;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;

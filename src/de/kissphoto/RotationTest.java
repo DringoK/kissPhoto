@@ -1,6 +1,6 @@
 package de.kissphoto;
 
-import de.kissphoto.view.helper.RotatablePaneLayouter;
+import de.kissphoto.view.viewerHelpers.RotatablePaneLayouter;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;

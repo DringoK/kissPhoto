@@ -26,11 +26,11 @@ import java.util.ResourceBundle;
 
 
 /**
- * Keep it simple! Photo Management Main Class<br>
- * ===========================================<p>
+ * Keep it simple! File renaming and Photo/Media File Management Main Class<br>
+ * ========================================================<p>
  * The main KISS ideas of the application are
  * <ul>
- * <li>Rename files like in words in a wordprocesser's table: move around with the cursor, search and replace + batch rename and renumbering</li>
+ * <li>Rename files like in a wordprocesser's table: move around with the cursor, search and replace + mass rename, renumbering and sorting</li>
  * <li>photo management and photo show without installation or database</li>
  * <li>self containing: all information is in the picture files, filenames or directory names</li>
  * <li>auto numbering: file order can be changed, file numbering will follow</li>
@@ -44,7 +44,7 @@ import java.util.ResourceBundle;
  * @author Ingo Kreuz<br>
  * @version see KISS_PHOTO_VERSION constant below
  * @since 2014-04-29
- * @version 2020-11-11 vlcj integrated
+ * @version 2020-11-19 vlcj integrated, GlobalSettings made global(static), Player Options introduced
  * @version 2019-11-01 move up/down key handling improved, scrolling in FileTable improved, preview in UnDeleteDialog repaired, Cache speed improved (e.g. Background Loading Cancelling), reload File History repaired
  * @version 2019-07-07 Cache problems fixed
  * @version 2019-06-23 release candidate: fixes in Cache Algo, fixed issues with "second screen"/fullscreen, Strg-j menu internationalized, jpeg (with e) supported
@@ -56,6 +56,7 @@ import java.util.ResourceBundle;
  * ======================
  * planned features:
  * ======================
+ * todo Autoplay ersetzen in Menü und Context-Menü des Players durch "Playlist Mode" und "Repeat Mode" und syncen mit Icons in PlayerControl
  * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger)
  * todo Player in MediaPane hochheben und mit Burger-Menü (=rechtsklick) ergänzen (Burger immer sichtbar, auch für Photo, nicht ausblenden solange Maus darüber, nicht ausblenden bei Musik)
  * todo   audio abspielen (m4a, mp3, wav): Player nicht ausblenden!
@@ -73,7 +74,7 @@ import java.util.ResourceBundle;
  * todo Nice to have: Undo-History
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.20.11work in progress"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.20.11 work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   private static ResourceBundle language = null;
 
@@ -88,12 +89,14 @@ public class KissPhoto extends Application {
   private StatusBar statusBar;
   protected Stage primaryStage;
   protected Scene scene;
-  private GlobalSettings globalSettings = new GlobalSettings();
+
+  //all classes can access the settings file
+  public static GlobalSettings globalSettings = new GlobalSettings();
 
   SplitPane mainSplitPane = new SplitPane();
   SplitPane detailsArea = new SplitPane();
 
-  //------------- IDs for GlobalSettings-File
+  //------- Default Window size/position if no valid settings file found
   private static final double default_X = 0;
   private static final double default_Y = 0;
   private static final double default_width = 1000;
@@ -101,6 +104,7 @@ public class KissPhoto extends Application {
   private static final double MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS = 0.5;
   private static final double DETAILS_AREA_DEFAULT_DIVIDER_POS = 0.99;
 
+  //------------- IDs for GlobalSettings-File
   private static final String STAGE_X = "StageX";
   private static final String STAGE_Y = "StageY";
   private static final String STAGE_WIDTH = "StageWidth";
@@ -163,11 +167,11 @@ public class KissPhoto extends Application {
     statusBar.showMessage("");
     mediaContentView = new MediaContentView(primaryStage); //Area for showing Media
 
-    fileTableView = new FileTableView(primaryStage, mediaContentView, statusBar, globalSettings); //File table and directory
+    fileTableView = new FileTableView(primaryStage, mediaContentView, statusBar); //File table and directory
     statusBar.connectUndeleteDialog(fileTableView);
     mediaContentView.setFileTableView(fileTableView);
 
-    mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION, globalSettings);
+    mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION);
     mainMenuBar.addRecentlyMenu(fileTableView.getFileHistory().getRecentlyFilesMenu());
     // Left and right split pane
     mainSplitPane.prefWidthProperty().bind(scene.widthProperty());
@@ -211,7 +215,7 @@ public class KissPhoto extends Application {
       }
     });
 
-    ExternalEditorsDialog.initializeAllSupportedMediaFileClasses(globalSettings);
+    ExternalEditorsDialog.initializeAllSupportedMediaFileClasses();
 
     //close the splash screen that might be provided by java -splash:file.jpg  or manifest SplashScreen-Image: images/splash.gif
     final SplashScreen splash = SplashScreen.getSplashScreen();

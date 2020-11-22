@@ -2,7 +2,7 @@ package de.kissphoto.model;
 
 import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
-import de.kissphoto.helper.GlobalSettings;
+import de.kissphoto.KissPhoto;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -19,12 +19,12 @@ import java.nio.file.Path;
  * <p/>
  *
  * @author Dr. Ingo Kreuz
- * date: 28.08.12
- * modified:
- * 2014-06-05 java.io operations changed into java.nio
- * 2017-10-28 support of rotation for jpg files
- * 2019-06-22 mediaCache corrections: getMediaContentException() added
- * 2019-07-07: Cache problems fixed
+ * @since 28.08.12
+ * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
+ * @version 2019-07-07: Cache problems fixed
+ * @version 2019-06-22 mediaCache corrections: getMediaContentException() added
+ * @version 2017-10-28 support of rotation for jpg files
+ * @version 2014-06-05 java.io operations changed into java.nio
  */
 public class ImageFile extends MediaFileTagged {
   //Exif orientation constants
@@ -189,13 +189,11 @@ public class ImageFile extends MediaFileTagged {
 
   /**
    * load the external editor's pathnames from globalSettings
-   *
-   * @param globalSettings link to globalSettings
    */
-  public static void loadExternalEditorPaths(GlobalSettings globalSettings) {
+  public static void loadExternalEditorPaths() {
     try {
-      ImageFile.externalMainEditorPath = globalSettings.getProperty(ImageFile.class.getSimpleName() + MAIN_EDITOR);
-      ImageFile.external2ndEditorPath = globalSettings.getProperty(ImageFile.class.getSimpleName() + SECOND_EDITOR);
+      ImageFile.externalMainEditorPath = KissPhoto.globalSettings.getProperty(ImageFile.class.getSimpleName() + MAIN_EDITOR);
+      ImageFile.external2ndEditorPath = KissPhoto.globalSettings.getProperty(ImageFile.class.getSimpleName() + SECOND_EDITOR);
     } catch (Exception e) {
       //nothing to do in case of exception --> editors will remain inactive
       //until a value is added via ExternalEditorsDialog
@@ -207,9 +205,8 @@ public class ImageFile extends MediaFileTagged {
    *
    * @param newExternalMainEditorPath the path to the external main editor
    * @param newExternal2ndEditorPath  the path to the external second editor
-   * @param globalSettings            link to globalSettings
    */
-  public static void setExternalEditorPaths(String newExternalMainEditorPath, String newExternal2ndEditorPath, GlobalSettings globalSettings) {
+  public static void setExternalEditorPaths(String newExternalMainEditorPath, String newExternal2ndEditorPath) {
     if (newExternalMainEditorPath != null)
       ImageFile.externalMainEditorPath = newExternalMainEditorPath;
     else
@@ -220,7 +217,7 @@ public class ImageFile extends MediaFileTagged {
     else
       ImageFile.external2ndEditorPath = "";
 
-    saveExternalEditorPaths(globalSettings);
+    saveExternalEditorPaths();
   }
 
   /**
@@ -242,14 +239,12 @@ public class ImageFile extends MediaFileTagged {
 
   /**
    * save the external editor's pathnames to GlobalSettings
-   *
-   * @param globalSettings link to globalSettings
    */
-  protected static void saveExternalEditorPaths(GlobalSettings globalSettings) {
+  protected static void saveExternalEditorPaths() {
     if (ImageFile.externalMainEditorPath != null)
-      globalSettings.setProperty(ImageFile.class.getSimpleName() + MAIN_EDITOR, ImageFile.externalMainEditorPath);
+      KissPhoto.globalSettings.setProperty(ImageFile.class.getSimpleName() + MAIN_EDITOR, ImageFile.externalMainEditorPath);
     if (ImageFile.external2ndEditorPath != null)
-      globalSettings.setProperty(ImageFile.class.getSimpleName() + SECOND_EDITOR, ImageFile.external2ndEditorPath);
+      KissPhoto.globalSettings.setProperty(ImageFile.class.getSimpleName() + SECOND_EDITOR, ImageFile.external2ndEditorPath);
   }
 
   public static String getExternalMainEditorPath() {
