@@ -1,7 +1,6 @@
 package de.kissphoto.model;
 
 import de.kissphoto.ctrl.CounterPositionHeuristic;
-import de.kissphoto.helper.I18Support;
 import de.kissphoto.helper.PathHelpers;
 import de.kissphoto.helper.StringHelper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -13,7 +12,8 @@ import java.io.*;
 import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.text.MessageFormat;
-import java.util.ResourceBundle;
+
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br>
@@ -29,32 +29,31 @@ import java.util.ResourceBundle;
  * </ul>
  * All changes are not directly written to disk (=files renamed) but collected in memory until saving is triggered manually
  *
- * @author: Dr. Ingo Kreuz
- * @date: 2012-09-01
- * @modified: 2014-05-24 find/replace works now
- * @modified: 2014-06-04 open with invalid file but valid path will open the path (directory)
- * @modified: 2014-06-05 java.io operations changed into java.nio, onFolderChanged optimized (events for no longer existing tmp-files are ignored)
- * @modified: 2014-06-07 getContent interface to cache simplified
- * @modified: 2017-10-30 support lossless rotation and flipping of ImageFiles, saving moved to mediaFileListSavingTask to enable ProgressBar (with rotation it can take long!)
+ * @author Dr. Ingo Kreuz
+ * @since 2012-09-01
+ * @version 2020-11-30 clean up code
+ * @version 2017-10-30 support lossless rotation and flipping of ImageFiles, saving moved to mediaFileListSavingTask to enable ProgressBar (with rotation it can take long!)
+ * @version 2014-06-07 getContent interface to cache simplified
+ * @version 2014-06-05 java.io operations changed into java.nio, onFolderChanged optimized (events for no longer existing tmp-files are ignored)
+ * @version 2014-06-04 open with invalid file but valid path will open the path (directory)
+ * @version 2014-05-24 find/replace works now
  */
-public class MediaFileList {
-  private static final String NO_SUCH_FILE_OR_DIRECTORY = "no.such.file.or.directory";  //should extend ObservableList, but JavaFx only provides FactoryClasses. Therefore it contains an Observable List only
+public class MediaFileList { //should extend ObservableList, but JavaFx only provides FactoryClasses. Therefore it contains an Observable List only
+  private static final String NO_SUCH_FILE_OR_DIRECTORY = "no.such.file.or.directory";
 
-  private static ResourceBundle language = I18Support.languageBundle;
   private Path folder;    //without a trailing File.separator!
   private ObservableList<MediaFile> fileList;         //the list of files to be shown and edited
   private ObservableList<MediaFile> deletedFileList;  //the files to be deleted on next saving (File-Save ctrl-s)
   private ObservableList<MediaFile> clipboardFileList;//the deleted files that can be inserted by paste menu (=move in file list)
-  private CounterPositionHeuristic heuristic = new CounterPositionHeuristic();
+  private final CounterPositionHeuristic heuristic = new CounterPositionHeuristic();
   private int counterPosition = 0; //effectively used position (nth number in filenames)entered by user or guessed by heuristic
-  private MediaCache mediaCache = new MediaCache(this); //implements a Cache strategy: which content should be preloaded, which can be flushed
-  private SimpleObjectProperty mediaFileThatNeedsReload = new SimpleObjectProperty(); //MediaContentView can subscribe to detect cache became invalid e.g. because backgroundloading failed
+  private final MediaCache mediaCache = new MediaCache(this); //implements a Cache strategy: which content should be preloaded, which can be flushed
+  private final SimpleObjectProperty<MediaFile> mediaFileThatNeedsReload = new SimpleObjectProperty(); //MediaContentView can subscribe to detect cache became invalid e.g. because backgroundloading failed
 
-  private boolean respectFolderChanges = true;         //false while changing the loaded folder (saveCurrentFolder)
-  private SearchRec searchRec = new SearchRec();
+  private final SearchRec searchRec = new SearchRec();
 
   /**
-   * @constructor
+   * constructor
    */
   public MediaFileList() {
     resetMediaFileList();
@@ -524,7 +523,7 @@ public class MediaFileList {
    *
    * @return mediaFileThatNeedsReload
    */
-  public SimpleObjectProperty getMediaFileThatNeedsReloadProperty() {
+  public SimpleObjectProperty<MediaFile> getMediaFileThatNeedsReloadProperty() {
     return mediaFileThatNeedsReload;
   }
 

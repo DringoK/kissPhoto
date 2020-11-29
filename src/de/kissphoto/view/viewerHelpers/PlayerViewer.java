@@ -1,25 +1,21 @@
 package de.kissphoto.view.viewerHelpers;
 
-import de.kissphoto.helper.I18Support;
 import de.kissphoto.model.MediaFile;
+import de.kissphoto.view.MainMenuBar;
 import de.kissphoto.view.MediaContentView;
+import de.kissphoto.view.mediaViewers.ViewportZoomer;
 import de.kissphoto.view.mediaViewers.ZoomableViewer;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.input.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
-import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
+
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
@@ -28,6 +24,7 @@ import java.util.ResourceBundle;
  *
  * @author Dr. Ingo Kreuz
  * @since 2014-07-24
+ * @version 2020-11-29 sync of menuItems now directly in PlayerControls. Common parts of ZoomableViewer implementation pulled up from the MovieViewers
  * @version 2020-11-02 media Viewers now determine itself if they can show/play a file (no longer the content view)
  * @version 2020-10-25 made abstract and moved JavaFx-Player into MovieViewerFX, so than MovieViewerVLC could be added
  * @version 2017-10-20 single click and space (if not zoomed) will toggle Play/Pause now additionally
@@ -36,43 +33,28 @@ import java.util.ResourceBundle;
  *
  */
 abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
-  protected static ResourceBundle language = I18Support.languageBundle;
-
-  //language file keys (used also in main menu)
-  public static final String PAUSE = "pause";
-  public static final String PLAY = "play";
-  public static final String AUTO_PLAY = "auto.play";
-  public static final String STOP = "stop";
 
   protected boolean finished; //true if the endOfMedia event had been detected, false if any other status has been detected
 
-  private static final KeyCodeCombination PLAY_PAUSE_KEY_CODE_COMBINATION = new KeyCodeCombination(KeyCode.P);
-
-  //link to mainMenu items for controlling checking and disabling. Use same link for all instances of the player (i.e. also for full screen)
-  protected static MenuItem mainMenuPlayPauseItem;
-  protected static MenuItem mainMenuStopItem;
-
   //contextMenu items for controlling checking and disabling
   protected ContextMenu contextMenu = new ContextMenu();
-  protected CheckMenuItem autoPlayItem;
   protected MenuItem playPauseItem;
-  protected MenuItem stopItem;
+  protected MenuItem rewindItem;
+  protected CheckMenuItem playListModeItem;
+  protected CheckMenuItem repeatModeItem;
 
   protected MediaContentView mediaContentView; //link to the underlying mediaContentView (e.g.for binding sizes and for next media after endOfMedia)
 
   protected PlayerControls playerControls;
 
-  public SimpleBooleanProperty autoPlayProperty = new SimpleBooleanProperty(true); //play immediately and skip automatically to next media
-
   protected boolean lastMouseButtonWasPrimary = false;
   protected boolean lastMouseDownWasMouseDragged = false;
-
-  //
+  protected ViewportZoomer viewportZoomer;
 
 
   /**
    * @param mediaContentView remember the view where this viewer resides in
-   * @constructor initialize the play status
+   * initialize the play status
    */
   public PlayerViewer(MediaContentView mediaContentView) {
     super();
@@ -82,43 +64,41 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
     setAlignment(playerControls, Pos.TOP_CENTER);
     //will be added to this StackPane in the implementing subclasses on top of their mediaView
 
+    viewportZoomer = new ViewportZoomer(this);
+    installMouseHandlers();
+    installKeyboardHandlers();
+
     //visible only while hovering
     playerControls.setVisible(false);
   }
 
   /**
-   * @param event
+   * @param event mouseEvent to be handled
    * @return if event has been handled
    */
   public boolean handleMouseMoved(MouseEvent event) {
     playerControls.resetThreadAndShow();
     return true;
   }
-
-  ;
-
   /**
-   * @param event
+   * @param event mouseEvent to be handled
    * @return if event has been handled
    */
   public boolean handleMouseDragged(MouseEvent event) {
     lastMouseDownWasMouseDragged = true;
     return false; //nothing has happened for the user, so don't block further actions if any
   }
-
-  ;
-
   /**
-   * @param event
+   * @param event mouseEvent to be handled
    * @return if event has been handled
    */
   public boolean handleMousePressed(MouseEvent event) {
     lastMouseButtonWasPrimary = event.isPrimaryButtonDown();
     return false; //nothing has happened for the user
   }
-
   /**
-   * @param event
+   *
+   * @param event mouseEvent to be handled
    * @return if event has been handled
    */
   public boolean handleMouseClicked(MouseEvent event) {
@@ -131,23 +111,6 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
     lastMouseDownWasMouseDragged = false;
     return handled;
   }
-
-  ;
-
-  /**
-   * @param event
-   * @return if event has been handled
-   */
-  public boolean handleKeyPressed(KeyEvent event) {
-    boolean handled = false;
-    if (event.getCode() == KeyCode.SPACE && !(event.isShiftDown() || event.isControlDown())) { //space without shift or ctrl
-      playerControls.togglePlayPause();
-      handled = true;
-    }
-    return handled;
-  }
-
-
   /**
    * call this before setting PlayerViewer to null, e.g. to end internal thread
    */
@@ -155,65 +118,32 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
     playerControls.cleanUp();
     releaseAll();
   }
-
-
-  /**
-   * Register the Player's main menu items, so that they can be enabled/disabled dependent on the players status
-   * MainMenuBar will register its menu items with that
-   *
-   * @param playItem     main menu item to enable/disable/change Pause/Pla
-   * @param stopItem     main menu to enable/disable
-   */
-  public void registerMainMenuItems(MenuItem playItem, MenuItem stopItem) {
-    mainMenuPlayPauseItem = playItem;
-    mainMenuStopItem = stopItem;
-  }
-
   /**
    * add the player functions to the context-menu
    */
   protected void initPlayerContextMenu() {
     //---- Player support
-    autoPlayItem = new CheckMenuItem(language.getString(AUTO_PLAY));
-    autoPlayItem.setSelected(true);
-    autoPlayItem.setAccelerator(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
-    autoPlayItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        toggleAutoPlay();
-      }
-    });
+    playPauseItem = new MenuItem(language.getString("play"));  //P = Pause/Play --> two states reflected by setting text
+    playPauseItem.setAccelerator(MainMenuBar.PLAY_PAUSE_KEYCODE);
+    playPauseItem.setOnAction(actionEvent -> playerControls.togglePlayPause() );
+    playerControls.registerPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
 
-    playPauseItem = new MenuItem(language.getString(PLAY));  //P = Pause/Play --> only one of the is enabled at one time (at maximum)
-    playPauseItem.setAccelerator(PLAY_PAUSE_KEY_CODE_COMBINATION);
-    playPauseItem.setDisable(true);
-    playPauseItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        playerControls.togglePlayPause();
-      }
-    });
+    rewindItem = new MenuItem(language.getString("rewind"));  //Pause/Play --> two states reflected by setting text
+    rewindItem.setAccelerator(MainMenuBar.REWIND_KEYCODE);
+    rewindItem.setOnAction(actionEvent -> playerControls.rewind());
 
-    stopItem = new MenuItem(language.getString(STOP)); //S=Stop/Rewind
-    stopItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHIFT_ANY));
-    stopItem.setDisable(true);
-    stopItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        stop();
-      }
-    });
-    contextMenu.getItems().addAll(autoPlayItem, playPauseItem, stopItem, new SeparatorMenuItem());
+    playListModeItem = new CheckMenuItem(language.getString("playlist.mode"));
+    playListModeItem.setAccelerator(MainMenuBar.PLAYLIST_MODE_KEYCODE);
+    playListModeItem.setOnAction(actionEvent -> playerControls.setPlayListMode(!playerControls.isPlayListMode())); //toggle
+    playerControls.registerPlayListModeMenuItem(playListModeItem); //keep state of playControls and menuItem synced
 
-    //sync context menu's autoPlay check with property
-    autoPlayProperty.addListener(new ChangeListener<Boolean>() {
-      @Override
-      public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-        autoPlayItem.setSelected(newValue);
-      }
-    });
+    repeatModeItem = new CheckMenuItem(language.getString("repeat.mode"));
+    repeatModeItem.setAccelerator(MainMenuBar.REPEAT_MODE_KEYCODE);
+    repeatModeItem.setOnAction(actionEvent -> playerControls.setRepeatMode(!playerControls.isRepeatMode())); //toggle
+    playerControls.registerRepeatMenuItem(repeatModeItem); //keep state of playControls and menuItem synced
+
+    contextMenu.getItems().addAll(playPauseItem, rewindItem, playListModeItem, repeatModeItem, new SeparatorMenuItem());
   }
-
   /**
    *
    * @return the status of the media player of this PlayerViewer
@@ -287,56 +217,58 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
     return playerControls;
   }
 
-  protected void setPlayerStatusInAllMenues(MediaPlayer.Status newPlayerStatus) {
-    PlayerViewer.setMenuItemsForPlayerStatus(newPlayerStatus, mainMenuStopItem, mainMenuPlayPauseItem);
-    PlayerViewer.setMenuItemsForPlayerStatus(newPlayerStatus, stopItem, playPauseItem);
-    playerControls.setPlayPausedButtonForPlayerStatus(newPlayerStatus);
+  //----------------------- Implement common part of ZoomableViewer Interface ----------------------------
+
+  @Override
+  public void installResizeHandler() {
+    prefWidthProperty().addListener((observable, oldValue, newValue) -> viewportZoomer.handleResize());
+    prefHeightProperty().addListener((observable, oldValue, newValue) -> viewportZoomer.handleResize());
   }
 
-
-  /**
-   * toggle auto play. if movie viewer is currently visible then pause/play accordingly
-   */
-  public void toggleAutoPlay() {
-    autoPlayProperty.set(!autoPlayProperty.get());
-
-
-    if (autoPlayProperty.get()) {
-      if (isVisible()) play();
-    } else {
-      if (isVisible()) pause();
-    }
+  @Override
+  public void zoomToFit() {
+    viewportZoomer.zoomToFit();
   }
 
+  private void installMouseHandlers() {
+    setOnScroll(event -> {
+      boolean handled = viewportZoomer.handleMouseScroll(event);
+      if (handled) event.consume();
+    });
+    setOnMousePressed(event -> {
+      boolean handled = viewportZoomer.handleMousePressed(event);
+      handled = handleMousePressed(event) || handled; //inherited from PlayerViewer
+      if (handled) event.consume();
+    });
 
-  //------------------------------- static helper for menu items ---------------------
-  public static void setMenuItemsForPlayerStatus(MediaPlayer.Status newValue, MenuItem stopItem, MenuItem playPauseItem) {
-    switch (newValue) {
-      case READY:
-      case HALTED:
-      case PAUSED:
-        stopItem.setDisable(false);
-        playPauseItem.setDisable(false);
-        playPauseItem.setText(language.getString(PlayerViewer.PLAY));
-        break;
-      case PLAYING:
-        stopItem.setDisable(false);
-        playPauseItem.setDisable(false);
-        playPauseItem.setText(language.getString(PlayerViewer.PAUSE));
-        break;
-      case STOPPED:
-        stopItem.setDisable(true);
-        playPauseItem.setDisable(false);
-        playPauseItem.setText(language.getString(PlayerViewer.PLAY));
-        break;
-      case STALLED:
-      case UNKNOWN:
-      case DISPOSED:
-      default:
-        stopItem.setDisable(true);
-        playPauseItem.setDisable(false);
-        break;
-    }
+    setOnMouseMoved(event -> {
+      boolean handled = handleMouseMoved(event); //inherited from PlayerViewer
+      if (handled) event.consume();
+    });
+    setOnMouseDragged(event -> {
+      boolean handled = viewportZoomer.handleMouseDragged(event);
+      handled = handleMouseDragged(event) || handled; //inherited from PlayerViewer
+      if (handled) event.consume();
+    });
+    setOnMouseReleased(event -> {
+      boolean handled = viewportZoomer.handleMouseReleased(event);
+      if (handled) event.consume();
+    });
+    setOnMouseClicked(event -> {
+      //clicks must only be handled by one class to perform only one action at a time
+      boolean handled = viewportZoomer.handleMouseClicked(event);
+      if (!handled) {
+        handled = handleMouseClicked(event);
+      } //inherited from PlayerViewer
+      if (handled) event.consume();
+    });
+
+  }
+  private void installKeyboardHandlers() {
+    setOnKeyPressed(event -> {
+      boolean handled = viewportZoomer.handleKeyPressed(event);
+      if (handled) event.consume();
+    });
   }
 
 }

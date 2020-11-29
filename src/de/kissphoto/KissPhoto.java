@@ -76,7 +76,7 @@ import java.util.ResourceBundle;
 public class KissPhoto extends Application {
   public static final String KISS_PHOTO_VERSION = "0.20.11 work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
-  private static ResourceBundle language = null;
+  public static ResourceBundle language = null;
 
   //set in void main(args) = in static context, so the need to be static
   private static String initialFileOrFolder;

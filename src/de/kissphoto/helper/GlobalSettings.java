@@ -2,6 +2,10 @@ package de.kissphoto.helper;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 /**
@@ -23,10 +27,38 @@ import java.util.Properties;
  *
  */
 public class GlobalSettings extends Properties {
-  private static final String PROPERTIES_FILENAME = "KissPhoto.settings";
+  private static final String PROPERTIES_FOLDERNAME = ".kissPhoto";
+  private static final String PROPERTIES_FILENAME = "kissPhoto.settings";
+
+  private String propertiesFilename = "";
 
 
   public GlobalSettings() {
+
+    //determine the settings-path on this OS
+    Path propertiesFilePath;
+    Path folderPath = getOSUserSettingsDirectory();
+
+    if (folderPath != null)
+      propertiesFilePath = folderPath.resolve(PROPERTIES_FOLDERNAME);
+    else
+      propertiesFilePath = Paths.get(PROPERTIES_FOLDERNAME);
+
+    try { //ignore IO-Exceptions
+
+      //make a new settings dir if not already existing
+      if (Files.notExists(propertiesFilePath))
+        Files.createDirectory(propertiesFilePath);
+
+
+
+    }catch (IOException e){
+      //ignore if writing was not possible
+    }
+
+    propertiesFilename = propertiesFilePath.resolve(PROPERTIES_FILENAME).toString();
+    System.out.println("Settings-Path=" + propertiesFilename);
+
   }
 
   /**
@@ -34,7 +66,7 @@ public class GlobalSettings extends Properties {
    */
   public void load() {
     try {
-      loadFromXML(new FileInputStream(PROPERTIES_FILENAME));
+      loadFromXML(new FileInputStream(propertiesFilename));
     } catch (Exception e) {
       //the default values will be set by the classes who use globalSettings for storing their Settings
     }
@@ -45,9 +77,25 @@ public class GlobalSettings extends Properties {
    */
   public void store() {
     try {
-      storeToXML(new FileOutputStream(PROPERTIES_FILENAME), null);
+      storeToXML(new FileOutputStream(propertiesFilename), null);
     } catch (Exception e) {
       //ignore if writing was not possible
     }
+  }
+
+  public static Path getOSUserSettingsDirectory()
+  {
+    String appdataPath;
+
+    String OS = System.getProperty("os.name").toUpperCase();
+    if (OS.contains("WIN"))
+      appdataPath =  System.getenv("APPDATA");
+    else if (OS.contains("MAC"))
+      appdataPath = System.getProperty("user.home") + "/Library/Application Support";
+    else if (OS.contains("NUX"))
+      appdataPath = System.getProperty("user.home");
+    else appdataPath= System.getProperty("user.dir");
+
+    return Paths.get(appdataPath);
   }
 }

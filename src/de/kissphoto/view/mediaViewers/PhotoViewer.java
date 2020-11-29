@@ -1,20 +1,11 @@
 package de.kissphoto.view.mediaViewers;
 
-import de.kissphoto.helper.I18Support;
 import de.kissphoto.model.ImageFile;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MediaContentView;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.EventHandler;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
-
-import java.util.ResourceBundle;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
@@ -40,18 +31,14 @@ import java.util.ResourceBundle;
  * @version 2020-11-02: Viewer now decides if it can show a media and returns true if so
  */
 public class PhotoViewer extends ImageView implements ZoomableViewer {
-  private static ResourceBundle language = I18Support.languageBundle;
-
-  private MediaContentView mediaContentView;  //link back to the containing Pane
-  private ViewportZoomer viewportZoomer;
-  private ImageFile imageFile; //remember link to the file object to access current rotation
+  private final ViewportZoomer viewportZoomer;
 
   /**
    * constructor to initialize the viewer
    */
   public PhotoViewer(final MediaContentView contentView) {
     super();
-    this.mediaContentView = contentView;
+    //link back to the containing Pane
     setPreserveRatio(true);
 
     //binding is performed in MediaContentView
@@ -59,7 +46,7 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
 
     viewportZoomer = new ViewportZoomer(this); //installs also the eventHandlers and contextMenu
     ContextMenu contextMenu = viewportZoomer.addContextMenuItems(null);  //null=no existing contextMenu but create new one
-    viewportZoomer.installContextMenu(mediaContentView, contextMenu);
+    viewportZoomer.installContextMenu(contentView, contextMenu);
 
     installMouseHandlers();
     installKeyboardHandlers();
@@ -91,67 +78,38 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
 
   @Override
   public void installResizeHandler() {
-    fitWidthProperty().addListener(new ChangeListener<Number>() {
-      @Override
-      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        viewportZoomer.handleResize();
-      }
-    });
-    fitHeightProperty().addListener(new ChangeListener<Number>() {
-      @Override
-      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        viewportZoomer.handleResize();
-      }
-    });
-
+    fitWidthProperty().addListener((observable, oldValue, newValue) -> viewportZoomer.handleResize());
+    fitHeightProperty().addListener((observable, oldValue, newValue) -> viewportZoomer.handleResize());
   }
 
   private void installMouseHandlers() {
-    setOnScroll(new EventHandler<ScrollEvent>() {
-      @Override
-      public void handle(ScrollEvent event) {
-        boolean handled = viewportZoomer.handleMouseScroll(event);
-        if (handled) event.consume();
-      }
+    setOnScroll(event -> {
+      boolean handled = viewportZoomer.handleMouseScroll(event);
+      if (handled) event.consume();
     });
-    setOnMousePressed(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        boolean handled = viewportZoomer.handleMousePressed(event);
-        if (handled) event.consume();
-      }
+    setOnMousePressed(event -> {
+      boolean handled = viewportZoomer.handleMousePressed(event);
+      if (handled) event.consume();
     });
-    setOnMouseDragged(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        boolean handled = viewportZoomer.handleMouseDragged(event);
-        if (handled) event.consume();
-      }
+    setOnMouseDragged(event -> {
+      boolean handled = viewportZoomer.handleMouseDragged(event);
+      if (handled) event.consume();
     });
-    setOnMouseReleased(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        boolean handled = viewportZoomer.handleMouseReleased(event);
-        if (handled) event.consume();
-      }
+    setOnMouseReleased(event -> {
+      boolean handled = viewportZoomer.handleMouseReleased(event);
+      if (handled) event.consume();
     });
-    setOnMouseClicked(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        boolean handled = viewportZoomer.handleMouseClicked(event);
-        if (handled) event.consume();
-      }
+    setOnMouseClicked(event -> {
+      boolean handled = viewportZoomer.handleMouseClicked(event);
+      if (handled) event.consume();
     });
 
   }
 
   private void installKeyboardHandlers() {
-    setOnKeyPressed(new EventHandler<KeyEvent>() {
-      @Override
-      public void handle(KeyEvent event) {
-        boolean handled = viewportZoomer.handleKeyPressed(event);
-        if (handled) event.consume();
-      }
+    setOnKeyPressed(event -> {
+      boolean handled = viewportZoomer.handleKeyPressed(event);
+      if (handled) event.consume();
     });
   }
 
@@ -176,8 +134,8 @@ public class PhotoViewer extends ImageView implements ZoomableViewer {
     boolean compatible = (mediaFile != null) && (mediaFile.getClass() == ImageFile.class);
 
     if (compatible){
-      this.imageFile = (ImageFile)mediaFile;
-      Image image = (Image) imageFile.getMediaContent();  //getMediaContent tries to put the content into an Image-Object and returns null if not possible
+      //remember link to the file object to access current rotation
+      Image image = (Image) mediaFile.getMediaContent();  //getMediaContent tries to put the content into an Image-Object and returns null if not possible
       if (image != null) {
         setImage(image);
       } else {

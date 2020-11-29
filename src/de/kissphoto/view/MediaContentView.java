@@ -1,10 +1,7 @@
 package de.kissphoto.view;
 
 import de.kissphoto.KissPhoto;
-import de.kissphoto.helper.I18Support;
-import de.kissphoto.model.ImageFileRotater;
 import de.kissphoto.model.MediaFile;
-import de.kissphoto.model.MediaFileRotater;
 import de.kissphoto.view.mediaViewers.*;
 import de.kissphoto.view.viewerHelpers.PlayerControls;
 import de.kissphoto.view.viewerHelpers.PlayerViewer;
@@ -14,24 +11,24 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.input.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
-import java.util.ResourceBundle;
+
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
@@ -40,25 +37,24 @@ import java.util.ResourceBundle;
  * It is a JavaFX-Pane which contains the links between the primaryWindow and fullScreenWindow<br>
  * and all mediaViewers (Photo, Player, Other/None)<br>
  * <br>
- * Here the strategy for selecting the right viewer is implemented (see setMedia() )
+ * Here the strategy is implemented for selecting the compatible viewer (see setMedia() )
  * <p/>
  *
  * @author Dr. Ingo Kreuz
  * @version 2020-11-02 change viewer strategy: every viewer decides by it's own if it is compatible with the media
  */
 public class MediaContentView extends Pane {
-  private static ResourceBundle language = I18Support.languageBundle;
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
 
   //every viewer has these items. For enabling/disabling keep a reference to all of them
-  static private ObservableList<MenuItem> showOnNextScreenItems = FXCollections.observableArrayList();
-  static private ObservableList<MenuItem> fullScreenItems = FXCollections.observableArrayList();
+  static private final ObservableList<MenuItem> showOnNextScreenItems = FXCollections.observableArrayList();
+  static private final ObservableList<MenuItem> fullScreenItems = FXCollections.observableArrayList();
 
   private int enteredLineNumber = -1; //negative means: nothing entered
 
   private FileTableView fileTableView = null; //optional link to the fileTableView connected with this MediaContentView (for selecting pictures while focus is in MediaContentView
 
-  private Stage owner = null; //normal mediaContentView is in the primary stage, full-Screen MediaContentView is in a dialog-stage which is in fullScreenMode
+  private final Stage owner; //normal mediaContentView is in the primary stage, full-Screen MediaContentView is in a dialog-stage which is in fullScreenMode
   private FullScreenStage fullScreenStage = null; //this stage is used (!=null) if showFullScreen() has been called. It again has a mediaContentView
   private MediaContentView primaryMediaContentView = null; //in full screen mode only: link to the mediaContentView of the primary stage
 
@@ -66,29 +62,26 @@ public class MediaContentView extends Pane {
   private PhotoViewer photoViewer;
   private PlayerViewer playerViewer;
   private OtherViewer otherViewer;
-  private AttributesViewer attrViewer = new AttributesViewer(this);
+  private final AttributesViewer attrViewer = new AttributesViewer(this);
 
-  private Object currentMedia = null; //the content from the cache
   private MediaFile currentMediaFile = null; //the according mediaFile for attributes
-  ImageFileRotater.RotateOperation currentRotation = MediaFileRotater.RotateOperation.ROTATE0;
+
+  private MediaFile lastMediaFileBoundtoProgress = null;
+  private ChangeListener<Number> lastListener = null;
 
   /**
-   * put media/image into the appropriate viewer and set it visible (and all others invisible)
-   * if null is passed all internal views are set to invisible (= nothing is shown)
-   * <p>
-   * if a lastPlayerPos!=null has been passed and a Player-Media becomes active then
-   * the Media is seeked to this position as soon as it is loaded (see PlayerViewer.setMedia())
-   *
-   * @param lastPlayerPos null=no effect, not null=try to seek the position for player media
-   * @param mediaFile     is the mediaFile of which it's content is to be shown
+   * constructor
    */
-  private MediaFile lastMediaFileBoundtoProgress = null;
-  private ChangeListener lastListener = null;
+  public MediaContentView(Stage owner) {
+    super();
+    this.owner = owner;
+    init();
+  }
 
   /**
    * @param owner                   link to the stage which contains this mediaContentView
    * @param primaryMediaContentView link to the primaryMediaContentView (i.e. from full screen to "normal view"
-   * @constructor this constructor is only used internally for linking back the full-Screen version to the primary MediaContentView (in primary Stage)
+   * this constructor is only used internally for linking back the full-Screen version to the primary MediaContentView (in primary Stage)
    */
   protected MediaContentView(Stage owner, MediaContentView primaryMediaContentView) {
     super();
@@ -97,16 +90,6 @@ public class MediaContentView extends Pane {
     this.primaryMediaContentView = primaryMediaContentView;
     init();
   }
-
-  /**
-   * @constructor
-   */
-  public MediaContentView(Stage owner) {
-    super();
-    this.owner = owner;
-    init();
-  }
-
 
   private void init() {
     //width/height-binding of the pane is not necessary because it lies in a splitPane which does binding automatically
@@ -162,128 +145,104 @@ public class MediaContentView extends Pane {
     //add contents to mediaContentView
     getChildren().addAll(rotatablePaneLayouter, attrViewer); //the attr. Viewer lies over all other viewers, but not in stack Pane (because it would fill the whole screen :-(
 
-    setOnScroll(new EventHandler<ScrollEvent>() {
-      @Override
-      public void handle(ScrollEvent scrollEvent) {
-        if (!scrollEvent.isControlDown() && !scrollEvent.isAltDown() && !scrollEvent.isShiftDown()) {
-          if (scrollEvent.getDeltaY() > 0)
-            showPreviousMedia();
+    setOnScroll(scrollEvent -> {
+      if (!scrollEvent.isControlDown() && !scrollEvent.isAltDown() && !scrollEvent.isShiftDown()) {
+        if (scrollEvent.getDeltaY() > 0)
+          showPreviousMedia();
+        else
+          showNextMedia();
+        scrollEvent.consume();
+      }
+    });
+
+    setOnMouseClicked(event -> {
+      if (event.getClickCount() > 1) { //if double clicked
+        toggleFullScreenAndNormal();
+      }
+    });
+
+    setOnKeyPressed(keyEvent -> {
+      boolean eventHandled = true;
+
+      switch (keyEvent.getCode()) {
+        //moving in fileTableView
+        case HOME:
+          showMediaInLineNumber(1);
+          break;
+        case END:
+          showMediaInLineNumber(Integer.MAX_VALUE);
+          break;
+        case UP:  //only used if the current zoomable viewer does not consume it for moving
+        case PAGE_UP: //works always
+          showPreviousMedia();
+          break;
+        case DOWN: //only used if the current zoomable viewer does not consume it for moving
+        case PAGE_DOWN: //works always
+          showNextMedia();
+          break;
+
+        case ENTER:
+          if (enteredLineNumber > 0)
+            showMediaForEnteredLineNumber();
           else
             showNextMedia();
-          scrollEvent.consume();
-        }
-      }
-    });
+          break;
 
-    setOnMouseClicked(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        if (event.getClickCount() > 1) { //if double clicked
+        //full screen support
+        case F5:
           toggleFullScreenAndNormal();
-        }
-      }
-    });
+          break;
+        case TAB:
+          //tab = next screen
+          showFullScreenOnNextScreen(!keyEvent.isShiftDown()); //shift-Tab = previous screen
+          break;
+        case ESCAPE:
+          endFullScreen();
+          break;
+        case DELETE:    //also with ctrl-delete: close the window, not only end full screen (see "workaround" in this class)
+          if (keyEvent.isControlDown()) endFullScreen();
+          break;
 
-    setOnKeyPressed(new EventHandler<KeyEvent>() {
-      @Override
-      public void handle(KeyEvent keyEvent) {
-        boolean eventHandled = true;
-
-        switch (keyEvent.getCode()) {
-          //moving in fileTableView
-          case HOME:
-            showMediaInLineNumber(1);
+        //attributes viewer control (toggle) (note: shortcuts are described in context menu --> don't forget to keep consistent!!!)
+        case D:
+          if (keyEvent.isControlDown()) {
+            attrViewer.setVisible(!attrViewer.isVisible());
             break;
-          case END:
-            showMediaInLineNumber(Integer.MAX_VALUE);
-            break;
-          case UP:  //only used if the current zoomable viewer does not consume it for moving
-          case PAGE_UP: //works always
-            showPreviousMedia();
-            break;
-          case DOWN: //only used if the current zoomable viewer does not consume it for moving
-          case PAGE_DOWN: //works always
-            showNextMedia();
-            break;
-
-          case ENTER:
-            if (enteredLineNumber > 0)
-              showMediaForEnteredLineNumber();
-            else
-              showNextMedia();
-            break;
-
-          //full screen support
-          case F5:
-            toggleFullScreenAndNormal();
-            break;
-          case TAB:
-            if (keyEvent.isShiftDown())
-              showFullScreenOnNextScreen(false); //shift-Tab = previous screen
-            else
-              showFullScreenOnNextScreen(true); //tab = next screen
-            break;
-          case ESCAPE:
-            endFullScreen();
-            break;
-          case DELETE:    //also with ctrl-delete: close the window, not only end full screen (see "workaround" in this class)
-            if (keyEvent.isControlDown()) endFullScreen();
-            break;
-
-          //attributes viewer control (toggle) (note: shortcuts are described in context menu --> don't forget to keep consistent!!!)
-          case D:
-            if (keyEvent.isControlDown()) {
-              attrViewer.setVisible(!attrViewer.isVisible());
-              break;
-            }
-          case P:
-            if (keyEvent.isControlDown()) {
-              attrViewer.setDisplayPrefix(!attrViewer.isDisplayPrefix());
-              break;
-            }
-          case C:
-            if (keyEvent.isControlDown()) {
-              attrViewer.setDisplayCounter(!attrViewer.isDisplayCounter());
-              break;
-            }
-          case E:
-            if (keyEvent.isControlDown()) {
-              attrViewer.setDisplayExtension(!attrViewer.isDisplayExtension());
-              break;
-            }
-          case F:
-            if (keyEvent.isControlDown()) {
-              attrViewer.setDisplayFileDate(!attrViewer.isDisplayFileDate());
-              break;
-            }
-
-          default:
-            eventHandled = false;
-        }
-        if (!eventHandled) {
-          eventHandled = true;
-          switch (keyEvent.getText()) {
-            //collecting/selecting line number
-            case "0":
-            case "1":
-            case "2":
-            case "3":
-            case "4":
-            case "5":
-            case "6":
-            case "7":
-            case "8":
-            case "9":
-              collectDigit(Integer.parseInt(keyEvent.getText()));
-
-              break;
-            default:
-              eventHandled = false;
           }
-        }
+        case P:
+          if (keyEvent.isControlDown()) {
+            attrViewer.setDisplayPrefix(!attrViewer.isDisplayPrefix());
+            break;
+          }
+        case C:
+          if (keyEvent.isControlDown()) {
+            attrViewer.setDisplayCounter(!attrViewer.isDisplayCounter());
+            break;
+          }
+        case E:
+          if (keyEvent.isControlDown()) {
+            attrViewer.setDisplayExtension(!attrViewer.isDisplayExtension());
+            break;
+          }
+        case F:
+          if (keyEvent.isControlDown()) {
+            attrViewer.setDisplayFileDate(!attrViewer.isDisplayFileDate());
+            break;
+          }
 
-        if (eventHandled) keyEvent.consume();
+        default:
+          eventHandled = false;
       }
+      if (!eventHandled) {
+        eventHandled = true;
+        //collecting/selecting line number
+        switch (keyEvent.getText()) {
+          case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" -> collectDigit(Integer.parseInt(keyEvent.getText()));
+          default -> eventHandled = false;
+        }
+      }
+
+      if (eventHandled) keyEvent.consume();
     });
   }
 
@@ -303,21 +262,10 @@ public class MediaContentView extends Pane {
     if (currentMediaFile == null) return;
 
     switch (currentMediaFile.getRotateOperation()) {
-      case ROTATE0:
-        mediaStackPane.setRotate(0);
-        break;
-
-      case ROTATE90:
-        mediaStackPane.setRotate(90);
-        break;
-
-      case ROTATE180:
-        mediaStackPane.setRotate(180);
-        break;
-
-      case ROTATE270:
-        mediaStackPane.setRotate(270);
-        break;
+      case ROTATE0 -> mediaStackPane.setRotate(0);
+      case ROTATE90 -> mediaStackPane.setRotate(90);
+      case ROTATE180 -> mediaStackPane.setRotate(180);
+      case ROTATE270 -> mediaStackPane.setRotate(270);
     }
 
     //finally execute flipping
@@ -415,7 +363,7 @@ public class MediaContentView extends Pane {
         //----- empty directory
         if (mediaFile == null) {  //e.g. if current directory is empty
           activateEmptyMediaViewer();
-          if (this.isFullScreenMediaContentView()) primaryMediaContentView.syncMediaContentViews(mediaFile, null);
+          if (this.isFullScreenMediaContentView()) primaryMediaContentView.syncMediaContentViews(null, null);
 
           //----- Photo
         } else if (photoViewer.setMediaFileIfCompatible(mediaFile)) {
@@ -549,7 +497,7 @@ public class MediaContentView extends Pane {
   /**
    * bind progress of loading media to the status bar's progress bar
    *
-   * @param mediaFile
+   * @param mediaFile to be bound to the progress bar
    */
   private void showProgressBarForMediaFile(MediaFile mediaFile) {
     if (mediaFile != null) {
@@ -586,13 +534,10 @@ public class MediaContentView extends Pane {
     }
 
     //above selection might steel focus from mediaContentView if changed from movie to image
-    if (!fileTableViewHadFocus) Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        playerViewer.requestFocus();   //whatever is visible gets the focus back
-        otherViewer.requestFocus();
-        photoViewer.requestFocus();
-      }
+    if (!fileTableViewHadFocus) Platform.runLater(() -> {
+      playerViewer.requestFocus();   //whatever is visible gets the focus back
+      otherViewer.requestFocus();
+      photoViewer.requestFocus();
     });
   }
 
@@ -615,9 +560,7 @@ public class MediaContentView extends Pane {
     } else {
       //not isPlayListMode()  or in FileTableView's EditMode
       if (playerControls.isRepeatMode()) {
-        Platform.runLater(()->{
-          playerViewer.rewindAndPlayWhenFinished();
-        });
+        Platform.runLater(()-> playerViewer.rewindAndPlayWhenFinished());
       }
       //else do nothing, media remains to be finished
     }
@@ -670,10 +613,8 @@ public class MediaContentView extends Pane {
     }
 
     //above selection might steel focus from mediaContentView if changed from movie to image
-    if (!fileTableViewHadFocus) Platform.runLater(() -> {
-      //whatever is visible --> get the focus back
-      requestFocus();
-    });
+    //whatever is visible --> get the focus back
+    if (!fileTableViewHadFocus) Platform.runLater(this::requestFocus);
 
   }
 
@@ -718,7 +659,7 @@ public class MediaContentView extends Pane {
         ObservableList<Screen> currentScreens = Screen.getScreensForRectangle(owner.getX(), owner.getY(), owner.getWidth(), owner.getHeight());
 
         Screen current;
-        if (currentScreens != null && currentScreens.size() > 0)
+        if (currentScreens.size() > 0)
           current = currentScreens.get(0);
         else
           current = Screen.getPrimary();
@@ -854,75 +795,52 @@ public class MediaContentView extends Pane {
     //----- select media file from list
     MenuItem nextItem = new MenuItem(language.getString("next.scroll.mouse.wheel.down")); //PgDn  or ENTER
     nextItem.setAccelerator(new KeyCodeCombination(KeyCode.PAGE_DOWN));
-    nextItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        showNextMedia();
-        actionEvent.consume();
-      }
+    nextItem.setOnAction(actionEvent -> {
+      showNextMedia();
+      actionEvent.consume();
     });
 
     MenuItem previousItem = new MenuItem(language.getString("previous.scroll.mouse.wheel.up")); //PgUp
     previousItem.setAccelerator(new KeyCodeCombination(KeyCode.PAGE_UP));
-    previousItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        showPreviousMedia();
-        actionEvent.consume();
-      }
+    previousItem.setOnAction(actionEvent -> {
+      showPreviousMedia();
+      actionEvent.consume();
     });
 
     MenuItem homeItem = new MenuItem(language.getString("first")); //home
     homeItem.setAccelerator(new KeyCodeCombination(KeyCode.HOME));
-    homeItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        showMediaInLineNumber(1);
-        actionEvent.consume();
-      }
+    homeItem.setOnAction(actionEvent -> {
+      showMediaInLineNumber(1);
+      actionEvent.consume();
     });
 
     MenuItem endItem = new MenuItem(language.getString("last")); //end
     endItem.setAccelerator(new KeyCodeCombination(KeyCode.END));
-    endItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        showMediaInLineNumber(Integer.MAX_VALUE);
-        actionEvent.consume();
-      }
+    endItem.setOnAction(actionEvent -> {
+      showMediaInLineNumber(Integer.MAX_VALUE);
+      actionEvent.consume();
     });
 
     MenuItem gotoItem = new MenuItem(language.getString("goto.number.type.digits.then.enter")); //ENTER
     gotoItem.setAccelerator(new KeyCodeCombination(KeyCode.ENTER));
-    gotoItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        showMediaForEnteredLineNumber();
-        actionEvent.consume();
-      }
+    gotoItem.setOnAction(actionEvent -> {
+      showMediaForEnteredLineNumber();
+      actionEvent.consume();
     });
     contextMenu.getItems().addAll(nextItem, previousItem, homeItem, endItem, gotoItem);
 
     //-------- View
     MenuItem fullScreenItem = new MenuItem(language.getString("full.screen"));
     fullScreenItem.setAccelerator(new KeyCodeCombination(KeyCode.F5));
-    fullScreenItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        toggleFullScreenAndNormal();
-        actionEvent.consume();
-      }
+    fullScreenItem.setOnAction(actionEvent -> {
+      toggleFullScreenAndNormal();
+      actionEvent.consume();
     });
     fullScreenItems.add(fullScreenItem);
 
     MenuItem showOnNextScreenItem = new MenuItem(language.getString(SHOW_ON_NEXT_SCREEN_FULLSCREEN));
     showOnNextScreenItem.setAccelerator((new KeyCodeCombination(KeyCode.TAB))); //TAB, previous shift-Tab is not shown in menu
-    showOnNextScreenItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        showFullScreenOnNextScreen(true);
-      }
-    });
+    showOnNextScreenItem.setOnAction(actionEvent -> showFullScreenOnNextScreen(true));
     showOnNextScreenItem.setDisable(true); //enable only in Full screen mode
     showOnNextScreenItems.add(showOnNextScreenItem);
 
@@ -931,80 +849,40 @@ public class MediaContentView extends Pane {
 //-------- Attributes
     final CheckMenuItem showAttrItem = new CheckMenuItem(language.getString("display.description"));
     showAttrItem.setAccelerator(new KeyCodeCombination(KeyCode.D, KeyCombination.CONTROL_DOWN));
-    showAttrItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        attrViewer.setVisible(showAttrItem.isSelected());
-      }
-    });
+    showAttrItem.setOnAction(actionEvent -> attrViewer.setVisible(showAttrItem.isSelected()));
 //--------
     final CheckMenuItem showPrefixItem = new CheckMenuItem(language.getString("show.prefix"));
     showPrefixItem.setAccelerator(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN));
-    showPrefixItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        attrViewer.setDisplayPrefix(showPrefixItem.isSelected());
-      }
-    });
+    showPrefixItem.setOnAction(actionEvent -> attrViewer.setDisplayPrefix(showPrefixItem.isSelected()));
 
     final CheckMenuItem showCounterItem = new CheckMenuItem(language.getString("show.counter"));
     showCounterItem.setAccelerator(new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN));
-    showCounterItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        attrViewer.setDisplayCounter(showCounterItem.isSelected());
-      }
-    });
+    showCounterItem.setOnAction(actionEvent -> attrViewer.setDisplayCounter(showCounterItem.isSelected()));
     final CheckMenuItem showExtensionItem = new CheckMenuItem(language.getString("show.extension"));
     showExtensionItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN));
-    showExtensionItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        attrViewer.setDisplayExtension(showExtensionItem.isSelected());
-      }
-    });
+    showExtensionItem.setOnAction(actionEvent -> attrViewer.setDisplayExtension(showExtensionItem.isSelected()));
     final CheckMenuItem showFileDateItem = new CheckMenuItem(language.getString("show.file.date"));
     showFileDateItem.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
-    showFileDateItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        attrViewer.setDisplayFileDate(showFileDateItem.isSelected());
-      }
-    });
+    showFileDateItem.setOnAction(actionEvent -> attrViewer.setDisplayFileDate(showFileDateItem.isSelected()));
 
     contextMenu.getItems().addAll(new SeparatorMenuItem(), showAttrItem, showPrefixItem, showCounterItem,
       showExtensionItem, showFileDateItem);
 
-    contextMenu.setOnShowing(new EventHandler<WindowEvent>() {
-      @Override
-      public void handle(WindowEvent windowEvent) {
-        showAttrItem.setSelected(attrViewer.isVisible());
+    contextMenu.setOnShowing(windowEvent -> {
+      showAttrItem.setSelected(attrViewer.isVisible());
 
-        showPrefixItem.setSelected(attrViewer.isDisplayPrefix());
-        showPrefixItem.setDisable(!attrViewer.isVisible());
+      showPrefixItem.setSelected(attrViewer.isDisplayPrefix());
+      showPrefixItem.setDisable(!attrViewer.isVisible());
 
-        showCounterItem.setSelected(attrViewer.isDisplayCounter());
-        showCounterItem.setDisable(!attrViewer.isVisible());
+      showCounterItem.setSelected(attrViewer.isDisplayCounter());
+      showCounterItem.setDisable(!attrViewer.isVisible());
 
-        showExtensionItem.setSelected(attrViewer.isDisplayExtension());
-        showExtensionItem.setDisable(!attrViewer.isVisible());
+      showExtensionItem.setSelected(attrViewer.isDisplayExtension());
+      showExtensionItem.setDisable(!attrViewer.isVisible());
 
-        showFileDateItem.setSelected(attrViewer.isDisplayFileDate());
-        showFileDateItem.setDisable(!attrViewer.isVisible());
-      }
+      showFileDateItem.setSelected(attrViewer.isDisplayFileDate());
+      showFileDateItem.setDisable(!attrViewer.isVisible());
     });
-  }
-
-  /**
-   * short for accessing fileTableView.isEditMode e.g. from playerViewer
-   *
-   * @return true if fileTableView is currently in CellEdit-Mode or Multi-edit-Mode
-   */
-  public boolean isFileTableViewInEditMode() {
-    if (fileTableView != null) //is null in UndeleteDialog
-      return fileTableView.isEditMode();
-    else
-      return false;
   }
 
   public AttributesViewer getAttrViewer() {

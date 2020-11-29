@@ -4,17 +4,13 @@ import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MovieFile;
 import de.kissphoto.view.MediaContentView;
 import de.kissphoto.view.viewerHelpers.PlayerViewer;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
+
+import java.util.Objects;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
@@ -40,13 +36,11 @@ import javafx.util.Duration;
  */
 public class MovieViewerFX extends PlayerViewer {
   protected MediaView mediaView;
-  private ViewportZoomer viewportZoomer;
-
   protected MediaPlayer mediaPlayer;      //initialized in setMedia()
 
 
   /**
-   * @constructor to initialize the viewer
+   * constructor to initialize the viewer
    */
   public MovieViewerFX(final MediaContentView contentView) {
     super(contentView);   //mediaContentView of father class is now = contentView
@@ -65,14 +59,10 @@ public class MovieViewerFX extends PlayerViewer {
 
     setFocusTraversable(true);
 
-    viewportZoomer = new ViewportZoomer(this);
-
     initPlayerContextMenu();
     viewportZoomer.addContextMenuItems(contextMenu);
     viewportZoomer.installContextMenu(mediaContentView, contextMenu);
 
-    installMouseHandlers();
-    installKeyboardHandlers();
   }
 
   public javafx.scene.media.MediaPlayer.Status getStatus(){
@@ -120,7 +110,6 @@ public class MovieViewerFX extends PlayerViewer {
 
       //install listener for player status to update play/pause/inactive, stop active/inactive
       mediaPlayer.statusProperty().addListener((observable, oldValue, newValue) -> {
-        setPlayerStatusInAllMenues(newValue);
         finished = false; //setEndOfMedia will set it to true
       });
 
@@ -194,13 +183,9 @@ public class MovieViewerFX extends PlayerViewer {
    */
   public void seek(Duration newPos){
     if (mediaPlayer != null){
-      if (newPos==null)
-        mediaPlayer.seek(Duration.ZERO);
-      else
-        mediaPlayer.seek(newPos);
+      mediaPlayer.seek(Objects.requireNonNullElse(newPos, Duration.ZERO));
 
       if (finished){
-        setPlayerStatusInAllMenues(mediaPlayer.getStatus()); //sync menues with status
         finished=false; //seeking results in not being at the end of the media any more
       }
       if (playerControls.isUserHasPaused()) mediaPlayer.pause();     //FX player keeps PLAYING status even if finished
@@ -234,7 +219,6 @@ public class MovieViewerFX extends PlayerViewer {
   public void releaseAll(){
     //nothing to do here
   }
-
   //----------------------- Implement ZoomableViewer Interface ----------------------------
 
   @Override
@@ -265,94 +249,6 @@ public class MovieViewerFX extends PlayerViewer {
   @Override
   public double getFitHeight() {
     return mediaView.getFitHeight();
-  }
-
-  @Override
-  public void installResizeHandler() {
-    prefWidthProperty().addListener(new ChangeListener<Number>() {
-      @Override
-      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        viewportZoomer.handleResize();
-      }
-    });
-    prefHeightProperty().addListener(new ChangeListener<Number>() {
-      @Override
-      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        viewportZoomer.handleResize();
-      }
-    });
-  }
-
-  @Override
-  public void zoomToFit() {
-    viewportZoomer.zoomToFit();
-  }
-
-  private void installMouseHandlers() {
-    setOnScroll(new EventHandler<ScrollEvent>() {
-      @Override
-      public void handle(ScrollEvent event) {
-        boolean handled = viewportZoomer.handleMouseScroll(event);
-        if (handled) event.consume();
-      }
-    });
-    setOnMousePressed(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        boolean handled = viewportZoomer.handleMousePressed(event);
-        handled = handleMousePressed(event) || handled; //inherited from PlayerViewer
-        if (handled) event.consume();
-      }
-    });
-
-    setOnMouseMoved(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        boolean handled = handleMouseMoved(event); //inherited from PlayerViewer
-        if (handled) event.consume();
-      }
-    });
-    setOnMouseDragged(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        boolean handled = viewportZoomer.handleMouseDragged(event);
-        handled = handleMouseDragged(event) || handled; //inherited from PlayerViewer
-        if (handled) event.consume();
-      }
-    });
-    setOnMouseReleased(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        boolean handled = viewportZoomer.handleMouseReleased(event);
-        if (handled) event.consume();
-      }
-    });
-    setOnMouseClicked(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        //clicks must only be handled by one class to perform only one action at a time
-        boolean handled = viewportZoomer.handleMouseClicked(event);
-        if (!handled) {
-          handled = handleMouseClicked(event);
-        } //inherited from PlayerViewer
-        if (handled) event.consume();
-      }
-    });
-
-  }
-
-  private void installKeyboardHandlers() {
-    setOnKeyPressed(new EventHandler<KeyEvent>() {
-      @Override
-      public void handle(KeyEvent event) {
-        //keyboard clicks must only be handled by one class to perform only one action at a time
-        boolean handled = viewportZoomer.handleKeyPressed(event);
-        if (!handled) {
-          handleKeyPressed(event);
-        }     //inherited from PlayerViewer
-        if (handled) event.consume();
-      }
-    });
   }
 
 }

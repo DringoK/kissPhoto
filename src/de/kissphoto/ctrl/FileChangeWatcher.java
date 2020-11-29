@@ -13,10 +13,11 @@ import static java.nio.file.StandardWatchEventKinds.*;
  * <p/>
  * This class is based on a solution found on com.thecoderscorner.niostuff;
  *
- * @Author: Dr. Ingo Kreuz
- * @created: 2014-05-04
- * @modified: 2014-06-06 Thread handling improved: Thread.interrupt to stop thread and Watcher created in the thread
- * @modified: 2014-06-08 folder update is toooooo slow. Just a message is given to the user...that reopen could help...: not all events are signalled!!!
+ * @author Dr. Ingo Kreuz
+ * @since 2014-05-04
+ * @version 2020-11-29 code clean up
+ * @version 2014-06-08 folder update is toooooo slow. Just a message is given to the user...that reopen could help...: not all events are signalled!!!
+ * @version 2014-06-06 Thread handling improved: Thread.interrupt to stop thread and Watcher created in the thread
  */
 
 public class FileChangeWatcher {
@@ -37,17 +38,13 @@ public class FileChangeWatcher {
    *
    * @param pathToWatch a path to the folder to be watched
    * @param listener    a class implementing FilechangeWatcherEventListener-interface to receive "onFolderChanged"Events
-   * @throws Exception
    */
-  public void registerFolderToWatch(String pathToWatch, FileChangeWatcherEventListener listener) throws Exception {
+  public void registerFolderToWatch(String pathToWatch, FileChangeWatcherEventListener listener) {
     //stop watcher threads started before
     stopWatcherThread();
 
     // get the directory we want to watch, using the Paths singleton class
     Path toWatch = Paths.get(pathToWatch);
-    if (toWatch == null) {
-      throw new UnsupportedOperationException("Directory not found");
-    }
 
     // start the file watcher thread below
     queueReader = new MyWatchQueueReader(toWatch, listener);
@@ -120,10 +117,10 @@ public class FileChangeWatcher {
    * standard out.
    */
   private static class MyWatchQueueReader extends Task<Void> {
-    private FileChangeWatcherEventListener listener;
-    private Path pathToWatch;
+    private final FileChangeWatcherEventListener listener;
+    private final Path pathToWatch;
     private String currentFilename;
-    private WatchEvent.Kind currentKind;
+    private WatchEvent.Kind<?> currentKind;
     protected boolean paused = false;
 
     /**
@@ -158,17 +155,14 @@ public class FileChangeWatcher {
           // we have a polled event, now we traverse it and
           // receive all the states from it
           //for (WatchEvent event : key.pollEvents()) {
-          WatchEvent event = key.pollEvents().get(0); //signal just the first event
+          WatchEvent<?> event = key.pollEvents().get(0); //signal just the first event
           currentFilename = event.context().toString();
           currentKind = event.kind();
 
           //access FXApplication Thread only via Platform.runLater (see tutorial from oracle about Task)
           //produce events only while not paused = while paused ignore events (consume them)
-          if (!paused) Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-              listener.onFolderChanged(currentFilename, currentKind); //the event object is new every time from key.pollEvents()
-            }
+          if (!paused) Platform.runLater(() -> {
+            listener.onFolderChanged(currentFilename, currentKind); //the event object is new every time from key.pollEvents()
           });
           //Thread.sleep(50); //give the listener a chance to process events before waiting for the next event
           //}

@@ -256,7 +256,7 @@
       <option name="MAIN_CLASS_NAME" value="de.kissphoto.KissPhoto" />
       <module name="kissPhoto" />
       <option name="PROGRAM_PARAMETERS" value="-noVLCDoch" />
-      <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg --module-path out\production;lib\javafx-sdk-13.0.1\lib" />
+      <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg " />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="" />
         <option name="TRANSPORT" value="0" />

@@ -7,19 +7,24 @@ import de.kissphoto.view.viewerHelpers.viewerButtons.PlayPauseButton;
 import de.kissphoto.view.viewerHelpers.viewerButtons.RepeatButton;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.control.CheckMenuItem;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
@@ -93,6 +98,10 @@ public class PlayerControls extends VBox {
   private static final double OPTION_AREA_HEIGHT = 20;
   private static final double OPTIONS_SIZE = 17;
 
+  //-------------- Sync with Menues
+  ObservableList<MenuItem> playPauseMenuItemList = FXCollections.observableArrayList();
+  ObservableList<CheckMenuItem> repeatMenuItemList = FXCollections.observableArrayList();
+  ObservableList<CheckMenuItem> playListModeMenuItemList = FXCollections.observableArrayList();
 
   /**
    * @param viewer to show in
@@ -223,16 +232,17 @@ public class PlayerControls extends VBox {
     try {
       setPlayListMode(Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(PLAYLIST_MODE_ID)) );
     } catch (Exception ignored) {}//if not loadable keep default value)
+    syncPlayListModeMenuItems();
+
     try {
       setRepeatMode(Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(REPEAT_MODE_ID)) );
     } catch (Exception ignored) {}//if not loadable keep default value)
-    try {
-      if (Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(PAUSED_ID)) )
-        setPlayPausedButtonForPlayerStatus(MediaPlayer.Status.PAUSED);
-      else
-        setPlayPausedButtonForPlayerStatus(MediaPlayer.Status.PLAYING);
-    } catch (Exception ignored) {}//if not loadable keep default value)
+    syncRepeatMenuItems();
 
+    try {
+      userHasPaused = Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(PAUSED_ID)) ;
+    } catch (Exception ignored) {}//if not loadable keep default value)
+    syncPlayPauseMenuItems();
   }
     /**
      * report button status
@@ -261,7 +271,7 @@ public class PlayerControls extends VBox {
    * exactly execute what keyboard "P" does: if paused then play and vice versa..to user's intend
    */
   public void togglePlayPause(){
-    if (playPauseButton.isPaused()) //start from the controls status and synchronize the users intend in play/pause if necessary
+    if (userHasPaused) //start from the controls status and synchronize the users intend in play/pause if necessary
       play();
     else
       pause();
@@ -275,7 +285,9 @@ public class PlayerControls extends VBox {
     playerViewer.play();
 
     userHasPaused=false;
-    KissPhoto.globalSettings.setProperty(PAUSED_ID,Boolean.toString(false));
+    syncPlayPauseMenuItems();
+    KissPhoto.globalSettings.setProperty(PAUSED_ID,Boolean.toString(userHasPaused));
+
     //note: the button synchronizes with the status of the player when the new status is reported as an event
   }
 
@@ -283,9 +295,10 @@ public class PlayerControls extends VBox {
    * user intends to pause media
    */
   public void pause(){
-    userHasPaused=true;
     playerViewer.pause();
-    KissPhoto.globalSettings.setProperty(PAUSED_ID,Boolean.toString(true));
+    userHasPaused=true;
+    syncPlayPauseMenuItems();
+    KissPhoto.globalSettings.setProperty(PAUSED_ID,Boolean.toString(userHasPaused));
 
     //if at the end of media the player might still report PLAYING (e.g.FX' media player)
     //so force to show pause state for button
@@ -295,6 +308,13 @@ public class PlayerControls extends VBox {
   }
 
   /**
+   * restart media by seeking position 0.0
+   * don't change paused state
+   */
+  public void rewind(){
+    playerViewer.seek(Duration.ZERO);
+  }
+  /**
    * set button status
    * @param newValue  true if playList Mode shall be active
    */
@@ -302,6 +322,7 @@ public class PlayerControls extends VBox {
     playListButton.setButtonValue(newValue);
     repeatButton.setButtonValue(isRepeatMode(),newValue);//adjust the tooltip repeat track/list
 
+    syncPlayListModeMenuItems();
     KissPhoto.globalSettings.setProperty(PLAYLIST_MODE_ID, Boolean.toString(newValue));
   }
   /**
@@ -311,6 +332,7 @@ public class PlayerControls extends VBox {
   public void setRepeatMode(boolean newValue){
     repeatButton.setButtonValue(newValue,isPlayListMode()); //don't change playlist mode
 
+    syncRepeatMenuItems();
     KissPhoto.globalSettings.setProperty(REPEAT_MODE_ID, Boolean.toString(newValue));
   }
 
@@ -400,32 +422,56 @@ public class PlayerControls extends VBox {
     }
   }
 
+  //------------- Sync menuItems with PlayerControls
   /**
-   * set the visible play pause button in Player controls to the according shape
-   *
-   * @param newValue status of the player
+   * register a menuItem to reflect the playPauseButton's state also in that menuItem
+   * @param playPauseMenuItem
    */
-  public void setPlayPausedButtonForPlayerStatus(MediaPlayer.Status newValue) {
-    switch (newValue) {
-      case PAUSED:
-      case READY:
-      case HALTED:
-      case STOPPED:
-        playPauseButton.setVisible(true);
-        playPauseButton.setPaused(true); //if paused then show play
-        break;
+  public void registerPlayPauseMenuItem(MenuItem playPauseMenuItem){
+    playPauseMenuItemList.add(playPauseMenuItem);
+  }
+  /**
+   * sync state of playPauseButton (or more exact the userHasPaused intend) with all registered menuItems
+   */
+  private void syncPlayPauseMenuItems(){
+    for (MenuItem item: playPauseMenuItemList){ //sync all registered menuItems
+      if (userHasPaused)
+        item.setText(language.getString("play")); //if paused menuItem can start play again
+      else
+        item.setText((language.getString("pause")));  //if playing then the menuItem can pause
 
-      case PLAYING:
-        playPauseButton.setVisible(true);
-        playPauseButton.setPaused(false); //if playing then show pause
-        break;
+    }
+    playPauseButton.setPaused(userHasPaused);
+  }
 
-      case STALLED:
-      case UNKNOWN:
-      case DISPOSED:
-      default:
-        playPauseButton.setVisible(false);
-        break;
+  /**
+   * register a menuItem to reflect the repeatButton's state also in that menuItem
+   * @param repeatMenuItem
+   */
+  public void registerRepeatMenuItem(CheckMenuItem repeatMenuItem){
+    repeatMenuItemList.add(repeatMenuItem);
+  }
+  /**
+   * sync state of repeatButton with all registered menuItems
+   */
+  private void syncRepeatMenuItems(){
+    for (CheckMenuItem item: repeatMenuItemList){ //sync all registered menuItems
+      item.setSelected(isRepeatMode());
+    }
+  }
+  /**
+   * register a menuItem to reflect the playListModeButton's state also in that menuItem
+   * @param playListModeMenuItem
+   */
+  public void registerPlayListModeMenuItem(CheckMenuItem playListModeMenuItem){
+    playListModeMenuItemList.add(playListModeMenuItem);
+  }
+  /**
+   * sync state of playListModeButton with all registered menuItems
+   */
+  private void syncPlayListModeMenuItems(){
+    for (CheckMenuItem item: playListModeMenuItemList){ //sync all registered menuItems
+      item.setSelected(isPlayListMode());
     }
   }
 

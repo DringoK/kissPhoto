@@ -12,6 +12,7 @@ import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 
+import static javafx.scene.media.MediaPlayer.Status;
 import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory.videoSurfaceForImageView;
 
 /**
@@ -36,10 +37,6 @@ import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactor
  */
 public class MovieViewerVLCJ extends PlayerViewer {
   //treat the VLCJ-mediaPlayer's status compatible to FX-mediaPlayer: use the FX-constants
-  protected final javafx.scene.media.MediaPlayer.Status PLAYING = javafx.scene.media.MediaPlayer.Status.PLAYING;
-  protected final javafx.scene.media.MediaPlayer.Status PAUSED = javafx.scene.media.MediaPlayer.Status.PAUSED;
-  protected final javafx.scene.media.MediaPlayer.Status STOPPED = javafx.scene.media.MediaPlayer.Status.STOPPED;
-  protected final javafx.scene.media.MediaPlayer.Status STALLED = javafx.scene.media.MediaPlayer.Status.STALLED; //i.e. reset
   protected MediaPlayerFactory mediaPlayerFactory = null; //prevent garbage collection by making also the factory a member (see vlcj docu)
   protected EmbeddedMediaPlayer mediaPlayer = null;
   protected ImageView mediaImageView;
@@ -47,7 +44,6 @@ public class MovieViewerVLCJ extends PlayerViewer {
   javafx.scene.media.MediaPlayer.Status playerStatus = javafx.scene.media.MediaPlayer.Status.UNKNOWN;
   boolean wasReset = false; //after calling resetPlayer() e.g. skipToNextOnAutoPlay() should not be used
   boolean repeatTrackWhenStopped = false; //flag set in rewindAndPlayWhenFinished to trigger restart in STOPPED-Event
-  private ViewportZoomer viewportZoomer;
   private boolean vlcAvailable;
 
   /**
@@ -81,27 +77,23 @@ public class MovieViewerVLCJ extends PlayerViewer {
         @Override
         public void playing(MediaPlayer mediaPlayer) {
           Platform.runLater(() -> {
-            playerStatus = PLAYING;
-            setPlayerStatusInAllMenues(PLAYING);
+            playerStatus = Status.PLAYING;
             finished = false;
           });
         }
 
         @Override
         public void paused(MediaPlayer mediaPlayer) {
-          Platform.runLater(() -> {
-            playerStatus = PAUSED;
-          });
+          Platform.runLater(() -> playerStatus = Status.PAUSED);
         }
 
         @Override
         public void stopped(MediaPlayer mediaPlayer) {
           Platform.runLater(() -> {
             if (wasReset)
-              playerStatus = STALLED;
+              playerStatus = Status.STALLED;
             else
-              playerStatus = STOPPED;
-            if (!finished) setPlayerStatusInAllMenues(STOPPED); //when not finished because stop will then not change the user intend-> do not reflect in GUI
+              playerStatus = Status.STOPPED;
 
             if (repeatTrackWhenStopped){     //see rewindAndPlayWhenFinished()
               play();
@@ -113,10 +105,9 @@ public class MovieViewerVLCJ extends PlayerViewer {
 
         @Override
         public void timeChanged(MediaPlayer mediaPlayer, long newTime) {
-          Platform.runLater(() -> {
-            playerControls.showProgress(new Duration(newTime));
-          });
+          Platform.runLater(() -> playerControls.showProgress(new Duration(newTime)));
         }
+
 
         @Override
         public void finished(MediaPlayer mediaPlayer) {
@@ -134,6 +125,7 @@ public class MovieViewerVLCJ extends PlayerViewer {
             mediaContentView.showPlayerError();
           });
         }
+
       });
 
 
@@ -157,9 +149,6 @@ public class MovieViewerVLCJ extends PlayerViewer {
       initPlayerContextMenu();
       viewportZoomer.addContextMenuItems(contextMenu);
       viewportZoomer.installContextMenu(mediaContentView, contextMenu);
-
-      installMouseHandlers();
-      installKeyboardHandlers();
 
     } catch (Exception e) {
       vlcAvailable = false;   //MovieViewerVLCJ is not usable e.g. if vlc is not installed on the system :-(
@@ -208,7 +197,7 @@ public class MovieViewerVLCJ extends PlayerViewer {
   public void resetPlayer() {
     if (!wasReset) { //prevent from double reset
       stop();
-      playerStatus = STALLED;
+      playerStatus = Status.STALLED;
       wasReset = true;
     }
   }
@@ -324,7 +313,7 @@ public class MovieViewerVLCJ extends PlayerViewer {
     }
   }
 
-  //----------------------- Implement ZoomableViewer Interface ----------------------------
+  //----------------------- Implement specific ZoomableViewer Interface ----------------------------
 
   @Override
   public Rectangle2D getViewport() {
@@ -361,62 +350,4 @@ public class MovieViewerVLCJ extends PlayerViewer {
   public double getFitHeight() {
     return mediaImageView.getFitHeight();
   }
-
-  @Override
-  public void installResizeHandler() {
-    prefWidthProperty().addListener((observable, oldValue, newValue) -> viewportZoomer.handleResize());
-    prefHeightProperty().addListener((observable, oldValue, newValue) -> viewportZoomer.handleResize());
-  }
-
-  @Override
-  public void zoomToFit() {
-    viewportZoomer.zoomToFit();
-  }
-
-  private void installMouseHandlers() {
-    setOnScroll(event -> {
-      boolean handled = viewportZoomer.handleMouseScroll(event);
-      if (handled) event.consume();
-    });
-    setOnMousePressed(event -> {
-      boolean handled = viewportZoomer.handleMousePressed(event);
-      handled = handleMousePressed(event) || handled; //inherited from PlayerViewer
-      if (handled) event.consume();
-    });
-
-    setOnMouseMoved(event -> {
-      boolean handled = handleMouseMoved(event); //inherited from PlayerViewer
-      if (handled) event.consume();
-    });
-    setOnMouseDragged(event -> {
-      boolean handled = viewportZoomer.handleMouseDragged(event);
-      handled = handleMouseDragged(event) || handled; //inherited from PlayerViewer
-      if (handled) event.consume();
-    });
-    setOnMouseReleased(event -> {
-      boolean handled = viewportZoomer.handleMouseReleased(event);
-      if (handled) event.consume();
-    });
-    setOnMouseClicked(event -> {
-      //clicks must only be handled by one class to perform only one action at a time
-      boolean handled = viewportZoomer.handleMouseClicked(event);
-      if (!handled) {
-        handled = handleMouseClicked(event);
-      } //inherited from PlayerViewer
-      if (handled) event.consume();
-    });
-
-  }
-
-  private void installKeyboardHandlers() {
-    setOnKeyPressed(event -> {
-      //keyboard clicks must only be handled by one class to perform only one action at a time
-      boolean handled = viewportZoomer.handleKeyPressed(event);
-      if (!handled) {
-        handleKeyPressed(event);
-      }     //inherited from PlayerViewer
-      if (handled) event.consume();
-    });
-  }
-
 }
