@@ -1,13 +1,13 @@
 package de.kissphoto.view.viewerHelpers.viewerButtons;
 
-import de.kissphoto.helper.I18Support;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
@@ -27,14 +27,11 @@ import java.util.ResourceBundle;
  * @version 2020-11-19 initial version
  */
 public class RepeatButton extends Group {
-  protected static ResourceBundle language = I18Support.languageBundle;
+  private final Rectangle buttonRect;
+  private final Tooltip tooltip = new Tooltip();
 
-  private Rectangle buttonRect;
-  private Node icon;
-  private Line strikeThrough;
-  private Tooltip tooltip = new Tooltip();
-
-  private boolean buttonValue = true;
+  private final SimpleBooleanProperty repeatMode = new SimpleBooleanProperty(true);
+  private final SimpleBooleanProperty playListMode = new SimpleBooleanProperty(true); //to be bound to the PlayListBtn of the same PlayerControls for better ToolTip-Texts
 
   /**
    * @param size  the width and height of the button
@@ -44,19 +41,24 @@ public class RepeatButton extends Group {
     final double ICON_SIZE = size*4/5;
 
     buttonRect = new Rectangle(size, size, backgroundColor); //this rect is used as the clicking area for mouse control. It will be invisible (background-color)
-    icon = createIcon(ICON_SIZE, iconColor);
+    Node icon = createIcon(ICON_SIZE, iconColor);
 
-    strikeThrough = new Line(0, 0, ICON_SIZE, ICON_SIZE);
+    Line strikeThrough = new Line(0, 0, ICON_SIZE, ICON_SIZE);
     strikeThrough.setStrokeWidth(ICON_SIZE/13*2);
     strikeThrough.setStroke(iconColor);
     //center
     strikeThrough.setTranslateX((buttonRect.getWidth() - ICON_SIZE) / 2);
     strikeThrough.setTranslateY((buttonRect.getHeight() - ICON_SIZE) / 2);
 
-    setButtonValue(true, true);
-
     Tooltip.install(buttonRect, tooltip);
     getChildren().addAll(buttonRect, icon, strikeThrough);
+
+    strikeThrough.visibleProperty().bind(repeatMode.not()); //Strike Through if not repeatMode
+    repeatMode.addListener((observable, oldValue, newValue) -> setTooltipText());
+    playListMode.addListener((observable, oldValue, newValue) -> setTooltipText());
+
+    setRepeatMode(true);
+
   }
 
   /**
@@ -82,10 +84,9 @@ public class RepeatButton extends Group {
 
      Polygon topHead = new Polygon();  //arrowhead
      //build it in the origin because it must start with 0.0, 0.0
-     topHead.getPoints().addAll(new Double[]{
-       0.0, 0.0,        //top (left) corner of the triangle
+     topHead.getPoints().addAll(0.0, 0.0,        //top (left) corner of the triangle
        0.0, 6 * GRID,
-       4 * GRID, 3 * GRID});
+       4 * GRID, 3 * GRID);
      topHead.setTranslateX(9 * GRID);
      topHead.setTranslateY(0 * GRID);
      topHead.setFill(iconColor);
@@ -101,10 +102,9 @@ public class RepeatButton extends Group {
 
      Polygon bottomHead = new Polygon();  //arrowhead
      //build it in the origin because it must start with 0.0, 0.0
-     bottomHead.getPoints().addAll(new Double[]{
-       0.0, 0.0,        //top (right) corner of the triangle
+     bottomHead.getPoints().addAll(0.0, 0.0,        //top (right) corner of the triangle
        0.0, 6 * GRID,
-       -4 * GRID, 3 * GRID});
+       -4 * GRID, 3 * GRID);
      bottomHead.setTranslateX(4 * GRID);
      bottomHead.setTranslateY(7 * GRID);
      bottomHead.setFill(iconColor);
@@ -124,28 +124,33 @@ public class RepeatButton extends Group {
    * and the tooltip text
    *
    * @param repeatMode    false = strikeThrough
-   * @param playListMode  tooltipp text is "repeat mediaFile" or "repeat list"
    */
-  public void setButtonValue(boolean repeatMode, boolean playListMode){
-    strikeThrough.setVisible(!repeatMode);
-    buttonValue = repeatMode;
-    if (repeatMode) {
-      if (playListMode)
+  public void setRepeatMode(boolean repeatMode){
+    this.repeatMode.set(repeatMode);
+  }
+
+  private void setTooltipText(){
+    if (repeatMode.get()) {
+      if (playListMode.get())
         tooltip.setText(language.getString("repeat.list"));
       else
         tooltip.setText(language.getString("repeat.current.media.file"));
     }else{
-      if (playListMode)
+      if (playListMode.get())
         tooltip.setText(language.getString("don.t.repeat.play.list.once"));
       else
         tooltip.setText(language.getString("don.t.repeat.play.current.media.once"));
     }
-
   }
 
-  public boolean getButtonValue(){
-    return buttonValue;
+  public boolean isRepeatMode(){
+    return repeatMode.get();
   }
+
+  //for binding with menues and fullscreen PlayerControl
+  public SimpleBooleanProperty repeatModeProperty(){return repeatMode;}
+  //for binding with the PlayListButton of the same PlayerControl for better toolTip-Texts
+  public SimpleBooleanProperty playListModeProperty(){return playListMode;}
 
   public double getWidth() {
     return buttonRect.getWidth();

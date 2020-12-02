@@ -4,9 +4,9 @@ import de.kissphoto.KissPhoto;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.mediaViewers.*;
 import de.kissphoto.view.viewerHelpers.PlayerControls;
-import de.kissphoto.view.viewerHelpers.PlayerViewer;
 import de.kissphoto.view.viewerHelpers.RotatablePaneLayouter;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -34,14 +34,15 @@ import static de.kissphoto.KissPhoto.language;
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
  * This is the Pane where visible Media (photo, video) is shown<br>
- * It is a JavaFX-Pane which contains the links between the primaryWindow and fullScreenWindow<br>
+ * It is a JavaFX-Pane which contains the links between the primary contentView and a secondary contentView (=fullScreenWindow)<br>
  * and all mediaViewers (Photo, Player, Other/None)<br>
+ * The secondary contentView exists as soon as fullScreen has been activated for the fist time and is made visible/invisible from that on<br>
  * <br>
  * Here the strategy is implemented for selecting the compatible viewer (see setMedia() )
  * <p/>
  *
  * @author Dr. Ingo Kreuz
- * @version 2020-11-02 change viewer strategy: every viewer decides by it's own if it is compatible with the media
+ * @version 2020-11-02 change viewer strategy: every viewer decides by it's own if it is compatible with the media. FullScreen Stage is now a singleton to save memory
  */
 public class MediaContentView extends Pane {
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
@@ -55,8 +56,9 @@ public class MediaContentView extends Pane {
   private FileTableView fileTableView = null; //optional link to the fileTableView connected with this MediaContentView (for selecting pictures while focus is in MediaContentView
 
   private final Stage owner; //normal mediaContentView is in the primary stage, full-Screen MediaContentView is in a dialog-stage which is in fullScreenMode
-  private FullScreenStage fullScreenStage = null; //this stage is used (!=null) if showFullScreen() has been called. It again has a mediaContentView
-  private MediaContentView primaryMediaContentView = null; //in full screen mode only: link to the mediaContentView of the primary stage
+
+  private FullScreenStage fullScreenStage = null; //in primary content view: link to secondary mediaContentView (fullscreen)
+  private MediaContentView primaryMediaContentView = null; //in full screen content view only: link to the mediaContentView of the primary stage
 
   StackPane mediaStackPane = new StackPane(); //the viewers lie one above the other, so fading will (in future) be possible even from photo to video clip ...
   private PhotoViewer photoViewer;
@@ -68,6 +70,10 @@ public class MediaContentView extends Pane {
 
   private MediaFile lastMediaFileBoundtoProgress = null;
   private ChangeListener<Number> lastListener = null;
+
+  //Main-Menu connects "enabled" of the Player-/Image Menu with these Properties
+  private final SimpleBooleanProperty isPlayerActive = new SimpleBooleanProperty(false);
+  private final SimpleBooleanProperty isImageActive = new SimpleBooleanProperty(false);
 
   /**
    * constructor
@@ -276,32 +282,40 @@ public class MediaContentView extends Pane {
     else mediaStackPane.setScaleY(1);
 
     //maintain the fullScreenStage's media also, if it is displayed currently
-    if (fullScreenStage != null && fullScreenStage.isShowing()) {
+    if (hasActiveFullScreenMediaContentView()) {
       fullScreenStage.getMediaContentView().showRotationAndFlippingPreview();
     }
-
   }
 
   /**
-   * mainContentView: there is no FullScreen Window or this is the FullScreen Window
-   * secondaryView: there is a FullScreen Window but this is not the FullScreen Window
+   * @return true if this is the primaryContentView view with an active secondary fullScreen contentView
+   */
+  public boolean hasActiveFullScreenMediaContentView() {
+    return (fullScreenStage != null) && fullScreenStage.isShowing();
+  }
+
+  /**
+   * the main ContentView controls the decision which viewer to take and contains the active player<br>
+   * the primary ContentView is main ContentView if there is no active FullScreen Window<br>
+   * the secondaryContentView is the main ContentView if it is active<br>
    *
-   * @return true, if this is a main ContentView, false if secondary
+   * @return true, if this is a main ContentView which contains the active player and controls the decision about the viewer
    */
   public boolean isMainMediaContentView() {
-    return (fullScreenStage == null);
+    return (!hasActiveFullScreenMediaContentView());
   }
 
   /**
    * fullScreenStage has no fullscreen stage again but a primaryMediaContentView
-   * fullScreenStage is the mainContentView if it exists
-   * if no fullScreenStage exists the primaryMediaContentView is the main ContentView but not a fullScreen Stage
+   * fullScreenStage is the mainContentView if it is active
+   * if fullScreenStage is not active the primaryMediaContentView is the main ContentView but not a fullScreen Stage
    *
    * @return true if this contentView is in a fullScreenStage
    */
   public boolean isFullScreenMediaContentView() {
     return (primaryMediaContentView != null);
   }
+
 
   /**
    * When setMedia has found a compatible viewer for the main MediaContentView it calls this routine<br>
@@ -339,7 +353,7 @@ public class MediaContentView extends Pane {
    * <br>
    * If the mediaFile is already showing nothing happens to suppress multiple calls due to events while building the GUI during start-up<br>
    * <br>
-   * If this is the main mediaContentView (i.e. the only one or the fullscreen) then
+   * If this is the main mediaContentView (i.e. the only one or the fullscreen = the controlling window which also contains the active player) then
    * find the suitable viewer by trying one after the other until a suitable viewer is found.
    * Note: at least the "OtherViewer" will fits in the end
    * when the compatible viewer has been found it is activated on the main mediaContentView and synchronized with the other views by activating the same viewer there<br>
@@ -416,6 +430,9 @@ public class MediaContentView extends Pane {
   }
 
   private void activatePlayerViewer() {
+    isImageActive.set(false);
+    isPlayerActive.set(true);
+
     photoViewer.setVisible(false);
     playerViewer.setVisible(true);
     otherViewer.setVisible(false);
@@ -425,6 +442,9 @@ public class MediaContentView extends Pane {
   }
 
   private void activatePhotoViewer() {
+    isImageActive.set(true);
+    isPlayerActive.set(false);
+
     photoViewer.setVisible(true);
     playerViewer.setVisible(false);
     otherViewer.setVisible(false);
@@ -442,8 +462,11 @@ public class MediaContentView extends Pane {
    * If VLC is not currently used a hint is added, that VLC should be installed to support more media file formats
    */
   public void activateOtherMediaViewer() {
+    isImageActive.set(false);
+    isPlayerActive.set(false);
+
     if (playerViewer instanceof MovieViewerVLCJ)
-      activateOtherMediaViewer(true, "");   //no vlc installtion hint
+      activateOtherMediaViewer(true, "");   //no vlc installation hint
     else
       //if vlc is not installed than add a hint
       activateOtherMediaViewer(true, language.getString("to.support.more.file.formats.install.the.free.vlc.player.from.videolan.on.your.system.kissphoto.will.detect.and.use.it"));
@@ -456,6 +479,9 @@ public class MediaContentView extends Pane {
    * @param additionalMessage  extra information in a second line, or nothing if "" or null is provided
    */
   public void activateOtherMediaViewer(boolean mainMessageVisible, String additionalMessage) {
+    isImageActive.set(false);
+    isPlayerActive.set(false);
+
     otherViewer.setMainMessageVisable(mainMessageVisible);
     otherViewer.setAdditionalMessage(additionalMessage);
 
@@ -466,6 +492,9 @@ public class MediaContentView extends Pane {
   }
 
   public void activatePlayerOnOtherScreenHint() {
+    isImageActive.set(false);
+    isPlayerActive.set(true);
+
     otherViewer.setMainMessageVisable(false);
     otherViewer.setAdditionalMessage(language.getString("media.file.is.being.played.in.fullscreen.window"));
 
@@ -474,6 +503,9 @@ public class MediaContentView extends Pane {
     otherViewer.setVisible(true);
 
   }
+  //make Properties bindable e.g. in Main-Menu
+  public SimpleBooleanProperty getIsPlayerActive(){return isPlayerActive;}
+  public SimpleBooleanProperty getIsImageActive(){return isImageActive;}
 
   private void stopAllActivePlayers() {
     //reset all probably playing players
@@ -695,16 +727,29 @@ public class MediaContentView extends Pane {
    * Any Players will be stopped in main window, but the position is handed over into full screen
    */
   public void showFullScreen() {
-    if (!isFullScreenMediaContentView() && fullScreenStage == null) { //only if not already in fullScreen-Mode
+    if (!isFullScreenMediaContentView() && !hasActiveFullScreenMediaContentView()) { //only the primary window and not already fullScreen-Mode active
 
       Duration currentPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
 
+      System.out.println("showFullScreen. playerViewer="+playerViewer + "  visible="+playerViewer.isVisible());
       if (playerViewer.isVisible()) {
         currentPlayerPosition = playerViewer.getCurrentTime();
         playerViewer.resetPlayer(); //stop playback if running, because it will be started full screen
+        System.out.println("showFullScreen.resetPlayer");
       }
 
-      fullScreenStage = new FullScreenStage(this, currentPlayerPosition); //use a new mediaContentView for fullScreen and link to "this" =normal view
+      //Singleton: only build it once and only when needed for the first time otherwise reuse
+      if (fullScreenStage==null){
+        fullScreenStage = new FullScreenStage(this); //use a new mediaContentView for fullScreen and link to "this" =normal view
+        //bind controls together
+        playerViewer.getPlayerControls().bindBidirectionalPlayPauseButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getPlayPauseButton());
+        playerViewer.getPlayerControls().bindBidirectionalPlaylistModeButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getPlaylistButton());
+        playerViewer.getPlayerControls().bindBidirectionalRepeatButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getRepeatButton());
+        //getAttrViewer().copyState(primaryMediaContentView.getAttrViewer());
+      }else{
+        fullScreenStage.getMediaContentView().currentMediaFile = null; //reset it, so that setMedia detects a change and will set/start it again
+      }
+
       fullScreenStage.mediaContentView.getAttrViewer().copyState(attrViewer); //synchronize normal and full screen attributesViewers
 
       //enabling/disabling of fullScreen items in all context menus (of all viewers)
@@ -715,6 +760,7 @@ public class MediaContentView extends Pane {
       for (MenuItem item : showOnNextScreenItems) item.setDisable(false);
 
       fullScreenStage.show();
+      fullScreenStage.getMediaContentView().setMedia(getCurrentMediaFile(), currentPlayerPosition);       //and start playing, if player was active
     }
   }
 
@@ -722,18 +768,23 @@ public class MediaContentView extends Pane {
     Duration fullScreenPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
 
     //only if in fullScreen-Mode (seen from the main window's view)
-    if (fullScreenStage != null) {
+    if (hasActiveFullScreenMediaContentView()) {
+      //unbind controls
+      //playerViewer.getPlayerControls().unbindBidirectionalPlayPauseButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getPlayPauseButton());
+      //playerViewer.getPlayerControls().unbindBidirectionalPlaylistModeButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getPlaylistButton());
+      //playerViewer.getPlayerControls().unbindBidirectionalRepeatButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getRepeatButton());
+
       attrViewer.copyState(fullScreenStage.mediaContentView.getAttrViewer()); //synchronize normal and full screen attributesViewers
       if (fullScreenStage.mediaContentView.getPlayerViewer() != null && fullScreenStage.mediaContentView.getPlayerViewer().isVisible()) {
         fullScreenPlayerPosition = fullScreenStage.getMediaContentView().getPlayerViewer().getCurrentTime();
         fullScreenStage.mediaContentView.getPlayerViewer().resetPlayer();
       }
       fullScreenStage.close();
-      fullScreenStage.getMediaContentView().cleanUp();
-      fullScreenStage = null;
+      //fullScreenStage.getMediaContentView().cleanUp();
+      //fullScreenStage = null;
 
       MediaFile mediaFile = currentMediaFile; //save it
-      currentMediaFile = null; //reset it, so that setMedia will have an effect, otherwise re-setting it would be prevented
+      currentMediaFile = null; //reset it, so that setMedia will have an effect, otherwise re-setting would be prevented
       setMedia(mediaFile, fullScreenPlayerPosition); //sync normal view with previous full screen view, restore currentMediaFile
 
       //enabling/disabling of fullScreen items in all context menus (of all viewers)
@@ -752,15 +803,17 @@ public class MediaContentView extends Pane {
   }
 
   public void toggleFullScreenAndNormal() {
-    if (fullScreenStage == null && !owner.isFullScreen()) { //only if not already in fullScreen-Mode
+    if (isFullScreenMediaContentView() || hasActiveFullScreenMediaContentView()) {
+      //if fullscreen acitve --> end it
+      endFullScreen();
+      if (fileTableView != null) fileTableView.getStatusBar().clearMessage();
+    } else {
+      //start it
       showFullScreen();
       showFullScreenOnNextScreen(true); //if multiple screens are available use the "next" initially
       //note: fileTableView = null if in UnDeleteDialog (i.e. no progressBar)
       if (fileTableView != null)
         fileTableView.getStatusBar().showMessage(language.getString("esc.to.end.full.screen.tab.to.shift.full.screen.panel.between.screens"));
-    } else {
-      endFullScreen();
-      if (fileTableView != null) fileTableView.getStatusBar().clearMessage();
     }
   }
 
@@ -932,5 +985,11 @@ public class MediaContentView extends Pane {
         mediaContentView.clearProgress();
     }
 
+  }
+  public MediaContentView getFullScreenMediaContentView() {
+    if (fullScreenStage!=null)
+      return fullScreenStage.getMediaContentView();
+    else
+      return null;
   }
 }

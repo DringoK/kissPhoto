@@ -1,22 +1,18 @@
 package de.kissphoto.view.viewerHelpers;
 
 import de.kissphoto.KissPhoto;
+import de.kissphoto.view.MediaContentView;
+import de.kissphoto.view.mediaViewers.PlayerViewer;
 import de.kissphoto.view.viewerHelpers.viewerButtons.BurgerMenuButton;
 import de.kissphoto.view.viewerHelpers.viewerButtons.PlayListButton;
 import de.kissphoto.view.viewerHelpers.viewerButtons.PlayPauseButton;
 import de.kissphoto.view.viewerHelpers.viewerButtons.RepeatButton;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -55,27 +51,21 @@ import static de.kissphoto.KissPhoto.language;
  * Note: it will be added into PlayerViewers(StackPane) and therefore will be bound to the PlayerViewers size
  *
  * @author Dr. Ingo Kreuz
- * @since  2014-07-18
- * @version 2020-11-22 bug fixing event handling + Keep it visible while mouse is in control area, added burger menu + repeat icon + Playlist icon
- * @version 2020-10-25 using new interface of PlayerViewer avoiding direct access to MediaPlayer (because FX and VLC implementation are different)
- * @version 2017-10-21 play/pause-symbol synchronized with player state
  * @version 2017-10-08 longer showing the Player, higher player
+ * @since 2014-07-18
  */
 
 public class PlayerControls extends VBox {
-  private boolean userHasPaused=false;  //reflects the intend of the user, PlayButton reflects the status of the player
-
   private HBox controlArea;
   private HBox optionArea;
-  private PlayerViewer playerViewer;
+  private final PlayerViewer playerViewer;
 
   private PlayPauseButton playPauseButton;
   private Slider progressSlider;
   private Text progressText;
   private Duration totalDuration;   //of the current media in playerViewer, used for scrollbar scaling and progressText
-  private BurgerMenuButton burgerMenuButton;
 
-  private PlayListButton playListButton;
+  private PlayListButton playlistButton;
   private RepeatButton repeatButton;
 
   private PlayerControlsHiderThread playerControlsHiderThread;
@@ -98,16 +88,11 @@ public class PlayerControls extends VBox {
   private static final double OPTION_AREA_HEIGHT = 20;
   private static final double OPTIONS_SIZE = 17;
 
-  //-------------- Sync with Menues
-  ObservableList<MenuItem> playPauseMenuItemList = FXCollections.observableArrayList();
-  ObservableList<CheckMenuItem> repeatMenuItemList = FXCollections.observableArrayList();
-  ObservableList<CheckMenuItem> playListModeMenuItemList = FXCollections.observableArrayList();
-
   /**
+   * create a player control and connect it to a MediaPlayer
    * @param viewer to show in
-   * @constructor create a player control and connect it to a MediaPlayer
    */
-  PlayerControls(PlayerViewer viewer) {
+  public PlayerControls(PlayerViewer viewer) {
     //setStyle("-fx-background-color: blue;");
     //setOpacity(0.5);
 
@@ -117,9 +102,10 @@ public class PlayerControls extends VBox {
     createOptionArea();
 
     //default values (not using set...Mode(), because they overwrite the settings)
+    repeatButton.playListModeProperty().bind(playlistButton.playListModeProperty()); //keep playListMode synced for repeat and playlistbutton for better Tooltips (see RepeatButton.setTooltipText())
+    playlistButton.setPlayListMode(true);
+    repeatButton.setRepeatMode(false);
     playPauseButton.setPaused(false); //if playing then show pause
-    repeatButton.setButtonValue(false, true);
-    playListButton.setButtonValue(true);
     //then try to load the last values
     restoreLastPlayerStatus();
 
@@ -133,23 +119,19 @@ public class PlayerControls extends VBox {
       mouseEvent.consume();   //if no control in the playerControl has consumed the event yet, do not let go through, preventing playerViewer to interfere with play/pause there
     });
 
-    controlArea.setOnMouseEntered(mouseEvent->{
+    controlArea.setOnMouseEntered(mouseEvent -> {
       setVisible(true);
       playerControlsHiderThread.pause();
 
     });
-    controlArea.setOnMouseExited(mouseEvent->{
-      playerControlsHiderThread.resume();
-    });
+    controlArea.setOnMouseExited(mouseEvent -> playerControlsHiderThread.resume());
 
-    optionArea.setOnMouseEntered(mouseEvent->{
+    optionArea.setOnMouseEntered(mouseEvent -> {
       setVisible(true);
       playerControlsHiderThread.pause();
 
     });
-    optionArea.setOnMouseExited(mouseEvent->{
-      playerControlsHiderThread.resume();
-    });
+    optionArea.setOnMouseExited(mouseEvent -> playerControlsHiderThread.resume());
 
 
     //toggle play/pause to user's intend
@@ -171,13 +153,13 @@ public class PlayerControls extends VBox {
     controlArea.setPrefHeight(CONTROL_AREA_HEIGHT);
     controlArea.prefWidthProperty().bind(widthProperty());
     controlArea.setAlignment(Pos.CENTER_RIGHT);
-    controlArea.setPadding(new Insets(0, PADDING, 0,PADDING)); //only left/right, because top/bottom regulated by Pos.CENTER
+    controlArea.setPadding(new Insets(0, PADDING, 0, PADDING)); //only left/right, because top/bottom regulated by Pos.CENTER
 
     //----------- build controls ---------------------
     playPauseButton = new PlayPauseButton(BUTTON_SIZE, BACKGROUND_COLOR, ICON_COLOR);
-    burgerMenuButton = new BurgerMenuButton(BUTTON_SIZE, BACKGROUND_COLOR, ICON_COLOR);
-    burgerMenuButton.setOnMouseClicked((mouseEvent)->{
-      playerViewer.contextMenu.show(playerViewer, mouseEvent.getScreenX(),mouseEvent.getScreenY());
+    BurgerMenuButton burgerMenuButton = new BurgerMenuButton(BUTTON_SIZE, BACKGROUND_COLOR, ICON_COLOR);
+    burgerMenuButton.setOnMouseClicked((mouseEvent) -> {
+      playerViewer.getContextMenu().show(playerViewer, mouseEvent.getScreenX(), mouseEvent.getScreenY());
       mouseEvent.consume();
     });
 
@@ -185,7 +167,7 @@ public class PlayerControls extends VBox {
     progressText = new Text();
     progressText.setFill(Color.WHITE);
 
-    Rectangle spaceBeforeBurgerMenu = new Rectangle(BUTTON_SIZE/2, BUTTON_SIZE, BACKGROUND_COLOR);
+    Rectangle spaceBeforeBurgerMenu = new Rectangle(BUTTON_SIZE / 2, BUTTON_SIZE, BACKGROUND_COLOR);
 
     progressSlider = createSlider();
     progressSlider.prefWidthProperty().bind(controlArea.prefWidthProperty());  //try to use as much space as possible of the controlArea for the progress Slider
@@ -194,6 +176,7 @@ public class PlayerControls extends VBox {
 
     controlArea.setCursor(Cursor.DEFAULT);
   }
+
   private void createOptionArea() {
     optionArea = new HBox();
 
@@ -202,23 +185,23 @@ public class PlayerControls extends VBox {
     optionArea.setPrefHeight(OPTION_AREA_HEIGHT);
     optionArea.prefWidthProperty().bind(widthProperty());
     optionArea.setAlignment(Pos.CENTER);
-    optionArea.setPadding(new Insets(0, PADDING, 0,PADDING)); //only left/right, because top/bottom regulated by Pos.CENTER
-    optionArea.setSpacing(PADDING/2);
+    optionArea.setPadding(new Insets(0, PADDING, 0, PADDING)); //only left/right, because top/bottom regulated by Pos.CENTER
+    optionArea.setSpacing(PADDING / 2);
 
     //----------- build controls ---------------------
-    playListButton = new PlayListButton(OPTIONS_SIZE, BACKGROUND_COLOR, ICON_COLOR);
-    playListButton.setOnMouseClicked((mouseEvent)->{
+    playlistButton = new PlayListButton(OPTIONS_SIZE, BACKGROUND_COLOR, ICON_COLOR);
+    playlistButton.setOnMouseClicked((mouseEvent) -> {
       setPlayListMode(!isPlayListMode());
       mouseEvent.consume();
     });
 
     repeatButton = new RepeatButton(OPTIONS_SIZE, BACKGROUND_COLOR, ICON_COLOR);
-    repeatButton.setOnMouseClicked((mouseEvent)->{
+    repeatButton.setOnMouseClicked((mouseEvent) -> {
       setRepeatMode(!isRepeatMode());
       mouseEvent.consume();
     });
 
-    optionArea.getChildren().addAll(playListButton, repeatButton);
+    optionArea.getChildren().addAll(playlistButton, repeatButton);
 
     optionArea.setCursor(Cursor.DEFAULT);
   }
@@ -230,63 +213,74 @@ public class PlayerControls extends VBox {
    */
   private void restoreLastPlayerStatus() {
     try {
-      setPlayListMode(Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(PLAYLIST_MODE_ID)) );
-    } catch (Exception ignored) {}//if not loadable keep default value)
-    syncPlayListModeMenuItems();
+      setPlayListMode(Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(PLAYLIST_MODE_ID)));
+    } catch (Exception ignored) {
+    }//if not loadable keep default value)
 
     try {
-      setRepeatMode(Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(REPEAT_MODE_ID)) );
-    } catch (Exception ignored) {}//if not loadable keep default value)
-    syncRepeatMenuItems();
+      setRepeatMode(Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(REPEAT_MODE_ID)));
+    } catch (Exception ignored) {
+    }//if not loadable keep default value)
 
     try {
-      userHasPaused = Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(PAUSED_ID)) ;
-    } catch (Exception ignored) {}//if not loadable keep default value)
-    syncPlayPauseMenuItems();
+      playPauseButton.pausedProperty().set(Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(PAUSED_ID)));
+    } catch (Exception ignored) {
+    }//if not loadable keep default value)
   }
-    /**
-     * report button status
-     * @return true if playList Mode is active
-     */
-  public boolean isPlayListMode(){
-    return playListButton.getButtonValue();
-  }
+
   /**
    * report button status
+   *
+   * @return true if playList Mode is active
+   */
+  public boolean isPlayListMode() {
+    return playlistButton.isPlayListMode();
+  }
+
+  /**
+   * report button status
+   *
    * @return true if Repeat Mode is active
    */
-  public boolean isRepeatMode(){
-    return repeatButton.getButtonValue();
+  public boolean isRepeatMode() {
+    return repeatButton.isRepeatMode();
   }
 
   /**
    * user's intend
+   *
    * @return true if user intended to pause media
    */
-  public boolean isUserHasPaused(){
-    return userHasPaused;
+  public boolean isUserHasPaused() {
+    return playPauseButton.pausedProperty().get();
   }
 
   /**
    * exactly execute what keyboard "P" does: if paused then play and vice versa..to user's intend
+   * if this is the primary ContentView's Player and a secondary (FullScreen) Content View is active then forward this call to the FullScreen's player
    */
-  public void togglePlayPause(){
-    if (userHasPaused) //start from the controls status and synchronize the users intend in play/pause if necessary
-      play();
-    else
-      pause();
-    //note: the button synchronizes with the status of the player when the new status is reported as an event
+  public void togglePlayPause() {
+    MediaContentView myMediaContentView = playerViewer.getMediaContentView();
+
+    if (myMediaContentView.hasActiveFullScreenMediaContentView()){
+      myMediaContentView.getFullScreenMediaContentView().getPlayerViewer().getPlayerControls().togglePlayPause();
+    }else {
+      if (playPauseButton.pausedProperty().get()) //start from the controls status and synchronize the users intend in play/pause if necessary
+        play();
+      else
+        pause();
+      //note: the button synchronizes with the status of the player when the new status is reported as an event
+    }
   }
 
   /**
    * user intends to start media
    */
-  public void play(){
+  public void play() {
     playerViewer.play();
 
-    userHasPaused=false;
-    syncPlayPauseMenuItems();
-    KissPhoto.globalSettings.setProperty(PAUSED_ID,Boolean.toString(userHasPaused));
+    playPauseButton.pausedProperty().set(false);
+    KissPhoto.globalSettings.setProperty(PAUSED_ID, playPauseButton.pausedProperty().toString());
 
     //note: the button synchronizes with the status of the player when the new status is reported as an event
   }
@@ -294,11 +288,10 @@ public class PlayerControls extends VBox {
   /**
    * user intends to pause media
    */
-  public void pause(){
+  public void pause() {
     playerViewer.pause();
-    userHasPaused=true;
-    syncPlayPauseMenuItems();
-    KissPhoto.globalSettings.setProperty(PAUSED_ID,Boolean.toString(userHasPaused));
+    playPauseButton.pausedProperty().set(true);
+    KissPhoto.globalSettings.setProperty(PAUSED_ID, playPauseButton.pausedProperty().toString());
 
     //if at the end of media the player might still report PLAYING (e.g.FX' media player)
     //so force to show pause state for button
@@ -311,28 +304,25 @@ public class PlayerControls extends VBox {
    * restart media by seeking position 0.0
    * don't change paused state
    */
-  public void rewind(){
+  public void rewind() {
     playerViewer.seek(Duration.ZERO);
   }
+
   /**
    * set button status
-   * @param newValue  true if playList Mode shall be active
+   *
+   * @param newValue true if playList Mode shall be active
    */
-  public void setPlayListMode(boolean newValue){
-    playListButton.setButtonValue(newValue);
-    repeatButton.setButtonValue(isRepeatMode(),newValue);//adjust the tooltip repeat track/list
-
-    syncPlayListModeMenuItems();
+  public void setPlayListMode(boolean newValue) {
+    playlistButton.setPlayListMode(newValue);
     KissPhoto.globalSettings.setProperty(PLAYLIST_MODE_ID, Boolean.toString(newValue));
   }
+
   /**
    * set button status
-   * @return true if playList Mode is active
    */
-  public void setRepeatMode(boolean newValue){
-    repeatButton.setButtonValue(newValue,isPlayListMode()); //don't change playlist mode
-
-    syncRepeatMenuItems();
+  public void setRepeatMode(boolean newValue) {
+    repeatButton.setRepeatMode(newValue); //don't change playlist mode
     KissPhoto.globalSettings.setProperty(REPEAT_MODE_ID, Boolean.toString(newValue));
   }
 
@@ -352,23 +342,18 @@ public class PlayerControls extends VBox {
     slider.setSnapToTicks(false);
 
     //click needs initiate player.seek which again moves the slider to the clicked position
-    slider.setOnMouseClicked(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        //max -> width
-        //pos -> x
-        double pos = slider.getMax() / slider.getWidth() * mouseEvent.getX();
-        playerViewer.seek(new Duration(pos));
-        mouseEvent.consume();
-      }
+    slider.setOnMouseClicked(mouseEvent -> {
+      //max -> width
+      //pos -> x
+      double pos = slider.getMax() / slider.getWidth() * mouseEvent.getX();
+      playerViewer.seek(new Duration(pos));
+      mouseEvent.consume();
     });
 
     //Slider has been dragged with mouse
-    slider.valueProperty().addListener(new InvalidationListener() {
-      public void invalidated(Observable ov) {
-        if (slider.isValueChanging()) {
-          playerViewer.seek(new Duration(slider.getValue()));
-        }
+    slider.valueProperty().addListener(ov -> {
+      if (slider.isValueChanging()) {
+        playerViewer.seek(new Duration(slider.getValue()));
       }
     });
 
@@ -380,18 +365,18 @@ public class PlayerControls extends VBox {
    * to update the scale of the slider
    */
   public void setSliderScaling(Duration totalDuration) {
-    if ((totalDuration != null) && (totalDuration.toMillis()>0)) {
+    if ((totalDuration != null) && (totalDuration.toMillis() > 0)) {
       progressSlider.setMax(totalDuration.toMillis());
       progressSlider.setBlockIncrement(totalDuration.toMillis() / 10);
       this.totalDuration = totalDuration;
-    }else{
+    } else {
       this.totalDuration = Duration.ZERO;
     }
   }
 
   // update slider as video is progressing if totalDuration and currentPos are valid
   public void showProgress(Duration currentPos) {
-    if (currentPos!=null && totalDuration!=null) {
+    if (currentPos != null && totalDuration != null) {
       progressSlider.setValue(currentPos.toMillis());
       progressText.setText(String.format("%s/%s", formatTime(currentPos), formatTime(totalDuration)));
     }
@@ -423,66 +408,95 @@ public class PlayerControls extends VBox {
   }
 
   //------------- Sync menuItems with PlayerControls
+
   /**
    * register a menuItem to reflect the playPauseButton's state also in that menuItem
-   * @param playPauseMenuItem
+   *
+   * @param playPauseMenuItem the menu to be registered
    */
-  public void registerPlayPauseMenuItem(MenuItem playPauseMenuItem){
-    playPauseMenuItemList.add(playPauseMenuItem);
+  public void bindPlayPauseMenuItem(MenuItem playPauseMenuItem) {
+    playPauseButton.pausedProperty().addListener((observable, oldValue, newValue) -> syncPlayPauseMenuItemText(playPauseMenuItem));
   }
   /**
-   * sync state of playPauseButton (or more exact the userHasPaused intend) with all registered menuItems
+   * bind/unbind another otherPlayPauseButton to reflect the otherPlayPauseButton's state also in that other playerControl
+   * used to Sync FullScreen-Mode
+   *
+   * @param otherPlayPauseButton the button to be snyced
    */
-  private void syncPlayPauseMenuItems(){
-    for (MenuItem item: playPauseMenuItemList){ //sync all registered menuItems
-      if (userHasPaused)
-        item.setText(language.getString("play")); //if paused menuItem can start play again
-      else
-        item.setText((language.getString("pause")));  //if playing then the menuItem can pause
+  public void bindBidirectionalPlayPauseButtons(PlayPauseButton otherPlayPauseButton) {
+    playPauseButton.pausedProperty().bindBidirectional(otherPlayPauseButton.pausedProperty());
+  }
+  public void unbindBidirectionalPlayPauseButtons(PlayPauseButton otherPlayPauseButton){
+    playPauseButton.pausedProperty().unbindBidirectional(otherPlayPauseButton.pausedProperty());
+  }
+  public PlayPauseButton getPlayPauseButton() {return playPauseButton;}
 
-    }
-    playPauseButton.setPaused(userHasPaused);
+  /**
+   * sync state of playPauseButton (or more exact the userHasPaused intend) with all registered menuItems
+   * if this is the fullScreenContentViews PlayerControl send sync to primaryPlayerControl
+   */
+  protected void syncPlayPauseMenuItemText(MenuItem item) {
+        if (playPauseButton.pausedProperty().get())
+          item.setText(language.getString("play")); //if paused menuItem can start play again
+        else
+          item.setText((language.getString("pause")));  //if playing then the menuItem can pause
   }
 
   /**
    * register a menuItem to reflect the repeatButton's state also in that menuItem
-   * @param repeatMenuItem
+   *
+   * @param repeatMenuItem the menu item to be synced
    */
-  public void registerRepeatMenuItem(CheckMenuItem repeatMenuItem){
-    repeatMenuItemList.add(repeatMenuItem);
+  public void bindBidirectionalRepeatMenuItem(CheckMenuItem repeatMenuItem) {
+    repeatMenuItem.selectedProperty().bindBidirectional(repeatButton.repeatModeProperty());
   }
   /**
-   * sync state of repeatButton with all registered menuItems
+   * bind another otherRepeatButton to reflect the otherRepeatButton's state also in that other playerControl
+   * used to Sync FullScreen-Mode
+   *
+   * @param otherRepeatButton the button to be synced
    */
-  private void syncRepeatMenuItems(){
-    for (CheckMenuItem item: repeatMenuItemList){ //sync all registered menuItems
-      item.setSelected(isRepeatMode());
-    }
+  public void bindBidirectionalRepeatButtons(RepeatButton otherRepeatButton) {
+    repeatButton.repeatModeProperty().bindBidirectional(otherRepeatButton.repeatModeProperty());
   }
+  public void unbindBidirectionalRepeatButtons(RepeatButton otherRepeatButton){
+    repeatButton.repeatModeProperty().unbindBidirectional(otherRepeatButton.repeatModeProperty());
+  }
+  public RepeatButton getRepeatButton() {return repeatButton;}
+
   /**
    * register a menuItem to reflect the playListModeButton's state also in that menuItem
-   * @param playListModeMenuItem
+   *
+   * @param playlistModeMenuItem the menu Item to by synced
    */
-  public void registerPlayListModeMenuItem(CheckMenuItem playListModeMenuItem){
-    playListModeMenuItemList.add(playListModeMenuItem);
+  public void bindBidirectionalPlaylistModeMenuItem(CheckMenuItem playlistModeMenuItem) {
+    playlistModeMenuItem.selectedProperty().bindBidirectional(playlistButton.playListModeProperty());
   }
   /**
-   * sync state of playListModeButton with all registered menuItems
+   * bind another otherPlaylistButton to reflect the otherPlaylistButton's state also in that other playerControl
+   * used to Sync FullScreen-Mode
+   *
+   * @param otherPlaylistButton the button to be synced
    */
-  private void syncPlayListModeMenuItems(){
-    for (CheckMenuItem item: playListModeMenuItemList){ //sync all registered menuItems
-      item.setSelected(isPlayListMode());
-    }
+  public void bindBidirectionalPlaylistModeButtons(PlayListButton otherPlaylistButton) {
+    playlistButton.playListModeProperty().bindBidirectional(otherPlaylistButton.playListModeProperty());
   }
+  public void unbindBidirectionalPlaylistModeButtons(PlayListButton otherPlaylistButton) {
+    playlistButton.playListModeProperty().unbindBidirectional(otherPlaylistButton.playListModeProperty());
+  }
+  public PlayListButton getPlaylistButton() {return playlistButton;}
+
 
   /**
    * show the PlayerControls for some time using the playerControlsHiderThread to hide it automatically after some time
    */
-  void resetThreadAndShow() {
+  public void resetThreadAndShow() {
     playerControlsHiderThread.showPlayerControls();
   }
 
-  void hide() {
+  /*
+  public void hide() {
     playerControlsHiderThread.hidePlayerControlsImmediately();
   }
+  */
 }

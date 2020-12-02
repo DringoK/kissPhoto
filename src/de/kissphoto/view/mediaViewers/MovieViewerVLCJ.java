@@ -2,7 +2,6 @@ package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MediaContentView;
-import de.kissphoto.view.viewerHelpers.PlayerViewer;
 import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.ImageView;

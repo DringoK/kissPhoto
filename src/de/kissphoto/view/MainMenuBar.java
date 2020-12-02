@@ -77,9 +77,9 @@ public class MainMenuBar extends MenuBar {
     createHelpMenu();
 
     //imageMenu is active only if an image is selected, i.e. if the PhotoViewer is visible
-    imageMenu.disableProperty().bind(mediaContentView.getPhotoViewer().visibleProperty().not());
+    imageMenu.disableProperty().bind(mediaContentView.getIsImageActive().not());
     //playerMenu is active only if a playable media (movie/sound) is selected, i.e. if the PlayerViewer is visible
-    playerMenu.disableProperty().bind(mediaContentView.getPlayerViewer().visibleProperty().not());
+    playerMenu.disableProperty().bind(mediaContentView.getIsPlayerActive().not());
 
   }
 
@@ -371,10 +371,13 @@ public class MainMenuBar extends MenuBar {
     CheckMenuItem playListModeItem;
     CheckMenuItem repeatModeItem;
 
-    playPauseItem = new MenuItem(language.getString("play"));  //P = Pause/Play --> two states reflected by setting text
+    playPauseItem = new MenuItem(language.getString("play"));  //Pause/Play --> two states reflected by setting text
     playPauseItem.setAccelerator(MainMenuBar.PLAY_PAUSE_KEYCODE);
-    playPauseItem.setOnAction(actionEvent -> playerControls.togglePlayPause());
-    playerControls.registerPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
+    playPauseItem.setOnAction(actionEvent -> {
+      playerControls.togglePlayPause();
+      System.out.println("MainMenuBar.TogglePlayPause()");
+    });
+    playerControls.bindPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
 
     rewindItem = new MenuItem(language.getString("rewind"));  //Pause/Play --> two states reflected by setting text
     rewindItem.setAccelerator(MainMenuBar.REWIND_KEYCODE);
@@ -382,13 +385,13 @@ public class MainMenuBar extends MenuBar {
 
     playListModeItem = new CheckMenuItem(language.getString("playlist.mode"));
     playListModeItem.setAccelerator(MainMenuBar.PLAYLIST_MODE_KEYCODE);
-    playListModeItem.setOnAction(actionEvent -> playerControls.setPlayListMode(!playerControls.isPlayListMode())); //toggle
-    playerControls.registerPlayListModeMenuItem(playListModeItem); //keep state of playControls and menuItem synced
+    //playListModeItem.setOnAction(actionEvent -> playerControls.setPlayListMode(!playerControls.isPlayListMode())); //toggle --> not necessary, because bidirectional binding
+    playerControls.bindBidirectionalPlaylistModeMenuItem(playListModeItem); //keep state of playControls and menuItem synced
 
     repeatModeItem = new CheckMenuItem(language.getString("repeat.mode"));
     repeatModeItem.setAccelerator(MainMenuBar.REPEAT_MODE_KEYCODE);
-    repeatModeItem.setOnAction(actionEvent -> playerControls.setRepeatMode(!playerControls.isRepeatMode())); //toggle
-    playerControls.registerRepeatMenuItem(repeatModeItem); //keep state of playControls and menuItem synced
+    //repeatModeItem.setOnAction(actionEvent -> playerControls.setRepeatMode(!playerControls.isRepeatMode())); //toggle --> not necessary, because bidirectional binding
+    playerControls.bindBidirectionalRepeatMenuItem(repeatModeItem); //keep state of playControls and menuItem synced
 
     playerMenu.getItems().addAll(playPauseItem, rewindItem, playListModeItem, repeatModeItem);
     getMenus().add(playerMenu);

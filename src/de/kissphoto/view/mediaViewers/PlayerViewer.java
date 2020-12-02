@@ -1,10 +1,9 @@
-package de.kissphoto.view.viewerHelpers;
+package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MainMenuBar;
 import de.kissphoto.view.MediaContentView;
-import de.kissphoto.view.mediaViewers.ViewportZoomer;
-import de.kissphoto.view.mediaViewers.ZoomableViewer;
+import de.kissphoto.view.viewerHelpers.PlayerControls;
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
@@ -38,17 +37,17 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
 
   //contextMenu items for controlling checking and disabling
   protected ContextMenu contextMenu = new ContextMenu();
-  protected MenuItem playPauseItem;
-  protected MenuItem rewindItem;
-  protected CheckMenuItem playListModeItem;
-  protected CheckMenuItem repeatModeItem;
+  private MenuItem playPauseItem;
+  private MenuItem rewindItem;
+  private CheckMenuItem playListModeItem;
+  private CheckMenuItem repeatModeItem;
 
   protected MediaContentView mediaContentView; //link to the underlying mediaContentView (e.g.for binding sizes and for next media after endOfMedia)
 
   protected PlayerControls playerControls;
 
-  protected boolean lastMouseButtonWasPrimary = false;
-  protected boolean lastMouseDownWasMouseDragged = false;
+  private boolean lastMouseButtonWasPrimary = false;
+  private boolean lastMouseDownWasMouseDragged = false;
   protected ViewportZoomer viewportZoomer;
 
 
@@ -123,10 +122,10 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
    */
   protected void initPlayerContextMenu() {
     //---- Player support
-    playPauseItem = new MenuItem(language.getString("play"));  //P = Pause/Play --> two states reflected by setting text
+    playPauseItem = new MenuItem(language.getString("play"));  //Pause/Play --> two states reflected by setting text
     playPauseItem.setAccelerator(MainMenuBar.PLAY_PAUSE_KEYCODE);
     playPauseItem.setOnAction(actionEvent -> playerControls.togglePlayPause() );
-    playerControls.registerPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
+    playerControls.bindPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
 
     rewindItem = new MenuItem(language.getString("rewind"));  //Pause/Play --> two states reflected by setting text
     rewindItem.setAccelerator(MainMenuBar.REWIND_KEYCODE);
@@ -134,13 +133,13 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
 
     playListModeItem = new CheckMenuItem(language.getString("playlist.mode"));
     playListModeItem.setAccelerator(MainMenuBar.PLAYLIST_MODE_KEYCODE);
-    playListModeItem.setOnAction(actionEvent -> playerControls.setPlayListMode(!playerControls.isPlayListMode())); //toggle
-    playerControls.registerPlayListModeMenuItem(playListModeItem); //keep state of playControls and menuItem synced
+    //playListModeItem.setOnAction(actionEvent -> playerControls.setPlayListMode(!playerControls.isPlayListMode())); //toggle --> not necessary because of bidirectional binding
+    playerControls.bindBidirectionalPlaylistModeMenuItem(playListModeItem); //keep state of playControls and menuItem synced
 
     repeatModeItem = new CheckMenuItem(language.getString("repeat.mode"));
     repeatModeItem.setAccelerator(MainMenuBar.REPEAT_MODE_KEYCODE);
-    repeatModeItem.setOnAction(actionEvent -> playerControls.setRepeatMode(!playerControls.isRepeatMode())); //toggle
-    playerControls.registerRepeatMenuItem(repeatModeItem); //keep state of playControls and menuItem synced
+    //repeatModeItem.setOnAction(actionEvent -> playerControls.setRepeatMode(!playerControls.isRepeatMode())); //toggle --> not necessary because of bidirectional binding
+    playerControls.bindBidirectionalRepeatMenuItem(repeatModeItem); //keep state of playControls and menuItem synced
 
     contextMenu.getItems().addAll(playPauseItem, rewindItem, playListModeItem, repeatModeItem, new SeparatorMenuItem());
   }
@@ -264,11 +263,47 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
     });
 
   }
+
+  /**
+   * reinstall the player shortcuts (incl. viewPortShortcuts) because main menu not active while player is active
+   */
   private void installKeyboardHandlers() {
     setOnKeyPressed(event -> {
-      boolean handled = viewportZoomer.handleKeyPressed(event);
+      boolean handled = false;
+
+      //try player shortcuts first
+      switch (event.getCode()) {
+        case SPACE:
+          if (!event.isControlDown() && !event.isShiftDown()) {
+            playerControls.togglePlayPause();
+            handled = true;
+          }
+          break;
+        case P:
+          if (event.isControlDown() && event.isShiftDown()) {
+            playerControls.setPlayListMode(!playerControls.isPlayListMode());
+            handled = true;
+          }
+          break;
+        case R:
+          if (event.isControlDown() && event.isShiftDown()) {
+            playerControls.setRepeatMode(!playerControls.isRepeatMode());
+            handled = true;
+          }
+      }
+
+     //try viewport shortcuts
+      if (!handled){
+        handled = viewportZoomer.handleKeyPressed(event);
+      }
       if (handled) event.consume();
     });
   }
 
+  public ContextMenu getContextMenu() {
+    return contextMenu;
+  }
+  public MediaContentView getMediaContentView(){
+    return mediaContentView;
+  }
 }

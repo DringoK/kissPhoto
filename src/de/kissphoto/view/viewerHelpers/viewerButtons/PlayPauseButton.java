@@ -1,5 +1,6 @@
 package de.kissphoto.view.viewerHelpers.viewerButtons;
 
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
@@ -20,7 +21,7 @@ import javafx.scene.shape.Rectangle;
  */
 public class PlayPauseButton extends Group {
 
-  private boolean paused;
+  private SimpleBooleanProperty paused = new SimpleBooleanProperty(false);
 
   private Rectangle buttonRect;
   private final Node playIcon;
@@ -79,6 +80,10 @@ public class PlayPauseButton extends Group {
     pauseIcon.setTranslateX((buttonRect.getWidth() - iconSize) / 2);
     pauseIcon.setTranslateY((buttonRect.getHeight() - iconSize) / 2);
 
+    //bind to pausedProperty
+    playIcon.visibleProperty().bind(paused);     //if player is paused then show the playIcon
+    pauseIcon.visibleProperty().bind(paused.not());
+
     return pauseIcon;
   }
 
@@ -91,10 +96,9 @@ public class PlayPauseButton extends Group {
   private Node createPlayIcon(double iconSize, Color iconColor) {
     // play control
     Polygon playIcon = new Polygon();
-    playIcon.getPoints().addAll(new Double[]{
-        0.0, 0.0,
-        0.0, iconSize,
-        iconSize, (iconSize / 2)});
+    playIcon.getPoints().addAll(0.0, 0.0,
+      0.0, iconSize,
+      iconSize, (iconSize / 2));
 
     playIcon.setFill(iconColor);
 
@@ -120,7 +124,7 @@ public class PlayPauseButton extends Group {
    * false if the state is "play" and therefore the pauseIcon is visible
    */
   public boolean isPaused() {
-    return paused;
+    return paused.get();
   }
 
   /**
@@ -130,9 +134,10 @@ public class PlayPauseButton extends Group {
    *               false to set the state to "play" and make the playIcon visible
    */
   public void setPaused(boolean paused) {
-    this.paused = paused;
-    playIcon.setVisible(paused);     //if player is paused then show the playIcon
-    pauseIcon.setVisible(!paused);
+    this.paused.set(paused);
   }
+
+  //for binding with menues and fullscreen PlayerControl
+  public SimpleBooleanProperty pausedProperty(){return paused;}
 
 }
