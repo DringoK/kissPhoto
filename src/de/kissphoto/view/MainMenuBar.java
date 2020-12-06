@@ -268,15 +268,16 @@ public class MainMenuBar extends MenuBar {
     final MenuItem moveUpItem = new MenuItem(language.getString("move.upMenu"));
     //shift-alt ok: compatible with windows: alt+??=menu, shift-alt-arrow = move, compatible with ubuntu: shift-alt used for changing windows
     //here only for displaying the shortcut. It must be set additionally directly in FileTableView constructor to override standard use of Shift-Ctrl-Up/Down=extend selection
-    moveUpItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
+    moveUpItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, KeyCombination.SHIFT_DOWN, KeyCombination.ALT_DOWN));
     moveUpItem.setOnAction(event -> {
       event.consume();
       fileTableView.moveSelectedFilesUp();
+
     });
     editMenu.getItems().add(moveUpItem);
 
     final MenuItem moveDnItem = new MenuItem(language.getString("move.downMenu"));
-    moveDnItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
+    moveDnItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, KeyCombination.SHIFT_DOWN, KeyCombination.ALT_DOWN));
     moveDnItem.setOnAction(event -> {
       event.consume();
       fileTableView.moveSelectedFilesDown();
@@ -314,13 +315,12 @@ public class MainMenuBar extends MenuBar {
       actionEvent.consume();
       mediaContentView.toggleFullScreenAndNormal();
     });
-    mediaContentView.addToFullScreenItems(fullScreenItem);
+    mediaContentView.getIsFullScreenActive().addListener((observable, oldValue, newValue) -> mediaContentView.setFullScreenMenuItemText(fullScreenItem));
 
     MenuItem showOnNextScreenItem = new MenuItem(language.getString(MediaContentView.SHOW_ON_NEXT_SCREEN_FULLSCREEN));
     showOnNextScreenItem.setAccelerator((new KeyCodeCombination(KeyCode.TAB))); //TAB, previous shift-Tab is not shown in menu
     showOnNextScreenItem.setOnAction(actionEvent -> mediaContentView.showFullScreenOnNextScreen(true));
-    showOnNextScreenItem.setDisable(true); //enable only in Full screen mode
-    mediaContentView.addToShowOnNextScreenItems(showOnNextScreenItem);
+    showOnNextScreenItem.disableProperty().bind(mediaContentView.getIsFullScreenActive().not());  //only enabled if fullScreen-Mode is active
 
     viewMenu.getItems().addAll(fullScreenItem, showOnNextScreenItem);
 

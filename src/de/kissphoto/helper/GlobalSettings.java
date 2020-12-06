@@ -57,7 +57,7 @@ public class GlobalSettings extends Properties {
     }
 
     propertiesFilename = propertiesFilePath.resolve(PROPERTIES_FILENAME).toString();
-    System.out.println("Settings-Path=" + propertiesFilename);
+    System.out.println("Settings-Path=" + propertiesFilename);     //leave this information, so that anyone can find the setting-file
 
   }
 

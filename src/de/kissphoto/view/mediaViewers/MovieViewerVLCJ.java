@@ -91,12 +91,13 @@ public class MovieViewerVLCJ extends PlayerViewer {
           Platform.runLater(() -> {
             if (wasReset)
               playerStatus = Status.STALLED;
-            else
+            else {
               playerStatus = Status.STOPPED;
 
-            if (repeatTrackWhenStopped){     //see rewindAndPlayWhenFinished()
-              play();
-              repeatTrackWhenStopped = false;
+              if (repeatTrackWhenStopped) {     //see rewindAndPlayWhenFinished()
+                play();
+                repeatTrackWhenStopped = false;
+              }
             }
           });
 
@@ -179,7 +180,6 @@ public class MovieViewerVLCJ extends PlayerViewer {
         mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString());
       else
         mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
-
       wasReset = false;
     } catch (Exception e) {
       //e.printStackTrace();
@@ -198,6 +198,7 @@ public class MovieViewerVLCJ extends PlayerViewer {
       stop();
       playerStatus = Status.STALLED;
       wasReset = true;
+
     }
   }
 

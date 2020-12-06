@@ -290,6 +290,12 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
             playerControls.setRepeatMode(!playerControls.isRepeatMode());
             handled = true;
           }
+          break;
+        case LEFT:
+          if (event.isControlDown() && !event.isShiftDown()) {
+            playerControls.rewind();
+            handled = true;
+          }
       }
 
      //try viewport shortcuts

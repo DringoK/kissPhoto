@@ -9,7 +9,6 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
@@ -47,10 +46,6 @@ import static de.kissphoto.KissPhoto.language;
 public class MediaContentView extends Pane {
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
 
-  //every viewer has these items. For enabling/disabling keep a reference to all of them
-  static private final ObservableList<MenuItem> showOnNextScreenItems = FXCollections.observableArrayList();
-  static private final ObservableList<MenuItem> fullScreenItems = FXCollections.observableArrayList();
-
   private int enteredLineNumber = -1; //negative means: nothing entered
 
   private FileTableView fileTableView = null; //optional link to the fileTableView connected with this MediaContentView (for selecting pictures while focus is in MediaContentView
@@ -74,6 +69,7 @@ public class MediaContentView extends Pane {
   //Main-Menu connects "enabled" of the Player-/Image Menu with these Properties
   private final SimpleBooleanProperty isPlayerActive = new SimpleBooleanProperty(false);
   private final SimpleBooleanProperty isImageActive = new SimpleBooleanProperty(false);
+  private final SimpleBooleanProperty isFullScreenActive = new SimpleBooleanProperty(false); //in primary MediaContentView redundant to hasActiveFullScreenMediaContentView(), but here menusItems can be bound to
 
   /**
    * constructor
@@ -506,6 +502,7 @@ public class MediaContentView extends Pane {
   //make Properties bindable e.g. in Main-Menu
   public SimpleBooleanProperty getIsPlayerActive(){return isPlayerActive;}
   public SimpleBooleanProperty getIsImageActive(){return isImageActive;}
+  public SimpleBooleanProperty getIsFullScreenActive(){return isFullScreenActive;}
 
   private void stopAllActivePlayers() {
     //reset all probably playing players
@@ -731,11 +728,9 @@ public class MediaContentView extends Pane {
 
       Duration currentPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
 
-      System.out.println("showFullScreen. playerViewer="+playerViewer + "  visible="+playerViewer.isVisible());
       if (playerViewer.isVisible()) {
         currentPlayerPosition = playerViewer.getCurrentTime();
         playerViewer.resetPlayer(); //stop playback if running, because it will be started full screen
-        System.out.println("showFullScreen.resetPlayer");
       }
 
       //Singleton: only build it once and only when needed for the first time otherwise reuse
@@ -752,12 +747,7 @@ public class MediaContentView extends Pane {
 
       fullScreenStage.mediaContentView.getAttrViewer().copyState(attrViewer); //synchronize normal and full screen attributesViewers
 
-      //enabling/disabling of fullScreen items in all context menus (of all viewers)
-      for (MenuItem item : fullScreenItems) {
-        item.setText(language.getString("end.full.screen.mode"));
-        //item.setAccelerator(new KeyCodeCombination(KeyCode.ESCAPE));  //old accelerator (F5) cannot be overwritten, therefore F5 always remains to be the visible accelerator (and also works additionally to ESC)
-      }
-      for (MenuItem item : showOnNextScreenItems) item.setDisable(false);
+      isFullScreenActive.set(true); //setting the property to update all bound menuItems
 
       fullScreenStage.show();
       fullScreenStage.getMediaContentView().setMedia(getCurrentMediaFile(), currentPlayerPosition);       //and start playing, if player was active
@@ -769,11 +759,6 @@ public class MediaContentView extends Pane {
 
     //only if in fullScreen-Mode (seen from the main window's view)
     if (hasActiveFullScreenMediaContentView()) {
-      //unbind controls
-      //playerViewer.getPlayerControls().unbindBidirectionalPlayPauseButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getPlayPauseButton());
-      //playerViewer.getPlayerControls().unbindBidirectionalPlaylistModeButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getPlaylistButton());
-      //playerViewer.getPlayerControls().unbindBidirectionalRepeatButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getRepeatButton());
-
       attrViewer.copyState(fullScreenStage.mediaContentView.getAttrViewer()); //synchronize normal and full screen attributesViewers
       if (fullScreenStage.mediaContentView.getPlayerViewer() != null && fullScreenStage.mediaContentView.getPlayerViewer().isVisible()) {
         fullScreenPlayerPosition = fullScreenStage.getMediaContentView().getPlayerViewer().getCurrentTime();
@@ -787,12 +772,7 @@ public class MediaContentView extends Pane {
       currentMediaFile = null; //reset it, so that setMedia will have an effect, otherwise re-setting would be prevented
       setMedia(mediaFile, fullScreenPlayerPosition); //sync normal view with previous full screen view, restore currentMediaFile
 
-      //enabling/disabling of fullScreen items in all context menus (of all viewers)
-      for (MenuItem item : fullScreenItems) {
-        item.setText(language.getString("full.screen"));
-        //item.setAccelerator(new KeyCodeCombination(KeyCode.F5)); //old accelerator (ESC) cannot be overwritten, therefore F5 always remains to be the visible accelerator (and also works additionally to ESC)
-      }
-      for (MenuItem item : showOnNextScreenItems) item.setDisable(true);
+      isFullScreenActive.set(false);  //setting the property to update all bound menuItems
 
       if (fileTableView != null) fileTableView.requestFocus();    //null if in UnDeleteDialog
     }
@@ -817,24 +797,12 @@ public class MediaContentView extends Pane {
     }
   }
 
-  /**
-   * (main menu) add a fullScreenItem to the list of MenuItems that need to be
-   * enabled/disabled when fullscreen mode is activated/deactivated
-   *
-   * @param item to be added to the list
-   */
-  public void addToFullScreenItems(MenuItem item) {
-    fullScreenItems.add(item);
-  }
-
-  /**
-   * (main menu) add a showOnNextScreenItem to the list of MenuItems that need to be
-   * enabled/disabled when fullscreen mode is activated/deactivated
-   *
-   * @param item to be added to the list
-   */
-  public void addToShowOnNextScreenItems(MenuItem item) {
-    showOnNextScreenItems.add(item);
+  public void setFullScreenMenuItemText(MenuItem showFullScreenItem){
+    if (isFullScreenActive.get()) {
+      showFullScreenItem.setText(language.getString("end.full.screen.mode"));
+    }else {
+      showFullScreenItem.setText(language.getString("full.screen"));
+    }
   }
 
   /**
@@ -889,13 +857,21 @@ public class MediaContentView extends Pane {
       toggleFullScreenAndNormal();
       actionEvent.consume();
     });
-    fullScreenItems.add(fullScreenItem);
 
     MenuItem showOnNextScreenItem = new MenuItem(language.getString(SHOW_ON_NEXT_SCREEN_FULLSCREEN));
     showOnNextScreenItem.setAccelerator((new KeyCodeCombination(KeyCode.TAB))); //TAB, previous shift-Tab is not shown in menu
     showOnNextScreenItem.setOnAction(actionEvent -> showFullScreenOnNextScreen(true));
     showOnNextScreenItem.setDisable(true); //enable only in Full screen mode
-    showOnNextScreenItems.add(showOnNextScreenItem);
+    if (isFullScreenMediaContentView()) {
+      //in FullScreenStage isFullScreen is always true why the text can be set to be constant
+      isFullScreenActive.set(true);              //final
+      setFullScreenMenuItemText(fullScreenItem); //final
+      showOnNextScreenItem.setDisable(false);    //final
+    }else {
+      //bind to primaryContentView's isFullScreenActive property
+      isFullScreenActive.addListener((observable, oldValue, newValue) -> setFullScreenMenuItemText(fullScreenItem));
+      showOnNextScreenItem.disableProperty().bind(isFullScreenActive.not());
+    }
 
     contextMenu.getItems().addAll(new SeparatorMenuItem(), fullScreenItem, showOnNextScreenItem);
 

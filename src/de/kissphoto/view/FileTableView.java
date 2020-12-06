@@ -27,7 +27,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.skin.TableViewSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.Dragboard;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -48,24 +47,8 @@ import static de.kissphoto.KissPhoto.language;
  * <p/>
  *
  * @author Ingo
- * @since 2012-09-06
- * @version 2020-11-29 bug fixing: empty directories and reloading invalid directories, GlobalSettings made global (static), clean up code
- * @version 2019-11-01 moving viewport completely rewritten and Alignment is new parameter. Behavior is now as expected with extra lines :-), move/up down keys improved
- * @version 2019-07-07 chooseFileOrFolder sends extra refresh() for tableView to prevent from be shown as empty, cache problems fixed
- * @version 2018-11-17 OpenRecentFile(0) now keeps the selection (like ReopenCurrentFolder earlier), keep caret position when moving up/down (bugfix)
- * @version 2017-10-30 saving uses ProgressBar now because saving of rotated images can last long...
- * @version 2017-10-24 statistics in statusBar support
- * @version 2017-10-22 file-open history (Open recent) support
- * @version 2017-10-20 space-bar is now play/pause additionally if not in edit mode
- * @version 2017-10-14 bugfixing and new functionality copyDescriptionDown() + store Column-Widths
- * @version 2016-11-01 RestrictedTextField stores connection to FileTable locally, so that passing editing threads store the correct table cell
- * @version 2016-06-12 shift-ctrl up/down for moving files now also works in windows 10
- * @version 2014-06-22 extra column for the counter's separator (the character after the counter)
- * @version 2014-06-07 getContent interface to cache simplified
- * @version 2014-06-05 java.io operations changed into java.nio
- * @version 2014-06-02 WAIT-mouse cursor shown during loading a directory now
- * @version 2014-05-25 find/replace markup works now
  * @version 2014-05-02 I18Support, Cursor in Edit-Mode over lines, reopen added etc
+ * @since 2012-09-06
  */
 
 public class FileTableView extends TableView<MediaFile> implements FileChangeWatcherEventListener {
@@ -253,12 +236,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   private void installInvalidCacheHandler(MediaContentView mediaContentView) {
     mediaFileList.getMediaFileThatNeedsReloadProperty().addListener((observable, oldValue, newValue) -> {
-      //System.out.println("FileTableView: invalidation detected: " + mediaFileToReload.getFileOnDisk());
-
       int currentlySelectedLine = getSelectionModel().getFocusedIndex();
       //if this is the currently shown media then reload
       if ((currentlySelectedLine >= 0) && (currentlySelectedLine == mediaFileList.getFileList().indexOf(newValue))) {
-        //System.out.println("FileTableView: ----------> current media invalidated: Line: " + currentlySelectedLine);
         mediaContentView.setMedia(mediaFileList.getFileList().get(currentlySelectedLine), null);
       }
     });
@@ -333,28 +313,47 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   private void installKeyHandlers(MediaContentView mediaContentView) {
     setOnKeyPressed(keyEvent -> {
-      //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
-      if ((keyEvent.getCode() == KeyCode.F2) && !keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
-        keyEvent.consume();
-        rename();
-      } else if ((keyEvent.getCode() == KeyCode.SPACE) && !keyEvent.isControlDown() && !keyEvent.isShiftDown()
-        && !isEditMode() && mediaContentView.getPlayerViewer().isVisible()) {
-        keyEvent.consume();
-        mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
-      }
-      //overwrite standard functionality (selection) view ctrl-shift up/down with file moving
-      else if ((keyEvent.getCode() == KeyCode.DOWN) && keyEvent.isControlDown() && keyEvent.isShiftDown()) {
-        moveSelectedFilesDown();
-        keyEvent.consume();
-      } else if ((keyEvent.getCode() == KeyCode.UP) && keyEvent.isControlDown() && keyEvent.isShiftDown()) {
-        moveSelectedFilesUp();
-        keyEvent.consume();
+      switch (keyEvent.getCode()) {
+        //Edit
+        case F2: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
+            keyEvent.consume();
+            rename();
+          }
+          break;
+
+        //Player
+        case SPACE:
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !isEditMode() && mediaContentView.getPlayerViewer().isVisible()) {
+            keyEvent.consume();
+            mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
+          }
+          break;
+        case LEFT:
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !isEditMode() && mediaContentView.getPlayerViewer().isVisible()) {
+            keyEvent.consume();
+            mediaContentView.getPlayerViewer().getPlayerControls().rewind();
+          }
+          break;
+
+        //overwrite standard functionality (selection) view ctrl-shift up/down with file moving
+        case DOWN:
+          if (keyEvent.isAltDown() && keyEvent.isShiftDown()) {
+            keyEvent.consume();
+            moveSelectedFilesDown();
+          }
+          break;
+        case UP:
+          if (keyEvent.isAltDown() && keyEvent.isShiftDown()) {
+            keyEvent.consume();
+            moveSelectedFilesUp();
+          }
       }
     });
   }
 
   /**
-   * Strategy for opening inital File or Folder:
+   * Strategy for opening initial File or Folder:
    * - try to open the passed file (the parameter when starting kissPhoto)
    * - if failed then try to open the last open folder (read it from settings file if available)
    * - if failed then load nothing but show a message in Status bar
@@ -564,8 +563,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       }
 
       int result = new MessageBox(primaryStage, MessageLabel,
-          MessageBox.USER_BTN + MessageBox.NO_BTN + MessageBox.CANCEL_BTN,
-          language.getString("save")).showModal();
+        MessageBox.USER_BTN + MessageBox.NO_BTN + MessageBox.CANCEL_BTN,
+        language.getString("save")).showModal();
       if ((result == MessageBox.CANCEL_BTN) || (result == MessageBox.NONE_BTN)) {
         return false;
       } else if (result == MessageBox.USER_BTN) {
@@ -597,6 +596,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   /**
    * try to select the row of the table by searching for the path of a physical filename
    * If not found then select first row of the table
+   *
    * @param file path to the physical Filename
    */
   public void selectRowByPath(final Path file) {
@@ -629,7 +629,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * if this file is invalid then then containing folder is opened and the first file is focused
    * if the string is a path to a folder then the folder is opened and the first file is focused
    *
-   * @param fileOrFolderName string path to the file or folder
+   * @param fileOrFolderName     string path to the file or folder
    * @param askForUnsavedChanges if true and ansaved changes are pending then a dialog opens, if false the caller must care itself for it
    */
   public void openFolder(String fileOrFolderName, boolean askForUnsavedChanges) {
@@ -638,13 +638,13 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   /**
    * if unsaved changes are pending a dialog opens to ask if the should be saved
-   * 
+   * <p>
    * open a file or folder (from File)
    * If the file-object is a file then the containing folder is opened and the file is focused
    * if this file is invalid then then containing folder is opened and the first file is focused
    * if the file-object is a folder then the folder is opened and the first file is focused
    *
-   * @param fileOrFolder file object representing a file or folder
+   * @param fileOrFolder         file object representing a file or folder
    * @param askForUnsavedChanges if true and unsaved changes are pending then a dialog opens, if false the caller must care itself for it
    */
   public synchronized void openFolder(final Path fileOrFolder, boolean askForUnsavedChanges) {
@@ -669,67 +669,67 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       } else
         newFileOrFolder = fileOrFolder;  //normal open
 
-        final FileTableView fileTableView = this; //for handing over to the runLater event
+      final FileTableView fileTableView = this; //for handing over to the runLater event
 
-        final Scene primaryScene = primaryStage.getScene();
-        if (primaryScene != null)
-          primaryScene.setCursor(Cursor.WAIT); //can be null during openInitialFolder() called from main()
+      final Scene primaryScene = primaryStage.getScene();
+      if (primaryScene != null)
+        primaryScene.setCursor(Cursor.WAIT); //can be null during openInitialFolder() called from main()
 
-        statusBar.showMessage(MessageFormat.format(language.getString("trying.to.open.0"), fileOrFolder.toString()));
+      statusBar.showMessage(MessageFormat.format(language.getString("trying.to.open.0"), fileOrFolder.toString()));
 
 
-        String errMsg = "";
+      String errMsg = "";
+      try {
+        getSelectionModel().clearSelection();  //prevent the selection listener from doing nonsense while loading
+        errMsg = mediaFileList.openFolder(newFileOrFolder);
+
+        if (errMsg.length() == 0) {
+          primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
+          if (reopened)
+            statusBar.showMessage(MessageFormat.format(language.getString("0.reopend"), mediaFileList.getCurrentFolderName()));
+          else
+            statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
+
+          statusBar.showFilesNumber(mediaFileList.getFileList().size());
+          numberingOffset = 1;  //determines with which number renumbering of the list starts.
+          numberingStepSize = 1;
+          numberingDigits = 0;   //zero is [auto]
+
+          setItems(mediaFileList.getFileList());
+          if (newFileOrFolder != null) {
+            selectRowByPath(newFileOrFolder);
+            fileHistory.putOpenedFileToHistory(newFileOrFolder);
+          }
+
+        }
+        registerStatisticsPanel();
+
+
+        //register a file watcher for watching out for changes to this folder from external applications
         try {
-          getSelectionModel().clearSelection();  //prevent the selection listener from doing nonsense while loading
-          errMsg = mediaFileList.openFolder(newFileOrFolder);
+          //register stops the old thread and starts an new for the new folder to register
+          fileChangeWatcher.registerFolderToWatch(mediaFileList.getCurrentFolderName(), fileTableView);   //openFolder (above) already has set the currentFolderName
+        } catch (Exception e) {
+          //in Case of error the function does not exist to update the folder in background..so what...
+        }
+        //set default sorting
+        Platform.runLater(this::resetSortOrder);
 
-          if (errMsg.length() == 0) {
-            primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
-            if (reopened)
-              statusBar.showMessage(MessageFormat.format(language.getString("0.reopend"), mediaFileList.getCurrentFolderName()));
-            else
-              statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
-
-            statusBar.showFilesNumber(mediaFileList.getFileList().size());
-            numberingOffset = 1;  //determines with which number renumbering of the list starts.
-            numberingStepSize = 1;
-            numberingDigits = 0;   //zero is [auto]
-
-            setItems(mediaFileList.getFileList());
-            if (newFileOrFolder!=null){
-              selectRowByPath(newFileOrFolder);
-              fileHistory.putOpenedFileToHistory(newFileOrFolder);
-            }
-
-          }
-          registerStatisticsPanel();
-
-
-          //register a file watcher for watching out for changes to this folder from external applications
-          try {
-            //register stops the old thread and starts an new for the new folder to register
-            fileChangeWatcher.registerFolderToWatch(mediaFileList.getCurrentFolderName(), fileTableView);   //openFolder (above) already has set the currentFolderName
-          } catch (Exception e) {
-            //in Case of error the function does not exist to update the folder in background..so what...
-          }
-          //set default sorting
-          Platform.runLater(this::resetSortOrder);
-
-        } finally {
-          //empty directory?
-          if (mediaFileList.getFileList().size() < 1) {
-            //clear any visible image shown before
-            fileTableView.mediaContentView.setMedia(null, null);
-          }
-          if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
-          if (errMsg.length() > 0) {
-            statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), fileOrFolder.toString()));
-          }
+      } finally {
+        //empty directory?
+        if (mediaFileList.getFileList().size() < 1) {
+          //clear any visible image shown before
+          fileTableView.mediaContentView.setMedia(null, null);
+        }
+        if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
+        if (errMsg.length() > 0) {
+          statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), fileOrFolder.toString()));
         }
       }
-      refresh();
-      requestFocus(); //if full-screen is active then after a dialog the main window should be active again
-      primaryStage.requestFocus();
+    }
+    refresh();
+    requestFocus(); //if full-screen is active then after a dialog the main window should be active again
+    primaryStage.requestFocus();
 
 
   }
@@ -786,19 +786,19 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
     //define what happens when task has finished
     savingTask.addEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, t -> {
-        mediaContentView.setMedia(currentFile, null); //continue playing
+      mediaContentView.setMedia(currentFile, null); //continue playing
 
-        fileChangeWatcher.continueWatching();
+      fileChangeWatcher.continueWatching();
 
-        statusBar.clearProgress();
-        int errorCount = savingTask.getValue();
+      statusBar.clearProgress();
+      int errorCount = savingTask.getValue();
 
-        if (errorCount > 0) {
-          statusBar.showError(MessageFormat.format(language.getString("errors.occurred.during.saving.check.status.column.for.details"), getUnsavedChanges(), MediaFile.STATUSFLAGS_HELPTEXT));
-        } else {
-          statusBar.showMessage(language.getString("changes.successfully.written.to.disk"));
-        }
-      });
+      if (errorCount > 0) {
+        statusBar.showError(MessageFormat.format(language.getString("errors.occurred.during.saving.check.status.column.for.details"), getUnsavedChanges(), MediaFile.STATUSFLAGS_HELPTEXT));
+      } else {
+        statusBar.showMessage(language.getString("changes.successfully.written.to.disk"));
+      }
+    });
 
     //and start the task in a new thread
     mediaFileList.startSavingTask(savingTask);
@@ -824,8 +824,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       fileChooserDialog.setInitialDirectory(new File(mediaFileList.getCurrentFolder().toAbsolutePath().toString()));
     fileChooserDialog.setInitialFileName("kissPhotoFileList.csv");
     fileChooserDialog.getExtensionFilters().addAll(
-        new FileChooser.ExtensionFilter(language.getString(WriteFolderStructureCSVDialog.COMMA_SEPARATED_VALUES_FILE_SPREADSHEET), "*.CSV"),
-        new FileChooser.ExtensionFilter(language.getString(WriteFolderStructureCSVDialog.ALL_FILES), "*.*")
+      new FileChooser.ExtensionFilter(language.getString(WriteFolderStructureCSVDialog.COMMA_SEPARATED_VALUES_FILE_SPREADSHEET), "*.CSV"),
+      new FileChooser.ExtensionFilter(language.getString(WriteFolderStructureCSVDialog.ALL_FILES), "*.*")
     );
 
     File file = fileChooserDialog.showSaveDialog(primaryStage);   //already asks if existing file should be replaced ;-)
@@ -901,7 +901,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
             (getSelectionModel()).select(anIndex);
           }
           //set new focus (has been changed by select() calls)
-          scrollViewportToIndex(focusIndex-1, Alignment.TOP);
+          scrollViewportToIndex(focusIndex - 1, Alignment.TOP);
           getFocusModel().focus(focusIndex - 1);
         }
       } finally {
@@ -1099,9 +1099,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         ObservableList<MediaFile> selectedFiles = getSelectionModel().getSelectedItems();
         for (MediaFile m : selectedFiles) {
           m.rename(renameDialog.isPrefixChecked(), renameDialog.getPrefix(),
-              renameDialog.isSeparatorChecked(), renameDialog.getSeparator(),
-              renameDialog.isDescriptionChecked(), renameDialog.getDescription(),
-              renameDialog.isExtensionChecked(), renameDialog.getExtension());
+            renameDialog.isSeparatorChecked(), renameDialog.getSeparator(),
+            renameDialog.isDescriptionChecked(), renameDialog.getDescription(),
+            renameDialog.isExtensionChecked(), renameDialog.getExtension());
         }
       }
     } finally {
@@ -1126,13 +1126,13 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   /**
    * auto fill from first selected lines to the other selected lines
-   *
+   * <p>
    * if multiple lines are selected
    * - Prefix
    * - separator
    * - and description
    * are copied from the first of the selected lines to all other selected lines (like autofill in excel)
-   *
+   * <p>
    * if just one line is selected copying will be performed from the above line (if there is any. if not nothing will happen)
    * if in edit-mode nothing happens (this would have to make TextFieldCell
    */
@@ -1228,7 +1228,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     ObservableList<Integer> selectedIndicesSorted = getCopyOfSelectedIndicesSortedAndUnique();
 
     int newSelectionIndex = selectedIndicesSorted.get(selectedIndicesSorted.size() - 1) + 1 //last selected row + 1
-                            - selectedIndicesSorted.size(); //this index will be lowered by the number of deleted items
+      - selectedIndicesSorted.size(); //this index will be lowered by the number of deleted items
 
     //--------delete
     //copy selection list (otherwise the selection will change while deletion - which leads to random results)
@@ -1399,7 +1399,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    */
   public boolean isEditMode() {
     return (getEditingCell() != null) ||  //cell-Edit-Mode? ...or
-        renameDialogActive;           //multi-edit
+      renameDialogActive;           //multi-edit
   }
 
 
@@ -1426,7 +1426,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * if index is already visible nothing happens
    *
    * @param indexToShow line to scroll to become visible in viewport
-   * @param alignment should the line -index- be aligned top, centered or bottom
+   * @param alignment   should the line -index- be aligned top, centered or bottom
    */
   public void scrollViewportToIndex(int indexToShow, Alignment alignment) {
     try {
@@ -1465,7 +1465,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       } else { //flow==null
         //retry until there is a Viewport available
         Platform.runLater(() -> {
-          System.out.println("retry " + indexToShow);
           scrollViewportToIndex(indexToShow, alignment);
         });
       }
@@ -1553,8 +1552,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
       //for status bar add 1 to all values as humans usually count 1, 2, 3, ... not 0, 1, 2,...
       statusBar.showMessage(language.getString("found") + " " +
-          language.getString("line") + " " + (searchRec.tableRow + 1) + ", " + language.getString("column") + " " + (searchRec.tableColumn + 1)
-          + ", " + language.getString("character.position") + " [" + (searchRec.startPos + 1) + "-" + (searchRec.endPos + 1) + "]"
+        language.getString("line") + " " + (searchRec.tableRow + 1) + ", " + language.getString("column") + " " + (searchRec.tableColumn + 1)
+        + ", " + language.getString("character.position") + " [" + (searchRec.startPos + 1) + "-" + (searchRec.endPos + 1) + "]"
       );
     } else {
       statusBar.showError(language.getString(NOTHING_FOUND));
@@ -1649,6 +1648,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   public void setPasteMenuItem(MenuItem pasteMenuItem) {
     this.pasteMenuItem = pasteMenuItem;
   }
+
   public FileHistory getFileHistory() {
     return fileHistory;
   }

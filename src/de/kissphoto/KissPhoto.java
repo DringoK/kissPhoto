@@ -42,25 +42,18 @@ import java.util.ResourceBundle;
  * </ul>
  *
  * @author Ingo Kreuz<br>
- * @version see KISS_PHOTO_VERSION constant below
- * @since 2014-04-29
- * @version 2020-11-19 vlcj integrated, GlobalSettings made global(static), Player Options introduced
- * @version 2019-11-01 move up/down key handling improved, scrolling in FileTable improved, preview in UnDeleteDialog repaired, Cache speed improved (e.g. Background Loading Cancelling), reload File History repaired
- * @version 2019-07-07 Cache problems fixed
- * @version 2019-06-23 release candidate: fixes in Cache Algo, fixed issues with "second screen"/fullscreen, Strg-j menu internationalized, jpeg (with e) supported
- * @version 2018-11-17 rotation of images is now supported, improved inCell-editing (caretPosition, Tab-Support)
- * @version 2017-10-02 main window is moved into visible part of screen after startup (e.g. if resolution changed or 2nd screen has been disabled)
  * @version 2014-07-05 loading initialFileOrFolder after stage.show() to show messages during slow network access
  * <p>
  * Bugs:
  * ======================
  * planned features:
  * ======================
- * todo Autoplay ersetzen in Menü und Context-Menü des Players durch "Playlist Mode" und "Repeat Mode" und syncen mit Icons in PlayerControl
  * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger)
- * todo Player in MediaPane hochheben und mit Burger-Menü (=rechtsklick) ergänzen (Burger immer sichtbar, auch für Photo, nicht ausblenden solange Maus darüber, nicht ausblenden bei Musik)
- * todo   audio abspielen (m4a, mp3, wav): Player nicht ausblenden!
+ * todo Burger-Menü auch bei Fotos
+ * todo Vollbild-Button
+ * todo hoover über Filetable: Umbenennung anzeigen (aktuellerName --> neuer ResultingFilename)
  * todo Meta-Daten anzeigen. Fenster ausblendbar
+ * todo Editierbar: Datum, Autor, Beschreibung, Copyright
  * todo Multi-Edit-Dialog: Hilfe nur auf Knopfdruck ("Hilfe zu %p %d..."), Aufruf Nummerieren-Dialog rein, EXIF-Kommentar rein (der bekommt %k, damit Übernahme möglich)
  * todo   Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
  * todo   Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
@@ -72,6 +65,7 @@ import java.util.ResourceBundle;
  * ===============
  * todo doch nochmal schauen, ob die Updates vom FileWatcher nicht verwendet werden können. Siehe JavaFX Task: A Task Which Returns Partial Results
  * todo Nice to have: Undo-History
+ * @since 2014-04-29
  */
 public class KissPhoto extends Application {
   public static final String KISS_PHOTO_VERSION = "0.20.11 work in progress"; // <------------------------------------------------------------------------------
@@ -79,7 +73,7 @@ public class KissPhoto extends Application {
   public static ResourceBundle language = null;
 
   //set in void main(args) = in static context, so the need to be static
-  private static String initialFileOrFolder;
+  private static String initialFileOrFolder = "";
   public static boolean optionNoVLC = false; //if -noVLC is provided then prevent from searching for and using of vlc
   private static boolean optionHelp = false; //-Help will println a short helptext
 
@@ -115,31 +109,43 @@ public class KissPhoto extends Application {
 
   /**
    * Entry point
+   *
    * @param args the command line arguments handed by command shell:<br>
    *             [filename] (file or folder): will be opened<br>
    *             -noVLC: prevent the search for and use of vlc (for testing or to save resources)
    *             -help: a short help text about parameters
    */
   public static void main(String[] args) {
-    if (args.length >= 1) {
-      //if first parameter would contain "-" then it was an option and no fileOrFoler is provided
-      //first argument is fileOrFolder to open if it does not contain a "-"
-      if (!args[0].contains("-")) {
-        initialFileOrFolder = args[0]; //first parameter is treated as file or folder to open
+    int i = 0;
+
+    if (args.length > 0) {
+      //Filename
+      if (args[0].startsWith("\"")) { //if starting with quote then collect parameters as filename parts until closing quotes
+        initialFileOrFolder = args[0];
+        i++;
+
+        while (i < args.length && !args[i-1].endsWith("\"")) { //collect Filename until closing quotes
+          initialFileOrFolder = initialFileOrFolder + " " + args[i];
+          i++;
+        }
+      } else {
+        if (!args[0].startsWith("-")) { //not an option
+          initialFileOrFolder = args[0];
+          i++;
+        }
       }
 
-      //search for options
-      for (int i=0;i<args.length;i++){
-        if (args[i].equalsIgnoreCase("-noVLC")) optionNoVLC=true;
-        else if (args[i].equalsIgnoreCase("-help")) optionHelp=true;
+      //options
+      while (i < args.length) {
+        if (args[i].equalsIgnoreCase("-noVLC")) optionNoVLC = true;
+        else if (args[i].equalsIgnoreCase("-help")) optionHelp = true;
+        i++;
       }
 
-    } else {
-      initialFileOrFolder = "";
     }
 
     Application.launch(args);
-  }
+}
 
   @Override
   public void start(Stage stage) {
@@ -236,10 +242,11 @@ public class KissPhoto extends Application {
   }
 
   @Override
-  public final void stop(){
+  public final void stop() {
     //release all external ressources e.g. VLC.dll
     mediaContentView.cleanUp();
   }
+
   /**
    * Store last main window settings from Global-Settings properties file
    * assumes:
@@ -312,13 +319,13 @@ public class KissPhoto extends Application {
    * This method checks the stage's boundaries and moves the stage completely into a visible area
    * For this it might be necessary to make the Stage smaller.
    * note: if a second screen is active, but the monitor is switched off...there is no chance ;-)
-   *
+   * <p>
    * Especially call this method after restoreLastMainWindowSettings() has been used...
-   *
+   * <p>
    * When called during start-up: wait after resizing of stage has been performed (using runlater)
    * so that the scene size has followed stage size and the decoWidth (border) can be calculated correctly
    *
-   * @param stage  (not null) the window which will be sized
+   * @param stage (not null) the window which will be sized
    * @throws Exception if stage or scene in stage is null
    */
   public void ensureStageToBeVisible(Stage stage) {
