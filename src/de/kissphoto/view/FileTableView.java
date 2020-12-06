@@ -330,7 +330,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
           }
           break;
         case LEFT:
-          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !isEditMode() && mediaContentView.getPlayerViewer().isVisible()) {
+          if (keyEvent.isControlDown() && !keyEvent.isShiftDown() && !isEditMode() && mediaContentView.getPlayerViewer().isVisible()) {
             keyEvent.consume();
             mediaContentView.getPlayerViewer().getPlayerControls().rewind();
           }
