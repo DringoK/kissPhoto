@@ -3,7 +3,7 @@ package de.kissphoto.view;
 import de.kissphoto.KissPhoto;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.mediaViewers.*;
-import de.kissphoto.view.viewerHelpers.PlayerControls;
+import de.kissphoto.view.viewerHelpers.PlayerControlPanel;
 import de.kissphoto.view.viewerHelpers.RotatablePaneLayouter;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -101,8 +101,8 @@ public class MediaContentView extends Pane {
 
     //--all MediaViewers are collected in a StackPane
     photoViewer = new PhotoViewer(this);
-    photoViewer.fitWidthProperty().bind(mediaStackPane.widthProperty());
-    photoViewer.fitHeightProperty().bind(mediaStackPane.heightProperty());
+    photoViewer.prefWidthProperty().bind(mediaStackPane.widthProperty());
+    photoViewer.prefHeightProperty().bind(mediaStackPane.heightProperty());
 
 
     //find the best movie viewer for the system: 1:VLC, 2:JavaFX, 3:Dummy
@@ -253,6 +253,7 @@ public class MediaContentView extends Pane {
    * e.g. to cleanUp all playerViewers
    */
   public void cleanUp() {
+    if (photoViewer != null) photoViewer.cleanUp();
     if (playerViewer != null) playerViewer.cleanUp();
   }
 
@@ -576,7 +577,7 @@ public class MediaContentView extends Pane {
    * repeat Playlist, or halt at the end
    */
   public void showNextOrRepeatMedia() {
-    PlayerControls playerControls = playerViewer.getPlayerControls();
+    PlayerControlPanel playerControls = playerViewer.getPlayerControls();
     if (playerControls.isPlayListMode() && !fileTableView.isEditMode()) {   //while editing a line in filetable changing the line would steel the cursor
       boolean skipped = showNextMedia();
       if (!skipped) {  //end of list reached

@@ -1,6 +1,5 @@
 package de.kissphoto.model;
 
-import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import de.kissphoto.KissPhoto;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -133,6 +132,14 @@ public class ImageFile extends MediaFileTagged {
   @Override
   public MediaFileRotater getMediaFileRotater() {
     return imageFileRotater;
+  }
+
+  @Override
+  public boolean canRotate(){
+    String filename = fileOnDisk.getFileName().toString().toLowerCase();
+    return filename.endsWith(".jpg") ||
+           filename.endsWith(".jpeg") ||
+           filename.endsWith(".jp2");
   }
 
   /**
@@ -270,7 +277,7 @@ public class ImageFile extends MediaFileTagged {
     try {
       orientation = jpegDirectory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
       //System.out.println("Orientation:" + orientation);
-    } catch (MetadataException me) {
+    } catch (Exception e) {
       //System.out.println("Orientation Exception: " + me);
       orientation = -1;
     }

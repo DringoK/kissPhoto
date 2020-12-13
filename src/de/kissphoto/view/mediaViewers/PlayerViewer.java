@@ -3,14 +3,10 @@ package de.kissphoto.view.mediaViewers;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MainMenuBar;
 import de.kissphoto.view.MediaContentView;
-import de.kissphoto.view.viewerHelpers.PlayerControls;
-import javafx.geometry.Pos;
+import de.kissphoto.view.viewerHelpers.PlayerControlPanel;
 import javafx.scene.control.CheckMenuItem;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
 import static de.kissphoto.KissPhoto.language;
@@ -31,112 +27,55 @@ import static de.kissphoto.KissPhoto.language;
  * @version 2017-10-08 autoplay suspended while edit-mode/multi-edit-mode
  *
  */
-abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
+abstract public class PlayerViewer extends MediaViewerZoomable {
 
   protected boolean finished; //true if the endOfMedia event had been detected, false if any other status has been detected
-
-  //contextMenu items for controlling checking and disabling
-  protected ContextMenu contextMenu = new ContextMenu();
-  private MenuItem playPauseItem;
-  private MenuItem rewindItem;
-  private CheckMenuItem playListModeItem;
-  private CheckMenuItem repeatModeItem;
-
-  protected MediaContentView mediaContentView; //link to the underlying mediaContentView (e.g.for binding sizes and for next media after endOfMedia)
-
-  protected PlayerControls playerControls;
-
-  private boolean lastMouseButtonWasPrimary = false;
-  private boolean lastMouseDownWasMouseDragged = false;
-  protected ViewportZoomer viewportZoomer;
-
 
   /**
    * @param mediaContentView remember the view where this viewer resides in
    * initialize the play status
    */
   public PlayerViewer(MediaContentView mediaContentView) {
-    super();
-
-    this.mediaContentView = mediaContentView;
-    playerControls = new PlayerControls(this);
-    setAlignment(playerControls, Pos.TOP_CENTER);
-    //will be added to this StackPane in the implementing subclasses on top of their mediaView
-
-    viewportZoomer = new ViewportZoomer(this);
-    installMouseHandlers();
-    installKeyboardHandlers();
-
-    //visible only while hovering
-    playerControls.setVisible(false);
+    super(mediaContentView);
   }
 
-  /**
-   * @param event mouseEvent to be handled
-   * @return if event has been handled
-   */
-  public boolean handleMouseMoved(MouseEvent event) {
-    playerControls.resetThreadAndShow();
-    return true;
+  @Override
+  void setViewerControlPanel() {
+    //do not call super.setViewerControls, because complete repacement!
+    viewerControlPanel = new PlayerControlPanel(this);
   }
-  /**
-   * @param event mouseEvent to be handled
-   * @return if event has been handled
-   */
-  public boolean handleMouseDragged(MouseEvent event) {
-    lastMouseDownWasMouseDragged = true;
-    return false; //nothing has happened for the user, so don't block further actions if any
-  }
-  /**
-   * @param event mouseEvent to be handled
-   * @return if event has been handled
-   */
-  public boolean handleMousePressed(MouseEvent event) {
-    lastMouseButtonWasPrimary = event.isPrimaryButtonDown();
-    return false; //nothing has happened for the user
-  }
-  /**
-   *
-   * @param event mouseEvent to be handled
-   * @return if event has been handled
-   */
-  public boolean handleMouseClicked(MouseEvent event) {
-    boolean handled = false;
-    //do not handle double-click i.e. this is full screen
-    if (event.getClickCount() == 1 && lastMouseButtonWasPrimary && !lastMouseDownWasMouseDragged) {
-      //togglePlayPause();// would interfere with the controlArea of playerControls
-      handled = true;
-      }
-    lastMouseDownWasMouseDragged = false;
-    return handled;
-  }
+
   /**
    * call this before setting PlayerViewer to null, e.g. to end internal thread
    */
+  @Override
   public void cleanUp() {
-    playerControls.cleanUp();
+    super.cleanUp();
     releaseAll();
   }
   /**
    * add the player functions to the context-menu
    */
   protected void initPlayerContextMenu() {
+    PlayerControlPanel playerControls = (PlayerControlPanel) viewerControlPanel; //temp to save casting
+
     //---- Player support
-    playPauseItem = new MenuItem(language.getString("play"));  //Pause/Play --> two states reflected by setting text
+    //contextMenu items for controlling checking and disabling
+    MenuItem playPauseItem = new MenuItem(language.getString("play"));  //Pause/Play --> two states reflected by setting text
     playPauseItem.setAccelerator(MainMenuBar.PLAY_PAUSE_KEYCODE);
     playPauseItem.setOnAction(actionEvent -> playerControls.togglePlayPause() );
     playerControls.bindPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
 
-    rewindItem = new MenuItem(language.getString("rewind"));  //Pause/Play --> two states reflected by setting text
+    MenuItem rewindItem = new MenuItem(language.getString("rewind"));  //Pause/Play --> two states reflected by setting text
     rewindItem.setAccelerator(MainMenuBar.REWIND_KEYCODE);
     rewindItem.setOnAction(actionEvent -> playerControls.rewind());
 
-    playListModeItem = new CheckMenuItem(language.getString("playlist.mode"));
+    CheckMenuItem playListModeItem = new CheckMenuItem(language.getString("playlist.mode"));
     playListModeItem.setAccelerator(MainMenuBar.PLAYLIST_MODE_KEYCODE);
     //playListModeItem.setOnAction(actionEvent -> playerControls.setPlayListMode(!playerControls.isPlayListMode())); //toggle --> not necessary because of bidirectional binding
     playerControls.bindBidirectionalPlaylistModeMenuItem(playListModeItem); //keep state of playControls and menuItem synced
 
-    repeatModeItem = new CheckMenuItem(language.getString("repeat.mode"));
+    CheckMenuItem repeatModeItem = new CheckMenuItem(language.getString("repeat.mode"));
     repeatModeItem.setAccelerator(MainMenuBar.REPEAT_MODE_KEYCODE);
     //repeatModeItem.setOnAction(actionEvent -> playerControls.setRepeatMode(!playerControls.isRepeatMode())); //toggle --> not necessary because of bidirectional binding
     playerControls.bindBidirectionalRepeatMenuItem(repeatModeItem); //keep state of playControls and menuItem synced
@@ -212,62 +151,21 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
    */
   abstract public void releaseAll();
 
-  public PlayerControls getPlayerControls(){
-    return playerControls;
+  public PlayerControlPanel getPlayerControls(){
+    return (PlayerControlPanel) viewerControlPanel;
   }
 
   //----------------------- Implement common part of ZoomableViewer Interface ----------------------------
 
-  @Override
-  public void installResizeHandler() {
-    prefWidthProperty().addListener((observable, oldValue, newValue) -> viewportZoomer.handleResize());
-    prefHeightProperty().addListener((observable, oldValue, newValue) -> viewportZoomer.handleResize());
-  }
-
-  @Override
-  public void zoomToFit() {
-    viewportZoomer.zoomToFit();
-  }
-
-  private void installMouseHandlers() {
-    setOnScroll(event -> {
-      boolean handled = viewportZoomer.handleMouseScroll(event);
-      if (handled) event.consume();
-    });
-    setOnMousePressed(event -> {
-      boolean handled = viewportZoomer.handleMousePressed(event);
-      handled = handleMousePressed(event) || handled; //inherited from PlayerViewer
-      if (handled) event.consume();
-    });
-
-    setOnMouseMoved(event -> {
-      boolean handled = handleMouseMoved(event); //inherited from PlayerViewer
-      if (handled) event.consume();
-    });
-    setOnMouseDragged(event -> {
-      boolean handled = viewportZoomer.handleMouseDragged(event);
-      handled = handleMouseDragged(event) || handled; //inherited from PlayerViewer
-      if (handled) event.consume();
-    });
-    setOnMouseReleased(event -> {
-      boolean handled = viewportZoomer.handleMouseReleased(event);
-      if (handled) event.consume();
-    });
-    setOnMouseClicked(event -> {
-      //clicks must only be handled by one class to perform only one action at a time
-      boolean handled = viewportZoomer.handleMouseClicked(event);
-      if (!handled) {
-        handled = handleMouseClicked(event);
-      } //inherited from PlayerViewer
-      if (handled) event.consume();
-    });
-
-  }
 
   /**
    * reinstall the player shortcuts (incl. viewPortShortcuts) because main menu not active while player is active
    */
-  private void installKeyboardHandlers() {
+  @Override
+  public void installKeyboardHandlers() {
+    //no super.installKeyboardHandlers because complete replace
+    PlayerControlPanel playerControls = (PlayerControlPanel) viewerControlPanel; //one central cast
+
     setOnKeyPressed(event -> {
       boolean handled = false;
 
@@ -300,16 +198,9 @@ abstract public class PlayerViewer extends StackPane implements ZoomableViewer {
 
      //try viewport shortcuts
       if (!handled){
-        handled = viewportZoomer.handleKeyPressed(event);
+        handled = handleKeyPressed(event);  //inherited from MediaViewerZoomable
       }
       if (handled) event.consume();
     });
-  }
-
-  public ContextMenu getContextMenu() {
-    return contextMenu;
-  }
-  public MediaContentView getMediaContentView(){
-    return mediaContentView;
   }
 }

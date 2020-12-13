@@ -9,6 +9,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.text.MessageFormat;
@@ -48,7 +49,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   private final CounterPositionHeuristic heuristic = new CounterPositionHeuristic();
   private int counterPosition = 0; //effectively used position (nth number in filenames)entered by user or guessed by heuristic
   private final MediaCache mediaCache = new MediaCache(this); //implements a Cache strategy: which content should be preloaded, which can be flushed
-  private final SimpleObjectProperty<MediaFile> mediaFileThatNeedsReload = new SimpleObjectProperty(); //MediaContentView can subscribe to detect cache became invalid e.g. because backgroundloading failed
+  private final SimpleObjectProperty<MediaFile> mediaFileThatNeedsReload = new SimpleObjectProperty<>(); //MediaContentView can subscribe to detect cache became invalid e.g. because backgroundloading failed
 
   private final SearchRec searchRec = new SearchRec();
 
@@ -57,10 +58,6 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
    */
   public MediaFileList() {
     resetMediaFileList();
-  }
-
-  public static String extractFilename(Path file) {
-    return file.getFileName().toString();
   }
 
   private void resetMediaFileList() {
@@ -79,36 +76,13 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   }
 
   /**
-   * e.g. for correcting the previously guessed position manually (via GUI)
-   *
-   * @param counterPosition
-   */
-  public void setCounterPosition(int counterPosition) {
-    this.counterPosition = counterPosition;
-  }
-
-  /**
-   * open a folder by reading the specified directory into MediaFile objects
-   * organized as an array list
-   * If the passed name is a file the mediaFileList directory is opened
-   * If the file/directory is null or does not exist at all an error-string is returned
-   *
-   * @param fileOrFolderName the folder to be opened
-   * @returns "" (if everything ok) or Error-Message
-   */
-  public String openFolder(String fileOrFolderName) throws Exception {
-    folder = Paths.get(fileOrFolderName);
-    return openFolder(folder);
-  }
-
-  /**
    * open a folder by reading the specified directory into MediaFile objects
    * organized as an array list
    * If the file is a file the mediaFileList directory is opened
    * If the file/directory is null or does not exist at all an error-string is returned
    *
    * @param fileOrFolder the file or folder to be loaded
-   * @returns "" (if everything ok) or Error-Message
+   * @return "" (if everything ok) or Error-Message
    */
   public String openFolder(Path fileOrFolder) {
     //parameter valid?
@@ -170,7 +144,6 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
     try {
       if (Files.exists(file) && Files.isRegularFile(file) && !Files.isHidden(file)) {
         fileList.add(MediaFile.createMediaFile(file, this));//wrap the file as a MediaFile and specialize it according its media type
-      } else {
       }
     } catch (Exception e) {
       //nothing to do if file could not be handled
@@ -218,64 +191,61 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   }
 
   /**
-   * count the mediaFiles in the handed list, which are instances of ImageFile
-   * typically the selection of FileTableView is handed to this counting routine
-   *
-   * @param selectedFiles
-   * @return number of ImageFiles
-   */
-  public int getImageFileCount(ObservableList<MediaFile> selectedFiles) {
-    int count = 0;
-
-    for (MediaFile mediaFile : selectedFiles) {
-      if (mediaFile instanceof ImageFile) count++;
-    }
-
-    return count;
-  }
-
-  /**
    * perform the handed rotateOperation to all selected Images
    * Only Images are affected - all other selected files are ignored
    *
-   * @param selectedFiles
+   * @param selectedFiles list of currently selected files
    * @param rotateOperation to perform
+   * @return the number of mediaFiles that cannot save the rotation (only jpgs are supported so far)
    */
-  public synchronized void rotateSelectedFiles(ObservableList<MediaFile> selectedFiles, ImageFileRotater.RotateOperation rotateOperation) {
+  public synchronized int rotateSelectedFiles(ObservableList<MediaFile> selectedFiles, ImageFileRotater.RotateOperation rotateOperation) {
+    int countNotRotatable = 0;
     for (MediaFile mediaFile : selectedFiles) {
-//      if (mediaFile instanceof ImageFile) //rotate all despite only jpg images' rotation can be saved
-      ((ImageFile) mediaFile).rotate(rotateOperation);
+      if (!(mediaFile instanceof OtherFile)) mediaFile.rotate(rotateOperation);
+      if (!mediaFile.canRotate()) countNotRotatable++;
     }
+    return countNotRotatable;
   }
 
   /**
    * perform flipping (mirroring) of all selected Images
    * Only Images are affected - all other selected files are ignored
    *
-   * @param selectedFiles
+   * @param selectedFiles list of currently selected files
    * @param horizontally  = true: mirror horizontally, false: mirror vertically
+   * @return the number of mediaFiles that cannot save the flipping (only jpgs are supported so far)
    */
-  public synchronized void flipSelectedFiles(ObservableList<MediaFile> selectedFiles, boolean horizontally) {
+  public synchronized int flipSelectedFiles(ObservableList<MediaFile> selectedFiles, boolean horizontally) {
+    int countNotRotatable = 0;
     for (MediaFile mediaFile : selectedFiles) {
 //      if (mediaFile instanceof ImageFile) //rotate all despite only jpg images' rotation can be saved
-      if (horizontally)
-        ((ImageFile) mediaFile).flipHorizontally();
+      if (!(mediaFile instanceof OtherFile))
+        if (horizontally)
+        mediaFile.flipHorizontally();
       else
-        ((ImageFile) mediaFile).flipVertically();
+        mediaFile.flipVertically();
+
+      if (!mediaFile.canRotate()) countNotRotatable++;
     }
+    return countNotRotatable;
   }
 
   /**
    * set orientation of the image according EXIF orientation (set rotation and flipping) of all selected JPEG-Images
    * Only JPEG-Images are affected - all other selected files are ignored
    *
-   * @param selectedFiles
+   * @param selectedFiles list of currently selected files
+   * @return the number of mediaFiles that cannot save the flipping (only jpgs are supported so far)
    */
-  public synchronized void setOrientationAccordingExif(ObservableList<MediaFile> selectedFiles) {
+  public synchronized int setOrientationAccordingExif(ObservableList<MediaFile> selectedFiles) {
+    int countNotRotatable = 0;
     for (MediaFile mediaFile : selectedFiles) {
-//      if (mediaFile instanceof ImageFile) //rotate all despite only jpg images' rotation can be saved
-      ((ImageFile) mediaFile).setOrientationAccordingExif();
+      if (mediaFile.canRotate()) //rotate only jpgs, because only here the Exif orientation can be determined
+        ((ImageFile)mediaFile).setOrientationAccordingExif();
+      else
+        countNotRotatable++;
     }
+    return countNotRotatable;
   }
 
   /**
@@ -321,7 +291,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   public synchronized void exportToCSV(File file) throws IOException {
     Writer writer = null;
     try {
-      writer = new OutputStreamWriter(new FileOutputStream(file.getAbsolutePath()), "ISO-8859-1");  //(UTF-8 does not work with Excel), US-ASCII, ISO-8859-1, UTF-8, UTF-16-BE, UTF-16LE, UTF-16
+      writer = new OutputStreamWriter(new FileOutputStream(file.getAbsolutePath()), StandardCharsets.ISO_8859_1);  //(UTF-8 does not work with Excel), US-ASCII, ISO-8859-1, UTF-8, UTF-16-BE, UTF-16LE, UTF-16
       //-------- write headline
       writer.write(MediaFile.getCSVHeadline());
 
@@ -392,7 +362,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
    * @return true if found, false if not found
    */
   public boolean searchNext(String searchText) {
-    ObservableList<MediaFile> listToSearchIn = null;
+    ObservableList<MediaFile> listToSearchIn;
 
     if (searchRec.searchInSelection && searchRec.selection != null) {
       listToSearchIn = searchRec.selection;
@@ -509,7 +479,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
    * remove a mediaFile from cache, e.g. because it became invalid and needs reload
    * (e.g. an ImageFile loads in background, and the errorHandler calls this method if an error occurred while background loading)
    *
-   * @param mediaFile
+   * @param mediaFile to be flushed from cache
    */
   public void flushFromCache(MediaFile mediaFile) {
     mediaCache.flush(mediaFile);
@@ -544,9 +514,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
       numberWidth = (int) (Math.log10(Math.max(start, finalNumber))) + 1;
     }
 
-    DecimalFormat decimalFormat = new DecimalFormat(StringHelper.repeat("0", numberWidth));
-
-    return decimalFormat;
+    return new DecimalFormat(StringHelper.repeat("0", numberWidth));
   }
 
   /**
@@ -603,7 +571,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
 
       //renumber
       for (Integer i : indicesSorted) {
-        fileList.get(i).setCounter(decimalFormat.format(i * step + start));
+        fileList.get(i).setCounter(decimalFormat.format((long) i * step + start));
       }
     }
   }
@@ -696,7 +664,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
    * it is initialized with initSearch(), so this call should be made for a new search using searchNext()
    * searchNext() always start from the cursor position stored in searchRec
    */
-  public class SearchRec {
+  public static class SearchRec {
     //mode
     public ObservableList<MediaFile> selection = null; //null means invalid
     public boolean searchInSelection = false;

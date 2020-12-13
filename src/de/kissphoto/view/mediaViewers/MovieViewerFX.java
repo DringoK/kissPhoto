@@ -3,6 +3,7 @@ package de.kissphoto.view.mediaViewers;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MovieFile;
 import de.kissphoto.view.MediaContentView;
+import de.kissphoto.view.viewerHelpers.PlayerControlPanel;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -50,17 +51,15 @@ public class MovieViewerFX extends PlayerViewer {
     mediaView = new MediaView();
     mediaView.setPreserveRatio(true);
 
-    //note: playerControls defined and initialized in PlayerViewer (fatherclass)
-    getChildren().addAll(mediaView, playerControls);
+    //note: playerControlPanel defined and initialized in PlayerViewer (fatherclass)
+    getChildren().addAll(mediaView, viewerControlPanel);
 
     mediaView.fitHeightProperty().bind(prefHeightProperty());
     mediaView.fitWidthProperty().bind(prefWidthProperty());
 
-    setFocusTraversable(true);
-
     initPlayerContextMenu();
-    viewportZoomer.addContextMenuItems(contextMenu);
-    viewportZoomer.installContextMenu(mediaContentView, contextMenu);
+    addContextMenuItems();
+    installContextMenu();
 
   }
 
@@ -80,6 +79,7 @@ public class MovieViewerFX extends PlayerViewer {
      */
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
     resetPlayer();
+    PlayerControlPanel viewerControlPanel = (PlayerControlPanel) this.viewerControlPanel; //one central cast
 
     boolean compatible = (mediaFile != null) && (mediaFile.getClass() == MovieFile.class);
     if (compatible) try {
@@ -87,17 +87,17 @@ public class MovieViewerFX extends PlayerViewer {
       mediaPlayer = new MediaPlayer(media);
 
       mediaPlayer.setOnReady(() -> {
-        if (playerControls.isUserHasPaused())
+        if (viewerControlPanel.isUserHasPaused())
           pause();
         else
           play();
 
         // as the media is playing move the slider for progress
-        playerControls.setSliderScaling(mediaPlayer.getTotalDuration());
-        playerControls.showProgress(Duration.ZERO);
+        viewerControlPanel.setSliderScaling(mediaPlayer.getTotalDuration());
+        viewerControlPanel.showProgress(Duration.ZERO);
 
         mediaPlayer.currentTimeProperty().addListener(ov -> {
-          if (mediaPlayer != null) playerControls.showProgress(mediaPlayer.getCurrentTime());
+          if (mediaPlayer != null) viewerControlPanel.showProgress(mediaPlayer.getCurrentTime());
         });
 
         if (seekPosition != null) seek(seekPosition);
@@ -187,7 +187,7 @@ public class MovieViewerFX extends PlayerViewer {
       if (finished){
         finished=false; //seeking results in not being at the end of the media any more
       }
-      if (playerControls.isUserHasPaused()) mediaPlayer.pause();     //FX player keeps PLAYING status even if finished
+      if (((PlayerControlPanel)viewerControlPanel).isUserHasPaused()) mediaPlayer.pause();     //FX player keeps PLAYING status even if finished
     }
   }
   /**

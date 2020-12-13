@@ -1,7 +1,5 @@
 package de.kissphoto.view.mediaViewers;
 
-import javafx.geometry.Rectangle2D;
-
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
@@ -14,19 +12,6 @@ import javafx.geometry.Rectangle2D;
  */
 
 public interface ZoomableViewer {
-  public void setViewport(Rectangle2D value);
-
-  Rectangle2D getViewport();
-
-  //proportions of Image/Media
-  double getMediaWidth();
-
-  double getMediaHeight();
-
-  //proportions of viewer
-  double getFitWidth();
-
-  double getFitHeight();
 
   /**
    * install Handler for resizing the viewer

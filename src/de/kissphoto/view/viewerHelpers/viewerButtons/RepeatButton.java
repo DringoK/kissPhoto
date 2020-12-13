@@ -1,5 +1,6 @@
 package de.kissphoto.view.viewerHelpers.viewerButtons;
 
+import de.kissphoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -50,6 +51,7 @@ public class RepeatButton extends Group {
     strikeThrough.setTranslateX((buttonRect.getWidth() - ICON_SIZE) / 2);
     strikeThrough.setTranslateY((buttonRect.getHeight() - ICON_SIZE) / 2);
 
+    tooltip.setShowDelay(ViewerControlPanel.TOOLTIP_DELAY);
     Tooltip.install(buttonRect, tooltip);
     getChildren().addAll(buttonRect, icon, strikeThrough);
 

@@ -3,18 +3,12 @@ package de.kissphoto.view.viewerHelpers;
 import de.kissphoto.KissPhoto;
 import de.kissphoto.view.MediaContentView;
 import de.kissphoto.view.mediaViewers.PlayerViewer;
-import de.kissphoto.view.viewerHelpers.viewerButtons.BurgerMenuButton;
 import de.kissphoto.view.viewerHelpers.viewerButtons.PlayListButton;
 import de.kissphoto.view.viewerHelpers.viewerButtons.PlayPauseButton;
 import de.kissphoto.view.viewerHelpers.viewerButtons.RepeatButton;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
@@ -25,7 +19,7 @@ import static de.kissphoto.KissPhoto.language;
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
- * This Class implements a MediaPlayer's controls area
+ * This Class implements a MediaPlayer's controls area extending the basic ViewerControls
  * <ul>
  * <li>a play/pause button
  * <li>a progress bar for jumping to a certain point of the media
@@ -35,7 +29,6 @@ import static de.kissphoto.KissPhoto.language;
  * <br>
  * <ul>
  * <li>to be connected to a JavaFX MediaPlayer
- * <li>fades in if mouse moves over Player Area
  * </ul>
  * <p/>
  * It is a transparent VBox which's size is bound to a playerViewer<br>
@@ -51,13 +44,13 @@ import static de.kissphoto.KissPhoto.language;
  * Note: it will be added into PlayerViewers(StackPane) and therefore will be bound to the PlayerViewers size
  *
  * @author Dr. Ingo Kreuz
- * @version 2017-10-08 longer showing the Player, higher player
  * @since 2014-07-18
+ * @version 2020-12-13 PlayerControls now one of the ViewerControls
+ * @version 2020-11-30 option pane added (repeat, playListMode)
+ * @version 2017-10-08 show the Player a longer time, higher player area
  */
 
-public class PlayerControls extends VBox {
-  private HBox controlArea;
-  private HBox optionArea;
+public class PlayerControlPanel extends ViewerControlPanel {
   private final PlayerViewer playerViewer;
 
   private PlayPauseButton playPauseButton;
@@ -68,38 +61,19 @@ public class PlayerControls extends VBox {
   private PlayListButton playlistButton;
   private RepeatButton repeatButton;
 
-  private PlayerControlsHiderThread playerControlsHiderThread;
-
   //------------- IDs for GlobalSettings-File
   private static final String PAUSED_ID = "playerWasPaused";
   private static final String REPEAT_MODE_ID = "playerRepeatMode";
   private static final String PLAYLIST_MODE_ID = "playerPlayListMode";
 
-  //color and padding for all panels
-  public static final Color ICON_COLOR = new Color(1, 1, 1, .90);
-  public static final Color BACKGROUND_COLOR = new Color(0, 0, 0, .55);
-  private static final double PADDING = 12.0; //borders
-
-  //control Panel sizes
-  private static final double CONTROL_AREA_HEIGHT = 35.0;
-  private static final double BUTTON_SIZE = 30.0;  //width and height
-
-  //option Panel sizes
-  private static final double OPTION_AREA_HEIGHT = 20;
-  private static final double OPTIONS_SIZE = 17;
-
   /**
    * create a player control and connect it to a MediaPlayer
-   * @param viewer to show in
+   * @param viewer to be conntected to
    */
-  public PlayerControls(PlayerViewer viewer) {
-    //setStyle("-fx-background-color: blue;");
-    //setOpacity(0.5);
+  public PlayerControlPanel(PlayerViewer viewer) {
+    super(viewer);
 
     playerViewer = viewer;
-
-    createControlArea();
-    createOptionArea();
 
     //default values (not using set...Mode(), because they overwrite the settings)
     repeatButton.playListModeProperty().bind(playlistButton.playListModeProperty()); //keep playListMode synced for repeat and playlistbutton for better Tooltips (see RepeatButton.setTooltipText())
@@ -109,60 +83,18 @@ public class PlayerControls extends VBox {
     //then try to load the last values
     restoreLastPlayerStatus();
 
-    this.getChildren().addAll(controlArea, optionArea);
-
-    //------------------- handle events ---------------------------------
-
-    //------- showing/hiding controlArea using
-    setOnMouseMoved(mouseEvent -> {
-      resetThreadAndShow(); //reset show time
-      mouseEvent.consume();   //if no control in the playerControl has consumed the event yet, do not let go through, preventing playerViewer to interfere with play/pause there
-    });
-
-    controlArea.setOnMouseEntered(mouseEvent -> {
-      setVisible(true);
-      playerControlsHiderThread.pause();
-
-    });
-    controlArea.setOnMouseExited(mouseEvent -> playerControlsHiderThread.resume());
-
-    optionArea.setOnMouseEntered(mouseEvent -> {
-      setVisible(true);
-      playerControlsHiderThread.pause();
-
-    });
-    optionArea.setOnMouseExited(mouseEvent -> playerControlsHiderThread.resume());
-
-
     //toggle play/pause to user's intend
     playPauseButton.setOnMousePressed(mouseEvent -> {
       togglePlayPause();
       mouseEvent.consume();
     });
-
-    //------------------ finally start the thread which will auto-hide this PlayerControls instance
-    playerControlsHiderThread = new PlayerControlsHiderThread(this);
-    playerControlsHiderThread.setShowTimeInMillis(2500);
   }
 
-  private void createControlArea() {
-    controlArea = new HBox();
-
-    controlArea.setStyle("-fx-background-color: black;");
-    controlArea.setOpacity(0.5);
-    controlArea.setPrefHeight(CONTROL_AREA_HEIGHT);
-    controlArea.prefWidthProperty().bind(widthProperty());
-    controlArea.setAlignment(Pos.CENTER_RIGHT);
-    controlArea.setPadding(new Insets(0, PADDING, 0, PADDING)); //only left/right, because top/bottom regulated by Pos.CENTER
+  protected void createControlArea() {
+    super.createControlArea();
 
     //----------- build controls ---------------------
     playPauseButton = new PlayPauseButton(BUTTON_SIZE, BACKGROUND_COLOR, ICON_COLOR);
-    BurgerMenuButton burgerMenuButton = new BurgerMenuButton(BUTTON_SIZE, BACKGROUND_COLOR, ICON_COLOR);
-    burgerMenuButton.setOnMouseClicked((mouseEvent) -> {
-      playerViewer.getContextMenu().show(playerViewer, mouseEvent.getScreenX(), mouseEvent.getScreenY());
-      mouseEvent.consume();
-    });
-
 
     progressText = new Text();
     progressText.setFill(Color.WHITE);
@@ -172,21 +104,11 @@ public class PlayerControls extends VBox {
     progressSlider = createSlider();
     progressSlider.prefWidthProperty().bind(controlArea.prefWidthProperty());  //try to use as much space as possible of the controlArea for the progress Slider
 
-    controlArea.getChildren().addAll(playPauseButton, progressSlider, progressText, spaceBeforeBurgerMenu, burgerMenuButton);
-
-    controlArea.setCursor(Cursor.DEFAULT);
+    controlArea.getChildren().addAll(playPauseButton, progressSlider, progressText, spaceBeforeBurgerMenu);
   }
 
-  private void createOptionArea() {
-    optionArea = new HBox();
-
-    optionArea.setStyle("-fx-background-color: black;");
-    optionArea.setOpacity(0.5);
-    optionArea.setPrefHeight(OPTION_AREA_HEIGHT);
-    optionArea.prefWidthProperty().bind(widthProperty());
-    optionArea.setAlignment(Pos.CENTER);
-    optionArea.setPadding(new Insets(0, PADDING, 0, PADDING)); //only left/right, because top/bottom regulated by Pos.CENTER
-    optionArea.setSpacing(PADDING / 2);
+  protected void createOptionArea() {
+    super.createOptionArea();
 
     //----------- build controls ---------------------
     playlistButton = new PlayListButton(OPTIONS_SIZE, BACKGROUND_COLOR, ICON_COLOR);
@@ -202,8 +124,6 @@ public class PlayerControls extends VBox {
     });
 
     optionArea.getChildren().addAll(playlistButton, repeatButton);
-
-    optionArea.setCursor(Cursor.DEFAULT);
   }
 
   /**
@@ -324,10 +244,6 @@ public class PlayerControls extends VBox {
   public void setRepeatMode(boolean newValue) {
     repeatButton.setRepeatMode(newValue); //don't change playlist mode
     KissPhoto.globalSettings.setProperty(REPEAT_MODE_ID, Boolean.toString(newValue));
-  }
-
-  public void cleanUp() {
-    playerControlsHiderThread.endThread();
   }
 
   /**
@@ -486,17 +402,4 @@ public class PlayerControls extends VBox {
   }
   public PlayListButton getPlaylistButton() {return playlistButton;}
 
-
-  /**
-   * show the PlayerControls for some time using the playerControlsHiderThread to hide it automatically after some time
-   */
-  public void resetThreadAndShow() {
-    playerControlsHiderThread.showPlayerControls();
-  }
-
-  /*
-  public void hide() {
-    playerControlsHiderThread.hidePlayerControlsImmediately();
-  }
-  */
 }

@@ -1258,10 +1258,14 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * @param rotateOperation operation to be performed
    */
   public synchronized void rotateSelectedFiles(ImageFileRotater.RotateOperation rotateOperation) {
-    int imageFilesCount = mediaFileList.getImageFileCount(getSelectionModel().getSelectedItems());
-    mediaFileList.rotateSelectedFiles(getSelectionModel().getSelectedItems(), rotateOperation);
+    int filesCount = getSelectionModel().getSelectedItems().size();
+    int notRotatable = mediaFileList.rotateSelectedFiles(getSelectionModel().getSelectedItems(), rotateOperation);
     mediaContentView.showRotationAndFlippingPreview();
-    statusBar.showMessage(MessageFormat.format(language.getString("0.images.rotated"), imageFilesCount));
+    if (notRotatable==0)
+      statusBar.showMessage(MessageFormat.format(language.getString("0.images.rotated"), filesCount));
+    else
+      statusBar.showMessage(MessageFormat.format(language.getString("0.files.cannot.save.the.rotation"), notRotatable)
+                            + " " + MessageFormat.format(language.getString("0.images.rotated"), filesCount));
   }
 
   /**
@@ -1271,17 +1275,25 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * @param horizontally = true: mirror horizontally, false: mirror vertically
    */
   public synchronized void flipSelectedFiles(boolean horizontally) {
-    int imageFilesCount = mediaFileList.getImageFileCount(getSelectionModel().getSelectedItems());
-    mediaFileList.flipSelectedFiles(getSelectionModel().getSelectedItems(), horizontally);
+    int filesCount = getSelectionModel().getSelectedItems().size();
+    int notRotatable = mediaFileList.flipSelectedFiles(getSelectionModel().getSelectedItems(), horizontally);
     mediaContentView.showRotationAndFlippingPreview();
-    statusBar.showMessage(MessageFormat.format(language.getString("0.images.flipped"), imageFilesCount));
+    if (notRotatable==0)
+      statusBar.showMessage(MessageFormat.format(language.getString("0.images.flipped"), filesCount));
+    else
+      statusBar.showMessage(MessageFormat.format(language.getString("0.files.cannot.save.the.flipping"), notRotatable)
+                            + " " + MessageFormat.format(language.getString("0.images.flipped"), filesCount));
   }
 
   public synchronized void setOrientationAccordingExif() {
-    int imageFilesCount = mediaFileList.getImageFileCount(getSelectionModel().getSelectedItems());
-    mediaFileList.setOrientationAccordingExif(getSelectionModel().getSelectedItems());
+    int filesCount = getSelectionModel().getSelectedItems().size();
+    int notRotatable = mediaFileList.setOrientationAccordingExif(getSelectionModel().getSelectedItems());
     mediaContentView.showRotationAndFlippingPreview();
-    statusBar.showMessage(MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), imageFilesCount));
+    if (notRotatable == 0)
+      statusBar.showMessage(MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), filesCount));
+    else
+      statusBar.showMessage(MessageFormat.format(language.getString("0.could.not.be.orientated.according.to.exif"), notRotatable)
+                           + " " + MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), filesCount-notRotatable));
   }
 
   private ObservableList<Integer> getCopyOfSelectedIndicesSortedAndUnique() {

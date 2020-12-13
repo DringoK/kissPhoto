@@ -6,7 +6,7 @@ import de.kissphoto.view.dialogs.AboutDialog;
 import de.kissphoto.view.dialogs.ExternalEditorsDialog;
 import de.kissphoto.view.dialogs.LanguageDialog;
 import de.kissphoto.view.dialogs.WriteFolderStructureCSVDialog;
-import de.kissphoto.view.viewerHelpers.PlayerControls;
+import de.kissphoto.view.viewerHelpers.PlayerControlPanel;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -365,7 +365,7 @@ public class MainMenuBar extends MenuBar {
 
   }
   private void createPlayerMenu() {
-    PlayerControls playerControls = mediaContentView.getPlayerViewer().getPlayerControls();
+    PlayerControlPanel playerControls = mediaContentView.getPlayerViewer().getPlayerControls();
     MenuItem playPauseItem;
     MenuItem rewindItem;
     CheckMenuItem playListModeItem;

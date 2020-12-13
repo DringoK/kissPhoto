@@ -45,8 +45,6 @@ import java.util.ResourceBundle;
  * @modified: 2019-06-22 cache issue fixed: isMediaContentValid() and getMediaContentException() added
  */
 public abstract class MediaFile implements Comparable<MediaFile> {
-  private static ResourceBundle language = I18Support.languageBundle;
-
   public static final String PLACEHOLDER_PREFIX = "%p";
   public static final String PLACEHOLDER_COUNTER = "%c";
   public static final String PLACEHOLDER_SEPARATOR = "%s";
@@ -54,7 +52,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static final String PLACEHOLDER_EXTENSION = "%e";
   public static final String PLACEHOLDER_DATE = "%m"; //modified date
   public static final String PLACEHOLDER_TIME = "%t";
-
   //order of the column-wise search in searchNext() and for interpreting searchRec.tableColumn;
   public static final int COL_NO_PREFIX = 0;
   public static final int COL_NO_COUNTER = 1;
@@ -62,46 +59,64 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static final int COL_NO_DESCRIPTION = 3;
   public static final int COL_NO_EXTENSION = 4;
   public static final int COL_NO_FILEDATE = 5;
-
+  public final static int MAX_LOAD_RETRIES = 3;
+  /**
+   * the changes made in the parsed filename properties are applied to the disk
+   * <p/>
+   * if the rename fails the rename is tried again with a temp name and the flag "Physical Rename Error"
+   * As soon as all other files have been renamed it can be tried again to rename the file
+   * because: e.g. when changing the order of two files with the same name (but different number) none of the files
+   * can be renamed first. The intermediate filename for the first file enables renaming of the second. In a second run
+   * the intermediate name can now be renamed into the wanted name.
+   * (MediaFileList implements a strategy in save-method with "two runs")
+   *
+   * @return SUCCESSFUL if successful
+   * SECOND_RUN if an intermediate filename has been given and a second run is necessary
+   * RENAME_ERROR if another error has occurred (e.g. write protect/access denied etc)
+   */
+  public static final int SUCCESSFUL = 0;
+  public static final int SECOND_RUN = 1;
+  public static final int RENAME_ERROR = 2;
+  //this constants are used by sibling classes for ids in globalSettings (together with their class.getSimpleName())
+  protected final static String MAIN_EDITOR = "_mainEditor";
+  protected final static String SECOND_EDITOR = "_2ndEditor";
+  //helpers
+  private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  private static ResourceBundle language = I18Support.languageBundle;
+  /**
+   * status is a single character representing the most important boolean error flag of this File
+   * e.g. "C" =conflicting name
+   * "" = no error
+   */
+  public static final String STATUSFLAGS_HELPTEXT = language.getString("statusFlags.Helptext");
   protected Path fileOnDisk;   //including physical filename on Disk...to be renamed
   protected MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
   protected Object content = null;
-
   //planned operation when saved next time: first rotate then flip vertical then horizontal!!!
   protected MediaFileRotater.RotateOperation rotateOperation = MediaFileRotater.RotateOperation.ROTATE0;
   protected boolean flipHorizontally = false;
   protected boolean flipVertically = false;
-
+  //prevent from infinite loop if (background) loading fails permanently (currently supported by ImageFile Background loading
+  protected int loadRetryCounter = 0;
   private StringProperty status = new SimpleStringProperty();
-
   //parsed Filename, editable by user
   private StringProperty prefix = new SimpleStringProperty("");
   private StringProperty counter = new SimpleStringProperty("");
   private StringProperty separator = new SimpleStringProperty("");
   private StringProperty description = new SimpleStringProperty("");
   private StringProperty extension = new SimpleStringProperty("");
-
   private StringProperty modifiedDate = new SimpleStringProperty("");
-
   //errors regarding the filename (to be shown on GUI)
   private boolean conflictingName = false; //if true resulting name conflicts with other file in directory
   private boolean renameError = false;   //indicate that the last rename was not successful
   private boolean timeStampWriteError = false; //indicates that the last try to write the timestamp was not successful
-
   private boolean filenameChanged = false; //if true the physical name of the file needs to be written to disk
   private boolean timeStampChanged = false; //if true the time stamp needs to be written to disk
 
-  //helpers
-  private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-  //prevent from infinite loop if (background) loading fails permanently (currently supported by ImageFile Background loading
-  protected int loadRetryCounter = 0;
-  public final static int MAX_LOAD_RETRIES = 3;
-
   /**
-   * @param file   the file that will be wrapped by this class or its subclasses
-   *               constructor generates an internal File object
-   *               and stores a parsed editable copy of the filename internally
+   * @param file          the file that will be wrapped by this class or its subclasses
+   *                      constructor generates an internal File object
+   *                      and stores a parsed editable copy of the filename internally
    * @param mediaFileList double linked: link to the mediaFileList where the mediaFile resides in
    */
   public MediaFile(Path file, MediaFileList mediaFileList) {
@@ -115,6 +130,81 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     } catch (IOException e) {
       //if date cannot be accessed nothing will displayed as the date
       this.modifiedDate.set("");
+    }
+  }
+
+  /**
+   * return all field names of a media file as a CSV (comma separated) string</br>
+   * the string is terminated with \n</br>
+   * this can be used as the headline of a csv-export where the lines are written using the toCSVString method</br>
+   *
+   * @return CSV strings with all fields of MediaFile
+   */
+  public static String getCSVHeadline() {
+    final char sep = StringHelper.getLocaleCSVSeparator();  //just a shortcut
+
+    return MessageFormat.format(language.getString("csv_Headline"), sep, sep, sep, sep, sep, sep, sep);
+  }
+
+  /**
+   * Factory method for creating a matching subclass of MediaFile
+   * supported MediaPlayer FileTypes are documented in JavaFX: Package javafx.scene.media
+   * http://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html#SupportedMediaTypes
+   *
+   * @param file       to be investigated and wrapped by MediaFile
+   * @param parentList every MediaFile knows about the list it is contained in
+   * @return subclass of MediaFile
+   */
+  public static MediaFile createMediaFile(Path file, MediaFileList parentList) {
+    //create specialized MediaFile-object based on extension
+    String filename = file.getFileName().toString().toLowerCase();
+    if ((filename.endsWith(".jpg")) ||
+      (filename.endsWith(".jpeg")) ||
+      (filename.endsWith(".jp2")) ||
+      (filename.endsWith(".png")) ||
+      (filename.endsWith(".bmp")) ||
+      (filename.endsWith(".gif")) ||
+      (filename.endsWith(".tiff")) ||   //not yet supported by Java-Fx ImageView but useful for loading external editor (nothing will be displayed (black))
+      (filename.endsWith(".tif")) ||    //not yet supported by Java-Fx ImageView but useful for loading external editor (nothing will be displayed (black))
+      (filename.endsWith(".ico"))) {     //not yet supported by Java-Fx ImageView but useful for loading external editor (nothing will be displayed (black))
+
+      return new ImageFile(file, parentList);
+    } else {
+      if ((filename.endsWith(".mp4")) ||  //MPEG-4 Part 14
+        (filename.endsWith(".mts")) ||  //mmpg-4 Part 14 from Digi-Cam
+        (filename.endsWith(".hls")) ||  //http live stream
+        (filename.endsWith(".flv")) ||   //flash video
+        (filename.endsWith(".fxm")) ||   //fx media
+        //not yet supported by Java-Fx, but with VLC and useful for loading external editor (will not be played)
+        (filename.endsWith(".mp2")) ||   //mpeg2
+        (filename.endsWith(".vob")) ||   //video object = mpeg2 file on a dvd
+        (filename.endsWith(".mov")) ||  //Apple's movie format
+
+        //in this version audio is treated like video (black area is displayed, but sound is played)
+        (filename.endsWith(".wav")) ||   //Waveform Audio Format
+        (filename.endsWith(".aiff")) ||  //Audio Interchange File Format
+        (filename.endsWith(".aif")) ||   //Audio Interchange File Format
+        (filename.endsWith(".mp3")) ||   //MPEG-1, 2, 2.5 raw audio stream possibly with ID3 metadata v2.3 or v2.4
+        (filename.endsWith(".m4a"))) {   //mp-4 audio only
+        return new MovieFile(file, parentList);
+      } else {
+        return new OtherFile(file, parentList);
+      }
+    }
+  }
+
+  /**
+   * execute the external editor specified for the subclass of MediaFile
+   * If the specified external editor is invalid nothing will happen
+   * If the selection is empty or null nothing will happen
+   *
+   * @param selection  the list of MediaFiles currently selected will be passed as parameters
+   * @param editorPath string holding the path to the external editor. If invalid (null, empty, nofile..),
+   *                   in windows cmd /c is used to start the standard app for the file type otherwise nothing will happen
+   */
+  public static void executeExternalEditor(ObservableList<MediaFile> selection, String editorPath) {
+    if (selection != null && selection.size() > 0) {
+      AppStarter.exec(editorPath, selection);
     }
   }
 
@@ -207,19 +297,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   }
 
   /**
-   * return all field names of a media file as a CSV (comma separated) string</br>
-   * the string is terminated with \n</br>
-   * this can be used as the headline of a csv-export where the lines are written using the toCSVString method</br>
-   *
-   * @return CSV strings with all fields of MediaFile
-   */
-  public static String getCSVHeadline() {
-    final char sep = StringHelper.getLocaleCSVSeparator();  //just a shortcut
-
-    return MessageFormat.format(language.getString("csv_Headline"), sep, sep, sep, sep, sep, sep, sep);
-  }
-
-  /**
    * Convert to a comma separated value string with a line break in the end
    * the
    */
@@ -227,12 +304,12 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     final char sep = StringHelper.getLocaleCSVSeparator();  //just a shortcut
 
     return "\"" + getFileOnDiskPath() + "\"" + sep + "\"" + getFileOnDisk().getFileName() + "\"" + sep +
-        "\"" + getPrefix() + "\"" + sep +
-        "\"" + getCounter() + "\"" + sep +
-        "\"" + getSeparator() + "\"" + sep +
-        "\"" + getDescription() + "\"" + sep +
-        "\"" + getExtension() + "\"" + sep +
-        "\"" + getModifiedDate() + "\"\n";
+      "\"" + getPrefix() + "\"" + sep +
+      "\"" + getCounter() + "\"" + sep +
+      "\"" + getSeparator() + "\"" + sep +
+      "\"" + getDescription() + "\"" + sep +
+      "\"" + getExtension() + "\"" + sep +
+      "\"" + getModifiedDate() + "\"\n";
   }
 
   /**
@@ -283,7 +360,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
     return replaced;
   }
-
 
   /**
    * helper function for MediaFileList.searchNext:
@@ -369,8 +445,8 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       String currentText = currentField.get();
 
       currentField.setValue(currentText.substring(0, searchRec.startPos) +
-          replaceText +
-          currentText.substring(searchRec.endPos));
+        replaceText +
+        currentText.substring(searchRec.endPos));
 
       searchRec.endPos = searchRec.startPos + replaceText.length();  //correct the new endPos for further searching
 
@@ -438,24 +514,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
     return filename;
   }
-
-  /**
-   * the changes made in the parsed filename properties are applied to the disk
-   * <p/>
-   * if the rename fails the rename is tried again with a temp name and the flag "Physical Rename Error"
-   * As soon as all other files have been renamed it can be tried again to rename the file
-   * because: e.g. when changing the order of two files with the same name (but different number) none of the files
-   * can be renamed first. The intermediate filename for the first file enables renaming of the second. In a second run
-   * the intermediate name can now be renamed into the wanted name.
-   * (MediaFileList implements a strategy in save-method with "two runs")
-   *
-   * @return SUCCESSFUL if successful
-   * SECOND_RUN if an intermediate filename has been given and a second run is necessary
-   * RENAME_ERROR if another error has occurred (e.g. write protect/access denied etc)
-   */
-  public static final int SUCCESSFUL = 0;
-  public static final int SECOND_RUN = 1;
-  public static final int RENAME_ERROR = 2;
 
   private int performRename() {
     int result;
@@ -537,8 +595,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  public enum SaveResult {ERROR, NEEDS_2ND_TRY, SUCCESSFUL}
-
   /**
    * tries to write all changes to disk
    *
@@ -580,13 +636,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     else
       return SaveResult.SUCCESSFUL;
   }
-
-  /**
-   * status is a single character representing the most important boolean error flag of this File
-   * e.g. "C" =conflicting name
-   * "" = no error
-   */
-  public static final String STATUSFLAGS_HELPTEXT = language.getString("statusFlags.Helptext");
 
   public String statusFlagsToString() {
     //status in first line has highest priority
@@ -649,14 +698,22 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
   /**
    * try to load MediaContent from Cache. If not possible load it with specific load-routine
+   *
    * @return MediaContent or null if this was not possible
    */
   public Object getMediaContent() {
     Object media = mediaFileList.getCachedMediaContent(this);
-    if (media==null)
+    if (media == null)
       getSpecificMediaContent();
     return media;
   }
+
+  /*
+   * --------------------- flag getters and setters---------------------
+   * write flags with these setters/getters to keep the status property up to date
+   * internally reading can be done directly
+   * write access is private, read access is public
+   */
 
   public abstract ReadOnlyDoubleProperty getContentProgressProperty();
 
@@ -679,13 +736,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     content = null; //delete  a f t e r  the memsize has been determined ;-)
     return memSize;
   }
-
-  /*
-   * --------------------- flag getters and setters---------------------
-   * write flags with these setters/getters to keep the status property up to date
-   * internally reading can be done directly
-   * write access is private, read access is public
-   */
 
   @Override
   public String toString() {
@@ -727,10 +777,19 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     return filenameChanged;
   }
 
+  /*
+   * --------------------- getters and setters---------------------
+   */
+
   private void setFilenameChanged(boolean value) {
     filenameChanged = value;
     updateStatusProperty();
   }
+
+
+  /*
+   * --------------------- TableView getters and setters---------------------
+   */
 
   public boolean isTimeStampChanged() {
     return timeStampChanged;
@@ -741,18 +800,9 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     updateStatusProperty();
   }
 
-/*
-* --------------------- getters and setters---------------------
-*/
-
   public Path getFileOnDisk() {
     return fileOnDisk;
   }
-
-
-/*
-* --------------------- TableView getters and setters---------------------
-*/
 
   /**
    * status is the one char indicator that encodes the status flags (see statusFlagsToString() )
@@ -767,6 +817,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     return status.get();
   }
 
+  public String getPrefix() {
+    return prefix.get();
+  }
+
   /**
    * prefix is the constant part of the files in the directory before the counter
    *
@@ -779,12 +833,12 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  public String getPrefix() {
-    return prefix.get();
-  }
-
   public StringProperty prefixProperty() { //TableView binds the property over it's name during runtime with that method
     return prefix;
+  }
+
+  public String getCounter() {
+    return counter.get();
   }
 
   /**
@@ -799,20 +853,20 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  public String getCounter() {
-    return counter.get();
-  }
-
   public int getCounterValue() {
     try {
       return Integer.parseInt(getCounter());
-    }catch(Exception e){ //if numbering is empty an exception has to be caught
+    } catch (Exception e) { //if numbering is empty an exception has to be caught
       return 0;
     }
   }
 
   public StringProperty counterProperty() { //TableView binds the property over it's name during runtime with that method
     return counter;
+  }
+
+  public String getSeparator() {
+    return separator.get();
   }
 
   /**
@@ -827,12 +881,12 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  public String getSeparator() {
-    return separator.get();
-  }
-
   public StringProperty separatorProperty() { //TableView binds the property over it's name during runtime with that method
     return separator;
+  }
+
+  public String getDescription() {
+    return description.get();
   }
 
   /**
@@ -847,14 +901,13 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  public String getDescription() {
-    return description.get();
-  }
-
   public StringProperty descriptionProperty() {//TableView binds the property over it's name during runtime with that method
     return description;
   }
 
+  public String getExtension() {
+    return extension.get();
+  }
 
   /**
    * file extension includes the dot (.)
@@ -868,14 +921,13 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  public String getExtension() {
-    return extension.get();
-  }
-
   public StringProperty extensionProperty() { //TableView binds the property over it's name during runtime with that method
     return extension;
   }
 
+  public String getModifiedDate() {
+    return modifiedDate.get();
+  }
 
   public void setModifiedDate(String modifiedDate) {
     if (!modifiedDate.equals(this.modifiedDate.get())) {
@@ -883,10 +935,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       setTimeStampChanged(true);
     }
   }
-
-  public String getModifiedDate() {
-    return modifiedDate.get();
-  }
+  /*
+   * --------------------- Comparable Interface ---------------------
+   * ..sorts for resulting filename (e.g. in undelete dialog)
+   */
 
   public StringProperty fileDateProperty() {  //TableView binds the property over it's name during runtime with that method
     return modifiedDate;
@@ -901,6 +953,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
+  /*
+   * --------------------- Factories ---------------------
+   */
+
   public String getModifiedTimeOnly() {
     int i = modifiedDate.get().indexOf(" "); //all after space is time
     if (i >= 0) {
@@ -909,10 +965,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       return modifiedDate.get();  //if date is malformed then return it completely
     }
   }
- /*
-  * --------------------- Comparable Interface ---------------------
-  * ..sorts for resulting filename (e.g. in undelete dialog)
-  */
+
+  /*
+   *--------------------------------------------- Rotation stuff --------------------------------
+   */
 
   @Override
   public int compareTo(MediaFile o) {
@@ -927,65 +983,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    */
   public boolean isSameResultingNameButExtension(MediaFile otherFile) {
     return getPrefix().equalsIgnoreCase(otherFile.getPrefix()) &&
-        getCounter().equalsIgnoreCase(otherFile.getCounter()) &&
-        getSeparator().equalsIgnoreCase(otherFile.getSeparator()) &&
-        getDescription().equalsIgnoreCase(otherFile.getDescription());
+      getCounter().equalsIgnoreCase(otherFile.getCounter()) &&
+      getSeparator().equalsIgnoreCase(otherFile.getSeparator()) &&
+      getDescription().equalsIgnoreCase(otherFile.getDescription());
   }
-
-/*
-  * --------------------- Factories ---------------------
-  */
-
-  /**
-   * Factory method for creating a matching subclass of MediaFile
-   * supported MediaPlayer FileTypes are documented in JavaFX: Package javafx.scene.media
-   * http://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html#SupportedMediaTypes
-   *
-   * @param file   to be investigated and wrapped by MediaFile
-   * @param parentList every MediaFile knows about the list it is contained in
-   * @return subclass of MediaFile
-   */
-  public static MediaFile createMediaFile(Path file, MediaFileList parentList) {
-    //create specialized MediaFile-object based on extension
-    String filename = file.getFileName().toString().toLowerCase();
-    if ((filename.endsWith(".jpg")) ||
-      (filename.endsWith(".jpeg")) ||
-      (filename.endsWith(".jp2")) ||
-      (filename.endsWith(".png")) ||
-      (filename.endsWith(".bmp")) ||
-      (filename.endsWith(".gif")) ||
-      (filename.endsWith(".tiff")) ||   //not yet supported by Java-Fx ImageView but useful for loading external editor (nothing will be displayed (black))
-      (filename.endsWith(".tif")) ||    //not yet supported by Java-Fx ImageView but useful for loading external editor (nothing will be displayed (black))
-     (filename.endsWith(".ico"))) {     //not yet supported by Java-Fx ImageView but useful for loading external editor (nothing will be displayed (black))
-
-      return new ImageFile(file, parentList);
-    } else {
-      if ((filename.endsWith(".mp4")) ||  //MPEG-4 Part 14
-        (filename.endsWith(".mts")) ||  //mmpg-4 Part 14 from Digi-Cam
-        (filename.endsWith(".hls")) ||  //http live stream
-        (filename.endsWith(".flv")) ||   //flash video
-        (filename.endsWith(".fxm")) ||   //fx media
-        //not yet supported by Java-Fx, but with VLC and useful for loading external editor (will not be played)
-        (filename.endsWith(".mp2")) ||   //mpeg2
-        (filename.endsWith(".vob")) ||   //video object = mpeg2 file on a dvd
-        (filename.endsWith(".mov")) ||  //Apple's movie format
-
-        //in this version audio is treated like video (black area is displayed, but sound is played)
-        (filename.endsWith(".wav")) ||   //Waveform Audio Format
-        (filename.endsWith(".aiff")) ||  //Audio Interchange File Format
-        (filename.endsWith(".aif")) ||   //Audio Interchange File Format
-        (filename.endsWith(".mp3")) ||   //MPEG-1, 2, 2.5 raw audio stream possibly with ID3 metadata v2.3 or v2.4
-        (filename.endsWith(".m4a"))) {   //mp-4 audio only
-        return new MovieFile(file, parentList);
-      } else {
-        return new OtherFile(file, parentList);
-      }
-    }
-  }
-
-  /*
-   *--------------------------------------------- Rotation stuff --------------------------------
-   */
 
   /**
    * if the subclass of MediaFile provides a specific MediaFileRotater then
@@ -993,7 +994,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * @return true else false
    */
   public boolean canRotate() {
-    return (getMediaFileRotater() != null);
+    return false;  //standard is false. Can be overwritten in subclass is rotating is supported
   }
 
   /**
@@ -1019,40 +1020,40 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   /**
    * plan a rotation
    * the handed operation is added on previously planned rotation operation and then optimized
+   * if canRotate==false then the rotation will not be saved later and a warning should be shown on GUI
    *
    * @param operation 90 degree-wise clockwise
    */
   public void rotate(MediaFileRotater.RotateOperation operation) {
-    if (canRotate()) { //only if the specific MediaFile type supports rotation
-      boolean wasOrientationChanged = isOrientationChanged(); //remember state before transformation
+    boolean wasOrientationChanged = isOrientationChanged(); //remember state before transformation
 
-      int rotation = (rotateOperation.ordinal() + operation.ordinal()) % 4; //modulo 4 because 360=90*4
-      rotateOperation = MediaFileRotater.RotateOperation.values()[rotation];
+    int rotation = (rotateOperation.ordinal() + operation.ordinal()) % 4; //modulo 4 because 360=90*4
+    rotateOperation = MediaFileRotater.RotateOperation.values()[rotation];
 
-      //as rotation is performed first in saveChanges() when rotation changes orientation flipping V/H must be exchanged
-      if (wasOrientationChanged != isOrientationChanged()) {
-        boolean temp = flipHorizontally;
-        flipHorizontally = flipVertically;
-        flipVertically = temp;
-      }
-      updateStatusProperty();
+    //as rotation is performed first in saveChanges() when rotation changes orientation flipping V/H must be exchanged
+    if (wasOrientationChanged != isOrientationChanged()) {
+      boolean temp = flipHorizontally;
+      flipHorizontally = flipVertically;
+      flipVertically = temp;
     }
+    if (canRotate()) updateStatusProperty();
+
   }
 
   /**
    * plan a flip operation
    * the handed operation is added on previously planned flip operations
+   * if canRotate==false then the flipping will not be saved later and a warning should be shown on GUI
    */
   public void flipHorizontally() {
-    if (canRotate()) { //only if the specific MediaFile type supports rotation
-      flipHorizontally = !flipHorizontally;
-      updateStatusProperty();
-    }
+    flipHorizontally = !flipHorizontally;
+    if (canRotate()) updateStatusProperty();
   }
 
   /**
    * plan a flip operation
    * the handed operation is added on previously planned flip operations
+   * if canRotate==false then the flipping will not be saved later and a warning should be shown on GUI
    */
   public void flipVertically() {
     if (canRotate()) { //only if the specific MediaFile type supports rotation
@@ -1064,6 +1065,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   /**
    * the default operation is empty
    * so this method needs to be overwritten when a specific MediaFileRotater is provided
+   * if canRotate==false then the transformation will not be saved later and a warning should be shown on GUI
    *
    * @return successful
    */
@@ -1071,9 +1073,8 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     //reset planned operations
     boolean successful = true;
 
-    if (canRotate()) { //only if the specific MediaFile type supports rotation
+    if (canRotate()) {
       successful = getMediaFileRotater().transform(this, rotateOperation, flipHorizontally, flipVertically);
-
 
       //reset planned operations
       rotateOperation = ImageFileRotater.RotateOperation.ROTATE0;
@@ -1099,6 +1100,11 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     return flipHorizontally;
   }
 
+  /*
+   *------------------------------------------------- Logic for External Editors --------------------------------
+   */
+  //----- this part is same for all subclasses of MediaFile
+
   public boolean isFlippedVertically() {
     return flipVertically;
   }
@@ -1107,29 +1113,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     return isRotated() || isFlippedHorizontally() || isFlippedVertically();
   }
 
-  /*
-   *------------------------------------------------- Logic for External Editors --------------------------------
-   */
-  //----- this part is same for all subclasses of MediaFile
 
-  //this constants are used by sibling classes for ids in globalSettings (together with their class.getSimpleName())
-  protected final static String MAIN_EDITOR = "_mainEditor";
-  protected final static String SECOND_EDITOR = "_2ndEditor";
-
-
-  /**
-   * execute the external editor specified for the subclass of MediaFile
-   * If the specified external editor is invalid nothing will happen
-   * If the selection is empty or null nothing will happen
-   *
-   * @param selection  the list of MediaFiles currently selected will be passed as parameters
-   * @param editorPath string holding the path to the external editor. If invalid (null, empty, nofile..),
-   *                   in windows cmd /c is used to start the standard app for the file type otherwise nothing will happen
-   */
-  public static void executeExternalEditor(ObservableList<MediaFile> selection, String editorPath) {
-    if (selection != null && selection.size() > 0) {
-      AppStarter.exec(editorPath, selection);
-    }
-  }
+  public enum SaveResult {ERROR, NEEDS_2ND_TRY, SUCCESSFUL}
 }
 

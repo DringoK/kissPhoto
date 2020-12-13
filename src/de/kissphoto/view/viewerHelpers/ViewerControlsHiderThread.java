@@ -17,20 +17,20 @@ import javafx.concurrent.Task;
  * @version 2020-11-11 possible to pause Thread (until mouse has left PlayerControls-Area -> see there)
  * @version 2017-10-08 show the bar longer
  */
-public class PlayerControlsHiderThread {
+public class ViewerControlsHiderThread {
   private Thread thread;
   private HiderTask hiderTask;
-  private PlayerControls playerControls;
+  private ViewerControlPanel viewerControlPanel;
 
   /**
-   * @param playerControls is the link to the PlayerControls object to show/hide
+   * @param viewerControlPanel is the link to the PlayerControls object to show/hide
    * @constructor The Thread is built and waits to be started
    */
-  public PlayerControlsHiderThread(PlayerControls playerControls) {
-    this.playerControls = playerControls;
+  public ViewerControlsHiderThread(ViewerControlPanel viewerControlPanel) {
+    this.viewerControlPanel = viewerControlPanel;
 
     hiderTask = new HiderTask();
-    hiderTask.setPlayerControls(playerControls);
+    hiderTask.setViewerControls(viewerControlPanel);
 
     thread = new Thread(hiderTask, "PlayerControlsHiderThread");
     thread.setDaemon(true); //close when main task is closed
@@ -56,7 +56,7 @@ public class PlayerControlsHiderThread {
    */
   public void showPlayerControls() {
     Platform.runLater(()->{
-      playerControls.setVisible(true);
+      viewerControlPanel.setVisible(true);
     });
 
     hiderTask.setDoHide(true);
@@ -105,7 +105,7 @@ public class PlayerControlsHiderThread {
     protected boolean doHide = false;       //if true hide the PlayerControls
     protected boolean doArmTimer = false;   //if true the Thread will next goto sleep for a certain time and then do the next
     protected int showTimeInMillis = 1000;
-    protected PlayerControls playerControls;
+    protected ViewerControlPanel viewerControlPanel;
     protected boolean paused = false;
 
     public void setDoHide(boolean doHide) {
@@ -120,8 +120,8 @@ public class PlayerControlsHiderThread {
       this.doArmTimer = doArmTimer;
     }
 
-    public void setPlayerControls(PlayerControls playerControls) {
-      this.playerControls = playerControls;
+    public void setViewerControls(ViewerControlPanel viewerControlPanel) {
+      this.viewerControlPanel = viewerControlPanel;
     }
 
     public void pause(){this.paused=true;}
@@ -138,7 +138,7 @@ public class PlayerControlsHiderThread {
           if (!paused) {
             //perform what had been scheduled
             if (!interrupted && doHide) {  //if interrupted then the timer just was reset
-              Platform.runLater(() -> playerControls.setVisible(false));
+              Platform.runLater(() -> viewerControlPanel.handleHideEvent());
             }
           }
 

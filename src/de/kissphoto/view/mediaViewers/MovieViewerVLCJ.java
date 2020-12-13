@@ -2,6 +2,7 @@ package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MediaContentView;
+import de.kissphoto.view.viewerHelpers.PlayerControlPanel;
 import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.ImageView;
@@ -54,6 +55,8 @@ public class MovieViewerVLCJ extends PlayerViewer {
     //prefHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
     //prefWidthProperty().bind(mediaContentView.getMediaStackPaneWidthProperty());
 
+    PlayerControlPanel playerControlPanel = (PlayerControlPanel) viewerControlPanel; //temp handle
+
     vlcAvailable = true;
     //try to initialize VLCJ...find VLC
     try {
@@ -68,8 +71,8 @@ public class MovieViewerVLCJ extends PlayerViewer {
         public void mediaPlayerReady(MediaPlayer mediaPlayer) {
           Platform.runLater(() -> {
             //show progress as soon as totalDuration is available
-            playerControls.setSliderScaling(getTotalDuration());
-            playerControls.showProgress(Duration.ZERO);
+            playerControlPanel.setSliderScaling(getTotalDuration());
+            playerControlPanel.showProgress(Duration.ZERO);
           });
         }
 
@@ -105,7 +108,7 @@ public class MovieViewerVLCJ extends PlayerViewer {
 
         @Override
         public void timeChanged(MediaPlayer mediaPlayer, long newTime) {
-          Platform.runLater(() -> playerControls.showProgress(new Duration(newTime)));
+          Platform.runLater(() -> playerControlPanel.showProgress(new Duration(newTime)));
         }
 
 
@@ -136,19 +139,17 @@ public class MovieViewerVLCJ extends PlayerViewer {
       //connect vlcj callback to the mediaView
       mediaPlayer.videoSurface().set(videoSurfaceForImageView(this.mediaImageView));
 
-      //note: playerControls defined and initialized in PlayerViewer (fatherclass)
-      getChildren().addAll(mediaImageView, playerControls);
+      //note: playerControlPanel defined and initialized in PlayerViewer (fatherclass)
+      getChildren().addAll(mediaImageView, playerControlPanel);
 
       mediaImageView.fitHeightProperty().bind(prefHeightProperty());
       mediaImageView.fitWidthProperty().bind(prefWidthProperty());
 
       setFocusTraversable(true);
 
-      viewportZoomer = new ViewportZoomer(this);
-
       initPlayerContextMenu();
-      viewportZoomer.addContextMenuItems(contextMenu);
-      viewportZoomer.installContextMenu(mediaContentView, contextMenu);
+      addContextMenuItems();
+      installContextMenu();
 
     } catch (Exception e) {
       vlcAvailable = false;   //MovieViewerVLCJ is not usable e.g. if vlc is not installed on the system :-(
@@ -176,7 +177,7 @@ public class MovieViewerVLCJ extends PlayerViewer {
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
     boolean compatible = true;
     try {
-      if (playerControls.isUserHasPaused())
+      if (((PlayerControlPanel) viewerControlPanel).isUserHasPaused())
         mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString());
       else
         mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
@@ -232,7 +233,7 @@ public class MovieViewerVLCJ extends PlayerViewer {
       if (finished){
         //seek(new Duration(0.4)); //rewind not necessary because VLC is in status STOPPED.
         // No event is fired to update GUI because playerStatus=stopped when finished
-        playerControls.showProgress(Duration.ZERO);
+       ((PlayerControlPanel) viewerControlPanel).showProgress(Duration.ZERO);
       }
       wasReset = false;
       finished = false;
