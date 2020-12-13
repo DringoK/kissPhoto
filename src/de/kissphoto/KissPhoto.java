@@ -49,8 +49,6 @@ import java.util.ResourceBundle;
  * planned features:
  * ======================
  * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger)
- * todo Burger-Menü auch bei Fotos
- * todo Vollbild-Button
  * todo hoover über Filetable: Umbenennung anzeigen (aktuellerName --> neuer ResultingFilename)
  * todo Meta-Daten anzeigen. Fenster ausblendbar
  * todo Editierbar: Datum, Autor, Beschreibung, Copyright
@@ -68,7 +66,7 @@ import java.util.ResourceBundle;
  * @since 2014-04-29
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.20.11 work in progress"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.20.12.13 work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
