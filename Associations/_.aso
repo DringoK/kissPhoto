@@ -1,0 +1,35 @@
+extension=bmp
+mime-type=image/bmp
+description=bitmap image
+
+extension=gif
+mime-type=image/gif
+description=gif image
+
+extension=jpg jpeg jpe jp2
+mime-type=image/jpeg
+description=jpeg image
+
+extension=png
+mime-type=image/png
+description=png image
+
+extension=mp4
+mime-type=video/mp4
+description=mp4 video file
+
+extension=mpg mpeg
+mime-type=video/mpeg
+description=mpeg video file
+
+extension=mov qt
+mime-type=video/quicktime
+description=quicktime video file
+
+extension=avi
+mime-type=video/x-msvideo
+description=microsoft avi video file
+
+
+
+
