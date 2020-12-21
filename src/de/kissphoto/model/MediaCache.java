@@ -11,7 +11,7 @@ import java.lang.management.MemoryUsage;
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
- * This Class implements a Cache strategy for speeding up drawing & displaying of pictures/movies:
+ * This Class implements a cache strategy for speeding up displaying of pictures/movies:
  * <ul>
  * <li>The type of content and its size can be (very) different for every mediaFile of MediaFileList.
  * <li>The cache buffer therefore tries to keep MIN_FREE_MEM_SIZE bytes free by deleting the oldest media
@@ -21,33 +21,27 @@ import java.lang.management.MemoryUsage;
  * </ul>
  *
  * @author Ingo
- * @date 11.09.12
- * @modified: 2014-04-18: Preload can be disabled temporarily e.g. while moving files in fileTable view
- * @modified: 2014-05-04: MediaFiles (links) instead of indices are stored, because indices can be changed by the user
- * @modified: 2014-05-25: MIN_FREE_MEM_SIZE is kept instead of a fixed number of maximum cache elements
- * @modified: 2014-06-07: getContent interface to cache simplified, min Free memory from oldHeap is only used (@see getAvailableMem)
- * @modified: 2019-06-22: corrections to cache algo: make robust against wrong estimations by caring about exceptions
- * @modified: 2019-07-07: improvement of exception handling: subscribing to Error-Property
+ * @since 2011-09-12
+ * @version 2020-12-20: media Cache now cooperates directly with MediaFile. Preload strategy now in MediaFileList.
+ * @version 2019-07-07: improvement of exception handling: subscribing to Error-Property
+ * @version 2019-06-22: corrections to cache algo: make robust against wrong estimations by caring about exceptions
+ * @version 2014-06-07: getContent interface to cache simplified, min Free memory from oldHeap is only used (@see getAvailableMem)
+ * @version 2014-05-25: MIN_FREE_MEM_SIZE is kept instead of a fixed number of maximum cache elements
+ * @version 2014-05-04: MediaFiles (links) instead of indices are stored, because indices can be changed by the user
+ * @version 2014-04-18: Preload can be disabled temporarily e.g. while moving files in fileTable view
  */
 public class MediaCache {
   private static final long MB = 1 << 20;      //=2^20
   private static final long MIN_FREE_MEM_SIZE = 300 * MB;
-  private MediaFileList mediaList;   //link to the original data
 
-  private ObservableList<MediaFile> cacheBuffer;
-  private Runtime env = Runtime.getRuntime();
-
-  private boolean enablePreload = true;
+  private final ObservableList<MediaFile> cacheBuffer;
+  private final Runtime env = Runtime.getRuntime();
 
   /**
    * constructor to build a cache for accessing the list passed in the parameter
-   *
-   * @param mediaList link to the mediaList connected with the cache
    */
-  public MediaCache(MediaFileList mediaList) {
-    this.mediaList = mediaList;
+  public MediaCache() {
     cacheBuffer = FXCollections.observableArrayList();
-
   }
 
 
@@ -96,19 +90,11 @@ public class MediaCache {
   }
 
   /**
-   * @param mediaFile object to be looked for
-   * @return if the object is in the cache-ring buffer
-   */
-  private boolean isInCache(MediaFile mediaFile) {
-    return (cacheBuffer.indexOf(mediaFile) >= 0);
-  }
-
-  /**
    * If the cache is full
    * i.e. less memory available then MIN_FREE_MEM_SIZE
    * then the oldest entries are deleted (and content flushed)
    */
-  private void maintainCacheSizeByFlushingOldest() {
+  public void maintainCacheSizeByFlushingOldest() {
     //flushing cached content does not have direct effect on getAvailableMem (until gc() has run)
     //therefore we add a "guessed" value for every MediaFile that has been flushed to the getAvailableMem()
     //to forecast the effect of flushing and to determine how many mediaFiles need to be flushed until MIN_FREE_MEM_SIZE
@@ -118,7 +104,9 @@ public class MediaCache {
     //memory full?
     //remove the oldest MediaFiles from cache until MIN_FREE_MEM_SIZE is reached again
     while (getAvailableMem() + approxMemFreed <= MIN_FREE_MEM_SIZE && cacheBuffer.size() > 0) {//size = 0 means: to less memory for caching at all
-      approxMemFreed = approxMemFreed + cacheBuffer.get(0).flushMediaContent(); //begin of the list contains the oldest element
+      MediaFile oldestMediaFile = cacheBuffer.get(0);
+      approxMemFreed = approxMemFreed + oldestMediaFile.getContentApproxMemSize(); //begin of the list contains the oldest element
+      oldestMediaFile.flushMediaContent();
       cacheBuffer.remove(0);
       //System.out.println("flushing --> cache Buffer Size = " + cacheBuffer.size() + " approxMemFreed=" + approxMemFreed + " availMem="+getAvailableMem());
     }
@@ -128,75 +116,27 @@ public class MediaCache {
 
 
   /**
-   * get the MediaContent out of the Cache if possible. If not fill the Cache from disk by accessing MediaFileList
-   * (passed in the constructor).
+   * add the media File into the cacheBuffer list
+   * If it is already in Cache than put it at the end of the cache because "youngest" entry
+   * the content of the media file remains valid until mediaFile.flushFromCache() is called
+   * the cached content is stored in the MediaFile object. Putting it into the cache just determines
+   * which if the content is valid and what is the "oldest" mediaFile that is flushed next if out of memory
    *
-   * @param mediaFile the mediaFile's content will be returned, the mediaFile will be maintained in Cache
-   * @return the according MediaFile.Content which is thereby maintained in the cache
+   * @param mediaFile  the file to be put into the cache
    */
-  public Object getCachedMediaContent(MediaFile mediaFile) {
-    int index = mediaList.getFileList().indexOf(mediaFile);
-    if (index >= 0)
-      return getCachedMediaContent(index, mediaFile);
-    else
-      return null;
+  public void addAsLatest(MediaFile mediaFile) {
+    cacheBuffer.remove(mediaFile);  //for the case it was already in the cache
+    //add as new/youngest element
+    cacheBuffer.add(mediaFile);//and remember that it is now in memory
   }
 
   /**
-   * get the MediaContent out of the Cache if possible. If not fill the Cache from disk by accessing MediaFileList
-   * (passed in the constructor).
+   * remove media file from the cacheBuffer list
+   * don't forget to put the MediaFile's content to null to free the memory also
    *
-   * @param mediaFile the mediaFile's content will be returned, the mediaFile will be maintained in Cache
-   * @param index     of the Media in MediaFileList (as shown in FileTableView) (to get next/previous media)
-   * @return the according MediaFile.Content which is thereby maintained in the cache
-   */
-  private Object getCachedMediaContent(int index, MediaFile mediaFile) {
-    maintainCacheSizeByFlushingOldest();
-
-    Object content = mediaFile.getSpecificMediaContent(); //get cached content or load if necessary
-    //store the new element in the Cache list
-    if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile); //add to the end of the list (as the latest/"newest")
-
-    if (enablePreload) {
-      //Cancel any background loadings except next/previous
-      if (index > 1) {//if there is a previous/previous
-        mediaFile = mediaList.getFileList().get(index - 2);
-        if (mediaFile != null) mediaFile.cancelBackgroundLoading();
-      }
-      if (index < mediaList.getFileList().size() - 2) { //if there exists a 'next next'
-        mediaFile = mediaList.getFileList().get(index + 2);
-        if (mediaFile != null) mediaFile.cancelBackgroundLoading();
-      }
-
-      //preload previous media if necessary async in background
-      if (index > 0) { //if there exists a 'previous'
-        mediaFile = mediaList.getFileList().get(index - 1);
-        if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
-          //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough
-          mediaFile.getSpecificMediaContent();
-          if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile);//and remember that it is now in memory
-        }
-      }
-      //preload next media if necessary async. in background
-      if (index < mediaList.getFileList().size() - 1) { //if there exists a 'next'
-        mediaFile = mediaList.getFileList().get(index + 1);
-        if (!isInCache(mediaFile) || (mediaFile.content == null)) { //if not in cache or invalid (because loading failed)
-          //maintainCacheSizeByFlushingOldest(); //not necessary again when MIN_FREE_MEM_SIZE is large enough
-          mediaFile.getSpecificMediaContent();
-          if (!isInCache(mediaFile)) cacheBuffer.add(mediaFile);//and remember that it is now in memory
-        }
-      }
-    }
-    return content;
-  }
-
-  /**
-   * if the mediaFile is in the Cache then flush it and remove it from the cacheBuffer list
-   *
-   * @param mediaFile the file to flush (e.g. because it is deleted from disk)
+   * @param mediaFile to be removed from cache
    */
   public void flush(MediaFile mediaFile) {
-    if (isInCache(mediaFile)) mediaFile.flushMediaContent();
     cacheBuffer.remove(mediaFile);
   }
 
@@ -209,23 +149,5 @@ public class MediaCache {
       element.flushMediaContent();
     }
     cacheBuffer.clear();
-  }
-
-  /**
-   * Enable Preload: Enable loading the neighbour files (one before and one after) of the file loaded with getCachedMediaContent(index)
-   * in the Cache.
-   * By default preloading is on
-   */
-  public void enablePreLoad() {
-    enablePreload = true;
-  }
-
-  /**
-   * Disable Preload: Disable loading the neighbour files (one before and one after) of the file loaded with getCachedMediaContent(index)
-   * in the Cache.
-   * By default preloading is on
-   */
-  public void disablePreLoad() {
-    enablePreload = false;
   }
 }

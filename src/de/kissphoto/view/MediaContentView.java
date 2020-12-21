@@ -109,22 +109,22 @@ public class MediaContentView extends Pane {
     //try 1:VLC
     if (!KissPhoto.optionNoVLC) {
       try {
-        playerViewer = new MovieViewerVLCJ(this);
+        playerViewer = new PlayerViewerVLCJ(this);
       } catch (Exception e) {
         playerViewer = null;
       }
     }
 
-    if (playerViewer == null || !((MovieViewerVLCJ) playerViewer).isVlcAvailable()) {
+    if (playerViewer == null || !((PlayerViewerVLCJ) playerViewer).isVlcAvailable()) {
       //try 2: JavaFX
       try {
         if (!InetAddress.getLocalHost().getHostName().startsWith("CMTC"))  //videos cannot be played by JavaFX on Daimler-Installations
-          playerViewer = new MovieViewerFX(this);
+          playerViewer = new PlayerViewerFX(this);
         else //3: Dummy
-          playerViewer = new MovieViewerDummy(this);
+          playerViewer = new PlayerViewerDummy(this);
 
       } catch (UnknownHostException e) {
-        playerViewer = new MovieViewerDummy(this);
+        playerViewer = new PlayerViewerDummy(this);
         e.printStackTrace();
       }
     }
@@ -346,6 +346,15 @@ public class MediaContentView extends Pane {
   }
 
   /**
+   * try to preload the media content / put it into the cache
+   * by asking the appropriate viewer to get an object that will help to show the mediaFile quickly
+   */
+  public void preloadMediaContent(MediaFile mediaFile){
+    if (!photoViewer.preloadMediaContent(mediaFile))  //first try the photoViewer
+      playerViewer.preloadMediaContent(mediaFile);    //then try the active playerViewer
+    //otherViewer has no Cache support
+  }
+  /**
    * set MediaFile to be shown<br>
    * <br>
    * If the mediaFile is already showing nothing happens to suppress multiple calls due to events while building the GUI during start-up<br>
@@ -462,7 +471,7 @@ public class MediaContentView extends Pane {
     isImageActive.set(false);
     isPlayerActive.set(false);
 
-    if (playerViewer instanceof MovieViewerVLCJ)
+    if (playerViewer instanceof PlayerViewerVLCJ)
       activateOtherMediaViewer(true, "");   //no vlc installation hint
     else
       //if vlc is not installed than add a hint
@@ -479,7 +488,7 @@ public class MediaContentView extends Pane {
     isImageActive.set(false);
     isPlayerActive.set(false);
 
-    otherViewer.setMainMessageVisable(mainMessageVisible);
+    otherViewer.setMainMessageVisible(mainMessageVisible);
     otherViewer.setAdditionalMessage(additionalMessage);
 
     photoViewer.setVisible(false);
@@ -492,7 +501,7 @@ public class MediaContentView extends Pane {
     isImageActive.set(false);
     isPlayerActive.set(true);
 
-    otherViewer.setMainMessageVisable(false);
+    otherViewer.setMainMessageVisible(false);
     otherViewer.setAdditionalMessage(language.getString("media.file.is.being.played.in.fullscreen.window"));
 
     photoViewer.setVisible(false);

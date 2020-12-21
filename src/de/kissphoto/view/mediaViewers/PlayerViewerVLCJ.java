@@ -1,6 +1,7 @@
 package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.model.MediaFile;
+import de.kissphoto.model.PlayableFile;
 import de.kissphoto.view.MediaContentView;
 import de.kissphoto.view.viewerHelpers.PlayerControlPanel;
 import javafx.application.Platform;
@@ -8,9 +9,14 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.image.ImageView;
 import javafx.util.Duration;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
+import uk.co.caprica.vlcj.filefilters.AudioFileFilter;
+import uk.co.caprica.vlcj.filefilters.VideoFileFilter;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
+
+import java.io.File;
+import java.nio.file.Path;
 
 import static javafx.scene.media.MediaPlayer.Status;
 import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory.videoSurfaceForImageView;
@@ -26,16 +32,15 @@ import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactor
  * <li>full screen support
  * <li>displaying filename/date in picture
  * <li>keyboard support (next/prev, zoom, fullscreen)
- * <li>player control over main menu, contextMenu und keyboard
- * <li>volume control not yet implemented
- * <li>autoPlay feature: if on: if media is selected playback starts immediately, if end of media -> next media is shown
+ * <li>player control over main menu, contextMenu, control Panel und keyboard
  * </ul>
  *
  * @author Dr. Ingo Kreuz
- * @version 2020-11-08 bugfixing
  * @since 2020-10-25
+ * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only the know what they accept and what should be cached to speed up viewing
+ * @version 2020-11-08 bugfixing
  */
-public class MovieViewerVLCJ extends PlayerViewer {
+public class PlayerViewerVLCJ extends PlayerViewer {
   //treat the VLCJ-mediaPlayer's status compatible to FX-mediaPlayer: use the FX-constants
   protected MediaPlayerFactory mediaPlayerFactory = null; //prevent garbage collection by making also the factory a member (see vlcj docu)
   protected EmbeddedMediaPlayer mediaPlayer = null;
@@ -47,9 +52,20 @@ public class MovieViewerVLCJ extends PlayerViewer {
   private boolean vlcAvailable;
 
   /**
+   * Determine if a given file could be played with this PlayerViewer
+   * @param file the file to be investigated
+   * @return true if playable
+   */
+  public static boolean willAccept(Path file){
+    File f = file.toFile();
+    return VideoFileFilter.INSTANCE.accept(f) || AudioFileFilter.INSTANCE.accept(f);
+  }
+
+  /**
    * constructor to initialize the viewer
    */
-  public MovieViewerVLCJ(final MediaContentView contentView) {
+  public PlayerViewerVLCJ(final MediaContentView contentView) {
+
     super(contentView);   //mediaContentView of father class is now = contentView
     //binding is not necessary when placed in a StackPane (mediaStackPane is a StackPane)
     //prefHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
@@ -175,7 +191,11 @@ public class MovieViewerVLCJ extends PlayerViewer {
    */
   @Override
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
+    if (!(mediaFile instanceof PlayableFile)){ //includes test on null
+      return false;
+    }
     boolean compatible = true;
+
     try {
       if (((PlayerControlPanel) viewerControlPanel).isUserHasPaused())
         mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString());
@@ -183,7 +203,7 @@ public class MovieViewerVLCJ extends PlayerViewer {
         mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
       wasReset = false;
     } catch (Exception e) {
-      //e.printStackTrace();
+      e.printStackTrace();
       compatible = false;
     }
 

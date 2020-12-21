@@ -1,7 +1,5 @@
 package de.kissphoto.view.dialogs;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -15,6 +13,8 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import static de.kissphoto.KissPhoto.language;
+
 /**
  * A simple MessageBox consisting of
  * <ul>
@@ -22,14 +22,14 @@ import javafx.stage.StageStyle;
  * <li>standard buttons</li>
  * </ul>
  *
- * @author: Dr. Ingo Kreuz
- * @date: 2012-09-23
- * @modified: 2014-05-02 (I18Support)
- * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Dr. Ingo Kreuz
+ * @since 2012-09-23
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
+ * @version 2017-10-14: Fixed: Scaling problems. Centrally solved in kissDialog
+ * @version 2014-06-16: multi screen support: center on main window instead of main screen
+ * @version 2014-05-02: (I18Support)
  */
 public class MessageBox extends KissDialog {
-
 
   public static final int NONE_BTN = 0;     //no button was pressed: MessageBox left by [x] of the window
   public static final int OK_BTN = 1;
@@ -100,11 +100,9 @@ public class MessageBox extends KissDialog {
         userBtn = new Button("?");
       }
       userBtn.setDefaultButton(true);
-      userBtn.setOnAction(new EventHandler<ActionEvent>() {
-        public void handle(ActionEvent event) {
-          modalResult = USER_BTN;
-          close();
-        }
+      userBtn.setOnAction(event -> {
+        modalResult = USER_BTN;
+        close();
       });
       buttonBox.getChildren().add(userBtn);
     }
@@ -112,44 +110,36 @@ public class MessageBox extends KissDialog {
       Button yesBtn = new Button(YES_LABEL);
       yesBtn.setDefaultButton(true);
       yesBtn.setDefaultButton((visibleButtons & (USER_BTN | OK_BTN)) == 0);//YES is only default if there is no user button and no OK_BOOL button
-      yesBtn.setOnAction(new EventHandler<ActionEvent>() {
-        public void handle(ActionEvent event) {
-          modalResult = YES_BTN;
-          close();
-        }
+      yesBtn.setOnAction(event -> {
+        modalResult = YES_BTN;
+        close();
       });
       buttonBox.getChildren().add(yesBtn);
     }
     if ((buttons & NO_BTN) > 0) {
       Button noBtn = new Button(NO_LABEL);
       noBtn.setCancelButton(true);
-      noBtn.setOnAction(new EventHandler<ActionEvent>() {
-        public void handle(ActionEvent event) {
-          modalResult = NO_BTN;
-          close();
-        }
+      noBtn.setOnAction(event -> {
+        modalResult = NO_BTN;
+        close();
       });
       buttonBox.getChildren().add(noBtn);
     }
     if ((buttons & OK_BTN) > 0) {
       Button okBtn = new Button(OK_LABEL);
       okBtn.setDefaultButton((visibleButtons & USER_BTN) == 0);//OK_BOOL is only default if there is no user button
-      okBtn.setOnAction(new EventHandler<ActionEvent>() {
-        public void handle(ActionEvent event) {
-          modalResult = OK_BTN;
-          close();
-        }
+      okBtn.setOnAction(event -> {
+        modalResult = OK_BTN;
+        close();
       });
       buttonBox.getChildren().add(okBtn);
     }
     if ((buttons & CANCEL_BTN) > 0) {
       Button cancelBtn = new Button(CANCEL_LABEL);
       cancelBtn.setCancelButton(true);
-      cancelBtn.setOnAction(new EventHandler<ActionEvent>() {
-        public void handle(ActionEvent event) {
-          modalResult = CANCEL_BTN;
-          close();
-        }
+      cancelBtn.setOnAction(event -> {
+        modalResult = CANCEL_BTN;
+        close();
       });
       buttonBox.getChildren().add(cancelBtn);
     }

@@ -1,29 +1,23 @@
 package de.kissphoto.view.inputFields;
 
-import de.kissphoto.helper.I18Support;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
 
 
 /**
  * This is an input field (TextField) which accepts numbers (digits), space, : and - only (characters allowed in date and time)
  * A tooltip is shown with explanation which characters are allowed if illegal characters are tried to enter
  *
- * @User: Ingo
- * @Date: 06.10.12
- * @modified: 02.05.14: I18Support
- * @modified: 01.11.16: RestrictedTextfield stores connected MediaFile and Column no more locally
+ * @author Ingo
+ * @since 2012-10-06
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers
+ * @version 2016-11-01 RestrictedTextfield stores connected MediaFile and Column no more locally
+ * @version 2014-05-02 I18Support
  */
 public class DateTimeTextField extends RestrictedTextField {
-  private static ResourceBundle language = I18Support.languageBundle;
   private static final String PLEASE_ENTER_A_DATE_TIME_IN_FORMAT_YYYY_MM_DD_HH_MM_SS = "please.enter.a.date.time.in.format.yyyy.mm.dd.hh.mm.ss";
-
-  //@constructor
-  public DateTimeTextField(Stage stage) {
-    super(stage);
-  }
 
   public DateTimeTextField(String caption, Stage stage) {
     super(caption, stage);

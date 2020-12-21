@@ -8,39 +8,15 @@ import java.io.File;
 import java.text.DecimalFormatSymbols;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Ingo
- * Date: 04.10.12
  * <p/>
  * String utilities.
  * These simple routines avoid to import the complete apache StringUtils-jar
+ *
+ * @author Dr. Ingo Kreuz
+ * @since 2012-10-04
+ * @version 2020-12-20 repeat removed, because already contained in String
  */
 public class StringHelper {
-
-  /**
-   * generate string containing repeated string s
-   * e.g.
-   * repeat("0", 5) --> "00000"
-   * repeat("ab", 2) --> "abab"
-   * repeat("",2) --> ""
-   * repeat(null, 2) --> null
-   * repeat("ab", 0) --> ""
-   *
-   * @param s string to be repeated
-   * @param n number of repetitions
-   * @return a string containing n repetitions of s
-   */
-  public static String repeat(String s, int n) {
-    if (s == null) {
-      return null;
-    }
-    final StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < n; i++) {
-      sb.append(s);
-    }
-    return sb.toString();
-  }
-
 
   /**
    * get the locale separator character from Platform or Default character if not supported by platform
@@ -49,7 +25,6 @@ public class StringHelper {
    * if the decimal separator is , then use ; else use , (like comma separated values indicate)
    */
   public static char getLocaleCSVSeparator() {
-
     if (new DecimalFormatSymbols().getDecimalSeparator() == ',') {
       return ';';
     } else {

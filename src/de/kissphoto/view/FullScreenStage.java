@@ -1,13 +1,12 @@
 package de.kissphoto.view;
 
-import de.kissphoto.helper.I18Support;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * **
@@ -19,19 +18,19 @@ import java.util.ResourceBundle;
  * in the constructor<br>
  * if ESC is pressed this stage is closed and destroyed<br>
  *<br>
- * @Author Dr. Ingo Kreuz
- * @Since 2016-11-06 moved from inner class of MediaContentView to separate class
- * @Version 2017-10-08 currentPlayerPosition is handed over from main window
- * @Version 2016-11-06
+ * @author Dr. Ingo Kreuz
+ * @since 2016-11-06 moved from inner class of MediaContentView to separate class
+ * @version 2020-12-20 language now static in KissPhoto
+ * @version 2017-10-08 currentPlayerPosition is handed over from main window
+ * @version 2016-11-06
  */
 class FullScreenStage extends Stage {
   MediaContentView mediaContentView;
-  private static ResourceBundle language = I18Support.languageBundle;
 
 
   /**
    * @param primaryMediaContentView link back to main window for taking over all settings
-   * @constructor Create new MediaContentView link it to the primary one and take over currentPlayerPosition if possible
+   * Create new MediaContentView link it to the primary one and take over currentPlayerPosition if possible
    */
   public FullScreenStage(MediaContentView primaryMediaContentView) {
     super();

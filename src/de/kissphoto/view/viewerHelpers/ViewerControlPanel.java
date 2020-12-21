@@ -107,7 +107,7 @@ public class ViewerControlPanel extends VBox {
 
     //------------------ finally start the thread which will auto-hide this PlayerControls instance
     viewerControlsHiderThread = new ViewerControlsHiderThread(this);
-    viewerControlsHiderThread.setShowTimeInMillis(2500);
+    viewerControlsHiderThread.setShowTimeInMillis(500); //can be short because when hovering over controls hiding is supressed
   }
 
   //---------------- install Mouse-Move-Activation also in mediaViewer

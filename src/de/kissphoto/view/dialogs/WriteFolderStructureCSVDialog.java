@@ -4,8 +4,6 @@ import de.kissphoto.helper.StringHelper;
 import de.kissphoto.model.MediaFileList;
 import de.kissphoto.view.StatusBar;
 import de.kissphoto.view.inputFields.PathNameTextField;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -13,7 +11,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -23,19 +20,23 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.text.MessageFormat;
+
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * This is the Dialog Window for choosing a root folder and
  * a target csv-filename for writing a folder structure to csv
  *
- * @author: Ingo Kreuz
- * @date: 2014-05-30
- * @modified: 2014-06-05 java.io operations changed into java.nio
- * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
- * @modified: 2016-11-01 RestrictedTextField no longer tries to store connection to FileTable locally
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Ingo Kreuz
+ * @since 2014-05-30
+ * @version 2020-12-20: language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
+ * @version 2017-10-14: Fixed: Scaling problems. Centrally solved in kissDialog
+ * @version 2016-11-01: RestrictedTextField no longer tries to store connection to FileTable locally
+ * @version 2014-06-16: multi screen support: center on main window instead of main screen
+ * @version 2014-06-05: java.io operations changed into java.nio
  */
 public class WriteFolderStructureCSVDialog extends KissDialog {
   private static final String CSV_STD_FILENAME = "kissPhotoFolderStructure.csv";
@@ -92,18 +93,8 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
     final double LABEL_COL_WIDTH = 160;
     final double ELLIPSES_BTN_COL_WIDTH = 30;
 
-    rootFolderTextField.setOnKeyReleased(new EventHandler<KeyEvent>() {
-      @Override
-      public void handle(KeyEvent keyEvent) {
-        enableValidButtons();
-      }
-    });
-    csvFilenameTextField.setOnKeyReleased(new EventHandler<KeyEvent>() {
-      @Override
-      public void handle(KeyEvent keyEvent) {
-        enableValidButtons();
-      }
-    });
+    rootFolderTextField.setOnKeyReleased(keyEvent -> enableValidButtons());
+    csvFilenameTextField.setOnKeyReleased(keyEvent -> enableValidButtons());
 
 
     gridPane.add(new Label(language.getString("root.folder")), 0, 0);      //column, row
@@ -116,19 +107,13 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
     csvFilenameTextField.prefWidthProperty().bind(gridPane.widthProperty().subtract(LABEL_COL_WIDTH + ELLIPSES_BTN_COL_WIDTH));
 
     //Ellipses Button Action Listeners
-    rootDirEditorBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        showDirectoryChooser();
-        enableValidButtons();
-      }
+    rootDirEditorBtn.setOnAction(actionEvent -> {
+      showDirectoryChooser();
+      enableValidButtons();
     });
-    csvFilenameEditorBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        showFileChooser();
-        enableValidButtons();
-      }
+    csvFilenameEditorBtn.setOnAction(actionEvent -> {
+      showFileChooser();
+      enableValidButtons();
     });
 
     //OK_BOOL / Cancel Buttons
@@ -140,27 +125,21 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
 
     okBtn = new Button(KissDialog.OK_LABEL);
     okBtn.setDefaultButton(true);
-    okBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        try {
-          exportFolderStructureToCSV(rootFolderTextField.getText(), csvFilenameTextField.getText());
-          statusBar.showMessage(language.getString("csv.successfully.generated.for.directory.structure"));
-        } catch (IOException e) {
-          statusBar.showError(MessageFormat.format(language.getString("error.generating.csv.file.for.directory.structure.0"), e.getMessage()));
-        }
-        modalResult_bool = OK_BOOL;
-        close();
+    okBtn.setOnAction(actionEvent -> {
+      try {
+        exportFolderStructureToCSV(rootFolderTextField.getText(), csvFilenameTextField.getText());
+        statusBar.showMessage(language.getString("csv.successfully.generated.for.directory.structure"));
+      } catch (IOException e) {
+        statusBar.showError(MessageFormat.format(language.getString("error.generating.csv.file.for.directory.structure.0"), e.getMessage()));
       }
+      modalResult_bool = OK_BOOL;
+      close();
     });
     Button cancelBtn = new Button(KissDialog.CANCEL_LABEL);
     cancelBtn.setCancelButton(true);
-    cancelBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult_bool = CANCEL_BOOL;
-        close();
-      }
+    cancelBtn.setOnAction(actionEvent -> {
+      modalResult_bool = CANCEL_BOOL;
+      close();
     });
     buttonBox.getChildren().addAll(okBtn, cancelBtn);
 
@@ -177,8 +156,8 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
    * if dialog is closed with OK_BOOL then the masterExtTextField is updated with the chosen directory path
    * if no path is provided in masterExtTextField then
    * the currentFolder of mediaFileList is the initial directory for the dialog
-   *
-   * @return the File to be used as root directory or null, if the dialog was not closed with OK_BOOL
+   * <br><br>
+   * set rootFolderTextField (the File to write in) if the dialog was closed with OK_BOOL
    */
   private void showDirectoryChooser() {
     if (directoryChooserDialog == null) {
@@ -206,8 +185,8 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
    * if dialog is closed with OK_BOOL then the csvFilenameTextField is updated with the chosen filename
    * if no path is provided in csvFilenameTextField then
    * the currentFolder of mediaFileList is the initial directory for the dialog
-   *
-   * @return the File to write in or null, if the dialog was not closed with OK_BOOL
+   * <br><br>
+   * set csvFilenameTextField (the File to write in) if the dialog was closed with OK_BOOL
    */
   private void showFileChooser() {
     if (fileChooserDialog == null) {
@@ -259,13 +238,13 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
    */
   public void exportFolderStructureToCSV(String rootDirName, String filename) throws IOException {
     try {
-      writer = new OutputStreamWriter(new FileOutputStream(filename), "ISO-8859-1");  //(UTF-8 does not work with Excel), US-ASCII, ISO-8859-1, UTF-8, UTF-16-BE, UTF-16LE, UTF-16
+      writer = new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.ISO_8859_1);  //(UTF-8 does not work with Excel), US-ASCII, ISO-8859-1, UTF-8, UTF-16-BE, UTF-16LE, UTF-16
 
       //-------- write full path to rootDirName
       writer.write("\"" + rootDirName + "\"\n\n");
 
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(rootDirName))) {
-        //-------- write recursivly all subfolder' directory trees
+        //-------- write recursively all subfolder' directory trees
         for (Path currentDir : stream) {
           if (Files.isDirectory(currentDir) && !Files.isHidden(currentDir)) //collect all directories, ignore hidden files
             exportFolderStructureToCSVOneColumn(currentDir, 0);
@@ -280,7 +259,7 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
   }
 
   /**
-   * write the directry's name
+   * write the directory's name
    * if sub folders exist recursively write the first one on next level (one leading separator)
    * and all others recursively on the level which has been passed +1 (level+1 leading separators)
    * Every indent level results in one table column:
@@ -311,7 +290,7 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
             writer.write(sep);
             first = false;
           } else {
-            writer.write(StringHelper.repeat(Character.toString(sep), level + 1));
+            writer.write(Character.toString(sep).repeat(level + 1));
           }
           exportFolderStructureToCSVMultiColumns(subDir, level + 1);
 
@@ -345,11 +324,11 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
    */
   private void exportFolderStructureToCSVOneColumn(Path rootDir, int level) throws IOException {
     //write own name
-    writer.write("\"" + StringHelper.repeat(SEP, level) + rootDir.getFileName() + "\"\n");
+    writer.write("\"" + SEP.repeat(level) + rootDir.getFileName() + "\"\n");
 
     //recursively write all subFolders
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(rootDir)) {
-      //-------- write recursivly all subfolder' directory trees
+      //-------- write recursively all subfolder' directory trees
       for (Path subDir : stream) {
         if (Files.isDirectory(subDir) && !Files.isHidden(subDir)) //collect all directories, ignore hidden files
           exportFolderStructureToCSVOneColumn(subDir, level + 1);

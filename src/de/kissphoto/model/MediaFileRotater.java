@@ -8,8 +8,8 @@ package de.kissphoto.model;
  * Every subclass of mediaFile has to install a MediaFileRotater
  *
  * @author Dr. Ingo Kreuz
- * date: 2018-10-21
- * modified:
+ * @since 2018-10-21
+ * @version initial version
  */
 
 

@@ -18,18 +18,15 @@ import java.io.InputStreamReader;
  * This solution for savely starting external programs is based on the article of Michael C. Daconta:
  * http://www.javaworld.com/article/2071275/core-java/when-runtime-exec---won-t.html?page=2
  * <p/>
- * Author: Ingo Kreuz
- * Date: 2014-05-17
- *
- * @modified: 2014-06-05 java.io operations changed into java.nio
+ * @author Dr. Ingo Kreuz
+ * @since 2014-05-17
+ * @version 2014-06-05 java.io operations changed into java.nio
  */
 public class AppStarter {
   public static void exec(String pathToProgram, ObservableList<MediaFile> selection) {
     String[] cmd;
-    int paramIndex = 0;
-
     try {
-
+      int paramIndex;
       if (pathToProgram != null && !pathToProgram.isEmpty()) {
         //build normal call as everything is provided
         cmd = new String[selection.size() + 1]; //
@@ -100,8 +97,9 @@ public class AppStarter {
       try {
         InputStreamReader isr = new InputStreamReader(is);
         BufferedReader br = new BufferedReader(isr);
-        String line = null;
-        while ((line = br.readLine()) != null) ; //consume all input
+        while ((br.readLine()) != null) {
+          //consume all input  }
+        }
       } catch (IOException ioe) {
         //ignore failures as we are not interested in the output of the program ;-)
       }

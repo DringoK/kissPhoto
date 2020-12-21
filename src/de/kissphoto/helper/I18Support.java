@@ -4,9 +4,10 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
- * Created by Ingo on 02.05.2014.
  * <p/>
  * provide the language resource bundle for all classes of kissphoto
+ * @author Dr. Ingo Kreuz
+ * @since 2014-05-02
  */
 public class I18Support {
   public static final String GERMAN = "de";

@@ -1,8 +1,6 @@
 package de.kissphoto.view.dialogs;
 
 import de.kissphoto.view.inputFields.NumberTextField;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -17,15 +15,18 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import static de.kissphoto.KissPhoto.language;
+
 /**
  * This is the Dialog Window for Renumbering
  *
- * @author: Dr. Ingo Kreuz
- * @date: 2012-10-05
- * @modified: 2014-05-02 (I18Support)
- * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
- * @modified: 2016-11-01 RestrictedTextField no longer tries to store connection to FileTable-->adaption here: pass null to constructor
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Dr. Ingo Kreuz
+ * @since 2012-10-05
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
+ * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @version 2016-11-01 RestrictedTextField no longer tries to store connection to FileTable-->adaption here: pass null to constructor
+ * @version 2014-06-16 multi screen support: center on main window instead of main screen
+ * @version 2014-05-02 (I18Support)
  */
 public class RenumberDialog extends KissDialog {
   public static final int NONE_BTN = 0; //no button was pressed: MessageBox left by [x] of the window
@@ -68,12 +69,7 @@ public class RenumberDialog extends KissDialog {
     gridPane.setPadding(mainPadding);
 
 
-    globalField.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        setStartLabelAccordingGlobalValue();
-      }
-    });
+    globalField.setOnAction(actionEvent -> setStartLabelAccordingGlobalValue());
     Label globalLabel = new Label(language.getString("global.numbering"));
     globalLabel.setTooltip(new Tooltip(language.getString("global.Explanation")));
     gridPane.add(globalLabel, 0, 0);
@@ -102,29 +98,20 @@ public class RenumberDialog extends KissDialog {
 
     Button renumAllBtn = new Button(language.getString("renumber.all"));
     renumAllBtn.setDefaultButton(true);
-    renumAllBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult = RENUM_ALL_BTN;
-        close();
-      }
+    renumAllBtn.setOnAction(actionEvent -> {
+      modalResult = RENUM_ALL_BTN;
+      close();
     });
     Button renumSelectionBtn = new Button(language.getString("renumber.selection"));
-    renumSelectionBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult = RENUM_SELECTION_BTN;
-        close();
-      }
+    renumSelectionBtn.setOnAction(actionEvent -> {
+      modalResult = RENUM_SELECTION_BTN;
+      close();
     });
     Button cancelBtn = new Button(KissDialog.CANCEL_LABEL);
     cancelBtn.setCancelButton(true);
-    cancelBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult = CANCEL_BTN;
-        close();
-      }
+    cancelBtn.setOnAction(actionEvent -> {
+      modalResult = CANCEL_BTN;
+      close();
     });
     buttonBox.getChildren().addAll(renumAllBtn, renumSelectionBtn, cancelBtn);
 

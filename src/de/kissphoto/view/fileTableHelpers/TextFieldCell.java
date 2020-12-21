@@ -30,10 +30,9 @@ import javafx.scene.input.KeyEvent;
  * <p/>
  *
  * @author Ingo
- * @date: 2016-11-04
- * @modified: 2018-11-17 Ctrl-U now copies information from the line above in edit mode,
- *                       (Shift) TAB moves to next (prev) column
- *                       fixed: keeping caret position fixed
+ * @since 2016-11-04
+ * @version 2020-12-20 lambda expressions for event handlers
+ * @version 2018-11-17 Ctrl-U now copies information from the line above in edit mode, (Shift) TAB moves to next (prev) column, fixed: keeping caret position fixed
  */
 class TextFieldCell extends TableCell<MediaFile, String> {
   static int lastCaretPosition = 0; //this is to save the caretPosition when moving up/down lines in editMode
@@ -57,16 +56,13 @@ class TextFieldCell extends TableCell<MediaFile, String> {
     setText(null);
     setGraphic((Node) inputField);
     this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        inputField.requestFocus();
-        //position caret again??? only then it works :-(
-        positionCaretOrSelect();
+    Platform.runLater(() -> {
+      inputField.requestFocus();
+      //position caret again??? only then it works :-(
+      positionCaretOrSelect();
 
-        ((FileTableView) getTableColumn().getTableView()).resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
-        lastCaretPositionValid = false; //also consume last caret position
-      }
+      ((FileTableView) getTableColumn().getTableView()).resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
+      lastCaretPositionValid = false; //also consume last caret position
     });
   }
 
@@ -87,10 +83,11 @@ class TextFieldCell extends TableCell<MediaFile, String> {
       inputField.positionCaret(lastCaretPosition); //move to last text cursor position in the new row
 
       //select all
-    } else {
+    }
+    //else {
       //default behavior of TableView is already selectAll...
       //inputField.selectAll();
-    }
+    //}
   }
 
   /**
@@ -100,7 +97,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
     setText(getItem());
     this.setContentDisplay(ContentDisplay.TEXT_ONLY);
     setGraphic(null);
-    if (!stayInEditMode) ((FileTableView) getTableColumn().getTableView()).setEditable(false);
+    if (!stayInEditMode) getTableColumn().getTableView().setEditable(false);
   }
 
   @Override
@@ -124,7 +121,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
    * refresh the cell content
    *
    * @param item  show this string either in Label (non editing) or in editInputField (when editing)
-   * @param empty
+   * @param empty if true the cell is cleared (null)
    */
   @Override
   public void updateItem(String item, boolean empty) {
@@ -184,11 +181,10 @@ class TextFieldCell extends TableCell<MediaFile, String> {
       if (!newValue) { //if focus lost (newValue of focussed=false)
         if (isEditing()) commitEdit(inputField.getText());
       }
-      ;
     });
 
     //use EventFilter instead of setOnKeyPressed. Otherwise Up/Dn would first execute their default behaviour (home/end) before onKeyPressed is fired
-    ((Node) inputField).addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+    ((Node) inputField).addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<>() {
       @Override
       public void handle(KeyEvent event) {
         switch (event.getCode()) {
@@ -263,7 +259,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
 
         stayInEditMode = false;
 
-        TableColumn nextColumn;
+        TableColumn<MediaFile, String> nextColumn;
         if (getTableColumn() == fileTableView.getPrefixColumn()) {
           nextColumn = fileTableView.getCounterColumn();
         } else if (getTableColumn() == fileTableView.getCounterColumn()) {
@@ -281,12 +277,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
           nextColumn = fileTableView.getDescriptionColumn();
         }
 
-        Platform.runLater(new Runnable() {
-          @Override
-          public void run() {
-            fileTableView.edit(currentLine, nextColumn);
-          }
-        });
+        Platform.runLater(() -> fileTableView.edit(currentLine, nextColumn));
       }
 
       /**
@@ -301,7 +292,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
         lastCaretPositionValid = true;
         stayInEditMode = false;
 
-        TableColumn prevColumn;
+        TableColumn<MediaFile, String> prevColumn;
         if (getTableColumn() == fileTableView.getPrefixColumn()) {
           prevColumn = fileTableView.getFileDateColumn(); //circle: jump from first to last column
         } else if (getTableColumn() == fileTableView.getCounterColumn()) {
@@ -319,12 +310,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
           prevColumn = fileTableView.getDescriptionColumn();
         }
 
-        Platform.runLater(new Runnable() {
-          @Override
-          public void run() {
-            fileTableView.edit(currentLine, prevColumn);
-          }
-        });
+        Platform.runLater(() -> fileTableView.edit(currentLine, prevColumn));
       }
 
       /**
@@ -361,12 +347,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
         fileTableView.getSelectionModel().focus(currentLineEdited);
         fileTableView.getSelectionModel().clearAndSelect(currentLineEdited, editingColumn);
 
-        Platform.runLater(new Runnable() {
-          @Override
-          public void run() {
-            fileTableView.edit(fileTableView.getSelectionModel().getSelectedIndex(), editingColumn);
-          }
-        });
+        Platform.runLater(() -> fileTableView.edit(fileTableView.getSelectionModel().getSelectedIndex(), editingColumn));
       }
     });
   }

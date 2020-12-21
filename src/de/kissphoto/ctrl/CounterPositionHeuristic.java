@@ -11,12 +11,12 @@ import java.nio.file.Path;
  * The nth number in the filename will be used in MediaFiles to auto (re)number the files
  * <p/>
  *
- * @author: Ingo
- * @Date: 2012-09-02
- * @modified: 2014-05-11: ik: if the 2-file heuristic does not find counter return 1-file heuristic
- * @modified: 2014-06-04: ik: bug fix: the first files have been used (might be dirs) instead of
- * the the found fileNames (which are files) More robust (null/not exist, ...)
- * @modified: 2014-06-05: java.nio used (except conversion to file array)
+ * @author Ingo
+ * @since 2012-09-02
+ * @version 2020-12-20: bug fixing with string compare
+ * @version 2014-06-05: java.nio used (except conversion to file array)
+ * @version 2014-06-04: ik: bug fix: the first files have been used (might be dirs) instead of the the found fileNames (which are files) More robust (null/not exist, ...)
+ * @version 2014-05-11: ik: if the 2-file heuristic does not find counter return 1-file heuristic
  */
 public class CounterPositionHeuristic {
 
@@ -45,6 +45,8 @@ public class CounterPositionHeuristic {
 
     if (Files.exists(directory)) {
       File[] files = directory.toFile().listFiles();
+      if (files == null) return 0;
+
       String[] fileNames = new String[MAXFILENAMES];
 
       //find the first two fileNames
@@ -94,15 +96,15 @@ public class CounterPositionHeuristic {
    * <li>filename1="hello.jpg", filename2="world.jpg" returns 0 (no number in the non-identical parts of the strings)</li>
    * </ul>
    *
-   * @param filename1
-   * @param filename2
-   * @return the likely position of the counter in the filename ("the nth number is the counter")
-   * 0 is returned if the counter should be added as a prefix (no number in the non-equal part of the filenames)
+   * @param filename1 a first filename
+   * @param filename2 a second filename to detect a "counting" number between first and second
+   * @return the likely position of the counter in the filename ("the nth number is the counter"),
+   *         0 is returned if the counter should be added as a prefix (no number in the non-equal part of the filenames)
    */
   public int guessCounterPosition(String filename1, String filename2) {
     //if too few arguments use heuristic with just one filename
-    if ((filename1 == null) || (filename1 == "")) return guessCounterPosition(filename2);
-    if ((filename2 == null) || (filename2 == "")) return guessCounterPosition(filename1);
+    if ((filename1 == null) || filename1.equals("")) return guessCounterPosition(filename2);
+    if ((filename2 == null) || filename2.equals("")) return guessCounterPosition(filename1);
 
     int i = 0;   //the current char-position in the strings
     int pos = 0; //the position of the number (the nth number)
@@ -169,12 +171,12 @@ public class CounterPositionHeuristic {
    * <li>filename="2012 09 01-2012 09 02_01 weekend in the mountains.jpg" returns 7</li>
    * </ul>
    *
-   * @param filename
+   * @param filename to be investigated
    * @return the likely position of the counter in the filename (the nth number is the counter)<br>
    * or zero if a prefix counter is proposed (no number is in the filename)
    */
   public int guessCounterPosition(String filename) {
-    if ((filename == null) || (filename == "")) {
+    if ((filename == null) || filename.equals("")) {
       return 1;
     } else {
       boolean found = false;

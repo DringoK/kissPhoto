@@ -1,5 +1,6 @@
 package de.kissphoto.view.mediaViewers;
 
+import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MediaContentView;
 import de.kissphoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.scene.control.ContextMenu;
@@ -14,11 +15,10 @@ import javafx.scene.layout.StackPane;
  *   <li>Context Menu can be activated</li>
  *   <li>ViewerControls can be installed</li>
  * </ul>
- * Assumption: All Viewers that implement MediaViewer must be derived from Node
  *
  * @author Dr. Ingo Kreuz
- * @since 2020-12-13
- * @version 2020-12-13
+ * @since 2020-12-13  common father class introduced to all MediaViewers
+ * @version 2020-12-20 now the viewer has to provide the object to be cached with MediaFile (because it's a view's implementation how to laod the file)
 */
 
 public class MediaViewer extends StackPane {
@@ -48,6 +48,24 @@ public class MediaViewer extends StackPane {
     return mediaContentView;
   }
 
+  /**
+   * Only the viewer knows what would help it to display the media faster next time
+   * standard is: do not use cache, i.e. return null as implemented here. Should be overwritten in subclasses
+   * @param mediaFile the file to be loaded by the viewer
+   * @return the object to be put in cache or null if no object can be put in cache
+   */
+  public Object getViewerSpecificMediaContent(MediaFile mediaFile){
+    return null;
+  }
+
+  /**
+   * try to preload the media content / put it into the cache
+   * @return true if this is the viewer which can open the file
+   */
+  public boolean preloadMediaContent(MediaFile mediaFile){
+    mediaFile.getMediaContentCached(this);
+    return true;
+  }
   /**
    * call this before setting PlayerViewer to null, e.g. to end internal thread
    */

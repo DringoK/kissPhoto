@@ -19,6 +19,7 @@ import static de.kissphoto.KissPhoto.language;
  *
  * @author Dr. Ingo Kreuz
  * @since 2014-07-24
+ * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only the know what they accept and what should be cached to speed up viewing
  * @version 2020-11-29 sync of menuItems now directly in PlayerControls. Common parts of ZoomableViewer implementation pulled up from the MovieViewers
  * @version 2020-11-02 media Viewers now determine itself if they can show/play a file (no longer the content view)
  * @version 2020-10-25 made abstract and moved JavaFx-Player into MovieViewerFX, so than MovieViewerVLC could be added

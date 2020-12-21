@@ -1,8 +1,6 @@
 package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.view.MediaContentView;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.control.ContextMenu;
@@ -21,7 +19,7 @@ import static de.kissphoto.KissPhoto.language;
  * @author Dr. Ingo Kreuz
  * @since 2016-11-06 all zooming/moving routines moved from PhotoViewer to this class
  * @version 2020-12-13 zooming Interface now in inheritance hierarchy
- * @version 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
+ * @version 2017-10-21 Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
  * @version 2017-10-08 fixed: while zooming not the complete space of the surrounding Pane has been used
  */
 
@@ -355,42 +353,30 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
     //---- zooming menu menu items
     MenuItem zoomInItem = new MenuItem(language.getString("zoom.in.ctrl.mouse.wheel.up")); //+
     zoomInItem.setAccelerator(new KeyCodeCombination(KeyCode.PLUS));
-    zoomInItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        zoomIn();
-        actionEvent.consume();
-      }
+    zoomInItem.setOnAction(actionEvent -> {
+      zoomIn();
+      actionEvent.consume();
     });
 
     MenuItem zoomOutItem = new MenuItem(language.getString("zoom.out.ctrl.mouse.wheel.down")); //-
     zoomOutItem.setAccelerator(new KeyCodeCombination(KeyCode.MINUS));
-    zoomOutItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        zoomOut();
-        actionEvent.consume();
-      }
+    zoomOutItem.setOnAction(actionEvent -> {
+      zoomOut();
+      actionEvent.consume();
     });
 
     MenuItem zoomFitItem = new MenuItem(language.getString("zoom.to.fit.middle.mouse.button")); //ctrl-space
     zoomFitItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.CONTROL_DOWN));
-    zoomFitItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        zoomToFit();
-        actionEvent.consume();
-      }
+    zoomFitItem.setOnAction(actionEvent -> {
+      zoomToFit();
+      actionEvent.consume();
     });
 
     MenuItem zoom100Item = new MenuItem(language.getString("zoom.100")); //shift-space
     zoom100Item.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.SHIFT_DOWN));
-    zoom100Item.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        zoom100();
-        actionEvent.consume();
-      }
+    zoom100Item.setOnAction(actionEvent -> {
+      zoom100();
+      actionEvent.consume();
     });
 
     contextMenu.getItems().addAll(zoomInItem, zoomOutItem, zoomFitItem, zoom100Item);
@@ -398,52 +384,37 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
     //---- moving menu menu items
     MenuItem moveToCenterItem = new MenuItem(language.getString("move.to.center"));//ctrl-shift-space
     moveToCenterItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
-    moveToCenterItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        centerMedia();
-        actionEvent.consume();
-      }
+    moveToCenterItem.setOnAction(actionEvent -> {
+      centerMedia();
+      actionEvent.consume();
     });
 
     MenuItem moveLeftItem = new MenuItem(language.getString("move.left.drag.mouse.left.button"));//left arrow
     moveLeftItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT));
-    moveLeftItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        moveLeft();
-        actionEvent.consume();
-      }
+    moveLeftItem.setOnAction(actionEvent -> {
+      moveLeft();
+      actionEvent.consume();
     });
 
     MenuItem moveRightItem = new MenuItem(language.getString("move.right.drag.mouse.left.button"));//right arrow
     moveRightItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT));
-    moveRightItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        moveRight();
-        actionEvent.consume();
-      }
+    moveRightItem.setOnAction(actionEvent -> {
+      moveRight();
+      actionEvent.consume();
     });
 
     MenuItem moveUpItem = new MenuItem(language.getString("move.up.drag.mouse.left.button"));//up arrow
     moveUpItem.setAccelerator(new KeyCodeCombination(KeyCode.UP));
-    moveUpItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        moveUp();
-        actionEvent.consume();
-      }
+    moveUpItem.setOnAction(actionEvent -> {
+      moveUp();
+      actionEvent.consume();
     });
 
     MenuItem moveDownItem = new MenuItem(language.getString("move.down.drag.mouse.left.button"));//down arrow
     moveDownItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN));
-    moveDownItem.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        moveDown();
-        actionEvent.consume();
-      }
+    moveDownItem.setOnAction(actionEvent -> {
+      moveDown();
+      actionEvent.consume();
     });
 
     contextMenu.getItems().addAll(new SeparatorMenuItem(), moveToCenterItem, moveLeftItem, moveRightItem, moveUpItem, moveDownItem);

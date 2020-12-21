@@ -6,8 +6,8 @@ package de.kissphoto.view.inputFields;
  * or implementing TextFieldComboBox
  * Implementing classes must be derived from Node!!
  *
- * @date 1.11.2016
- * @user Ingo
+ * @author Ingo
+ * @since 2016-11-01
  */
 public interface RestrictedInputField {
   //as is in RestrictedTextField, mapped to setValue in ComboBox

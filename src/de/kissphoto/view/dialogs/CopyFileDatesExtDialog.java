@@ -7,15 +7,12 @@ import de.kissphoto.view.FileTableView;
 import de.kissphoto.view.inputFields.FileNameTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TreeItemPropertyValueFactory;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -25,6 +22,8 @@ import javafx.stage.Stage;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static de.kissphoto.KissPhoto.language;
+
 /**
  * this dialog is for copying filedates from a "master-extension".
  * Imagine you've converted your video clips from mov-container to mp4 container, e.g. using XMediaRecode.
@@ -32,16 +31,17 @@ import java.nio.file.Paths;
  * Use this dialog and specify "mov" as the master to copy the filedates from each mov file to all files with the same name (except extension).
  * <p/>
  *
- * @author: Ingo
- * @date: 2014-06-19
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Dr. Ingo Kreuz
+ * @since 2014-06-19
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
+ * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class CopyFileDatesExtDialog extends KissDialog {
   public static final int FILEDATE_COL_WIDTH = 155;
   ObservableList<MediaFile> sortedFileList; //"current Directory" sorted for resultingFileName for preview
 
   final TextField masterExtTextField = new FileNameTextField(this);
-  final TreeTableView<MediaFile> treeTableView = new TreeTableView();
+  final TreeTableView<MediaFile> treeTableView = new TreeTableView<>();
   TreeItem<MediaFile> root;
 
   final Button okBtn;
@@ -77,12 +77,7 @@ public class CopyFileDatesExtDialog extends KissDialog {
     masterExtAreaBox.setPadding(new Insets(7));
     masterExtAreaBox.getChildren().addAll(new Label(language.getString("master.extension")), masterExtTextField);
 
-    masterExtTextField.setOnKeyReleased(new EventHandler<KeyEvent>() {
-      @Override
-      public void handle(KeyEvent keyEvent) {
-        buildClusteredFileList();
-      }
-    });
+    masterExtTextField.setOnKeyReleased(keyEvent -> buildClusteredFileList());
 
     //OK / Cancel Buttons
     HBox buttonBox = new HBox();
@@ -93,21 +88,15 @@ public class CopyFileDatesExtDialog extends KissDialog {
 
     okBtn = new Button(KissDialog.OK_LABEL);
     okBtn.setDefaultButton(true);
-    okBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult_bool = OK_BOOL;
-        close();
-      }
+    okBtn.setOnAction(actionEvent -> {
+      modalResult_bool = OK_BOOL;
+      close();
     });
     Button cancelBtn = new Button(KissDialog.CANCEL_LABEL);
     cancelBtn.setCancelButton(true);
-    cancelBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult_bool = CANCEL_BOOL;
-        close();
-      }
+    cancelBtn.setOnAction(actionEvent -> {
+      modalResult_bool = CANCEL_BOOL;
+      close();
     });
     buttonBox.getChildren().addAll(okBtn, cancelBtn);
 
@@ -140,11 +129,11 @@ public class CopyFileDatesExtDialog extends KissDialog {
 
     treeTableView.setRoot(root);
 
-    TreeTableColumn fileNameCol = new TreeTableColumn<>(language.getString("file.name"));
+    TreeTableColumn<MediaFile, String> fileNameCol = new TreeTableColumn<>(language.getString("file.name"));
     fileNameCol.prefWidthProperty().bind(treeTableView.widthProperty().subtract(FILEDATE_COL_WIDTH + 2)); //two extra pixels to avoid scroll bar
     fileNameCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("ResultingFilename"));
 
-    TreeTableColumn fileDateColumn = new TreeTableColumn(language.getString(FileTableView.MODIFIED));
+    TreeTableColumn<MediaFile, String> fileDateColumn = new TreeTableColumn<>(language.getString(FileTableView.MODIFIED));
     fileDateColumn.setPrefWidth(FILEDATE_COL_WIDTH);
     fileDateColumn.setCellValueFactory(new TreeItemPropertyValueFactory<>("fileDate"));
 

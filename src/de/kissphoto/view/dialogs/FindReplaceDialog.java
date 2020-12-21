@@ -3,8 +3,6 @@ package de.kissphoto.view.dialogs;
 import de.kissphoto.view.FileTableView;
 import de.kissphoto.view.StatusBar;
 import de.kissphoto.view.inputFields.FileNameTextField;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -12,7 +10,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -22,16 +19,18 @@ import javafx.stage.Stage;
 
 import java.text.MessageFormat;
 
+import static de.kissphoto.KissPhoto.language;
 import static de.kissphoto.view.FileTableView.NOTHING_FOUND;
 
 /**
  * This is the Dialog Window for Find and Replace
  *
- * @author: Ingo Kreuz
- * @date: 2014-05-03
- * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
- * @modified: 2016-11-04 indicate search mode: in all or in selected lines only
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Ingo Kreuz
+ * @since 2014-05-03
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
+ * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @version 2016-11-04 indicate search mode: in all or in selected lines only
+ * @version 2014-06-16 multi screen support: center on main window instead of main screen
  */
 public class FindReplaceDialog extends KissDialog {
   final static String findCaption = language.getString("find");
@@ -91,12 +90,7 @@ public class FindReplaceDialog extends KissDialog {
     Label findLabel = new Label(findCaption);
     gridPane.add(findLabel, 0, 0);      //column, row
     findTextField.prefWidthProperty().bind(gridPane.widthProperty().subtract(LABEL_COL_WIDTH));
-    findTextField.setOnKeyReleased(new EventHandler<KeyEvent>() {
-      @Override
-      public void handle(KeyEvent keyEvent) {
-        handleFindTextFieldChanged();
-      }
-    });
+    findTextField.setOnKeyReleased(keyEvent -> handleFindTextFieldChanged());
     gridPane.add(findTextField, 1, 0);
 
     Label replaceLabel = new Label(replaceCaption);
@@ -112,39 +106,19 @@ public class FindReplaceDialog extends KissDialog {
 
     //--- find first/find next
     findBtn.setDefaultButton(true);
-    findBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        handleFindFirst_FindNext();
-      }
-    });
+    findBtn.setOnAction(actionEvent -> handleFindFirst_FindNext());
 
     //--- replace
     replaceBtn.setDisable(true);  //not possible until first find
-    replaceBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        handleReplace();
-      }
-    });
+    replaceBtn.setOnAction(actionEvent -> handleReplace());
 
     //--- replace all
-    replaceAllBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        handleReplaceAll();
-      }
-    });
+    replaceAllBtn.setOnAction(actionEvent -> handleReplaceAll());
 
     //--- close
     Button closeBtn = new Button(language.getString("close"));
     closeBtn.setCancelButton(true);
-    closeBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        close();
-      }
-    });
+    closeBtn.setOnAction(actionEvent -> close());
     buttonBox.getChildren().addAll(findBtn, replaceBtn, replaceAllBtn, closeBtn);
 
     rootArea.getChildren().addAll(gridPane, buttonBox, statusBar);
@@ -229,7 +203,6 @@ public class FindReplaceDialog extends KissDialog {
       handleReplaceAll();
       firstCounter = 0; //reset for further searches
     }
-    ;
   }
 
   //********************************** helpers *********************************

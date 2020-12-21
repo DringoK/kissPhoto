@@ -1,7 +1,7 @@
 package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.model.MediaFile;
-import de.kissphoto.model.MovieFile;
+import de.kissphoto.model.PlayableFile;
 import de.kissphoto.view.MediaContentView;
 import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
@@ -28,14 +28,14 @@ import javafx.util.Duration;
  * @version 2019-11-02
  * @version 2020-11-02 adapted to new interface, where the viewer returns if it can play a mediaFile
  */
-public class MovieViewerDummy extends PlayerViewer {
+public class PlayerViewerDummy extends PlayerViewer {
   protected MediaView mediaView;
   private static Text message;
 
   /**
    * @constructor to initialize the viewer
    */
-  public MovieViewerDummy(final MediaContentView contentView) {
+  public PlayerViewerDummy(final MediaContentView contentView) {
     super(contentView);   //mediaContentView of father class is now = contentView
 
     setFocusTraversable(true);
@@ -90,7 +90,7 @@ public class MovieViewerDummy extends PlayerViewer {
      * @param seekPosition if not null it is tried to seek this position as soon as the movie is loaded/visible
      */
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
-    return (mediaFile.getClass() == MovieFile.class);
+    return (mediaFile.getClass() == PlayableFile.class);
   }
 
   /**

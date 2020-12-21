@@ -3,12 +3,11 @@ package de.kissphoto.model;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import de.kissphoto.KissPhoto;
 import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * This is a special MediaFile, namely an image.
@@ -18,7 +17,8 @@ import java.nio.file.Path;
  * <p/>
  *
  * @author Dr. Ingo Kreuz
- * @since 28.08.12
+ * @since 2012-08-28
+ * @version 2020-12-20 the according viewer determines now what to put in the cache (i.e. helps the viewer to show quickly)
  * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
  * @version 2019-07-07: Cache problems fixed
  * @version 2019-06-22 mediaCache corrections: getMediaContentException() added
@@ -26,16 +26,16 @@ import java.nio.file.Path;
  * @version 2014-06-05 java.io operations changed into java.nio
  */
 public class ImageFile extends MediaFileTagged {
-  //Exif orientation constants
-  private final static int TOP_LEFT = 1;
-  private final static int TOP_RIGHT = 2;
-  private final static int BOTTOM_RIGHT = 3;
-  private final static int BOTTOM_LEFT = 4;
-  private final static int LEFT_TOP = 5;
-  private final static int RIGHT_TOP = 6;
-  private final static int RIGHT_BOTTOM = 7;
-  private final static int LEFT_BOTTOM = 8;
-
+  // Orientation as described in Exif-Standard V.2.31
+  private final static int TOP_LEFT = 1;      //         0°:The 0th row is at the visual top of the image, and the 0th column is the visual left-hand side.  --> nothing to do
+  private final static int TOP_RIGHT = 2;     //     H-Flip:The 0th row is at the visual top of the image, and the 0th column is the visual right-hand side. --> flip horizontally
+  private final static int BOTTOM_RIGHT = 3;  //       180°:The 0th row is at the visual bottom of the image, and the 0th column is the visual right-hand side. --> rotate 180
+  private final static int BOTTOM_LEFT = 4;   //     V-Flip:The 0th row is at the visual bottom of the image, and the 0th column is the visual left-hand  side. --> flip vertically
+  private final static int LEFT_TOP = 5;      //270°+V-Flip:The 0th row is the visual left-hand side of the image, and the 0th column is the visual top.     --> rotate90 then flip horizontally
+  private final static int RIGHT_TOP = 6;     //       270°:The 0th row is the visual right-hand side of the image, and the 0th column is the visual top.    --> rotate90
+  private final static int RIGHT_BOTTOM = 7;  // 90°+V-Flip:The 0th row is the visual right-hand side of the image, and the 0th column is the visual bottom. --> rotate270 then flip horizontally
+  private final static int LEFT_BOTTOM = 8;   //        90°:The 0th row is the visual left-hand side of the image, and the 0th column is the visual bottom.  --> rotate270
+  //other = reserved
   protected static ImageFileRotater imageFileRotater = new ImageFileRotater();
 
 
@@ -43,51 +43,6 @@ public class ImageFile extends MediaFileTagged {
     super(imageFile, parent);
   }
 
-  /**
-   * implement getMediaContent() (abstract in MediaFile) for ImageFiles.
-   * by loading the image specified by "FileOnDisk" property
-   * (called by MediaCache to fill Cache, but also from PhotoViewer as a shortcut, still respecting cache policy
-   *
-   * @return Image if successful or null if not
-   * note: if null is returned possibly MediaCache needs to be maintained to free memory..and retried again
-   */
-  @Override
-  public Object getSpecificMediaContent() {
-    Image image = (Image) content;
-    ImageFile thisImageFile = this;
-
-    if (!isMediaContentValid()) {  //if not already loaded or image in cache is invalid
-      try {
-        loadRetryCounter++;
-        //System.out.println("RetryCounter="+loadRetryCounter + "  getMediaContent loading " + fileOnDisk);
-        image = new Image(fileOnDisk.toUri().toString(), true);  //true=load in Background
-        //install error-listener for background-loading
-        image.errorProperty().addListener(new ChangeListener<Boolean>() {
-          @Override
-          public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            mediaFileList.flushFromCache(thisImageFile);
-          }
-        });
-        image.progressProperty().addListener(new ChangeListener<Number>() {
-          @Override
-          public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-            if (newValue.doubleValue() >= 1.0) {     //if image loaded completely then retryCounter can be reset
-              loadRetryCounter = 0;
-            }
-          }
-        });
-      } catch (Exception e) {
-        //will not occur with backgroundLoading: image.getException will get the exception
-        System.out.println("Exception gefunden in ImageFile.getMediaContent, wenn TIFF oder ICO versucht wird zu laden, weil nicht unterstützt von JavaFX");
-        e.printStackTrace();
-      }
-    } else {
-      //System.out.println(fileOnDisk.toString() + "in Cache :-)...Error="+ image.isError() + " Exception=" + image.getException());
-    }
-
-    content = image;
-    return content;
-  }
 
   @Override
   public void cancelBackgroundLoading() {
@@ -151,27 +106,17 @@ public class ImageFile extends MediaFileTagged {
   public int getBytesPerPixel() {
     try {
       Image currentContent = (Image) content;
-      if (content != null)
-        switch (currentContent.getPixelReader().getPixelFormat().getType()) {
-          case BYTE_RGB:
-            return 3;
-          case BYTE_BGRA:
-            return 4;
-          case BYTE_BGRA_PRE:
-            return 4;
-          case BYTE_INDEXED:
-            return 4;
-          case INT_ARGB:
-            return 8;
-          case INT_ARGB_PRE:
-            return 8;
-          default:
-            return 1;
-        }
+      if (content != null) {
+        return switch (currentContent.getPixelReader().getPixelFormat().getType()) {
+          case BYTE_RGB -> 3;
+          case BYTE_BGRA, BYTE_BGRA_PRE, BYTE_INDEXED -> 4;
+          case INT_ARGB, INT_ARGB_PRE -> 8;
+        };
+      }
     } catch (Exception e) {
       //during complete flush (e.g. reload) it might happen that getPixelReader() returns null
     }
-    return 8; //as default, ie. if error occured or PixelFormat is unknown then calculate with the maximum possible
+    return 8; //as default, ie. if error occurred or PixelFormat is unknown then calculate with the maximum possible
   }
 
   @Override
@@ -195,7 +140,7 @@ public class ImageFile extends MediaFileTagged {
   private static String external2ndEditorPath;
 
   /**
-   * load the external editor's pathnames from globalSettings
+   * load the external editor's pathNames from globalSettings
    */
   public static void loadExternalEditorPaths() {
     try {
@@ -214,15 +159,8 @@ public class ImageFile extends MediaFileTagged {
    * @param newExternal2ndEditorPath  the path to the external second editor
    */
   public static void setExternalEditorPaths(String newExternalMainEditorPath, String newExternal2ndEditorPath) {
-    if (newExternalMainEditorPath != null)
-      ImageFile.externalMainEditorPath = newExternalMainEditorPath;
-    else
-      ImageFile.externalMainEditorPath = "";
-
-    if (newExternal2ndEditorPath != null)
-      ImageFile.external2ndEditorPath = newExternal2ndEditorPath;
-    else
-      ImageFile.external2ndEditorPath = "";
+    ImageFile.externalMainEditorPath = Objects.requireNonNullElse(newExternalMainEditorPath, "");
+    ImageFile.external2ndEditorPath = Objects.requireNonNullElse(newExternal2ndEditorPath, "");
 
     saveExternalEditorPaths();
   }
@@ -269,33 +207,22 @@ public class ImageFile extends MediaFileTagged {
    * @return orientation or -1 if not readable
    */
   public int getEXIFOrientation() {
-    getMetadata();
+    readMetadata();
 
     ExifIFD0Directory jpegDirectory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class); //JpegDirectory.class);
 
-    int orientation = 1;
+    int orientation=TOP_LEFT; //unchanged
     try {
-      orientation = jpegDirectory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+      if (jpegDirectory!=null)
+        orientation = jpegDirectory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
       //System.out.println("Orientation:" + orientation);
     } catch (Exception e) {
-      //System.out.println("Orientation Exception: " + me);
+      //System.out.println("Orientation Exception: " + e);
       orientation = -1;
     }
     return orientation;
   }
 
-  /* Orientation as described in Exif-Standard V.2.31
-   *
-   * 1 = TOP_LEFT:             0°:  The 0th row is at the visual top of the image, and the 0th column is the visual left-hand side.  --> nothing to do
-   * 2 = TOP_RIGHT:        H-Flip:  The 0th row is at the visual top of the image, and the 0th column is the visual right-hand side. --> flip horizontally
-   * 3 = BOTTOM_RIGHT:       180°:  The 0th row is at the visual bottom of the image, and the 0th column is the visual right-hand side. --> rotate 180
-   * 4 = BOTTOM_LEFT:      V-Flip:  The 0th row is at the visual bottom of the image, and the 0th column is the visual left-hand  side. --> flip vertically
-   * 5 = LEFT_TOP:    270°+V-Flip:  The 0th row is the visual left-hand side of the image, and the 0th column is the visual top.     --> rotate90 then flip horizontally
-   * 6 = RIGHT_TOP:          270°:  The 0th row is the visual right-hand side of the image, and the 0th column is the visual top.    --> rotate90
-   * 7 = RIGHT_BOTTOM: 90°+V-Flip:  The 0th row is the visual right-hand side of the image, and the 0th column is the visual bottom. --> rotate270 then flip horizontally
-   * 8 = LEFT_BOTTOM:         90°:  The 0th row is the visual left-hand side of the image, and the 0th column is the visual bottom.  --> rotate270
-   ' Other = reserved
-   */
 
   /**
    * read the current orientation from exif and set the planned transformations accordingly

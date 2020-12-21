@@ -20,8 +20,9 @@ import java.io.OutputStream;
  * <p/>
  *
  * @author Dr. Ingo Kreuz
- * @date: 2017-10-26  first trial
- * @modified: 2018-10-21  orientation bit is set correctly now
+ * @since 2017-10-26  first trial
+ * @version 2020-12-20 corrections. Rotation of jpegs without exif header works now
+ * @version 2018-10-21  orientation bit is set correctly now
  */
 
 public class ImageFileRotater extends MediaFileRotater {
@@ -51,18 +52,12 @@ public class ImageFileRotater extends MediaFileRotater {
 
         // 2. Transform the image using default options along with
         int options = LLJTran.OPT_DEFAULTS | LLJTran.OPT_XFORM_ORIENTATION;  //option=change orientation only in header
-        int op = 0;
-        switch (rotateOperation) {
-          case ROTATE90:
-            op = LLJTran.ROT_90;
-            break;
-          case ROTATE180:
-            op = LLJTran.ROT_180;
-            break;
-          case ROTATE270:
-            op = LLJTran.ROT_270;
-            break;
-        }
+        int op = switch (rotateOperation) {
+          case ROTATE90 -> LLJTran.ROT_90;
+          case ROTATE180 -> LLJTran.ROT_180;
+          case ROTATE270 -> LLJTran.ROT_270;
+          default -> 0;
+        };
         llj.transform(op, options);
 
         if (flipHorizontally) {
@@ -75,7 +70,8 @@ public class ImageFileRotater extends MediaFileRotater {
         //set orientation to 1  (Picture's top/left is top/left) because this is the desired rotation/flipping now
         AbstractImageInfo imageInfo = llj.getImageInfo();
 
-        if (imageInfo != null) {
+        //maintain exif directory's orientation if exif directory is existing
+        if (imageInfo instanceof Exif) { //includes test on !=null
           Exif exif = (Exif) imageInfo;  //java.lang.ClassCastException: mediautil.image.jpeg.JPEG cannot be cast to mediautil.image.jpeg.Exif
 
           Entry entry = exif.getTagValue(Exif.ORIENTATION, true); //true= use mainIFD (false would bei subIFD of thumbnail)
@@ -94,7 +90,7 @@ public class ImageFileRotater extends MediaFileRotater {
         llj.freeMemory();
       }
     } catch (Exception e) {
-      System.out.println(e);
+      e.printStackTrace();
       successful = false;
     }
 

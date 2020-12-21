@@ -1,8 +1,5 @@
 package de.kissphoto.view.inputFields;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.EventHandler;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
@@ -16,9 +13,10 @@ import javafx.stage.Stage;
  * A tooltip is shown with explanation which characters are allowed if illegal characters are tried to enter
  * An implementing class just needs to implement the verification methods and to set the errorMessage
  *
- * @User: Ingo
- * @Date: 06.10.12
- * @modified: 01.11.16: RestrictedTextfield stores connected MediaFile and Column no more locally
+ * @author Ingo
+ * @since 2012-10-06
+ * @version 2020-12-20 lambda expressions for event handlers
+ * @version 2016-11-01 RestrictedTextfield stores connected MediaFile and Column no more locally
  */
 public abstract class RestrictedTextField extends TextField implements RestrictedInputField {
   private Tooltip tooltip;
@@ -26,7 +24,6 @@ public abstract class RestrictedTextField extends TextField implements Restricte
 
   /**
    * @param stage is the containing Stage (for showing tooltips, when restricted character has been entered
-   * @constructor
    */
   RestrictedTextField(Stage stage) {
     super();
@@ -36,7 +33,6 @@ public abstract class RestrictedTextField extends TextField implements Restricte
   /**
    * @param caption the caption can be passed for an inital value of the TextField
    * @param stage   is the containing Stage (for showing tooltips, when restricted character has been entered
-   * @constructor
    */
   RestrictedTextField(String caption, Stage stage) {
     super(caption);
@@ -73,56 +69,45 @@ public abstract class RestrictedTextField extends TextField implements Restricte
    */
   private void installEventHandlers() {
     //remove invalid characters after ctrl-V (insert from clipboard)
-    setOnKeyReleased(new EventHandler<KeyEvent>() {
-      @Override
-      public void handle(KeyEvent event) {
-        boolean invalidCharFound = false;
-
-        //clipboard  or copy from line above
-        if (event.isControlDown() && (event.getCode() == KeyCode.V) ||
-          (event.isControlDown() && (event.getCode() == KeyCode.U))) {
-          String err = verifyClipboardInsertion(); //abstract method to be overwritten by implementing classes
-          if (!err.isEmpty()) {
-            tooltip.setText(err);
-            setTooltip(tooltip);
-            tooltip.show(RestrictedTextField.this, tooltipScreenLocationX(), tooltipScreenLocationY());
-          } else {
-            tooltip.hide();
-            Tooltip.uninstall(RestrictedTextField.this, tooltip);
-          }
+    setOnKeyReleased(event -> {
+      //clipboard  or copy from line above
+      if (event.isControlDown() && (event.getCode() == KeyCode.V) ||
+        (event.isControlDown() && (event.getCode() == KeyCode.U))) {
+        String err = verifyClipboardInsertion(); //abstract method to be overwritten by implementing classes
+        if (!err.isEmpty()) {
+          tooltip.setText(err);
+          setTooltip(tooltip);
+          tooltip.show(RestrictedTextField.this, tooltipScreenLocationX(), tooltipScreenLocationY());
+        } else {
+          tooltip.hide();
+          Tooltip.uninstall(RestrictedTextField.this, tooltip);
         }
       }
     });
 
     //suppress invalid characters
-    addEventFilter(KeyEvent.KEY_TYPED, new EventHandler<KeyEvent>() {
-      public void handle(KeyEvent event) {
-        if ((event.getCharacter().length() > 0) &&
-            !(event.getCharacter().startsWith("\t")) && //do not check tab (will move the focus and not produce text)
-            !(event.getCharacter().startsWith("\b"))   //do not check backspace (will not produce text(but remove;-))
-            ) {
-          String err = verifyKeyTyped(event);  //abstract method to be overwritten by implementing classes
+    addEventFilter(KeyEvent.KEY_TYPED, event -> {
+      if ((event.getCharacter().length() > 0) &&
+          !(event.getCharacter().startsWith("\t")) && //do not check tab (will move the focus and not produce text)
+          !(event.getCharacter().startsWith("\b"))   //do not check backspace (will not produce text(but remove;-))
+          ) {
+        String err = verifyKeyTyped(event);  //abstract method to be overwritten by implementing classes
 
-          if (!err.isEmpty()) {
-            tooltip.setText(err);
-            setTooltip(tooltip);
-            tooltip.show(RestrictedTextField.this, tooltipScreenLocationX(), tooltipScreenLocationY());
-          } else {
-            tooltip.hide();
-            Tooltip.uninstall(RestrictedTextField.this, tooltip);
-          }
+        if (!err.isEmpty()) {
+          tooltip.setText(err);
+          setTooltip(tooltip);
+          tooltip.show(RestrictedTextField.this, tooltipScreenLocationX(), tooltipScreenLocationY());
+        } else {
+          tooltip.hide();
+          Tooltip.uninstall(RestrictedTextField.this, tooltip);
         }
       }
     });
 
-    focusedProperty().addListener(new ChangeListener<Boolean>() {
-      @Override
-      public void changed(ObservableValue<? extends Boolean> arg0,
-                          Boolean oldVal, Boolean newVal) {
-        if (!newVal) { //focus became 'false' --> focus lost event
-          tooltip.hide();
-          Tooltip.uninstall(RestrictedTextField.this, tooltip);
-        }
+    focusedProperty().addListener((arg0, oldVal, newVal) -> {
+      if (!newVal) { //focus became 'false' --> focus lost event
+        tooltip.hide();
+        Tooltip.uninstall(RestrictedTextField.this, tooltip);
       }
     });
   }

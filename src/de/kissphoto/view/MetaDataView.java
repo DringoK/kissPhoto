@@ -2,7 +2,6 @@ package de.kissphoto.view;
 
 import com.drew.metadata.Directory;
 import com.drew.metadata.Tag;
-import de.kissphoto.helper.I18Support;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Tab;
@@ -12,16 +11,14 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
-import java.util.ResourceBundle;
-
 /**
  * View to show meta data, i.e. EXIF data etc.
  * <p/>
- * User: Ingo
- * Date: 04.11.12
+ * @author Dr. Ingo Kreuz
+ * since 2012-11-04
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers
  */
 public class MetaDataView extends TabPane {
-  private static ResourceBundle language = I18Support.languageBundle;
 
   private final Stage primaryStage;
   private final MediaContentView mediaContentView;
@@ -71,8 +68,8 @@ public class MetaDataView extends TabPane {
    * create a tab for the directory, create a table view for the tags and add it to this (Tabview)
    * Note: the tag-table will empty until it is filled with fillTab()
    *
-   * @param directory
-   * @return
+   * @param directory of exif
+   * @return the javaFX tab for the directory
    */
   private Tab createTab(Directory directory) {
     Tab tab = new Tab(directory.getName());

@@ -3,8 +3,8 @@ package de.kissphoto.view.dialogs;
 import de.kissphoto.helper.StringHelper;
 import de.kissphoto.model.ImageFile;
 import de.kissphoto.model.MediaFile;
-import de.kissphoto.model.MovieFile;
 import de.kissphoto.model.OtherFile;
+import de.kissphoto.model.PlayableFile;
 import de.kissphoto.view.inputFields.PathNameTextField;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -25,6 +25,8 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
+import static de.kissphoto.KissPhoto.language;
+
 /**
  * This is the Dialog Window for changing the external editors
  * Every Media-File Subclass has one
@@ -35,7 +37,7 @@ import java.io.File;
  *
  * @author Ingo Kreuz
  * @since 2014-05-07
- * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
+ * @version 2020-12-20 globalSettings and language are now global (static in Kissphoto)
  * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  * @version 2016-11-01 RestrictedTextField no longer tries to store connection to FileTable locally
  * @version 2014-06-16 multi screen support: center on main window instead of main screen
@@ -219,8 +221,8 @@ public class ExternalEditorsDialog extends KissDialog {
     imageFileEditorTextField1.setText(ImageFile.getExternalMainEditorPath());
     imageFileEditorTextField2.setText(ImageFile.getExternal2ndEditorPath());
 
-    movieFileEditorTextField1.setText(MovieFile.getExternalMainEditorPath());
-    movieFileEditorTextField2.setText(MovieFile.getExternal2ndEditorPath());
+    movieFileEditorTextField1.setText(PlayableFile.getExternalMainEditorPath());
+    movieFileEditorTextField2.setText(PlayableFile.getExternal2ndEditorPath());
 
     otherFileEditorTextField1.setText(OtherFile.getExternalMainEditorPath());
     otherFileEditorTextField2.setText(OtherFile.getExternal2ndEditorPath());
@@ -240,7 +242,7 @@ public class ExternalEditorsDialog extends KissDialog {
    */
   public void saveExternalEditorPaths() {
     ImageFile.setExternalEditorPaths(imageFileEditorTextField1.getText(), imageFileEditorTextField2.getText());
-    MovieFile.setExternalEditorPaths(movieFileEditorTextField1.getText(), movieFileEditorTextField2.getText());
+    PlayableFile.setExternalEditorPaths(movieFileEditorTextField1.getText(), movieFileEditorTextField2.getText());
     OtherFile.setExternalEditorPaths(otherFileEditorTextField1.getText(), otherFileEditorTextField2.getText());
   }
 
@@ -250,7 +252,7 @@ public class ExternalEditorsDialog extends KissDialog {
    */
   public static void initializeAllSupportedMediaFileClasses() {
     ImageFile.loadExternalEditorPaths();
-    MovieFile.loadExternalEditorPaths();
+    PlayableFile.loadExternalEditorPaths();
     OtherFile.loadExternalEditorPaths();
   }
 
@@ -267,7 +269,7 @@ public class ExternalEditorsDialog extends KissDialog {
       MediaFile firstFile = selection.get(0);
 
       if (firstFile.getClass() == ImageFile.class) ImageFile.executeExternalEditor(selection, mainEditor);
-      else if (firstFile.getClass() == MovieFile.class) MovieFile.executeExternalEditor(selection, mainEditor);
+      else if (firstFile.getClass() == PlayableFile.class) PlayableFile.executeExternalEditor(selection, mainEditor);
       else OtherFile.executeExternalEditor(selection, mainEditor);
     }
   }

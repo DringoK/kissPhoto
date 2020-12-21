@@ -1,7 +1,5 @@
 package de.kissphoto.view.dialogs;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -17,14 +15,17 @@ import javafx.stage.StageStyle;
 
 import java.text.MessageFormat;
 
+import static de.kissphoto.KissPhoto.language;
+
 /**
  * This is the Dialog showing the About Window
  *
- * @author: Ingo
- * @Date: 2014-04-23
- * @modified: 2014-05-02 (I18Support)
- * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Dr. Ingo Kreuz
+ * @since 2014-04-23
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
+ * @version 2014-05-02 (I18Support)
+ * @version 2014-06-16 multi screen support: center on main window instead of main screen
+ * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class AboutDialog extends KissDialog {
 
@@ -62,12 +63,7 @@ public class AboutDialog extends KissDialog {
     okBtn.setFocusTraversable(true);
     okBtn.setCancelButton(true);
     okBtn.setDefaultButton(true);
-    okBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        close();
-      }
-    });
+    okBtn.setOnAction(actionEvent -> close());
     buttonBox.getChildren().addAll(okBtn);
 
     StackPane rootArea = new StackPane();

@@ -1,6 +1,6 @@
 @echo off
 echo msi
-jpackage --input out/artifacts --name kissPhoto --app-version 0.20.11 ^
+jpackage --input out/artifacts --name kissPhoto --app-version 0.20.12 ^
  --copyright "(c)2020 Dr. Ingo Kreuz" ^
  --vendor "Ingo Kreuz" ^
  --description "file renaming, renumbering, photo and video-clip sorting but keep it simple stupid" ^

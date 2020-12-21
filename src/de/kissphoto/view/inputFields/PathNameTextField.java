@@ -1,31 +1,26 @@
 package de.kissphoto.view.inputFields;
 
-import de.kissphoto.helper.I18Support;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
 
 
 /**
  * This is an input field (TextField) which does not accepts characters that are not allowed in pathnames (e.g. :,+,?...)
  * A tooltip is shown with explanation which characters are allowed if illegal characters are tried to enter
  *
- * @Author: Dr. Ingo Kreuz
- * @Date: 2014-05-30
- * @modified: 01.11.16: RestrictedTextfield stores connected MediaFile and Column no longer locally
+ * @author Dr. Ingo Kreuz
+ * @since 2014-05-30
+ * @version 2020-12-20 language now static in KissPhoto
+ * @version 2016-11-01 RestrictedTextfield stores connected MediaFile and Column no longer locally
  */
 public class PathNameTextField extends RestrictedTextField {
   private static final String ARE_NOT_ALLOWED_IN_PATH_NAMES = "are.not.allowed.in.path.names";
-  private static ResourceBundle language = I18Support.languageBundle;
 
   //@constructor
   public PathNameTextField(Stage stage) {
     super(stage);
-  }
-
-  public PathNameTextField(String caption, Stage stage) {
-    super(caption, stage);
   }
 
   /**

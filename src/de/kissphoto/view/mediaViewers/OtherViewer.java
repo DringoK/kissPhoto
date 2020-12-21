@@ -1,13 +1,9 @@
 package de.kissphoto.view.mediaViewers;
 
-import de.kissphoto.helper.I18Support;
 import de.kissphoto.view.MediaContentView;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.effect.InnerShadow;
-import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -15,7 +11,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
@@ -30,15 +26,15 @@ import java.util.ResourceBundle;
  *
  * @author Dr. Ingo Kreuz
  * @since 2014-05-25
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers
  * @version 2020-11-12 Support for additional information why "this mediaFile cannot be shown" by any other viewer
  * @version 2017-10-08 minSize=0,0 added so that all other viewers can also be smaller (surrounding stackPane sets min size to smallest in stack)
  */
 public class OtherViewer extends VBox {
-  private static ResourceBundle language = I18Support.languageBundle;
-  private ContextMenu contextMenu = new ContextMenu();
+  private final ContextMenu contextMenu = new ContextMenu();
 
-  private Text message;
-  private Text additionalMessage;
+  private final Text message;
+  private final Text additionalMessage;
 
   /**
    * constructor to initialize the viewer
@@ -52,23 +48,17 @@ public class OtherViewer extends VBox {
 
     //---- context menu items
     contentView.addContextMenuItems(contextMenu);  //every viewer of kissPhoto lies in a MediaContentView
-    setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
-      @Override
-      public void handle(ContextMenuEvent contextMenuEvent) {
-        contextMenu.setAutoHide(true);
-        contextMenu.show(contentView, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
-      }
+    setOnContextMenuRequested(contextMenuEvent -> {
+      contextMenu.setAutoHide(true);
+      contextMenu.show(contentView, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
     });
     //hide context menu if clicked "somewhere else" or request focus on mouse click
-    setOnMouseClicked(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent mouseEvent) {
-        if (contextMenu.isShowing()) {
-          contextMenu.hide(); //this closes the context Menu
-          mouseEvent.consume();
-        } else {
-          requestFocus();
-        }
+    setOnMouseClicked(mouseEvent -> {
+      if (contextMenu.isShowing()) {
+        contextMenu.hide(); //this closes the context Menu
+        mouseEvent.consume();
+      } else {
+        requestFocus();
       }
     });
     InnerShadow iShadow = new javafx.scene.effect.InnerShadow();
@@ -95,9 +85,9 @@ public class OtherViewer extends VBox {
 
   /**
    * show or hide the main text "unsupported Media"
-   * @param visible
+   * @param visible = true to show the main text
    */
-  public void setMainMessageVisable(boolean visible){
+  public void setMainMessageVisible(boolean visible){
     message.setVisible(visible);
   }
 

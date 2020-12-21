@@ -15,8 +15,8 @@ import javafx.util.Callback;
  * <p/>
  *
  * @author Ingo
- * @date: 2016-11-04
- * @modified:
+ * @since 2016-11-04
+ * @version initial version
  */
 public class TextFieldCellFactory implements Callback<TableColumn<MediaFile, String>, TableCell<MediaFile, String>> {
 

@@ -7,8 +7,8 @@ package de.kissphoto.view.mediaViewers;
  * zoom and panning support for its viewport
  *
  * @author Dr. Ingo Kreuz
- * @date 2016-11-06
- * @modified: 2018-10-11  bugfixing: zoom rotated images
+ * @since 2016-11-06
+ * @version 2018-10-11  bugfixing: zoom rotated images
  */
 
 public interface ZoomableViewer {

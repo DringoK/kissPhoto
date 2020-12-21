@@ -15,6 +15,7 @@
         <element id="extracted-dir" path="$PROJECT_DIR$/../jna/dist/jna-platform.jar" path-in-jar="/" />
         <element id="module-output" name="vlcj-natives" />
         <element id="module-output" name="vlcj-javafx" />
+        <element id="module-output" name="vlcj-file-filters" />
       </root>
     </artifact>
   </component>
@@ -72,6 +73,7 @@
         <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
         <option name="REQUIRED_TAGS" value="@since@version@author" />
       </inspection_tool>
+      <inspection_tool class="StringConcatenationInLoops" enabled="false" level="WARNING" enabled_by_default="false" />
     </profile>
     <version value="1.0" />
   </component>
@@ -223,6 +225,7 @@
       <module fileurl="file://$PROJECT_DIR$/kissPhoto.iml" filepath="$PROJECT_DIR$/kissPhoto.iml" />
       <module fileurl="file://$PROJECT_DIR$/metadata-extractor.iml" filepath="$PROJECT_DIR$/metadata-extractor.iml" />
       <module fileurl="file://$PROJECT_DIR$/vlcj.iml" filepath="$PROJECT_DIR$/vlcj.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vlcj-file-filters/vlcj-file-filters.iml" filepath="$PROJECT_DIR$/../vlcj-file-filters/vlcj-file-filters.iml" />
       <module fileurl="file://$PROJECT_DIR$/vlcj-javafx.iml" filepath="$PROJECT_DIR$/vlcj-javafx.iml" />
       <module fileurl="file://$PROJECT_DIR$/vlcj-natives.iml" filepath="$PROJECT_DIR$/vlcj-natives.iml" />
     </modules>
@@ -237,7 +240,7 @@
     <configuration default="false" name="kissphoto" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="de.kissphoto.KissPhoto" />
       <module name="kissPhoto" />
-      <option name="PROGRAM_PARAMETERS" value="-noVLCDoch" />
+      <option name="PROGRAM_PARAMETERS" value="-noVLC" />
       <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg " />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="" />
@@ -267,8 +270,16 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../vlcj-file-filters" vcs="Git" />
   </component>
   <component name="libraryTable">
+    <library name="java">
+      <CLASSES />
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/../vlcj-file-filters/src/main/java" />
+      </SOURCES>
+    </library>
     <library name="jna">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/../jna/dist/jna.jar!/" />

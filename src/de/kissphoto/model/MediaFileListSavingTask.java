@@ -1,32 +1,33 @@
 package de.kissphoto.model;
-/**
- * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br>
- * Here is the task defined to save the changes. Especially because rotation of images might be slow
- * (the complete file needs to be rewritten) saving might take a long time. This task ensures that the
- * GUI will not freeze.
- * The task communicates with the progress bar in the status bar and respects cancelling
- *
- * @author: Dr. Ingo Kreuz
- * @date: 2018-09-22
- * @modified: 2018-11-17 housekeeping
- */
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
-// Returns the number of Errors while saving
+/**
+ *
+ * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br>
+ * Here is the task defined to save the changes. Especially because rotation of images might be slow
+ * (the complete file needs to be rewritten) saving might take a long time. This task ensures that the
+ * GUI will not freeze.
+ * The task communicates with the progress bar in the status bar and respects cancelling
+ * Returns the number of Errors while saving
+ *
+ * @author Dr. Ingo Kreuz
+ * @since 2018-09-22
+ * @version 2020-12-20 media cache moved to MediaFile, therefore no pointer to MediaCache needed anymore
+ * @version 2018-11-17 housekeeping
+ */
+
 public class MediaFileListSavingTask extends Task<Integer> {
   private final ObservableList<MediaFile> deletedFileList;
   private final ObservableList<MediaFile> fileList;
-  private final MediaCache mediaCache;
   private final int numberOfChangesToSave;
 
-  public MediaFileListSavingTask(ObservableList<MediaFile> deletedFileList, ObservableList<MediaFile> fileList, int numberOfChangesToSave, MediaCache mediaCache) {
+  public MediaFileListSavingTask(ObservableList<MediaFile> deletedFileList, ObservableList<MediaFile> fileList, int numberOfChangesToSave) {
     this.numberOfChangesToSave = numberOfChangesToSave;
     this.fileList = fileList;
     this.deletedFileList = deletedFileList;
-    this.mediaCache = mediaCache;
   }
 
   /**
@@ -59,7 +60,7 @@ public class MediaFileListSavingTask extends Task<Integer> {
         step++;
         updateProgress(step, numberOfChangesToSave);
 
-        mediaCache.flush(mediaFile);
+        mediaFile.flushFromCache();
 
         try {
           //perform deletion on disk
@@ -84,7 +85,7 @@ public class MediaFileListSavingTask extends Task<Integer> {
             updateProgress(step, numberOfChangesToSave);
             try {
               //give the GUI-Thread a chance to update the progressBar and Cancel-Button
-              Thread.sleep(10);
+              Thread.sleep(1);
             } catch (InterruptedException interrupted) {
               if (isCancelled()) {
                 break;

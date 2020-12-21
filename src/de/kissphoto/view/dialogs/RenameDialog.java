@@ -4,7 +4,6 @@ import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.FileTableView;
 import de.kissphoto.view.inputFields.FileNameTextField;
 import de.kissphoto.view.inputFields.SeparatorInputField;
-import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
@@ -24,16 +23,18 @@ import javafx.stage.Stage;
 
 import java.text.MessageFormat;
 
+import static de.kissphoto.KissPhoto.language;
+
 /**
  * This is the Dialog for Renaming Files.
  *
- * @author: Dr. Ingo Kreuz
- * @date: 2012-10-05
- * @modified: 2014-05-02
- * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
- * @modified: 2014-06-22 extra column for the counter's separator (the character after the counter)
- * @modified: 2016-11-02 RestrictedTextfield has changed signature
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Dr. Ingo Kreuz
+ * @since 2012-10-05
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
+ * @version 2017-10-14: Fixed: Scaling problems. Centrally solved in kissDialog
+ * @version 2016-11-02: RestrictedTextfield has changed signature
+ * @version 2014-06-22: extra column for the counter's separator (the character after the counter)
+ * @version 2014-06-16: multi screen support: center on main window instead of main screen
  */
 
 public class RenameDialog extends KissDialog {
@@ -124,16 +125,13 @@ public class RenameDialog extends KissDialog {
 
     prefixBtn = new Button(language.getString("ctrl.p"));
     prefixBtn.setFocusTraversable(false);
-    prefixBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
-            || sceneProperty().get().getFocusOwner().equals(separatorTextField)
-            || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
-            || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
-          TextField focusedTextField = (TextField) scene.getFocusOwner();
-          focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_PREFIX);
-        }
+    prefixBtn.setOnAction(actionEvent -> {
+      if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
+          || sceneProperty().get().getFocusOwner().equals(separatorTextField)
+          || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
+          || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
+        TextField focusedTextField = (TextField) scene.getFocusOwner();
+        focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_PREFIX);
       }
     });
     buttonsGridPane.add(prefixBtn, 0, 0);
@@ -142,16 +140,13 @@ public class RenameDialog extends KissDialog {
 
     counterBtn = new Button(language.getString("ctrl.c"));
     counterBtn.setFocusTraversable(false);
-    counterBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
-            || sceneProperty().get().getFocusOwner().equals(separatorTextField)
-            || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
-            || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
-          TextField focusedTextField = (TextField) scene.getFocusOwner();
-          focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_COUNTER);
-        }
+    counterBtn.setOnAction(actionEvent -> {
+      if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
+          || sceneProperty().get().getFocusOwner().equals(separatorTextField)
+          || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
+          || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
+        TextField focusedTextField = (TextField) scene.getFocusOwner();
+        focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_COUNTER);
       }
     });
     buttonsGridPane.add(counterBtn, 0, 1);
@@ -160,16 +155,13 @@ public class RenameDialog extends KissDialog {
 
     separatorBtn = new Button(language.getString("ctrl.s"));
     separatorBtn.setFocusTraversable(false);
-    separatorBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
-            || sceneProperty().get().getFocusOwner().equals(separatorTextField)
-            || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
-            || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
-          TextField focusedTextField = (TextField) scene.getFocusOwner();
-          focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_SEPARATOR);
-        }
+    separatorBtn.setOnAction(actionEvent -> {
+      if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
+          || sceneProperty().get().getFocusOwner().equals(separatorTextField)
+          || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
+          || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
+        TextField focusedTextField = (TextField) scene.getFocusOwner();
+        focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_SEPARATOR);
       }
     });
     buttonsGridPane.add(separatorBtn, 0, 2);
@@ -178,16 +170,13 @@ public class RenameDialog extends KissDialog {
 
     descriptionBtn = new Button(language.getString("ctrl.d"));
     descriptionBtn.setFocusTraversable(false);
-    descriptionBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
-            || sceneProperty().get().getFocusOwner().equals(separatorTextField)
-            || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
-            || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
-          TextField focusedTextField = (TextField) scene.getFocusOwner();
-          focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_DESCRIPTION);
-        }
+    descriptionBtn.setOnAction(actionEvent -> {
+      if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
+          || sceneProperty().get().getFocusOwner().equals(separatorTextField)
+          || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
+          || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
+        TextField focusedTextField = (TextField) scene.getFocusOwner();
+        focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_DESCRIPTION);
       }
     });
     buttonsGridPane.add(descriptionBtn, 0, 3);
@@ -196,16 +185,13 @@ public class RenameDialog extends KissDialog {
 
     extensionBtn = new Button(language.getString("ctrl.e"));
     extensionBtn.setFocusTraversable(false);
-    extensionBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
-            || sceneProperty().get().getFocusOwner().equals(separatorTextField)
-            || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
-            || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
-          TextField focusedTextField = (TextField) scene.getFocusOwner();
-          focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_EXTENSION);
-        }
+    extensionBtn.setOnAction(actionEvent -> {
+      if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
+          || sceneProperty().get().getFocusOwner().equals(separatorTextField)
+          || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
+          || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
+        TextField focusedTextField = (TextField) scene.getFocusOwner();
+        focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_EXTENSION);
       }
     });
     buttonsGridPane.add(extensionBtn, 0, 4);
@@ -214,16 +200,13 @@ public class RenameDialog extends KissDialog {
 
     dateBtn = new Button(language.getString("ctrl.m"));
     dateBtn.setFocusTraversable(false);
-    dateBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
-            || sceneProperty().get().getFocusOwner().equals(separatorTextField)
-            || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
-            || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
-          TextField focusedTextField = (TextField) scene.getFocusOwner();
-          focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_DATE);
-        }
+    dateBtn.setOnAction(actionEvent -> {
+      if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
+          || sceneProperty().get().getFocusOwner().equals(separatorTextField)
+          || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
+          || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
+        TextField focusedTextField = (TextField) scene.getFocusOwner();
+        focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_DATE);
       }
     });
     buttonsGridPane.add(dateBtn, 0, 5);
@@ -232,16 +215,13 @@ public class RenameDialog extends KissDialog {
 
     timeBtn = new Button(language.getString("ctrl.t"));
     timeBtn.setFocusTraversable(false);
-    timeBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
-            || sceneProperty().get().getFocusOwner().equals(separatorTextField)
-            || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
-            || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
-          TextField focusedTextField = (TextField) scene.getFocusOwner();
-          focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_TIME);
-        }
+    timeBtn.setOnAction(actionEvent -> {
+      if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
+          || sceneProperty().get().getFocusOwner().equals(separatorTextField)
+          || sceneProperty().get().getFocusOwner().equals(descriptionTextField)
+          || sceneProperty().get().getFocusOwner().equals(extensionTextField)) {
+        TextField focusedTextField = (TextField) scene.getFocusOwner();
+        focusedTextField.insertText(focusedTextField.getCaretPosition(), MediaFile.PLACEHOLDER_TIME);
       }
     });
     buttonsGridPane.add(timeBtn, 0, 6);
@@ -255,22 +235,16 @@ public class RenameDialog extends KissDialog {
 
     Button renameBtn = new Button(language.getString("rename"));
     renameBtn.setDefaultButton(true);
-    renameBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult = RENAME_BTN;
-        close();
-      }
+    renameBtn.setOnAction(actionEvent -> {
+      modalResult = RENAME_BTN;
+      close();
     });
 
     Button cancelBtn = new Button(KissDialog.CANCEL_LABEL);
     cancelBtn.setCancelButton(true);
-    cancelBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult = CANCEL_BTN;
-        close();
-      }
+    cancelBtn.setOnAction(actionEvent -> {
+      modalResult = CANCEL_BTN;
+      close();
     });
     buttonBox.getChildren().addAll(renameBtn, cancelBtn);
 
@@ -282,36 +256,34 @@ public class RenameDialog extends KissDialog {
 
   private void installTextFieldListeners() {
 
-    EventHandler<KeyEvent> textFieldEventHandler = new EventHandler<KeyEvent>() {
-      public void handle(KeyEvent event) {
-        //whenever text is typed in the according checkbox is set automatically
-        if (event.getSource().equals(prefixTextField)) prefixCheckBox.setSelected(true);
-        else if (event.getSource().equals(descriptionTextField)) descriptionCheckBox.setSelected(true);
-        else if (event.getSource().equals(extensionTextField)) extensionCheckBox.setSelected(true);
+    EventHandler<KeyEvent> textFieldEventHandler = event -> {
+      //whenever text is typed in the according checkbox is set automatically
+      if (event.getSource().equals(prefixTextField)) prefixCheckBox.setSelected(true);
+      else if (event.getSource().equals(descriptionTextField)) descriptionCheckBox.setSelected(true);
+      else if (event.getSource().equals(extensionTextField)) extensionCheckBox.setSelected(true);
 
-        //insert placeholders (%-Codes)
-        if (event.isShortcutDown() && event.getCode() == KeyCode.P) {
-          prefixBtn.fire();
-          event.consume();
-        } else if (event.isShortcutDown() && event.getCode() == KeyCode.C) {
-          counterBtn.fire();
-          event.consume();
-        } else if (event.isShortcutDown() && event.getCode() == KeyCode.S) {
-          separatorBtn.fire();
-          event.consume();
-        } else if (event.isShortcutDown() && event.getCode() == KeyCode.D) {
-          descriptionBtn.fire();
-          event.consume();
-        } else if (event.isShortcutDown() && event.getCode() == KeyCode.E) {
-          extensionBtn.fire();
-          event.consume();
-        } else if (event.isShortcutDown() && event.getCode() == KeyCode.M) {
-          dateBtn.fire();
-          event.consume();
-        } else if (event.isShortcutDown() && event.getCode() == KeyCode.T) {
-          timeBtn.fire();
-          event.consume();
-        }
+      //insert placeholders (%-Codes)
+      if (event.isShortcutDown() && event.getCode() == KeyCode.P) {
+        prefixBtn.fire();
+        event.consume();
+      } else if (event.isShortcutDown() && event.getCode() == KeyCode.C) {
+        counterBtn.fire();
+        event.consume();
+      } else if (event.isShortcutDown() && event.getCode() == KeyCode.S) {
+        separatorBtn.fire();
+        event.consume();
+      } else if (event.isShortcutDown() && event.getCode() == KeyCode.D) {
+        descriptionBtn.fire();
+        event.consume();
+      } else if (event.isShortcutDown() && event.getCode() == KeyCode.E) {
+        extensionBtn.fire();
+        event.consume();
+      } else if (event.isShortcutDown() && event.getCode() == KeyCode.M) {
+        dateBtn.fire();
+        event.consume();
+      } else if (event.isShortcutDown() && event.getCode() == KeyCode.T) {
+        timeBtn.fire();
+        event.consume();
       }
     };
 
@@ -319,12 +291,7 @@ public class RenameDialog extends KissDialog {
     descriptionTextField.addEventFilter(KeyEvent.KEY_PRESSED, textFieldEventHandler);
     extensionTextField.addEventFilter(KeyEvent.KEY_PRESSED, textFieldEventHandler);
 
-    separatorTextField.setOnShowing(new EventHandler<Event>() {
-      @Override
-      public void handle(Event event) {
-        separatorCheckBox.setSelected(true);
-      }
-    });
+    separatorTextField.setOnShowing((EventHandler<Event>) event -> separatorCheckBox.setSelected(true));
   }
 
   /**

@@ -6,7 +6,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -22,21 +21,24 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import static de.kissphoto.KissPhoto.language;
+
 /**
  * This is the Dialog Window for UnDeletion
  *
- * @author: Dr. Ingo kreuz
- * @date: 2012-10-05
- * @modified: 2014-05-02 (I18Support)
- * @modified: 2014-06-16 multi screen support: center on main window instead of main screen
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Dr. Ingo kreuz
+ * @since 2012-10-05
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers
+ * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @version 2014-06-16 multi screen support: center on main window instead of main screen
+ * @version 2014-05-02 (I18Support)
  */
 public class UnDeleteDialog extends KissDialog {
   public static final int NONE_BTN = 0;               //no button was pressed: MessageBox left by [x] of the window
   public static final int UNDELETE_SELECTION_BTN = 1;   //unDeleteBtn has closed the dialog. The selection in the dialog shall be unDeleted in mediaFileList
   public static final int CANCEL_BTN = 2;
 
-  final ListView<MediaFile> listView = new ListView<MediaFile>();
+  final ListView<MediaFile> listView = new ListView<>();
   final MediaContentView mediaContentView = new MediaContentView(this);
   //no fileTableViewConnection set, i.e. no moving up/down (=no prev/next media) when MediaContentView would have the focus
 
@@ -63,24 +65,16 @@ public class UnDeleteDialog extends KissDialog {
     listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
     listView.setEditable(false);
     //install keylisteners for ESC and ENTER for listView because ListView would consume them
-    listView.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+    listView.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<>() {
       @Override
       public void handle(KeyEvent event) {
+        //no support for toggeling AutoPlay
+        //no default
         switch (event.getCode()) {
-          case ESCAPE:
-            cancelBtn.fire();
-            break;
-          case ENTER:
-            unDeleteSelectionBtn.fire();
-            break;
-          case P:
-            mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
-            break;
-          case S:
-            mediaContentView.getPlayerViewer().stop();
-            break;
-          //no support for toggeling AutoPlay
-          //no default
+          case ESCAPE -> cancelBtn.fire();
+          case ENTER -> unDeleteSelectionBtn.fire();
+          case P -> mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
+          case S -> mediaContentView.getPlayerViewer().stop();
         }
       }
     });
@@ -99,23 +93,17 @@ public class UnDeleteDialog extends KissDialog {
     unDeleteSelectionBtn = new Button(language.getString("un.delete.selection"));
     unDeleteSelectionBtn.setDefaultButton(true);
     unDeleteSelectionBtn.setFocusTraversable(true);
-    unDeleteSelectionBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult = UNDELETE_SELECTION_BTN;
-        close();
-      }
+    unDeleteSelectionBtn.setOnAction(actionEvent -> {
+      modalResult = UNDELETE_SELECTION_BTN;
+      close();
     });
 
     cancelBtn = new Button(KissDialog.CANCEL_LABEL);
     cancelBtn.setCancelButton(true);
     cancelBtn.setFocusTraversable(true);
-    cancelBtn.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent actionEvent) {
-        modalResult = CANCEL_BTN;
-        close();
-      }
+    cancelBtn.setOnAction(actionEvent -> {
+      modalResult = CANCEL_BTN;
+      close();
     });
     buttonBox.getChildren().addAll(unDeleteSelectionBtn, cancelBtn);
 

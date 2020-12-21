@@ -1,24 +1,23 @@
 package de.kissphoto.view.dialogs;
 
-import de.kissphoto.helper.I18Support;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * This is the Dialog ancestor for all dialogs in KissPhoto
  * It is not shown directly but concentrates all methods that are common for all dialogs.
  * <li>showing the About Window
  *
- * @author: Ingo
- * @date: 2014-06-16 multi monitor support
- * @modified: 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
+ * @author Dr. Ingo Kreuz
+ * @since 2014-06-16 multi monitor support
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
+ * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */
 public class KissDialog extends Stage {
-  protected static ResourceBundle language = I18Support.languageBundle;
   //constants for setting which button you need
   //and reporting which button was used to close the message dialog
   public static final boolean OK_BOOL = true;

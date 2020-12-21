@@ -30,19 +30,14 @@ public class GlobalSettings extends Properties {
   private static final String PROPERTIES_FOLDERNAME = ".kissPhoto";
   private static final String PROPERTIES_FILENAME = "kissPhoto.settings";
 
-  private String propertiesFilename = "";
+  private final String propertiesFilename;
 
 
   public GlobalSettings() {
 
     //determine the settings-path on this OS
-    Path propertiesFilePath;
-    Path folderPath = getOSUserSettingsDirectory();
-
-    if (folderPath != null)
-      propertiesFilePath = folderPath.resolve(PROPERTIES_FOLDERNAME);
-    else
-      propertiesFilePath = Paths.get(PROPERTIES_FOLDERNAME);
+    Path folderPath = getOSUserSettingsDirectory(); //is never null
+    Path propertiesFilePath = folderPath.resolve(PROPERTIES_FOLDERNAME);
 
     try { //ignore IO-Exceptions
 

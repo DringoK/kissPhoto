@@ -28,12 +28,9 @@ import javafx.scene.text.Text;
  * Which of the attributes are visible can be chosen by the user (standard: just description)
  *
  * @author Dr. Ingo Kreuz
- * @version
- * <ul>
- * <li>2020-11-06 bug fixing: handle empty mediaFile
- * <li>2014-06-01 changed from overlaying fullscreen panel to a small panel with bound position to the bottom border
+ * @version 2020-11-06 bug fixing: handle empty mediaFile
+ * @version 2014-06-01 changed from overlaying fullscreen panel to a small panel with bound position to the bottom border
  *            otherwise mouse events would not be recognized from the underlying viewer
- * </ul>
  */
 public class AttributesViewer extends StackPane {
   MediaContentView mediaContentView; //link to the underlying ContentView (for resizing etc)
@@ -100,7 +97,7 @@ public class AttributesViewer extends StackPane {
    * especially used when full screen mode is enabled: then the state of the normal and the full screen mediaContentView's
    * attributes viewers are synchronized
    *
-   * @param otherAttrViewer
+   * @param otherAttrViewer  the attr viewer to copy the state to
    */
   public void copyState(AttributesViewer otherAttrViewer) {
     setVisible(otherAttrViewer.isVisible());

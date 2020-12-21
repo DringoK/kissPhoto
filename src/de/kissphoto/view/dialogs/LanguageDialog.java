@@ -19,6 +19,8 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import static de.kissphoto.KissPhoto.language;
+
 /**
  * A dialog to change the language of the GUI of kissPhoto
  * Changes are written to the settings file only and effects are only applied after a restart
@@ -26,7 +28,7 @@ import javafx.stage.StageStyle;
  *
  * @author Ingo
  * @since 2014-05-02
- * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
+ * @version 2020-12-20 globalSettings and language are now global (static in Kissphoto)
  * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  * @version 2014-06-16 multi screen support: center on main window instead of main screen
  */

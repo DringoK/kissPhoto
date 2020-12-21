@@ -1,15 +1,12 @@
 package de.kissphoto.view.statusBarHelpers;
 
-import de.kissphoto.helper.I18Support;
 import de.kissphoto.helper.StringHelper;
 import de.kissphoto.view.FileTableView;
-import javafx.event.EventHandler;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
@@ -20,25 +17,24 @@ import java.util.ResourceBundle;
  * <p/>
  *
  * @author Dr. Ingo Kreuz
- * @date: 2017-10-24
- * @modified: 2019-07-07 inserted missing spaces after ":"
+ * @since 2017-10-24
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers
+ * @version 2019-07-07 inserted missing spaces after ":"
  */
 
 public class StatisticsPanel extends HBox {
-  private static ResourceBundle language = I18Support.languageBundle;
-
   private final static String filesCaption = language.getString("filesStatistic");
   private final static String selectedCaption = language.getString("selectedStatistic");
   private final static String modifiedCaption = language.getString("modifiedStatistic");
   private final static String deletedCaption = language.getString("deletedStatistic");
 
-  private Label filesLabel = new Label(filesCaption + " 0");
-  private Label selectedLabel = new Label(selectedCaption + " 0");
-  private Label modifiedLabel = new Label(modifiedCaption + " 0");
-  private Label deletedLabel = new Label(deletedCaption + " 0");
+  private final Label filesLabel = new Label(filesCaption + " 0");
+  private final Label selectedLabel = new Label(selectedCaption + " 0");
+  private final Label modifiedLabel = new Label(modifiedCaption + " 0");
+  private final Label deletedLabel = new Label(deletedCaption + " 0");
 
   /**
-   * @constructor
+   * build the panel
    */
   public StatisticsPanel() {
 
@@ -60,12 +56,9 @@ public class StatisticsPanel extends HBox {
 
   public void connectUndeleteDialog(FileTableView fileTableView) {
     //register Double-Click on Deleted-Label for Undelete-Dialog
-    deletedLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
-      @Override
-      public void handle(MouseEvent event) {
-        if (event.getClickCount() > 1) {
-          fileTableView.unDeleteWithDialog();
-        }
+    deletedLabel.setOnMouseClicked(event -> {
+      if (event.getClickCount() > 1) {
+        fileTableView.unDeleteWithDialog();
       }
     });
   }

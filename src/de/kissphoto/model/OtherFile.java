@@ -24,11 +24,6 @@ public class OtherFile extends MediaFile {
   }
 
   @Override
-  public Object getSpecificMediaContent() {
-    return null;
-  }
-
-  @Override
   public Exception getMediaContentException() {
     return null;
   }

@@ -9,7 +9,6 @@ import de.kissphoto.view.StatusBar;
 import de.kissphoto.view.dialogs.ExternalEditorsDialog;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
@@ -19,7 +18,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
+import mediautil.gen.Log;
 
 import java.awt.*;
 import java.util.ResourceBundle;
@@ -42,12 +41,17 @@ import java.util.ResourceBundle;
  * </ul>
  *
  * @author Ingo Kreuz<br>
+ * @since 2014-04-29
  * @version 2014-07-05 loading initialFileOrFolder after stage.show() to show messages during slow network access
  * <p>
  * Bugs:
  * ======================
  * planned features:
  * ======================
+ * todo VLC nicht installiert - tut das?
+ * todo About: VLC-Status, copyrights
+ * todo Meldung initalFile genauer: 1. übergebene Datei nicht gefunden ... +2. vorheriges Verzeichnis nicht gefunden
+ * todo overscan mit padding im ContenView (FullScreen only) und auch speichern in globalSettings (nur context-Menü und Tastenkombi/Mausrad)
  * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger)
  * todo hoover über Filetable: Umbenennung anzeigen (aktuellerName --> neuer ResultingFilename)
  * todo Meta-Daten anzeigen. Fenster ausblendbar
@@ -63,10 +67,10 @@ import java.util.ResourceBundle;
  * ===============
  * todo doch nochmal schauen, ob die Updates vom FileWatcher nicht verwendet werden können. Siehe JavaFX Task: A Task Which Returns Partial Results
  * todo Nice to have: Undo-History
- * @since 2014-04-29
  */
 public class KissPhoto extends Application {
-  public static final String KISS_PHOTO_VERSION = "0.20.12.13 work in progress"; // <------------------------------------------------------------------------------
+  //please check Log.debugLevel in main()
+  public static final String KISS_PHOTO_VERSION = "0.20.12.20 work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -75,10 +79,8 @@ public class KissPhoto extends Application {
   public static boolean optionNoVLC = false; //if -noVLC is provided then prevent from searching for and using of vlc
   private static boolean optionHelp = false; //-Help will println a short helptext
 
-  private MainMenuBar mainMenuBar;
   private FileTableView fileTableView;
   private MediaContentView mediaContentView;
-  private StatusBar statusBar;
   protected Stage primaryStage;
   protected Scene scene;
 
@@ -114,6 +116,10 @@ public class KissPhoto extends Application {
    *             -help: a short help text about parameters
    */
   public static void main(String[] args) {
+    //Debug-Level currently used in mediaUtil an ImageFileRotater
+    Log.debugLevel = Log.LEVEL_NONE; //please no output on console (default is 3=Log.LEVEL_INFO) which shows ERROR, WARNING and INFO)
+    //Log.debugLevel = Log.LEVEL_DEBUG;
+
     int i = 0;
 
     if (args.length > 0) {
@@ -167,7 +173,7 @@ public class KissPhoto extends Application {
     stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/KissPhotoIcon.jpg")));
 
     //Create the View-Areas
-    statusBar = new StatusBar();
+    StatusBar statusBar = new StatusBar();
     statusBar.showMessage("");
     mediaContentView = new MediaContentView(primaryStage); //Area for showing Media
 
@@ -175,7 +181,7 @@ public class KissPhoto extends Application {
     statusBar.connectUndeleteDialog(fileTableView);
     mediaContentView.setFileTableView(fileTableView);
 
-    mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION);
+    MainMenuBar mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION);
     mainMenuBar.addRecentlyMenu(fileTableView.getFileHistory().getRecentlyFilesMenu());
     // Left and right split pane
     mainSplitPane.prefWidthProperty().bind(scene.widthProperty());
@@ -204,18 +210,16 @@ public class KissPhoto extends Application {
     root.getChildren().add(rootArea);
 
 
-    primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-      public void handle(final WindowEvent event) {
+    primaryStage.setOnCloseRequest(event -> {
 
-        //--ask for unsaved changes
-        if (!fileTableView.askIfContinueUnsavedChanges()) {
-          event.consume(); // Consuming the close event prevents the application from closing
-        } else {
-          storeLastMainWindowSettings(); //--save current window sizes to settings file
-          globalSettings.store(); //all settings not only Windows-Settings
+      //--ask for unsaved changes
+      if (!fileTableView.askIfContinueUnsavedChanges()) {
+        event.consume(); // Consuming the close event prevents the application from closing
+      } else {
+        storeLastMainWindowSettings(); //--save current window sizes to settings file
+        globalSettings.store(); //all settings not only Windows-Settings
 
-          fileTableView.stopWatcherThread();
-        }
+        fileTableView.stopWatcherThread();
       }
     });
 
@@ -230,12 +234,9 @@ public class KissPhoto extends Application {
 
 
     //wait until resizing has been performed and scene width has followed stage width
-    Platform.runLater(new Runnable() {
-      @Override
-      public void run() {
-        ensureStageToBeVisible(primaryStage);
-        fileTableView.openInitialFolder(initialFileOrFolder);
-      }
+    Platform.runLater(() -> {
+      ensureStageToBeVisible(primaryStage);
+      fileTableView.openInitialFolder(initialFileOrFolder);
     });
   }
 
@@ -324,7 +325,6 @@ public class KissPhoto extends Application {
    * so that the scene size has followed stage size and the decoWidth (border) can be calculated correctly
    *
    * @param stage (not null) the window which will be sized
-   * @throws Exception if stage or scene in stage is null
    */
   public void ensureStageToBeVisible(Stage stage) {
     Rectangle2D bounds;  //bounds per screen

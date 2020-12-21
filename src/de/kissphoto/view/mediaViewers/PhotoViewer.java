@@ -3,9 +3,13 @@ package de.kissphoto.view.mediaViewers;
 import de.kissphoto.model.ImageFile;
 import de.kissphoto.model.MediaFile;
 import de.kissphoto.view.MediaContentView;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+
+import java.nio.file.Path;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
@@ -21,6 +25,7 @@ import javafx.scene.image.ImageView;
  *
  * @author Dr. Ingo Kreuz
  * @since 2014-05-25
+ * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only the know what they accept and what should be cached to speed up viewing
  * @version 2020-12-13: same structure like playerViewers now: "contains an imageView" not "is an imageView". Therefore common sybling: MediaViewer :)
  * @version 2020-11-02: Viewer now decides if it can show a media and returns true if so
  * @version 2019-07-07: Cache problems fixed
@@ -32,6 +37,25 @@ import javafx.scene.image.ImageView;
  * @version 2014-05-25: zooming, moving (panning) (keyboard only)
  */
 public class PhotoViewer extends MediaViewerZoomable{
+  /**
+   * Reports if a given file would be accepted by this viewer
+   * Note: some Image Formats are accepted that currently cannot be displayed by JavaFX
+   * but useful for loading external editor (nothing will be displayed (black))
+   * @param file to be investigated
+   * @return true if file is an image
+   */
+  public static boolean willAccept(Path file){
+    String filename = file.getFileName().toString().toLowerCase();
+    return filename.endsWith(".jpg") ||
+          filename.endsWith(".jpeg") ||
+          filename.endsWith(".jp2")  ||
+          filename.endsWith(".png")  ||
+          filename.endsWith(".bmp")  ||
+          filename.endsWith(".gif")  ||
+          filename.endsWith(".tiff") ||
+          filename.endsWith(".tif")  ||
+          filename.endsWith(".ico");
+  }
 
   private ImageView imageView = new ImageView();
 
@@ -73,19 +97,63 @@ public class PhotoViewer extends MediaViewerZoomable{
    * @return true if displaying was successful, false if mediaFile could not be displayed
    */
   public boolean setMediaFileIfCompatible(MediaFile mediaFile) {
-    boolean compatible = (mediaFile != null) && (mediaFile.getClass() == ImageFile.class);
+    if (!(mediaFile instanceof ImageFile)){ //includes test on null
+      return false;
+    }
+    boolean compatible = true;
 
-    if (compatible){
-      //remember link to the file object to access current rotation
-      Image image = (Image) mediaFile.getMediaContent();  //getMediaContent tries to put the content into an Image-Object and returns null if not possible
-      if (image != null) {
-        imageView.setImage(image);
-      } else {
-        compatible = false;
-      }
+    //remember link to the file object to access current rotation
+    Image image = (Image) mediaFile.getMediaContentCached(this);  //getMediaContent tries to put the content into an Image-Object and returns null if not possible
+    if (image != null) {
+      imageView.setImage(image);
+    } else {
+      compatible = false;
     }
     return compatible;
   }
+
+  /**
+   * load an image specified by "FileOnDisk" property
+   *
+   * @return Image if successful or null if not
+   * note: if null is returned possibly MediaCache needs to be maintained to free memory..and retried again
+   * which is recursively tried
+   */
+  @Override
+  public Object getViewerSpecificMediaContent(MediaFile mediaFile) {
+    if (!(mediaFile instanceof ImageFile)) return null;
+    MediaViewer photoViewer = this; //to hand over into errorPropertyChange Listener
+
+    Image image= null;
+    if (mediaFile.isMediaContentInValid()) {  //if not already loaded i.e. image in cache is invalid
+      try {
+        //System.out.println("RetryCounter="+loadRetryCounter + "  getMediaContent loading " + fileOnDisk);
+        image = new Image(mediaFile.getFileOnDisk().toUri().toString(), true);  //true=load in Background
+        //install error-listener for background-loading
+        image.errorProperty().addListener(new ChangeListener<Boolean>() {
+          @Override
+          public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+            mediaFile.flushFromCache();
+            if (mediaFile.shouldRetryLoad())
+              mediaFile.getMediaContentCached(photoViewer); //i.e. retry is recursive
+          }
+        });
+        image.progressProperty().addListener(new ChangeListener<Number>() {
+          @Override
+          public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+            if (newValue.doubleValue() >= 1.0) {     //if image loaded completely then retryCounter can be reset
+              mediaFile.resetLoadRetryCounter();
+            }
+          }
+        });
+      } catch (Exception e) {
+        //will not occur with backgroundLoading: image.getException will get the exception
+      }
+    }
+
+    return image;
+  }
+
 
   //----------------------- Implement ZoomableViewer Interface ----------------------------
 

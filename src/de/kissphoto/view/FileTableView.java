@@ -52,29 +52,6 @@ import static de.kissphoto.KissPhoto.language;
  */
 
 public class FileTableView extends TableView<MediaFile> implements FileChangeWatcherEventListener {
-  //---- views linking
-  private final Stage primaryStage;  //main window
-  private final StatusBar statusBar;  //messages
-  protected MediaContentView mediaContentView; //mediaContentView to show media if selection changes
-
-  //---- the content to be displayed
-  private final MediaFileList mediaFileList = new MediaFileList();
-
-  //---- listen if an external program changes the currently loaded folder
-  private final FileChangeWatcher fileChangeWatcher = new FileChangeWatcher();  //check for external changes to an opened folder
-  private MediaFile lastSelection = null;
-
-  protected VirtualFlow<?> flow;  //viewport for scrolling
-
-  //----- Table Columns
-  protected final TableColumn<MediaFile, String> statusColumn;
-  protected final TableColumn<MediaFile, String> prefixColumn;
-  protected final TableColumn<MediaFile, String> counterColumn;
-  protected final TableColumn<MediaFile, String> separatorColumn;
-  protected final TableColumn<MediaFile, String> descriptionColumn;
-  protected final TableColumn<MediaFile, String> extensionColumn;
-  protected final TableColumn<MediaFile, String> fileDateColumn;
-
   //string constants (i18alized) for table columns' headlines
   public static final String PREFIX = "prefix";
   public static final String COUNTER = "counter";
@@ -84,7 +61,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   public static final String MODIFIED = "modified";
   public static final String NOTHING_FOUND = "nothing.found";
   private static final String FILE_DATE = "fileDate";
-
   //Default Column Widths
   private static final int STATUS_COL_DEFAULT_WIDTH = 20;
   private static final int PREFIX_COL_DEFAULT_WIDTH = 50;
@@ -93,7 +69,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private static final int DESCRIPTION_COL_DEFAULT_WIDTH = 480;
   private static final int EXTENSION_COL_DEFAULT_WIDTH = 50;
   private static final int FILEDATE_COL_DEFAULT_WIDTH = 155;
-
   //Constants for writing Width to settings-File
   private static final String STATUS_COL_WIDTH = "StatusColWidth";
   private static final String PREFIX_COL_WIDTH = "PrefixColWidth";
@@ -102,33 +77,50 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private static final String DESCRIPTION_COL_WIDTH = "DescriptionColWidth";
   private static final String EXTENSION_COL_WIDTH = "ExtensionColWidth";
   private static final String FILEDATE_COL_WIDTH = "FileDateColWidth";
-
+  //----- Table Columns
+  protected final TableColumn<MediaFile, String> statusColumn;
+  protected final TableColumn<MediaFile, String> prefixColumn;
+  protected final TableColumn<MediaFile, String> counterColumn;
+  protected final TableColumn<MediaFile, String> separatorColumn;
+  protected final TableColumn<MediaFile, String> descriptionColumn;
+  protected final TableColumn<MediaFile, String> extensionColumn;
+  protected final TableColumn<MediaFile, String> fileDateColumn;
+  //---- views linking
+  private final Stage primaryStage;  //main window
+  private final StatusBar statusBar;  //messages
+  //---- the content to be displayed
+  private final MediaFileList mediaFileList = new MediaFileList();
+  //---- listen if an external program changes the currently loaded folder
+  private final FileChangeWatcher fileChangeWatcher = new FileChangeWatcher();  //check for external changes to an opened folder
+  private final FileHistory fileHistory;
+  protected MediaContentView mediaContentView; //mediaContentView to show media if selection changes
+  protected VirtualFlow<?> flow;  //viewport for scrolling
+  //----- Define Cell Factory and EditEventHandler
+  //will be the identical for all columns (except statusColumn, see FileTableView constructor)
+  TextFieldCellFactory textFieldCellFactory = new TextFieldCellFactory();
+  CellEditCommitEventHandler cellEditCommitEventHandler = new CellEditCommitEventHandler();
+  //every mediaFileList has one searchRec that is built once.
+  // For convenience a pointer to that is searchRec is stored in Filetable while search is active (see findFirst/replaceAll)
+  // if no search is active searchRec == null!
+  MediaFileList.SearchRec searchRec = null;
+  private MediaFile lastSelection = null;
   //renumbering values will be initialized on every openFolder() and can be changed by user using renumberDialog()
   private int numberingOffset = 1;  //determines with which number renumbering of the list starts.
   private int numberingStepSize = 1;
   private int numberingDigits = 0;   //zero is [auto]
-
   //----- Dialog Singletons
   private FindReplaceDialog findReplaceDialog = null; //will be created when used firstly (see findAndReplace() )
   private RenumberDialog renumberDialog = null; //will be create when used firstly (see renumberWithDialog() )
   private RenameDialog renameDialog = null; //will be created when used firstly (see renameWithDialog())
   private UnDeleteDialog unDeleteDialog = null; //will be created when used firstly (see unDeleteWithDialog())
-
   //----- link to MenuItems to enable/disable
   private MenuItem unDeleteMenuItem = null;  //Main menu will pass a link to it's unDeleteMenuItem, so deletion routines can control if disabled or not
   private MenuItem pasteMenuItem = null;     //Main menu will pass a link to it's pasteMenuItem, so copy/cut routines can control if disabled or not
-
-  //----- Define Cell Factory and EditEventHandler
-  //will be the identical for all columns (except statusColumn, see FileTableView constructor)
-  TextFieldCellFactory textFieldCellFactory = new TextFieldCellFactory();
-  CellEditCommitEventHandler cellEditCommitEventHandler = new CellEditCommitEventHandler();
-
   //----- Enable keeping Cursor-Position while editing when changing line
   private boolean selectSearchResultOnNextStartEdit = false;  //during SearchNext searchRec Cursor needs to be set on StartEdit
-
   private boolean renameDialogActive = false;
-  private final FileHistory fileHistory;
 
+  private boolean isMovingFiles = false; //ignore selection refresh events while movingUp/Dn because selection has to be rebuilt with every step there, but effectively it does not change
   /**
    * constructor will try to open the passed file or foldername
    * if there is no such file or folder an empty list is shown
@@ -142,7 +134,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     this.primaryStage = primaryStage;
     this.mediaContentView = mediaContentView;
     this.statusBar = statusBar;
-    fileHistory = new FileHistory(KissPhoto.globalSettings, this);
+    fileHistory = new FileHistory(this);
 
     this.setMinSize(100.0, 100.0);
 
@@ -231,26 +223,17 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     getViewPort();
     installDragDropHandlers(primaryStage);
     installSelectionHandler(mediaContentView);
-    installInvalidCacheHandler(mediaContentView);
-  }
-
-  private void installInvalidCacheHandler(MediaContentView mediaContentView) {
-    mediaFileList.getMediaFileThatNeedsReloadProperty().addListener((observable, oldValue, newValue) -> {
-      int currentlySelectedLine = getSelectionModel().getFocusedIndex();
-      //if this is the currently shown media then reload
-      if ((currentlySelectedLine >= 0) && (currentlySelectedLine == mediaFileList.getFileList().indexOf(newValue))) {
-        mediaContentView.setMedia(mediaFileList.getFileList().get(currentlySelectedLine), null);
-      }
-    });
   }
 
   private void installSelectionHandler(MediaContentView mediaContentView) {
     this.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
+      if (isMovingFiles) return; //ignore refresh events while movingUp/Dn because selection has to be rebuilt with every step there, but effectively it does not change
+
       //set selected media in mediaContentView (or null if not valid)
       if (newValue.intValue() >= 0) { //only if selection is valid
         lastSelection = mediaFileList.getFileList().get(newValue.intValue());
         mediaContentView.setMedia(mediaFileList.getFileList().get(newValue.intValue()), null);
-
+        mediaFileList.preLoadMedia(newValue.intValue(), mediaContentView);
       } else {
         if (mediaFileList.getFileList().size() <= 0) {
           //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
@@ -719,7 +702,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         //empty directory?
         if (mediaFileList.getFileList().size() < 1) {
           //clear any visible image shown before
-          fileTableView.mediaContentView.setMedia(null, null);
+          mediaContentView.setMedia(null, null);
         }
         if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
         if (errMsg.length() > 0) {
@@ -774,6 +757,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
     fileChangeWatcher.pauseWatching();  //ignore own changes in filesystem
     MediaFile currentFile = getFocusModel().getFocusedItem();
+    int currentIndex = getFocusModel().getFocusedIndex();
 
     //if currentFile isChanged then stop players to enable renaming (keep it simple: do it always while saving)
     mediaContentView.getPlayerViewer().resetPlayer(); //stop players and disconnect from file to enable renaming
@@ -786,7 +770,11 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
     //define what happens when task has finished
     savingTask.addEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, t -> {
-      mediaContentView.setMedia(currentFile, null); //continue playing
+      //MediaFile.flushAllMediaFromCache(); //not necessary because flush is executed if necessary while saving in MediaFile.saveChanges...
+
+      mediaContentView.setMedia(null, null); //provoke a change in next line
+      mediaContentView.setMedia(currentFile, null); //reload media, continue playing
+      mediaFileList.preLoadMedia(currentIndex, mediaContentView);
 
       fileChangeWatcher.continueWatching();
 
@@ -877,35 +865,31 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   public synchronized void moveSelectedFilesUp() {
     if ((getSelectionModel()).getSelectedIndices().size() > 0) {  //only if a selection exists to be moved
 
-      mediaFileList.disablePreLoad();  //no preload into cache while moving multiple files to prevent from access violations
-      try {
-        //copy and sort the selection
-        ObservableList<Integer> selectedIndicesSorted = getCopyOfSelectedIndicesSortedAndUnique();
+      //copy and sort the selection
+      ObservableList<Integer> selectedIndicesSorted = getCopyOfSelectedIndicesSortedAndUnique();
 
-        //check if selection already contains first file (=index 0)
-        boolean firstFileSelected = (selectedIndicesSorted.get(0) == 0);
+      isMovingFiles = true; //ignore selection events
+      //check if selection already contains first file (=index 0)
+      if (selectedIndicesSorted.get(0) > 0) { //not the first row is selected = there is a row above
+        int focusIndex = getFocusModel().getFocusedIndex();
 
-        if (!firstFileSelected) { //not the first (but something) is selected
-          int focusIndex = getFocusModel().getFocusedIndex();
-
-          //move
-          int current;
-          for (int i = 0; i < selectedIndicesSorted.size(); i++) {
-            current = selectedIndicesSorted.get(i); //convert Integer to int
-            swapMediaFiles(current - 1, current); //move content
-            selectedIndicesSorted.set(i, current - 1); //move selection -1=one up
-          }
-
-          //renew selection, which has been lost during swapMediaFiles()
-          for (Integer anIndex : selectedIndicesSorted) {
-            (getSelectionModel()).select(anIndex);
-          }
-          //set new focus (has been changed by select() calls)
-          scrollViewportToIndex(focusIndex - 1, Alignment.TOP);
-          getFocusModel().focus(focusIndex - 1);
+        //move
+        int current;
+        for (int i = 0; i < selectedIndicesSorted.size(); i++) { //iterator not usable because IntValue not writeable (see selectedIndicesSorted.set)
+          current = selectedIndicesSorted.get(i); //convert Integer to int
+          swapMediaFiles(current - 1, current); //move content
+          selectedIndicesSorted.set(i, current - 1); //move selection -1=one up
         }
-      } finally {
-        mediaFileList.enablePreLoad();
+
+        //renew selection, which has been lost during swapMediaFiles()
+        for (Integer anIndex : selectedIndicesSorted) {
+          (getSelectionModel()).select(anIndex);
+        }
+
+        isMovingFiles = false; //handle selection events again
+        //set new focus (has been changed by select() calls)
+        scrollViewportToIndex(focusIndex - 1, Alignment.TOP);
+        getFocusModel().focus(focusIndex - 1);
       }
     }
   }
@@ -919,36 +903,32 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    */
   public synchronized void moveSelectedFilesDown() {
     if ((getSelectionModel()).getSelectedIndices().size() > 0) {  //only if a selection exists to be moved
-      mediaFileList.disablePreLoad();  //no preload into cache while moving multiple files to prevent from access violations
-      try {
-        //copy and sort the selection
-        ObservableList<Integer> selectedIndicesSorted = getCopyOfSelectedIndicesSortedAndUnique();
+      //copy and sort the selection
+      ObservableList<Integer> selectedIndicesSorted = getCopyOfSelectedIndicesSortedAndUnique();
 
-        //check if selection already contains last file (=index fileList.size-1)
-        boolean lastFileSelected = (selectedIndicesSorted.get(selectedIndicesSorted.size() - 1) == (mediaFileList.getFileList().size() - 1));
+      isMovingFiles = true; //ignore selection events
+      //check if selection already contains last file (=index fileList.size-1)
+      if (selectedIndicesSorted.get(selectedIndicesSorted.size()-1) < (mediaFileList.getFileList().size() - 1)){ //not the last row is selected = one row below
+        int focusIndex = getFocusModel().getFocusedIndex();
 
-        if (!lastFileSelected) { //not the first (but something) is selected
-          int focusIndex = getFocusModel().getFocusedIndex();
-
-          //move
-          int current;
-          for (int i = 0; i < selectedIndicesSorted.size(); i++) {
-            current = selectedIndicesSorted.get(i); //convert Integer to int
-            swapMediaFiles(current, current + 1); //move content
-            selectedIndicesSorted.set(i, current + 1); //move selection +1=one down
-          }
-
-          //renew selection, which has been lost during swapMediaFiles()
-          for (Integer anIndex : selectedIndicesSorted) {
-            (getSelectionModel()).select(anIndex);
-          }
-
-          //set new focus (has been changed by select() calls)
-          getFocusModel().focus(focusIndex + 1);
-          scrollViewportToIndex(getFocusModel().getFocusedIndex(), Alignment.BOTTOM);
+        //move
+        int current;
+        for (int i = selectedIndicesSorted.size()-1; i>=0; i--) {
+          current = selectedIndicesSorted.get(i); //convert Integer to int
+          swapMediaFiles(current, current + 1); //move content
+          selectedIndicesSorted.set(i, current + 1); //move selection +1=one down
         }
-      } finally {
-        mediaFileList.enablePreLoad();
+
+        //renew selection, which has been lost during swapMediaFiles()
+        for (Integer anIndex : selectedIndicesSorted) {
+          (getSelectionModel()).select(anIndex);
+        }
+
+        isMovingFiles = false; //handle selection events again
+
+        //set new focus (has been changed by select() calls)
+        scrollViewportToIndex(getFocusModel().getFocusedIndex(), Alignment.BOTTOM);
+        getFocusModel().focus(focusIndex + 1);
       }
     }
   }
@@ -1261,11 +1241,11 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     int filesCount = getSelectionModel().getSelectedItems().size();
     int notRotatable = mediaFileList.rotateSelectedFiles(getSelectionModel().getSelectedItems(), rotateOperation);
     mediaContentView.showRotationAndFlippingPreview();
-    if (notRotatable==0)
+    if (notRotatable == 0)
       statusBar.showMessage(MessageFormat.format(language.getString("0.images.rotated"), filesCount));
     else
       statusBar.showMessage(MessageFormat.format(language.getString("0.files.cannot.save.the.rotation"), notRotatable)
-                            + " " + MessageFormat.format(language.getString("0.images.rotated"), filesCount));
+        + " " + MessageFormat.format(language.getString("0.images.rotated"), filesCount));
   }
 
   /**
@@ -1278,11 +1258,11 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     int filesCount = getSelectionModel().getSelectedItems().size();
     int notRotatable = mediaFileList.flipSelectedFiles(getSelectionModel().getSelectedItems(), horizontally);
     mediaContentView.showRotationAndFlippingPreview();
-    if (notRotatable==0)
+    if (notRotatable == 0)
       statusBar.showMessage(MessageFormat.format(language.getString("0.images.flipped"), filesCount));
     else
       statusBar.showMessage(MessageFormat.format(language.getString("0.files.cannot.save.the.flipping"), notRotatable)
-                            + " " + MessageFormat.format(language.getString("0.images.flipped"), filesCount));
+        + " " + MessageFormat.format(language.getString("0.images.flipped"), filesCount));
   }
 
   public synchronized void setOrientationAccordingExif() {
@@ -1293,7 +1273,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       statusBar.showMessage(MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), filesCount));
     else
       statusBar.showMessage(MessageFormat.format(language.getString("0.could.not.be.orientated.according.to.exif"), notRotatable)
-                           + " " + MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), filesCount-notRotatable));
+        + " " + MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), filesCount - notRotatable));
   }
 
   private ObservableList<Integer> getCopyOfSelectedIndicesSortedAndUnique() {
@@ -1414,20 +1394,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       renameDialogActive;           //multi-edit
   }
 
-
-  /**
-   * EventHandler to handle CommitEdit() events from FieldCell in context of FileTableView
-   */
-  private class CellEditCommitEventHandler implements EventHandler<TableColumn.CellEditEvent<MediaFile, String>> {
-    @Override
-    public void handle(TableColumn.CellEditEvent<MediaFile, String> t) {
-      saveEditedValue(t.getRowValue(), t.getTableColumn(), t.getNewValue());
-    }
-  }
-
-
-  public enum Alignment {TOP, CENTER, BOTTOM}
-
   /**
    * make index visible
    * The scrollTo()-Method of TableView is similar but "jumps" to the middle of the visible region time by time.
@@ -1476,21 +1442,12 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         }
       } else { //flow==null
         //retry until there is a Viewport available
-        Platform.runLater(() -> {
-          scrollViewportToIndex(indexToShow, alignment);
-        });
+        Platform.runLater(() -> scrollViewportToIndex(indexToShow, alignment));
       }
     } catch (Exception e) {
       //if scrolling is not possible then don't do it (e.g. during Viewport is built newly because of opening an new folder
     }
   }
-
-  //--------------------------- Find & Replace -------------------------------
-
-  //every mediaFileList has one searchRec that is built once.
-  // For convenience a pointer to that is searchRec is stored in Filetable while search is active (see findFirst/replaceAll)
-  // if no search is active searchRec == null!
-  MediaFileList.SearchRec searchRec = null;
 
   /**
    * find the first occurrence of searchText in the file table (all columns)
@@ -1505,6 +1462,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     initSearch();
     return findNext(searchText);
   }
+
+  //--------------------------- Find & Replace -------------------------------
 
   /**
    * store selection in mediaFileList
@@ -1723,6 +1682,18 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   //searchRec is != null only while find/replace is activ
   public MediaFileList.SearchRec getSearchRec() {
     return searchRec;
+  }
+
+  public enum Alignment {TOP, CENTER, BOTTOM}
+
+  /**
+   * EventHandler to handle CommitEdit() events from FieldCell in context of FileTableView
+   */
+  private class CellEditCommitEventHandler implements EventHandler<TableColumn.CellEditEvent<MediaFile, String>> {
+    @Override
+    public void handle(TableColumn.CellEditEvent<MediaFile, String> t) {
+      saveEditedValue(t.getRowValue(), t.getTableColumn(), t.getNewValue());
+    }
   }
 
 }

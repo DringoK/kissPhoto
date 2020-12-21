@@ -49,7 +49,7 @@ import java.util.Date;
  * Thumbnail and to modify Image Header Information through the methods
  * writeInfo, getThumbnailOffset and getThumbnailLength.
  * <p>
- * To provide more common solution, this calss has to extend javax.imageio.metadata.IIOMetadata
+ * To provide more common solution, this class has to extend javax.imageio.metadata.IIOMetadata
  *
  * @author dmitriy
  */

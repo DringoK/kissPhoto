@@ -4,15 +4,14 @@ import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
 /**
- * @user Ingo
- * @date 01.11.2016.
+ * @author Ingo
+ * @since 2016-11-01
  * <p>
  * Restricted Textfield that accepts all characters but supports all interfaces
  */
 public class UnrestrictedTextField extends RestrictedTextField {
   /**
    * @param stage is the containing Stage (for showing tooltips, when restricted character has been entered
-   * @constructor
    */
   public UnrestrictedTextField(Stage stage) {
     super(stage);
@@ -21,7 +20,6 @@ public class UnrestrictedTextField extends RestrictedTextField {
   /**
    * @param caption the caption can be passed for an inital value of the TextField
    * @param stage   is the containing Stage (for showing tooltips, when restricted character has been entered
-   * @constructor
    */
   public UnrestrictedTextField(String caption, Stage stage) {
     super(caption, stage);

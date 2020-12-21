@@ -1,6 +1,5 @@
 package de.kissphoto.view;
 
-import de.kissphoto.helper.I18Support;
 import de.kissphoto.view.statusBarHelpers.StatisticsPanel;
 import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Insets;
@@ -13,7 +12,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
@@ -22,14 +21,13 @@ import java.util.ResourceBundle;
  * it can show one line of text-information on top of a progress bar
  * and a statistics area at the right bottom side showing number of files, number of selected files etc.
  * <p/>
- * User: Ingo
- * Date: 20.09.12
- * modified: 2014-05-02 (I18Support)
- * modified: 2017-10-28 statistics and progressbar added
+ * @author Ingo
+ * @since 2012-09-20
+ * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers
+ * @version 2017-10-28 statistics and progressbar added
+ * @version 2014-05-02 (I18Support)
  */
 public class StatusBar extends StackPane {
-  private static ResourceBundle language = I18Support.languageBundle;
-
   BorderPane messageAndStatistics = new BorderPane();
   Text textInformation = new Text(language.getString("ready"));
   StatisticsPanel statisticsPanel = new StatisticsPanel();

@@ -1,6 +1,7 @@
 package de.kissphoto.model;
 
 import de.kissphoto.KissPhoto;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.collections.ObservableList;
 
 import java.nio.file.Path;
@@ -9,15 +10,21 @@ import java.nio.file.Path;
  * MovieFiles are PlayableMediaFiles
  * Here just the External Editors are managed for this kind of files
  *
- * @Author ikreuz
+ * @author ikreuz
  * @since 2012-08-28
+ * @version 2020-12-20 The current playerViewer decides now if a file is a movieFile and what to put into the cache
  * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
  * @version 2014-06-05 java.io operations changed into java.nio
  */
-public class MovieFile extends MediaFilePlayable {
+public class PlayableFile extends MediaFileTagged {
 
-  public MovieFile(Path movieFile, MediaFileList parent) {
+  public PlayableFile(Path movieFile, MediaFileList parent) {
     super(movieFile, parent);
+  }
+
+  @Override
+  public Exception getMediaContentException() {
+    return null;
   }
 
   /*
@@ -34,8 +41,8 @@ public class MovieFile extends MediaFilePlayable {
    */
   public static void loadExternalEditorPaths() {
     try {
-      MovieFile.externalMainEditorPath = KissPhoto.globalSettings.getProperty(MovieFile.class.getSimpleName() + MAIN_EDITOR);
-      MovieFile.external2ndEditorPath = KissPhoto.globalSettings.getProperty(MovieFile.class.getSimpleName() + SECOND_EDITOR);
+      PlayableFile.externalMainEditorPath = KissPhoto.globalSettings.getProperty(PlayableFile.class.getSimpleName() + MAIN_EDITOR);
+      PlayableFile.external2ndEditorPath = KissPhoto.globalSettings.getProperty(PlayableFile.class.getSimpleName() + SECOND_EDITOR);
     } catch (Exception e) {
       //nothing to do in case of exception --> editors will remain inactive
       //until a value is added via ExternalEditorsDialog
@@ -50,14 +57,14 @@ public class MovieFile extends MediaFilePlayable {
    */
   public static void setExternalEditorPaths(String newExternalMainEditorPath, String newExternal2ndEditorPath) {
     if (newExternalMainEditorPath != null)
-      MovieFile.externalMainEditorPath = newExternalMainEditorPath;
+      PlayableFile.externalMainEditorPath = newExternalMainEditorPath;
     else
-      MovieFile.externalMainEditorPath = "";
+      PlayableFile.externalMainEditorPath = "";
 
     if (newExternal2ndEditorPath != null)
-      MovieFile.external2ndEditorPath = newExternal2ndEditorPath;
+      PlayableFile.external2ndEditorPath = newExternal2ndEditorPath;
     else
-      MovieFile.external2ndEditorPath = "";
+      PlayableFile.external2ndEditorPath = "";
 
     saveExternalEditorPaths();
   }
@@ -73,16 +80,16 @@ public class MovieFile extends MediaFilePlayable {
   public static void executeExternalEditor(ObservableList<MediaFile> selection, boolean mainEditor) {
     if (selection != null && selection.size() > 0) {
       if (mainEditor)
-        MediaFile.executeExternalEditor(selection, MovieFile.externalMainEditorPath);
+        MediaFile.executeExternalEditor(selection, PlayableFile.externalMainEditorPath);
       else
-        MediaFile.executeExternalEditor(selection, MovieFile.external2ndEditorPath);
+        MediaFile.executeExternalEditor(selection, PlayableFile.external2ndEditorPath);
     }
   }
 
   @Override
   public MediaFile.SaveResult saveChanges() {
     //Media files with players need to flush their cache because media becomes invalid if underlying filename changes
-    if (isFilenameChanged()) flushMediaContent();
+    if (isFilenameChanged()) flushFromCache();
     return super.saveChanges();
   }
 
@@ -90,18 +97,29 @@ public class MovieFile extends MediaFilePlayable {
    * save the external editor's pathnames to GlobalSettings
    */
   protected static void saveExternalEditorPaths() {
-    if (MovieFile.externalMainEditorPath != null)
-      KissPhoto.globalSettings.setProperty(MovieFile.class.getSimpleName() + MAIN_EDITOR, MovieFile.externalMainEditorPath);
-    if (MovieFile.external2ndEditorPath != null)
-      KissPhoto.globalSettings.setProperty(MovieFile.class.getSimpleName() + SECOND_EDITOR, MovieFile.external2ndEditorPath);
+    if (PlayableFile.externalMainEditorPath != null)
+      KissPhoto.globalSettings.setProperty(PlayableFile.class.getSimpleName() + MAIN_EDITOR, PlayableFile.externalMainEditorPath);
+    if (PlayableFile.external2ndEditorPath != null)
+      KissPhoto.globalSettings.setProperty(PlayableFile.class.getSimpleName() + SECOND_EDITOR, PlayableFile.external2ndEditorPath);
   }
 
   public static String getExternalMainEditorPath() {
-    return MovieFile.externalMainEditorPath;
+    return PlayableFile.externalMainEditorPath;
   }
 
   public static String getExternal2ndEditorPath() {
-    return MovieFile.external2ndEditorPath;
+    return PlayableFile.external2ndEditorPath;
+  }
+
+
+  @Override
+  public long getContentApproxMemSize() {
+    return 40000000; //40MB for a player (tried out)
+  }
+
+  @Override
+  public ReadOnlyDoubleProperty getContentProgressProperty() {
+    return null; //no progress available for playable media
   }
 
 }

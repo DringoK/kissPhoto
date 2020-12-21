@@ -1,10 +1,9 @@
 package de.kissphoto.view.inputFields;
 
-import de.kissphoto.helper.I18Support;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
-import java.util.ResourceBundle;
+import static de.kissphoto.KissPhoto.language;
 
 
 /**
@@ -12,13 +11,13 @@ import java.util.ResourceBundle;
  * A tooltip is shown with explanation which characters are allowed if illegal characters are tried to enter
  * Illegal characters are ignored.
  *
- * @User: Ingo
- * @Date: 05.10.12
- * @modified: 02.05.14: I18Support
- * @modified: 01.11.16: RestrictedTextfield stores connected MediaFile and Column no more locally
+ * @author Dr. Ingo Kreuz
+ * @since 2012-10-05
+ * @version 2020-12-20 language now static in KissPhoto
+ * @version 2014-05-02 I18Support
+ * @version 2016-11-01 RestrictedTextfield stores connected MediaFile and Column no more locally
  */
 public class NumberTextField extends RestrictedTextField {
-  private static ResourceBundle language = I18Support.languageBundle;
   private static final String SORRY_ONLY_DIGITS_ALLOWED_HERE = "sorry.only.digits.allowed.here";
 
   //@constructor

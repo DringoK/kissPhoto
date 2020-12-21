@@ -1,12 +1,8 @@
 package de.kissphoto.view.fileTableHelpers;
 
-import de.kissphoto.helper.GlobalSettings;
-import de.kissphoto.helper.I18Support;
 import de.kissphoto.view.FileTableView;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
@@ -16,7 +12,9 @@ import javafx.scene.input.KeyCombination;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ResourceBundle;
+
+import static de.kissphoto.KissPhoto.globalSettings;
+import static de.kissphoto.KissPhoto.language;
 
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
@@ -26,23 +24,21 @@ import java.util.ResourceBundle;
  *
  * @author Dr Ingo Kreuz
  * @since 2017-10-22
- * @version  2017-10-22
+ * @version 2020-12-20 globalSettings and language are now static in KissPhoto, lambda expressions for event handlers
+ * @version 2017-10-22
  */
 public class FileHistory {
   private static final int MAX_ENTRIES = 9; //collect a maximum number of history entries
-  private ObservableList<Path> recentlyOpenedList = FXCollections.observableArrayList();
-  GlobalSettings globalSettings = null;
-  FileTableView fileTableView = null;
+  private final ObservableList<Path> recentlyOpenedList = FXCollections.observableArrayList();
+  FileTableView fileTableView;
+  Menu mainMenuItem;
 
-  Menu mainMenuItem = null;
   private static final String LAST_FILE_OPENED = "lastFileOpened"; //constant for key in .setting file (a number 1..MAX_ENTRIES is added)
 
   //string constants (i18alized) for table columns' headlines
-  private static ResourceBundle language = I18Support.languageBundle;
 
 
-  public FileHistory(GlobalSettings globalSettings, FileTableView fileTableView) {
-    this.globalSettings = globalSettings;
+  public FileHistory(FileTableView fileTableView) {
     this.fileTableView = fileTableView;
 
     mainMenuItem = new Menu(language.getString("open.recent"));
@@ -62,7 +58,7 @@ public class FileHistory {
    * put a file to history just after opening
    * remove duplicate if the path of the file is already in the list
    *
-   * @param openedFile
+   * @param openedFile the file to be put to file history (open recent)
    */
   public void putOpenedFileToHistory(Path openedFile) {
     recentlyOpenedList.add(0, openedFile); //the latest is the first
@@ -88,7 +84,7 @@ public class FileHistory {
   /**
    * refresh the latest entry when closing kissPhoto, so that current selection is updated
    *
-   * @param openedFile
+   * @param openedFile the currently selected file to be updated in file history
    */
   public void refreshOpenedFileInHistory(Path openedFile) {
     recentlyOpenedList.set(0, openedFile); //the latest is the first
@@ -130,12 +126,7 @@ public class FileHistory {
       if (i < 10)  //add accelerator (ctrl+0, ctrl+1, ...) only for the first 10 (because there are not more number keys ;-)
         item.setAccelerator(new KeyCodeCombination(KeyCode.getKeyCode(Integer.toString(i)), KeyCombination.CONTROL_DOWN));
 
-      item.setOnAction(new EventHandler<ActionEvent>() {
-        @Override
-        public void handle(ActionEvent event) {
-          fileTableView.openFolder(entry, true);
-        }
-      });
+      item.setOnAction(event -> fileTableView.openFolder(entry, true));
 
       mainMenuItem.getItems().add(item);
       i++;

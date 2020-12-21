@@ -2,8 +2,7 @@ package de.kissphoto.model;
 
 import de.kissphoto.ctrl.CounterPositionHeuristic;
 import de.kissphoto.helper.PathHelpers;
-import de.kissphoto.helper.StringHelper;
-import javafx.beans.property.SimpleObjectProperty;
+import de.kissphoto.view.MediaContentView;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
@@ -32,6 +31,7 @@ import static de.kissphoto.KissPhoto.language;
  *
  * @author Dr. Ingo Kreuz
  * @since 2012-09-01
+ * @version 2020-12-20 Media Cache moved to MediaFile
  * @version 2020-11-30 clean up code
  * @version 2017-10-30 support lossless rotation and flipping of ImageFiles, saving moved to mediaFileListSavingTask to enable ProgressBar (with rotation it can take long!)
  * @version 2014-06-07 getContent interface to cache simplified
@@ -48,8 +48,6 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   private ObservableList<MediaFile> clipboardFileList;//the deleted files that can be inserted by paste menu (=move in file list)
   private final CounterPositionHeuristic heuristic = new CounterPositionHeuristic();
   private int counterPosition = 0; //effectively used position (nth number in filenames)entered by user or guessed by heuristic
-  private final MediaCache mediaCache = new MediaCache(this); //implements a Cache strategy: which content should be preloaded, which can be flushed
-  private final SimpleObjectProperty<MediaFile> mediaFileThatNeedsReload = new SimpleObjectProperty<>(); //MediaContentView can subscribe to detect cache became invalid e.g. because backgroundloading failed
 
   private final SearchRec searchRec = new SearchRec();
 
@@ -96,7 +94,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
 
     //folder successfully determined, now open file list:
     //prepare
-    mediaCache.flushAll();
+    MediaFile.flushAllMediaFromCache();
     resetMediaFileList();
     counterPosition = heuristic.guessCounterPosition(folder);
 
@@ -131,7 +129,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
 
       } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
         if (modifiedFile != null)
-          mediaCache.flush(modifiedFile);  //mark an existing file as invalid because it has changed
+          modifiedFile.flushFromCache();  //mark an existing file as invalid because it has changed
         else
           onFolderChangedAddFile(filename);   //generate an non existing file (sometimes CREATE-events were not generated during testing...)
       }
@@ -188,6 +186,37 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
     changes += deletedFileList.size();
 
     return changes;
+  }
+
+  /**
+   * Preload-Strategy: try to put one file before and one after the current position into the cache
+   * What to put in cache is determined by the viewer for the media. What is the appropriate viewer selects ContentView
+   * @param index the current position in mediaFileList
+   * @param contentView selects the appropriate viewer which again knows what to put in cache
+   */
+  public void preLoadMedia(int index, MediaContentView contentView){
+    MediaFile mediaFile;
+      //Cancel any background loadings except next/previous
+      if (index > 1) {//if there is a previous/previous
+        mediaFile = fileList.get(index - 2);
+        if (mediaFile != null) mediaFile.cancelBackgroundLoading();
+      }
+      if (index < fileList.size() - 2) { //if there exists a 'next next'
+        mediaFile = fileList.get(index + 2);
+        if (mediaFile != null) mediaFile.cancelBackgroundLoading();
+      }
+
+      //preload previous media if necessary async in background
+      if (index > 0) { //if there exists a 'previous'
+        mediaFile = fileList.get(index - 1);
+        contentView.preloadMediaContent(mediaFile);
+      }
+      //preload next media if necessary async. in background
+      if (index < fileList.size() - 1) { //if there exists a 'next'
+        mediaFile = fileList.get(index + 1);
+        contentView.preloadMediaContent(mediaFile);
+      }
+
   }
 
   /**
@@ -249,16 +278,6 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   }
 
   /**
-   * this is only an example how saving can be performed in principle
-   * more sophisticated (interruptable and showing progress)
-   * an progressBar can be bound
-   */
-  public void saveCurrentFolder() {
-    MediaFileListSavingTask savingTask = getNewSavingTask();
-    startSavingTask(savingTask);
-  }
-
-  /**
    * Build a Task for saving all changes of mediaFileList
    * and hand it to the GUI. Now the GUI has the chance to connect a progressBar with the progressProperty of the task
    * before it starts it using startSavingTask();
@@ -266,7 +285,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
    * @return a task that will save all changes
    */
   public MediaFileListSavingTask getNewSavingTask() {
-    return new MediaFileListSavingTask(deletedFileList, fileList, getUnsavedChanges(), mediaCache);
+    return new MediaFileListSavingTask(deletedFileList, fileList, getUnsavedChanges());
   }
 
   public void startSavingTask(MediaFileListSavingTask mediaFileListSavingTask) {
@@ -424,24 +443,6 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
 
 
   /**
-   * get the content (e.g. the image), if possible from the cache
-   *
-   * @param mediaFile in mediaFileList
-   */
-  public Object getCachedMediaContent(MediaFile mediaFile) {
-    //prevent from infinite load-retry
-    if (mediaFile != null) {
-      if (mediaFile.getLoadRetryCounter() < MediaFile.MAX_LOAD_RETRIES)
-        return mediaCache.getCachedMediaContent(mediaFile);
-      else
-        return null;
-    } else {
-      return null;
-    }
-
-  }
-
-  /**
    * @param filename Look up the filename in the fileList's mediaFiles
    * @return and return the mediaFile if found, null if not
    */
@@ -455,46 +456,6 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
       }
     }
     return foundMediaFile;
-  }
-
-  /**
-   * Enable Pre-load in Cache: Enable loading the neighbour files (one before and one after) of the file loaded with getCachedMediaContent(index)
-   * in the Cache.
-   * By default pre-loading is on
-   */
-  public void enablePreLoad() {
-    mediaCache.enablePreLoad();
-  }
-
-  /**
-   * Disable Pre-load: Disable loading the neighbour files (one before and one after) of the file loaded with getCachedMediaContent(index)
-   * in the Cache.
-   * By default pre-loading is on
-   */
-  public void disablePreLoad() {
-    mediaCache.disablePreLoad();
-  }
-
-  /**
-   * remove a mediaFile from cache, e.g. because it became invalid and needs reload
-   * (e.g. an ImageFile loads in background, and the errorHandler calls this method if an error occurred while background loading)
-   *
-   * @param mediaFile to be flushed from cache
-   */
-  public void flushFromCache(MediaFile mediaFile) {
-    mediaCache.flush(mediaFile);
-    //System.out.println("MediaFileList: flushed from cache: " + mediaFile.fileOnDisk);
-    mediaFileThatNeedsReload.set(mediaFile);   //inform all registered listeners (e.g. in FileTableView)
-  }
-
-  /**
-   * Get the property holding the last mediaFile that became invalid in the cache.
-   * This can happen e.g. for ImageFiles when background loading failed
-   *
-   * @return mediaFileThatNeedsReload
-   */
-  public SimpleObjectProperty<MediaFile> getMediaFileThatNeedsReloadProperty() {
-    return mediaFileThatNeedsReload;
   }
 
   /**
@@ -514,7 +475,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
       numberWidth = (int) (Math.log10(Math.max(start, finalNumber))) + 1;
     }
 
-    return new DecimalFormat(StringHelper.repeat("0", numberWidth));
+    return new DecimalFormat("0".repeat(numberWidth));
   }
 
   /**
@@ -573,27 +534,6 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
       for (Integer i : indicesSorted) {
         fileList.get(i).setCounter(decimalFormat.format((long) i * step + start));
       }
-    }
-  }
-
-  /**
-   * renumbers all files of the fileList by writing column "counter"
-   * Leading zeros are used to get at least the number of digits determined by param digits
-   * the numbering begins with start and uses step as step size
-   *
-   * @param start  starting number
-   * @param step   repeatingly add this number to the start, can be negative, 0 leads to constant numbering (using start)
-   * @param digits Use leading zeros for to fill up digits for the number . 0=automatic(Use the smallest possible fixed number), 1=no leading zeros
-   */
-  public void renumberAll(int start, int step, int digits) {
-    DecimalFormat decimalFormat = determineFormat(start, step, digits, fileList.size());
-
-    //renumber
-    int newNumber = start;
-
-    for (MediaFile mediaFile : fileList) {
-      mediaFile.setCounter(decimalFormat.format(newNumber));
-      newNumber = newNumber + step;
     }
   }
 

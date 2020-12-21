@@ -1,7 +1,7 @@
 package de.kissphoto.view.mediaViewers;
 
 import de.kissphoto.model.MediaFile;
-import de.kissphoto.model.MovieFile;
+import de.kissphoto.model.PlayableFile;
 import de.kissphoto.view.MediaContentView;
 import de.kissphoto.view.viewerHelpers.PlayerControlPanel;
 import javafx.geometry.Rectangle2D;
@@ -25,16 +25,16 @@ import java.util.Objects;
  * <li>keyboard support (next/prev, zoom, fullscreen)
  * <li>player control over main menu, contextMenu und keyboard
  * <li>volume control not yet implemented
- * <li>autoPlay feature: when on: if media is selected playback starts immediately, if end of media next media is shown
  * </ul>
  *
  * @author Dr. Ingo Kreuz
  * @since 2014-06-09
+ * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only the know what they accept and what should be cached to speed up viewing
  * @version 2020-10-25: JavaFX MediaPlayer renamed from MovieViewer to MovieViewerFX, to enable MovieViewerVLCJ. Pause/End of File behavior improved
  * @version 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
  * @version 2016-11-06: ViewportZoomerMover extracted for all viewport zooming and moving operations (now identical to PhotoViewer's)
  */
-public class MovieViewerFX extends PlayerViewer {
+public class PlayerViewerFX extends PlayerViewer {
   protected MediaView mediaView;
   protected MediaPlayer mediaPlayer;      //initialized in setMedia()
 
@@ -42,7 +42,7 @@ public class MovieViewerFX extends PlayerViewer {
   /**
    * constructor to initialize the viewer
    */
-  public MovieViewerFX(final MediaContentView contentView) {
+  public PlayerViewerFX(final MediaContentView contentView) {
     super(contentView);   //mediaContentView of father class is now = contentView
     //binding is automatically when placed in a StackPane (mediaStackPane is a StackPane)
     //prefHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
@@ -78,12 +78,16 @@ public class MovieViewerFX extends PlayerViewer {
      * @return true if the file could be played, false if not
      */
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
+    if (!(mediaFile instanceof PlayableFile)){  //includes test on null
+      return false;
+    }
+    boolean compatible = true;
+
     resetPlayer();
     PlayerControlPanel viewerControlPanel = (PlayerControlPanel) this.viewerControlPanel; //one central cast
 
-    boolean compatible = (mediaFile != null) && (mediaFile.getClass() == MovieFile.class);
     if (compatible) try {
-      Media media = (Media)mediaFile.getMediaContent();  //if it cannot be put into a Media object it can not be played --> catch
+      Media media = (Media)mediaFile.getMediaContentCached(this);  //if it cannot be put into a Media object it can not be played --> catch
       mediaPlayer = new MediaPlayer(media);
 
       mediaPlayer.setOnReady(() -> {
@@ -218,6 +222,28 @@ public class MovieViewerFX extends PlayerViewer {
   public void releaseAll(){
     //nothing to do here
   }
+
+  /**
+   * load a Media specified by "FileOnDisk" property
+   *
+   * @return Media if successful or null if not
+   * note: if null is returned possibly MediaCache needs to be maintained to free memory..and retried again
+   * retry not implemented because never needed
+   */
+  @Override
+  public Object getViewerSpecificMediaContent(MediaFile mediaFile) {
+    Media media = null;
+    if (mediaFile.isMediaContentInValid()) {
+      try {
+        media = new Media(mediaFile.getFileOnDisk().toFile().toURI().toString());
+      } catch (Exception e) {
+        media = null;  //not supported
+      }
+
+    }
+    return media;
+  }
+
   //----------------------- Implement ZoomableViewer Interface ----------------------------
 
   @Override
