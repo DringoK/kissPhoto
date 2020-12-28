@@ -18,17 +18,24 @@ This makes it more transparent smaller (the maven cache does not grow and grow) 
 I am aware that not using maven/gradle has the disadvantage that all libraries have to be checked out manually from git.
 Therefore I describe in the following what needs to be imported:
 
+For each module:
+* Import from Github (push green Code-Button in Github. For this follow the link under the headline of the module, see below)      
+* In IntelliJ: Git-Clone...: paste location from <green button> above.
+* Store in Directory beside kissPhoto
+  * it will be opened as a new IntelliJ-Project
+  * close the project
+
+If all modules are loaded to the harddisk
+* load kissPhoto again
+* Remove from version control for kissPhoto via File-Settings...-VersionControl
+
 
 ## Adobe XMP-Core
-
 https://github.com/drewnoakes/adobe-xmp-core
 
-Import from Github (push green Code-Button)      
-In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
-Store in Directory beside kissPhoto
-
 Check in ProjectStructure
-* add..Import Module as IntelliJ-Module to Project
+* Module should have been imported
+* no dependencies should be listed
 
 **Used from MetaData-Extractor**
 
@@ -36,29 +43,19 @@ Check in ProjectStructure
 
 https://github.com/drewnoakes/metadata-extractor
 
-Import from Github (push green Code-Button)  
-In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
-Store in Directory beside kissPhoto  
-
 Check in ProjectStructure
-* add..Import Module as IntelliJ-Module to Project
-* Mark Samples and Tests as "not Sources" and "not Tests" (unklick the two buttons) in ProjectStructure while Modules/meta-data-extractor is selected
-* add Dependency to module MetaData-Extractor in module MetaDataExtractor (cancel Maven-Import at the end)
+* Module should have been imported
+* dependency on Module adobe-xmp-core should be listed
 
 **Used for reading and interpreting a pretty complete set of EXIF-attributes**
 
 ## JNA
+https://github.com/java-native-access/jna
 
 Java Native Access
 
-https://github.com/java-native-access/jna
-
-Import from Github (push green Code-Button)  
-In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
-Store in Directory beside kissPhoto
-
-In ProjectStructure
-* add as Library "jna" with clases
+Check in ProjectStructure
+* Library "jna" with classes should have been added
   * jna\dist\jna-platform.jar
   * jna\dist\jna.jar
 
@@ -68,14 +65,9 @@ In ProjectStructure
 
 https://github.com/caprica/vlcj-natives
 
-Import from Github (push green Code-Button)  
-In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
-Store in Directory beside kissPhoto  
-Rename module-info.java into module-info.java.old as kissPhoto does not use modules
-
 Check in ProjectStructure
-* add..Import Module as IntelliJ-Module to Project
-* add Dependency to Library JNA in module VLCJ
+* Module should have been imported
+* dependency on Library JNA should be listed
 
 **Used from VLCJ**
 
@@ -83,15 +75,11 @@ Check in ProjectStructure
 
 https://github.com/caprica/vlcj
 
-Import from Github (push green Code-Button)  
-In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
-Store in Directory beside kissPhoto
-Rename module-info.java into module-info.java.old as kissPhoto does not use modules
-
-In ProjectStructure
-* add..Import Module as IntelliJ-Module to Project
-* add Dependency to Module VLCJ-natives in module VLCJ
-* add Dependency to Library JNA in module VLCJ
+Check in ProjectStructure
+* Module should have been imported
+* dependencies should be listed
+  * on Module VLCJ-natives
+  * on Library JNA
 
 **Used from VLCJ-javafx and from kissPhoto as the adapter to libvlc.dll of Video-LAN's vlc player**
 
@@ -99,29 +87,21 @@ In ProjectStructure
 
 https://github.com/caprica/vlcj-javafx
 
-Import from Github (push green Code-Button)  
-In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
-Store in Directory beside kissPhoto
-Rename module-info.java into module-info.java.old as kissPhoto does not use modules
-
 Check in ProjectStructure
-* add..Import Module as IntelliJ-Module to Project
-* add Dependency to Module VLCJ in VLCJ-javafx
+* Module should have been imported
+* dependency to Module VLCJ should be listed
 
 **Used from kissPhoto for copying pixels from vlc to an JavaFX ImageView**
+
 (if VLC is installed it is used for Playback, if not then JavaFX is used for Playback, with very limited codec support)
 
 ## Caprica VLCJ-File-Filters
 
 https://github.com/caprica/vlcj-file-filters
 
-Import from Github (push green Code-Button)  
-In IntelliJ: VCS-Get from Version Control: paste location from <green button> above.  
-Store in Directory beside kissPhoto
-Rename module-info.java into module-info.java.old as kissPhoto does not use modules
-
-In ProjectStructure
-* add..Import Module as IntelliJ-Module to Project
+Check in ProjectStructure
+* Module should have been imported
+* no dependencies should be listed
 
 **Used from kissPhoto for compatibility test of a media file by it's file extension**
 
@@ -135,10 +115,12 @@ To include the fixes it has been included in kissPhoto\src and the Fixes from so
 **Used for rotating jpgs + simple writing into exif fields**
 
 ## kissPhoto
-No add all depencencies to the other modules
-* module metadata-extractor
-* library jna
-* module vlcj
-* module vlcj-javafx
-* module vlcj-file-filters
+Check in ProjectStructure
+* Module should have been imported
+* dependencies should be listed
+  * module metadata-extractor
+  * library jna
+  * module vlcj
+  * module vlcj-javafx
+  * module vlcj-file-filters
 

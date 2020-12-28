@@ -225,6 +225,7 @@
       <module fileurl="file://$PROJECT_DIR$/kissPhoto.iml" filepath="$PROJECT_DIR$/kissPhoto.iml" />
       <module fileurl="file://$PROJECT_DIR$/metadata-extractor.iml" filepath="$PROJECT_DIR$/metadata-extractor.iml" />
       <module fileurl="file://$PROJECT_DIR$/vlcj.iml" filepath="$PROJECT_DIR$/vlcj.iml" />
+      <module fileurl="file://$PROJECT_DIR$/vlcj-file-filters.iml" filepath="$PROJECT_DIR$/vlcj-file-filters.iml" />
       <module fileurl="file://$PROJECT_DIR$/vlcj-javafx.iml" filepath="$PROJECT_DIR$/vlcj-javafx.iml" />
       <module fileurl="file://$PROJECT_DIR$/vlcj-natives.iml" filepath="$PROJECT_DIR$/vlcj-natives.iml" />
     </modules>
@@ -232,7 +233,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_14" default="false" project-jdk-name="14 bellsoft Liberica" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_15" default="false" project-jdk-name="15" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -269,16 +270,8 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../vlcj-file-filters" vcs="Git" />
   </component>
   <component name="libraryTable">
-    <library name="java">
-      <CLASSES />
-      <JAVADOC />
-      <SOURCES>
-        <root url="file://$PROJECT_DIR$/../vlcj-file-filters/src/main/java" />
-      </SOURCES>
-    </library>
     <library name="jna">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/../jna/dist/jna.jar!/" />

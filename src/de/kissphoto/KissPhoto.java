@@ -145,6 +145,7 @@ public class KissPhoto extends Application {
       }
 
     }
+    System.out.println("Java-Version "+System.getProperty("java.version"));
 
     Application.launch(args);
 }

@@ -124,11 +124,7 @@ public class AboutDialog extends KissDialog {
 
     Label description = new Label();
     description.setStyle(DESCRIPTION_TEXTSTYLE);
-    description.setText(
-      "Rename and renumber your files, sort your photos and media - but keep it simple!\n\n" +
-      "Libraries used\n" +
-      "-----------------\n"
-    );
+    description.setText(language.getString("about.description"));
     contentPane.getChildren().add(description);
 
 
@@ -173,12 +169,12 @@ public class AboutDialog extends KissDialog {
   private Label buildVLCInfo() {
     String vlcInfoText;
     if (PlayerViewerVLCJ.isVlcAvailable())
-      vlcInfoText = "VLC is used (version found: \"" + PlayerViewerVLCJ.getCurrentVLCVersion() + "\")";
+      vlcInfoText = MessageFormat.format(language.getString("vlc.is.used.version.found.0"), PlayerViewerVLCJ.getCurrentVLCVersion());
     else
       if (PlayerViewerVLCJ.getCurrentVLCVersion().equals(""))
-        vlcInfoText = "No VLC installation found on the system! Minimum required VLC version=\"" + PlayerViewerVLCJ.getRequiredVLCVersion() + "\"";
+        vlcInfoText = MessageFormat.format(language.getString("vlc.installation.not.found"), PlayerViewerVLCJ.getRequiredVLCVersion());
       else
-        vlcInfoText ="VLC found (version \"" + PlayerViewerVLCJ.getCurrentVLCVersion() +"\") but minimum required VLC version is: \"" + PlayerViewerVLCJ.getRequiredVLCVersion() + "\"";
+        vlcInfoText =MessageFormat.format(language.getString("vlc.found.version.0.but.required.1"), PlayerViewerVLCJ.getCurrentVLCVersion(),PlayerViewerVLCJ.getRequiredVLCVersion());
 
     Label vlcInfo = new Label();
     vlcInfo.setStyle("-fx-text-fill: lightblue; -fx-font: bold 14 \"serif\";" );
