@@ -69,7 +69,7 @@ public class MediaContentView extends Pane {
   //Main-Menu connects "enabled" of the Player-/Image Menu with these Properties
   private final SimpleBooleanProperty isPlayerActive = new SimpleBooleanProperty(false);
   private final SimpleBooleanProperty isImageActive = new SimpleBooleanProperty(false);
-  private final SimpleBooleanProperty isFullScreenActive = new SimpleBooleanProperty(false); //in primary MediaContentView redundant to hasActiveFullScreenMediaContentView(), but here menusItems can be bound to
+  private final SimpleBooleanProperty isFullScreenActiveProperty = new SimpleBooleanProperty(false); //in primary MediaContentView redundant to hasActiveFullScreenMediaContentView(), but here menusItems can be bound to
 
   /**
    * constructor
@@ -192,7 +192,7 @@ public class MediaContentView extends Pane {
 
         //full screen support
         case F5:
-          toggleFullScreenAndNormal();
+          showFullScreen();
           break;
         case TAB:
           //tab = next screen
@@ -512,7 +512,7 @@ public class MediaContentView extends Pane {
   //make Properties bindable e.g. in Main-Menu
   public SimpleBooleanProperty getIsPlayerActive(){return isPlayerActive;}
   public SimpleBooleanProperty getIsImageActive(){return isImageActive;}
-  public SimpleBooleanProperty getIsFullScreenActive(){return isFullScreenActive;}
+  public SimpleBooleanProperty getIsFullScreenActiveProperty(){return isFullScreenActiveProperty;}
 
   private void stopAllActivePlayers() {
     //reset all probably playing players
@@ -735,7 +735,6 @@ public class MediaContentView extends Pane {
    */
   public void showFullScreen() {
     if (!isFullScreenMediaContentView() && !hasActiveFullScreenMediaContentView()) { //only the primary window and not already fullScreen-Mode active
-
       Duration currentPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
 
       if (playerViewer.isVisible()) {
@@ -757,7 +756,7 @@ public class MediaContentView extends Pane {
 
       fullScreenStage.mediaContentView.getAttrViewer().copyState(attrViewer); //synchronize normal and full screen attributesViewers
 
-      isFullScreenActive.set(true); //setting the property to update all bound menuItems
+      isFullScreenActiveProperty.set(true); //setting the property to update all bound menuItems
 
       fullScreenStage.show();
       fullScreenStage.getMediaContentView().setMedia(getCurrentMediaFile(), currentPlayerPosition);       //and start playing, if player was active
@@ -782,7 +781,7 @@ public class MediaContentView extends Pane {
       currentMediaFile = null; //reset it, so that setMedia will have an effect, otherwise re-setting would be prevented
       setMedia(mediaFile, fullScreenPlayerPosition); //sync normal view with previous full screen view, restore currentMediaFile
 
-      isFullScreenActive.set(false);  //setting the property to update all bound menuItems
+      isFullScreenActiveProperty.set(false);  //setting the property to update all bound menuItems
 
       if (fileTableView != null) fileTableView.requestFocus();    //null if in UnDeleteDialog
     }
@@ -794,7 +793,7 @@ public class MediaContentView extends Pane {
 
   public void toggleFullScreenAndNormal() {
     if (isFullScreenMediaContentView() || hasActiveFullScreenMediaContentView()) {
-      //if fullscreen acitve --> end it
+      //if fullscreen active --> end it
       endFullScreen();
       if (fileTableView != null) fileTableView.getStatusBar().clearMessage();
     } else {
@@ -808,10 +807,12 @@ public class MediaContentView extends Pane {
   }
 
   public void setFullScreenMenuItemText(MenuItem showFullScreenItem){
-    if (isFullScreenActive.get()) {
+    if (isFullScreenActiveProperty.get()) {
       showFullScreenItem.setText(language.getString("end.full.screen.mode"));
+      showFullScreenItem.setAccelerator(MainMenuBar.fullScreenKeyCombinationEnd);
     }else {
       showFullScreenItem.setText(language.getString("full.screen"));
+      showFullScreenItem.setAccelerator(MainMenuBar.fullScreenKeyCombinationStart);
     }
   }
 
@@ -861,8 +862,8 @@ public class MediaContentView extends Pane {
     contextMenu.getItems().addAll(nextItem, previousItem, homeItem, endItem, gotoItem);
 
     //-------- View
-    MenuItem fullScreenItem = new MenuItem(language.getString("full.screen"));
-    fullScreenItem.setAccelerator(new KeyCodeCombination(KeyCode.F5));
+    MenuItem fullScreenItem = new MenuItem();
+    setFullScreenMenuItemText(fullScreenItem);
     fullScreenItem.setOnAction(actionEvent -> {
       toggleFullScreenAndNormal();
       actionEvent.consume();
@@ -874,13 +875,13 @@ public class MediaContentView extends Pane {
     showOnNextScreenItem.setDisable(true); //enable only in Full screen mode
     if (isFullScreenMediaContentView()) {
       //in FullScreenStage isFullScreen is always true why the text can be set to be constant
-      isFullScreenActive.set(true);              //final
+      isFullScreenActiveProperty.set(true);              //final
       setFullScreenMenuItemText(fullScreenItem); //final
       showOnNextScreenItem.setDisable(false);    //final
     }else {
       //bind to primaryContentView's isFullScreenActive property
-      isFullScreenActive.addListener((observable, oldValue, newValue) -> setFullScreenMenuItemText(fullScreenItem));
-      showOnNextScreenItem.disableProperty().bind(isFullScreenActive.not());
+      isFullScreenActiveProperty.addListener((observable, oldValue, newValue) -> setFullScreenMenuItemText(fullScreenItem));
+      showOnNextScreenItem.disableProperty().bind(isFullScreenActiveProperty.not());
     }
 
     contextMenu.getItems().addAll(new SeparatorMenuItem(), fullScreenItem, showOnNextScreenItem);

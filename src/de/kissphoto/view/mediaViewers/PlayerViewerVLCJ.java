@@ -9,11 +9,13 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.image.ImageView;
 import javafx.util.Duration;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
+import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
 import uk.co.caprica.vlcj.filefilters.AudioFileFilter;
 import uk.co.caprica.vlcj.filefilters.VideoFileFilter;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
+import uk.co.caprica.vlcj.support.version.LibVlcVersion;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -24,8 +26,8 @@ import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactor
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
- * This Class implements a viewer for movie clips using VLCJ from Caprica Software Limited which again uses a previously installed VLC-Player's dll .
- * By kissPhoto movie clips are treated like photos that move ("like newspapers in harry potter")
+ * This Class implements a viewer for movie clips using VLCJ from Mark Lee/Caprica Software Limited which again uses a previously installed VLC-Player's dll .
+ * By kissPhoto movie clips are treated like photos that move ("like newspaper photos in harry potter")
  * <ul>
  * <li>VLCJ fast high quality rendering
  * <li>zooming in/out/100%/fit
@@ -36,27 +38,33 @@ import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactor
  * </ul>
  *
  * @author Dr. Ingo Kreuz
- * @since 2020-10-25
- * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only the know what they accept and what should be cached to speed up viewing
  * @version 2020-11-08 bugfixing
+ * @since 2020-10-25
  */
 public class PlayerViewerVLCJ extends PlayerViewer {
   //treat the VLCJ-mediaPlayer's status compatible to FX-mediaPlayer: use the FX-constants
-  protected MediaPlayerFactory mediaPlayerFactory = null; //prevent garbage collection by making also the factory a member (see vlcj docu)
   protected EmbeddedMediaPlayer mediaPlayer = null;
   protected ImageView mediaImageView;
 
   javafx.scene.media.MediaPlayer.Status playerStatus = javafx.scene.media.MediaPlayer.Status.UNKNOWN;
   boolean wasReset = false; //after calling resetPlayer() e.g. skipToNextOnAutoPlay() should not be used
   boolean repeatTrackWhenStopped = false; //flag set in rewindAndPlayWhenFinished to trigger restart in STOPPED-Event
-  private boolean vlcAvailable;
+
+  private static NativeDiscovery nativeDiscovery; //only search the path to libvlc.dll once for all instances
+  private static MediaPlayerFactory mediaPlayerFactory = null; //prevent garbage collection by making also the factory a member (see vlcj docu)
+
+  private static boolean vlcAvailable;
+  private static final String requiredVLCVersion = LibVlcVersion.requiredVersion.version();
+  private static String currentVLCVersion = null;
+
 
   /**
    * Determine if a given file could be played with this PlayerViewer
+   *
    * @param file the file to be investigated
    * @return true if playable
    */
-  public static boolean willAccept(Path file){
+  public static boolean willAccept(Path file) {
     File f = file.toFile();
     return VideoFileFilter.INSTANCE.accept(f) || AudioFileFilter.INSTANCE.accept(f);
   }
@@ -73,112 +81,130 @@ public class PlayerViewerVLCJ extends PlayerViewer {
 
     PlayerControlPanel playerControlPanel = (PlayerControlPanel) viewerControlPanel; //temp handle
 
-    vlcAvailable = true;
-    //try to initialize VLCJ...find VLC
-    try {
-      mediaPlayerFactory = new MediaPlayerFactory();
-      mediaPlayer = mediaPlayerFactory.mediaPlayers().newEmbeddedMediaPlayer();
-
-      mediaPlayer.events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
-        //do not call vlcj methods within vlcj events (see docu in vlcj)
-        //use Platform.runLater except for stop(), play(), pause() which are asynchronous
-        //use Platform.runLater also for GUI access
-        @Override
-        public void mediaPlayerReady(MediaPlayer mediaPlayer) {
-          Platform.runLater(() -> {
-            //show progress as soon as totalDuration is available
-            playerControlPanel.setSliderScaling(getTotalDuration());
-            playerControlPanel.showProgress(Duration.ZERO);
-          });
-        }
-
-        @Override
-        public void playing(MediaPlayer mediaPlayer) {
-          Platform.runLater(() -> {
-            playerStatus = Status.PLAYING;
-            finished = false;
-          });
-        }
-
-        @Override
-        public void paused(MediaPlayer mediaPlayer) {
-          Platform.runLater(() -> playerStatus = Status.PAUSED);
-        }
-
-        @Override
-        public void stopped(MediaPlayer mediaPlayer) {
-          Platform.runLater(() -> {
-            if (wasReset)
-              playerStatus = Status.STALLED;
-            else {
-              playerStatus = Status.STOPPED;
-
-              if (repeatTrackWhenStopped) {     //see rewindAndPlayWhenFinished()
-                play();
-                repeatTrackWhenStopped = false;
-              }
-            }
-          });
-
-        }
-
-        @Override
-        public void timeChanged(MediaPlayer mediaPlayer, long newTime) {
-          Platform.runLater(() -> playerControlPanel.showProgress(new Duration(newTime)));
-        }
-
-
-        @Override
-        public void finished(MediaPlayer mediaPlayer) {
-          Platform.runLater(() -> {
-            finished = true;
-            mediaContentView.showNextOrRepeatMedia();
-          });
-        }
-
-        @Override
-        public void error(MediaPlayer mediaPlayer) {
-          //vlcj finds out that a media is not playable asynchronously. That's why we have to switch to the according viewer as soon as we find out that it is not compatible
-          Platform.runLater(() -> {
-            wasReset = true;
-            mediaContentView.showPlayerError();
-          });
-        }
-
-      });
-
-
-      //initialize all the rest for kissPhoto
-      mediaImageView = new ImageView(); //with VLCJ an ImageView is used for rendering ie. to copy Pixels to
-      mediaImageView.setPreserveRatio(true);
-
-      //connect vlcj callback to the mediaView
-      mediaPlayer.videoSurface().set(videoSurfaceForImageView(this.mediaImageView));
-
-      //note: playerControlPanel defined and initialized in PlayerViewer (fatherclass)
-      getChildren().addAll(mediaImageView, playerControlPanel);
-
-      mediaImageView.fitHeightProperty().bind(prefHeightProperty());
-      mediaImageView.fitWidthProperty().bind(prefWidthProperty());
-
-      setFocusTraversable(true);
-
-      initPlayerContextMenu();
-      addContextMenuItems();
-      installContextMenu();
-
-    } catch (Exception e) {
-      vlcAvailable = false;   //MovieViewerVLCJ is not usable e.g. if vlc is not installed on the system :-(
-      if (mediaPlayerFactory != null) mediaPlayerFactory.release();
-      mediaPlayerFactory = null;
+    //try to initialize VLCJ...find VLC..but only once
+    if (nativeDiscovery == null) {
+      vlcAvailable = false;
+      nativeDiscovery = new NativeDiscovery();
+      nativeDiscovery.discover();
     }
+
+    if (nativeDiscovery.discoveredPath() != null)  //if successful
+      try {
+        if (currentVLCVersion == null) {  //only read this once (static)
+          LibVlcVersion version = new LibVlcVersion();
+          currentVLCVersion = version.getVersion().version();
+        }
+
+        if (mediaPlayerFactory == null) mediaPlayerFactory = new MediaPlayerFactory();  //only build it once (static)
+        mediaPlayer = mediaPlayerFactory.mediaPlayers().newEmbeddedMediaPlayer();
+
+        vlcAvailable = true;  //only when the mediaPlayer was initialized successfully vlc is available
+
+        registerEventsForMediaPlayer(playerControlPanel);
+
+        //initialize all the rest for kissPhoto
+        mediaImageView = new ImageView(); //with VLCJ an ImageView is used for rendering ie. to copy Pixels to
+        mediaImageView.setPreserveRatio(true);
+
+        //connect vlcj callback to the mediaView
+        mediaPlayer.videoSurface().set(videoSurfaceForImageView(this.mediaImageView));
+
+        //note: playerControlPanel defined and initialized in PlayerViewer (fatherclass)
+        getChildren().addAll(mediaImageView, playerControlPanel);
+
+        mediaImageView.fitHeightProperty().bind(prefHeightProperty());
+        mediaImageView.fitWidthProperty().bind(prefWidthProperty());
+
+        setFocusTraversable(true);
+
+        initPlayerContextMenu();
+        addContextMenuItems();
+        installContextMenu();
+
+      } catch (Exception e) {
+        vlcAvailable = false;   //MovieViewerVLCJ is not usable e.g. if vlc is not installed on the system :-(
+        if (mediaPlayerFactory != null) mediaPlayerFactory.release();
+        mediaPlayerFactory = null;
+      }
+    //System.out.println("vlcAvailable=" + vlcAvailable);
+    //System.out.println("PlayerViewerVLCJ.constructor requiredVLCVersion =" +requiredVLCVersion );
+    //System.out.println("PlayerViewerVLCJ.constructor currentVLCVersion =" +currentVLCVersion );
+
   }
 
-  public boolean isVlcAvailable() {
-    return vlcAvailable;
+  /**
+   * as soon as the vlcj's mediaPlayer is built register the media event listeners
+   *
+   * @param playerControlPanel which is connected to the mediaPlayer
+   */
+  private void registerEventsForMediaPlayer(PlayerControlPanel playerControlPanel) {
+    mediaPlayer.events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
+      //do not call vlcj methods within vlcj events (see docu in vlcj)
+      //use Platform.runLater except for stop(), play(), pause() which are asynchronous
+      //use Platform.runLater also for GUI access
+      @Override
+      public void mediaPlayerReady(MediaPlayer mediaPlayer) {
+        Platform.runLater(() -> {
+          //show progress as soon as totalDuration is available
+          playerControlPanel.setSliderScaling(getTotalDuration());
+          playerControlPanel.showProgress(Duration.ZERO);
+        });
+      }
+
+      @Override
+      public void playing(MediaPlayer mediaPlayer) {
+        Platform.runLater(() -> {
+          playerStatus = Status.PLAYING;
+          finished = false;
+        });
+      }
+
+      @Override
+      public void paused(MediaPlayer mediaPlayer) {
+        Platform.runLater(() -> playerStatus = Status.PAUSED);
+      }
+
+      @Override
+      public void stopped(MediaPlayer mediaPlayer) {
+        Platform.runLater(() -> {
+          if (wasReset)
+            playerStatus = Status.STALLED;
+          else {
+            playerStatus = Status.STOPPED;
+
+            if (repeatTrackWhenStopped) {     //see rewindAndPlayWhenFinished()
+              play();
+              repeatTrackWhenStopped = false;
+            }
+          }
+        });
+      }
+
+      @Override
+      public void timeChanged(MediaPlayer mediaPlayer, long newTime) {
+        Platform.runLater(() -> playerControlPanel.showProgress(new Duration(newTime)));
+      }
+
+      @Override
+      public void finished(MediaPlayer mediaPlayer) {
+        Platform.runLater(() -> {
+          finished = true;
+          if (!wasReset) mediaContentView.showNextOrRepeatMedia();
+        });
+      }
+
+      @Override
+      public void error(MediaPlayer mediaPlayer) {
+        //vlcj finds out that a media is not playable asynchronously. That's why we have to switch to the according viewer as soon as we find out that it is not compatible
+        Platform.runLater(() -> {
+          wasReset = true;
+          mediaContentView.showPlayerError();
+        });
+      }
+    });
   }
 
-  public javafx.scene.media.MediaPlayer.Status getStatus(){
+  public javafx.scene.media.MediaPlayer.Status getStatus() {
     return playerStatus;
   }
 
@@ -191,7 +217,7 @@ public class PlayerViewerVLCJ extends PlayerViewer {
    */
   @Override
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
-    if (!(mediaFile instanceof PlayableFile)){ //includes test on null
+    if (!(mediaFile instanceof PlayableFile)) { //includes test on null
       return false;
     }
     boolean compatible = true;
@@ -250,10 +276,10 @@ public class PlayerViewerVLCJ extends PlayerViewer {
    */
   public void pause() {
     if (isMediaValid()) {
-      if (finished){
+      if (finished) {
         //seek(new Duration(0.4)); //rewind not necessary because VLC is in status STOPPED.
         // No event is fired to update GUI because playerStatus=stopped when finished
-       ((PlayerControlPanel) viewerControlPanel).showProgress(Duration.ZERO);
+        ((PlayerControlPanel) viewerControlPanel).showProgress(Duration.ZERO);
       }
       wasReset = false;
       finished = false;
@@ -280,12 +306,12 @@ public class PlayerViewerVLCJ extends PlayerViewer {
    * @param newPos position to jump to. null is treated like Duration.ZERO (rewind)
    */
   public void seek(Duration newPos) {
-    if (finished){
+    if (finished) {
       play(); // finished=false; //seeking results in not being at the end of the media any more
     }
     if (isMediaValid()) {
-      if (newPos==null)
-        mediaPlayer.controls().setTime(0,true);
+      if (newPos == null)
+        mediaPlayer.controls().setTime(0, true);
       else
         mediaPlayer.controls().setTime((long) newPos.toMillis(), true); //true=fast positioning
 
@@ -332,6 +358,35 @@ public class PlayerViewerVLCJ extends PlayerViewer {
       mediaPlayer.release();
       mediaPlayerFactory.release();
     }
+  }
+  /**
+   * could VLC be found and loaded?
+   * @return true if vlc could be found and loaded in the minimum version on the system
+  */
+
+  public static boolean isVlcAvailable() {
+    return vlcAvailable;
+  }
+  /**
+   * required VLC Version
+   * @return the minimum required VLC version or "" if it was not possible to determine it
+   */
+  public static String getRequiredVLCVersion() {
+    if (requiredVLCVersion != null)
+      return requiredVLCVersion;
+    else
+      return "";
+  }
+
+
+  /**
+   * current VLC Version
+   * @return the current VLC version or "" if vlc not available*/
+  public static String getCurrentVLCVersion() {
+    if (currentVLCVersion!=null)
+      return currentVLCVersion;
+    else
+      return "";
   }
 
   //----------------------- Implement specific ZoomableViewer Interface ----------------------------

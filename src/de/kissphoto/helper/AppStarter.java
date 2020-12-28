@@ -3,10 +3,13 @@ package de.kissphoto.helper;
 import de.kissphoto.model.MediaFile;
 import javafx.collections.ObservableList;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * kissPhoto: keep it simple stupid when organizing your photos
@@ -105,5 +108,30 @@ public class AppStarter {
       }
     }
   }
+
+  /**
+   * start the external default browser if possible
+   * seen on stackoverflow:
+   * https://stackoverflow.com/questions/5226212/how-to-open-the-default-webbrowser-using-java
+   * @param url the address to be loaded from the browser
+   */
+  public static void tryToBrowse(String url){
+    if(Desktop.isDesktopSupported()){
+      Desktop desktop = Desktop.getDesktop();
+      try {
+        desktop.browse(new URI(url));
+      } catch (IOException | URISyntaxException e) {
+        //e.printStackTrace();
+      }
+    }else{
+      Runtime runtime = Runtime.getRuntime();
+      try {
+        runtime.exec("xdg-open " + url);
+      } catch (IOException e) {
+        //e.printStackTrace();
+      }
+    }
+  }
+
 
 }

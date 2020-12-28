@@ -225,7 +225,6 @@
       <module fileurl="file://$PROJECT_DIR$/kissPhoto.iml" filepath="$PROJECT_DIR$/kissPhoto.iml" />
       <module fileurl="file://$PROJECT_DIR$/metadata-extractor.iml" filepath="$PROJECT_DIR$/metadata-extractor.iml" />
       <module fileurl="file://$PROJECT_DIR$/vlcj.iml" filepath="$PROJECT_DIR$/vlcj.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../vlcj-file-filters/vlcj-file-filters.iml" filepath="$PROJECT_DIR$/../vlcj-file-filters/vlcj-file-filters.iml" />
       <module fileurl="file://$PROJECT_DIR$/vlcj-javafx.iml" filepath="$PROJECT_DIR$/vlcj-javafx.iml" />
       <module fileurl="file://$PROJECT_DIR$/vlcj-natives.iml" filepath="$PROJECT_DIR$/vlcj-natives.iml" />
     </modules>
@@ -240,7 +239,7 @@
     <configuration default="false" name="kissphoto" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="de.kissphoto.KissPhoto" />
       <module name="kissPhoto" />
-      <option name="PROGRAM_PARAMETERS" value="-noVLC" />
+      <option name="PROGRAM_PARAMETERS" value="-noVLCdoch" />
       <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg " />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="" />

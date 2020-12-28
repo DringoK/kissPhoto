@@ -162,7 +162,7 @@ public class ViewerControlPanel extends VBox {
     optionPane.setPadding(new Insets(0, PADDING, 0, PADDING)); //only left/right, because top/bottom regulated by Pos.CENTER
 
     FullScreenButton fullScreenButton = new FullScreenButton(OPTIONS_SIZE, BACKGROUND_COLOR, ICON_COLOR);
-    fullScreenButton.fullScreenModeProperty().bind(mediaViewer.getMediaContentView().getIsFullScreenActive());
+    fullScreenButton.fullScreenModeProperty().bind(mediaViewer.getMediaContentView().getIsFullScreenActiveProperty());
     fullScreenButton.setOnMouseClicked((mouseEvent) -> {
       mediaViewer.getMediaContentView().toggleFullScreenAndNormal();
       mouseEvent.consume();

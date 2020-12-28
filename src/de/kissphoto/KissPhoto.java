@@ -42,14 +42,12 @@ import java.util.ResourceBundle;
  *
  * @author Ingo Kreuz<br>
  * @since 2014-04-29
- * @version 2014-07-05 loading initialFileOrFolder after stage.show() to show messages during slow network access
+ * @version see below in constant KISS_PHOTO_VERSION
  * <p>
  * Bugs:
  * ======================
  * planned features:
  * ======================
- * todo VLC nicht installiert - tut das?
- * todo About: VLC-Status, copyrights
  * todo Meldung initalFile genauer: 1. übergebene Datei nicht gefunden ... +2. vorheriges Verzeichnis nicht gefunden
  * todo overscan mit padding im ContenView (FullScreen only) und auch speichern in globalSettings (nur context-Menü und Tastenkombi/Mausrad)
  * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger)
@@ -70,7 +68,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.20.12.20 work in progress"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.20.12.28 work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 

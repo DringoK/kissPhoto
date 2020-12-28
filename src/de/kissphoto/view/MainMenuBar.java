@@ -49,10 +49,14 @@ public class MainMenuBar extends MenuBar {
   private final Menu extrasMenu = new Menu(language.getString("extrasMenu"));
   private final Menu helpMenu = new Menu(language.getString("helpMenu"));
 
-  public static KeyCodeCombination PLAY_PAUSE_KEYCODE = new KeyCodeCombination(KeyCode.SPACE);
-  public static KeyCodeCombination REWIND_KEYCODE = new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.CONTROL_DOWN);
-  public static KeyCodeCombination PLAYLIST_MODE_KEYCODE = new KeyCodeCombination(KeyCode.P, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN);
-  public static KeyCodeCombination REPEAT_MODE_KEYCODE = new KeyCodeCombination(KeyCode.R, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN);
+  public final static KeyCodeCombination PLAY_PAUSE_KEYCODE = new KeyCodeCombination(KeyCode.SPACE);
+  public final static KeyCodeCombination REWIND_KEYCODE = new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.CONTROL_DOWN);
+  public final static KeyCodeCombination PLAYLIST_MODE_KEYCODE = new KeyCodeCombination(KeyCode.P, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN);
+  public final static KeyCodeCombination REPEAT_MODE_KEYCODE = new KeyCodeCombination(KeyCode.R, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN);
+
+  public final static KeyCombination fullScreenKeyCombinationStart = new KeyCodeCombination(KeyCode.F5);
+  public final static KeyCombination fullScreenKeyCombinationEnd = new KeyCodeCombination(KeyCode.ESCAPE);
+
 
   /**
    * create the main menu bar and install all shortcuts/handlers
@@ -309,18 +313,19 @@ public class MainMenuBar extends MenuBar {
 
     viewMenu.getItems().add(new SeparatorMenuItem());
 
-    final MenuItem fullScreenItem = new MenuItem(language.getString("full.screen"));
-    fullScreenItem.setAccelerator((new KeyCodeCombination(KeyCode.F5)));
+    final MenuItem fullScreenItem = new MenuItem();
+    mediaContentView.setFullScreenMenuItemText(fullScreenItem); //initializes including accelerator key
+
     fullScreenItem.setOnAction(actionEvent -> {
       actionEvent.consume();
       mediaContentView.toggleFullScreenAndNormal();
     });
-    mediaContentView.getIsFullScreenActive().addListener((observable, oldValue, newValue) -> mediaContentView.setFullScreenMenuItemText(fullScreenItem));
+    mediaContentView.getIsFullScreenActiveProperty().addListener((observable, oldValue, newValue) -> mediaContentView.setFullScreenMenuItemText(fullScreenItem));
 
     MenuItem showOnNextScreenItem = new MenuItem(language.getString(MediaContentView.SHOW_ON_NEXT_SCREEN_FULLSCREEN));
     showOnNextScreenItem.setAccelerator((new KeyCodeCombination(KeyCode.TAB))); //TAB, previous shift-Tab is not shown in menu
     showOnNextScreenItem.setOnAction(actionEvent -> mediaContentView.showFullScreenOnNextScreen(true));
-    showOnNextScreenItem.disableProperty().bind(mediaContentView.getIsFullScreenActive().not());  //only enabled if fullScreen-Mode is active
+    showOnNextScreenItem.disableProperty().bind(mediaContentView.getIsFullScreenActiveProperty().not());  //only enabled if fullScreen-Mode is active
 
     viewMenu.getItems().addAll(fullScreenItem, showOnNextScreenItem);
 

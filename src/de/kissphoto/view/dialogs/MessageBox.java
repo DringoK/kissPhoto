@@ -151,7 +151,7 @@ public class MessageBox extends KissDialog {
    * shows the message box centered on the screen.
    *
    * @return the Button-ID-constant which was pressed to leave the message.
-   * 0 is returend if the box was left by pressing [x] of the window
+   * 0 is returned if the box was left by pressing [x] of the window
    */
   public int showModal() {
     modalResult = NONE_BTN;
