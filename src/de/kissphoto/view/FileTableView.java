@@ -14,6 +14,7 @@ import de.kissphoto.view.dialogs.*;
 import de.kissphoto.view.fileTableHelpers.FileHistory;
 import de.kissphoto.view.fileTableHelpers.TextFieldCellFactory;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -47,6 +48,7 @@ import static de.kissphoto.KissPhoto.language;
  * <p/>
  *
  * @author Ingo
+ * @version 2021-01-09 improve scrolling, save also currently edited value, improve findNext (F3-support)
  * @version 2014-05-02 I18Support, Cursor in Edit-Mode over lines, reopen added etc
  * @since 2012-09-06
  */
@@ -494,7 +496,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       found = (i >= 0);
       if (found) {
         this.getSelectionModel().clearAndSelect(i);
-        Platform.runLater(() -> scrollViewportToIndex(i, Alignment.CENTER));
+        scrollViewportToIndex(i, Alignment.CENTER);
       }
     }
     return found;
@@ -652,8 +654,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       } else
         newFileOrFolder = fileOrFolder;  //normal open
 
-      final FileTableView fileTableView = this; //for handing over to the runLater event
-
       final Scene primaryScene = primaryStage.getScene();
       if (primaryScene != null)
         primaryScene.setCursor(Cursor.WAIT); //can be null during openInitialFolder() called from main()
@@ -691,12 +691,12 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         //register a file watcher for watching out for changes to this folder from external applications
         try {
           //register stops the old thread and starts an new for the new folder to register
-          fileChangeWatcher.registerFolderToWatch(mediaFileList.getCurrentFolderName(), fileTableView);   //openFolder (above) already has set the currentFolderName
+          fileChangeWatcher.registerFolderToWatch(mediaFileList.getCurrentFolderName(), this);   //openFolder (above) already has set the currentFolderName
         } catch (Exception e) {
           //in Case of error the function does not exist to update the folder in background..so what...
         }
         //set default sorting
-        Platform.runLater(this::resetSortOrder);
+        Platform.runLater(()->resetSortOrder());
 
       } finally {
         //empty directory?
@@ -760,7 +760,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     int currentIndex = getFocusModel().getFocusedIndex();
 
     //if currentFile isChanged then stop players to enable renaming (keep it simple: do it always while saving)
-    mediaContentView.getPlayerViewer().resetPlayer(); //stop players and disconnect from file to enable renaming
+    if (mediaContentView.isMediaPlayerActive()) {
+      mediaContentView.getPlayerViewer().resetPlayer(); //stop players and disconnect from file to enable renaming
+    }
 
     //use a savingTask for saving so that the UI can update in between (e.g. showing the progressBar)
     MediaFileListSavingTask savingTask = mediaFileList.getNewSavingTask();
@@ -786,6 +788,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       } else {
         statusBar.showMessage(language.getString("changes.successfully.written.to.disk"));
       }
+
     });
 
     //and start the task in a new thread
@@ -1026,6 +1029,16 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     primaryStage.requestFocus();
   }
 
+  public ReadOnlyBooleanProperty getFindReplaceDialogShowingProperty(){
+    if (findReplaceDialog == null) findReplaceDialog = new FindReplaceDialog(primaryStage, this);
+    return findReplaceDialog.showingProperty();
+  }
+
+  public synchronized  void findNext(){
+    if (findReplaceDialog.isShowing()){
+      findReplaceDialog.handleFindFirst_FindNext();
+    }
+  }
   /**
    * rename selected line...or if multiple lines are selected call renameWithDialog()
    * if no column is currently selected, then select descriptionColumn
@@ -1114,7 +1127,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * are copied from the first of the selected lines to all other selected lines (like autofill in excel)
    * <p>
    * if just one line is selected copying will be performed from the above line (if there is any. if not nothing will happen)
-   * if in edit-mode nothing happens (this would have to make TextFieldCell
+   * if in edit-mode nothing happens (this will be performed in TextFieldCell)
    */
   public void copyDescriptionDown() {
     MediaFile firstSelectedFile = null;
@@ -1429,16 +1442,15 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
         if (indexToShow < firstLineWithExtraLines || indexToShow > lastLineWithExtraLines) {
           int index = switch (alignment) {
-            case TOP -> indexToShow - extraLines;
-            case CENTER -> indexToShow - (height / 2);
-            case BOTTOM -> indexToShow - height + extraLines + 1;
-            //default -> 0;
+            case TOP -> indexToShow - extraLines;         //calculates the first line to be in the viewport
+            //case CENTER -> indexToShow - (height / 2);    //calculates the first line to be in the viewport
+            default -> indexToShow + extraLines;      //bottom: calculates the last line to be in the viewport
           }; //the resulting index where to jump to
           //calculate index to be shown as first line according alignment
           if (index > mediaFileList.getFileList().size() - 1) index = mediaFileList.getFileList().size() - 1;
           if (index < 0) index = 0;
 
-          flow.scrollTo(index);     //the new first line
+          flow.scrollTo(index);     //view the index fully visible inside the viewport (VirtualFlow)
         }
       } else { //flow==null
         //retry until there is a Viewport available
@@ -1513,21 +1525,13 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       getSelectionModel().clearAndSelect(foundIndex, foundCol);
 
       //make it visible
-      scrollViewportToIndex(foundIndex, Alignment.CENTER);
+      if (searchRec.found){
+        scrollViewportToIndex(foundIndex, Alignment.CENTER);
+      }
 
-      Platform.runLater(() -> {
-        selectSearchResultOnNextStartEdit = true;
-        setEditable(true);
-        edit(foundIndex, foundCol);
-      });
-
-      //for status bar add 1 to all values as humans usually count 1, 2, 3, ... not 0, 1, 2,...
-      statusBar.showMessage(language.getString("found") + " " +
-        language.getString("line") + " " + (searchRec.tableRow + 1) + ", " + language.getString("column") + " " + (searchRec.tableColumn + 1)
-        + ", " + language.getString("character.position") + " [" + (searchRec.startPos + 1) + "-" + (searchRec.endPos + 1) + "]"
-      );
-    } else {
-      statusBar.showError(language.getString(NOTHING_FOUND));
+      selectSearchResultOnNextStartEdit = true;
+      setEditable(true);
+      edit(foundIndex, foundCol);
     }
 
     return searchRec.found;

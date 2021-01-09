@@ -38,6 +38,7 @@ import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactor
  * </ul>
  *
  * @author Dr. Ingo Kreuz
+ * @version 2021-01-08 resetPlayer() reworked to avoid blocking during saveFolder()
  * @version 2020-11-08 bugfixing
  * @since 2020-10-25
  */
@@ -56,6 +57,7 @@ public class PlayerViewerVLCJ extends PlayerViewer {
   private static boolean vlcAvailable;
   private static final String requiredVLCVersion = LibVlcVersion.requiredVersion.version();
   private static String currentVLCVersion = null;
+  private final PlayerControlPanel playerControlPanel;
 
 
   /**
@@ -79,7 +81,8 @@ public class PlayerViewerVLCJ extends PlayerViewer {
     //prefHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
     //prefWidthProperty().bind(mediaContentView.getMediaStackPaneWidthProperty());
 
-    PlayerControlPanel playerControlPanel = (PlayerControlPanel) viewerControlPanel; //temp handle
+    //temp handle
+    playerControlPanel = (PlayerControlPanel) viewerControlPanel;
 
     //try to initialize VLCJ...find VLC..but only once
     if (nativeDiscovery == null) {
@@ -96,18 +99,14 @@ public class PlayerViewerVLCJ extends PlayerViewer {
         }
 
         if (mediaPlayerFactory == null) mediaPlayerFactory = new MediaPlayerFactory();  //only build it once (static)
-        mediaPlayer = mediaPlayerFactory.mediaPlayers().newEmbeddedMediaPlayer();
-
-        vlcAvailable = true;  //only when the mediaPlayer was initialized successfully vlc is available
-
-        registerEventsForMediaPlayer(playerControlPanel);
 
         //initialize all the rest for kissPhoto
         mediaImageView = new ImageView(); //with VLCJ an ImageView is used for rendering ie. to copy Pixels to
         mediaImageView.setPreserveRatio(true);
 
-        //connect vlcj callback to the mediaView
-        mediaPlayer.videoSurface().set(videoSurfaceForImageView(this.mediaImageView));
+        buildMediaPlayer();
+
+        vlcAvailable = true;  //only when the mediaPlayer was initialized successfully vlc is available
 
         //note: playerControlPanel defined and initialized in PlayerViewer (fatherclass)
         getChildren().addAll(mediaImageView, playerControlPanel);
@@ -132,12 +131,18 @@ public class PlayerViewerVLCJ extends PlayerViewer {
 
   }
 
+  private void buildMediaPlayer() {
+    mediaPlayer = mediaPlayerFactory.mediaPlayers().newEmbeddedMediaPlayer();
+    registerEventsForMediaPlayer();
+
+    //connect vlcj callback to the mediaView
+    mediaPlayer.videoSurface().set(videoSurfaceForImageView(this.mediaImageView));
+  }
+
   /**
    * as soon as the vlcj's mediaPlayer is built register the media event listeners
-   *
-   * @param playerControlPanel which is connected to the mediaPlayer
    */
-  private void registerEventsForMediaPlayer(PlayerControlPanel playerControlPanel) {
+  private void registerEventsForMediaPlayer() {
     mediaPlayer.events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
       //do not call vlcj methods within vlcj events (see docu in vlcj)
       //use Platform.runLater except for stop(), play(), pause() which are asynchronous
@@ -238,14 +243,14 @@ public class PlayerViewerVLCJ extends PlayerViewer {
   }
 
   /**
-   * reset the player: stop it and free all event Handlers
+   * reset the player: release all and build a new player (e.g. to avoid media file blocking during FileTableView.saveFolder())
    */
   public void resetPlayer() {
     if (!wasReset) { //prevent from double reset
-      stop();
+      mediaPlayer.release(); //release the old one
+      buildMediaPlayer();    //build a new one
       playerStatus = Status.STALLED;
       wasReset = true;
-
     }
   }
 

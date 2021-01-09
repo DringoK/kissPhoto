@@ -41,6 +41,7 @@ import static de.kissphoto.KissPhoto.language;
  * <p/>
  *
  * @author Dr. Ingo Kreuz
+ * @version 2021-01-09 isMediaPlayerActive() neu
  * @version 2020-11-02 change viewer strategy: every viewer decides by it's own if it is compatible with the media. FullScreen Stage is now a singleton to save memory
  */
 public class MediaContentView extends Pane {
@@ -313,6 +314,15 @@ public class MediaContentView extends Pane {
     return (primaryMediaContentView != null);
   }
 
+  /**
+   * Report if the mediaPlayer is the currently active viewer.
+   * Use: FileTableView.saveFoler() needs write access also to the currently active media. If this is the mediaPlayer
+   * resetPlayer() needs to be called to free the media temporarily (esp. because of VLCJPlayer)
+   * @return true if the mediaPlayer is the active (visible) player
+   */
+  public boolean isMediaPlayerActive(){
+    return playerViewer.isVisible();
+  }
 
   /**
    * When setMedia has found a compatible viewer for the main MediaContentView it calls this routine<br>

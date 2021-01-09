@@ -1,7 +1,6 @@
 package de.kissphoto.view.dialogs;
 
 import de.kissphoto.view.FileTableView;
-import de.kissphoto.view.StatusBar;
 import de.kissphoto.view.inputFields.FileNameTextField;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -10,10 +9,13 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -27,6 +29,7 @@ import static de.kissphoto.view.FileTableView.NOTHING_FOUND;
  *
  * @author Ingo Kreuz
  * @since 2014-05-03
+ * @version 2021-01-09 own statusBar implemention to avoid show statistics. FindNext ShortCut F3 support here and from fileTable, TextFieldCell and MainMenu
  * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
  * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  * @version 2016-11-04 indicate search mode: in all or in selected lines only
@@ -45,7 +48,7 @@ public class FindReplaceDialog extends KissDialog {
   final Button replaceBtn = new Button(replaceCaption);
   final Button replaceAllBtn = new Button(language.getString("replace.all"));
   Label searchSelectedLabel = new Label();
-  StatusBar statusBar = new StatusBar(); //local statusBar in the Dialog to show search-Results
+  Text statusMessage = new Text(); //local statusBar in the Dialog to show search-Results
 
   boolean findFirstMode = true; //findButton is FindFirst in the beginnen (false=FindNextMode)
   boolean found = true;
@@ -76,6 +79,11 @@ public class FindReplaceDialog extends KissDialog {
     VBox rootArea = new VBox();
     rootArea.prefHeightProperty().bind(scene.heightProperty());
     rootArea.prefWidthProperty().bind(scene.widthProperty());
+    rootArea.setOnKeyPressed(keyEvent->{
+      if (keyEvent.getCode() == KeyCode.F3){ //support FindNext KeyCombination also if Dialog has the Focus
+        handleFindFirst_FindNext();
+      }
+    });
 
     GridPane gridPane = new GridPane();
     gridPane.setHgap(5);
@@ -90,7 +98,7 @@ public class FindReplaceDialog extends KissDialog {
     Label findLabel = new Label(findCaption);
     gridPane.add(findLabel, 0, 0);      //column, row
     findTextField.prefWidthProperty().bind(gridPane.widthProperty().subtract(LABEL_COL_WIDTH));
-    findTextField.setOnKeyReleased(keyEvent -> handleFindTextFieldChanged());
+    findTextField.setOnKeyReleased(keyEvent -> handleFindTextFieldChanged(keyEvent));
     gridPane.add(findTextField, 1, 0);
 
     Label replaceLabel = new Label(replaceCaption);
@@ -121,8 +129,24 @@ public class FindReplaceDialog extends KissDialog {
     closeBtn.setOnAction(actionEvent -> close());
     buttonBox.getChildren().addAll(findBtn, replaceBtn, replaceAllBtn, closeBtn);
 
+    //--- statusMessage
+    HBox statusBar = new HBox();
+    statusBar.setPadding(mainPadding);
+    statusBar.prefWidthProperty().bind(rootArea.widthProperty());
+    statusBar.getChildren().add(statusMessage);
+
     rootArea.getChildren().addAll(gridPane, buttonBox, statusBar);
     root.getChildren().add(rootArea);
+
+  }
+
+  public void showWarningStatus(String message){
+    statusMessage.setText(message);
+    statusMessage.setFill(Color.BROWN);
+  }
+  public void showStatus(String message){
+    statusMessage.setText(message);
+    statusMessage.setFill(Color.BLUE);
   }
 
   //------------------------ react on Buttons and input ----------------------------------------
@@ -131,16 +155,19 @@ public class FindReplaceDialog extends KissDialog {
    * executed every time the content of the find textfield has changed
    * to start a new search
    */
-  private void handleFindTextFieldChanged() {
+  private void handleFindTextFieldChanged(KeyEvent keyEvent) {
     fileTableView.closeSearchAndRestoreSelection();
     findFirstMode = true; //when textField has been changed always use find First
     enableValidButtons();
+    keyEvent.consume();
   }
 
   /**
    * executed when find-button has been pressed
    */
-  private void handleFindFirst_FindNext() {
+  public void handleFindFirst_FindNext() {
+    if (findBtn.isDisabled()) return; //ignore call if button is disabled
+
     if (findFirstMode) {
       showSelectionInfo();
 
@@ -192,11 +219,11 @@ public class FindReplaceDialog extends KissDialog {
 
     counter = counter + firstCounter;  //if an old result exists then add it
     if (counter == 0)
-      statusBar.showError(language.getString(NOTHING_FOUND));
+      showWarningStatus(language.getString(NOTHING_FOUND));
     else if (counter == 1)
-      statusBar.showMessage(language.getString("one.occurrence.has.been.replaced"));
+      showStatus(language.getString("one.occurrence.has.been.replaced"));
     else
-      statusBar.showMessage(MessageFormat.format(language.getString("0.occurrences.have.been.replaced"), Integer.toString(counter)));
+      showStatus(MessageFormat.format(language.getString("0.occurrences.have.been.replaced"), Integer.toString(counter)));
 
     if (ifAtTheEndAskIfContinueFromFirstLine()) {
       firstCounter = counter;  //save old result so it can be added to the new result
@@ -233,9 +260,9 @@ public class FindReplaceDialog extends KissDialog {
   private void showSearchResultInStatusBar() {
     //show result in statusBar
     if (found)
-      statusBar.showMessage(language.getString("found"));
+      showStatus(language.getString("found"));
     else
-      statusBar.showError(language.getString(NOTHING_FOUND));
+      showWarningStatus(language.getString(NOTHING_FOUND));
   }
 
   /**

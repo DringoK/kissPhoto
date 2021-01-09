@@ -68,7 +68,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.20.12.28 work in progress"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.01.08 work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -139,8 +139,8 @@ public class KissPhoto extends Application {
 
       //options
       while (i < args.length) {
-        if (args[i].equalsIgnoreCase("-noVLC")) optionNoVLC = true;
-        else if (args[i].equalsIgnoreCase("-help")) optionHelp = true;
+        if (args[i].equalsIgnoreCase("-noVLC") || args[i].equalsIgnoreCase("/noVLC")) optionNoVLC = true;
+        else if (args[i].equalsIgnoreCase("-help") || args[i].equalsIgnoreCase("/help")) optionHelp = true;
         i++;
       }
 

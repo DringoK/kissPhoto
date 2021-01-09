@@ -24,6 +24,7 @@ import static de.kissphoto.KissPhoto.language;
  *
  * @author Ingo
  * @since 2012-09-09
+ * @version 2021-01-09 findNext in editMenu
  * @version 2020-11-19 globalSettings is now global (static in Kissphoto)  and therefore no longer necessary in this class (formerly just passed through)
  * @version 2018-11-17 Image menu only active if an image is selected
  * @version 2017-10-29 Flipping and Rotation of JPEG-Images added (imageMenu)
@@ -156,6 +157,15 @@ public class MainMenuBar extends MenuBar {
       fileTableView.findAndReplace();
     });
     editMenu.getItems().add(findReplaceItem);
+
+    final MenuItem findNextItem = new MenuItem(language.getString("find.next"));
+    findNextItem.setAccelerator(new KeyCodeCombination(KeyCode.F3));
+    findNextItem.disableProperty().bind(fileTableView.getFindReplaceDialogShowingProperty().not());
+    findNextItem.setOnAction(event -> {
+      event.consume();
+      fileTableView.findNext();
+    });
+    editMenu.getItems().add(findNextItem);
 
     editMenu.getItems().add(new SeparatorMenuItem());
 

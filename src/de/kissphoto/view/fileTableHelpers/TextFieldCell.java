@@ -4,7 +4,6 @@ import de.kissphoto.model.MediaFile;
 import de.kissphoto.model.MediaFileList;
 import de.kissphoto.view.FileTableView;
 import de.kissphoto.view.inputFields.*;
-import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.ContentDisplay;
@@ -31,21 +30,20 @@ import javafx.scene.input.KeyEvent;
  *
  * @author Ingo
  * @since 2016-11-04
+ * @version 2021-01-09 support saving the currently editing line
  * @version 2020-12-20 lambda expressions for event handlers
  * @version 2018-11-17 Ctrl-U now copies information from the line above in edit mode, (Shift) TAB moves to next (prev) column, fixed: keeping caret position fixed
  */
-class TextFieldCell extends TableCell<MediaFile, String> {
+public class TextFieldCell extends TableCell<MediaFile, String> {
   static int lastCaretPosition = 0; //this is to save the caretPosition when moving up/down lines in editMode
   static boolean lastCaretPositionValid = false;
-  RestrictedInputField inputField;
+  static RestrictedInputField inputField;
   Boolean escPressed = false;
-  Boolean stayInEditMode = false; //will be true while moving from one line to the next with cursor-keys up/down
 
   @Override
   public void startEdit() {
     super.startEdit();
     escPressed = false;
-    stayInEditMode = false;
 
     createInputField();        //every time a new TextField
 
@@ -56,17 +54,29 @@ class TextFieldCell extends TableCell<MediaFile, String> {
     setText(null);
     setGraphic((Node) inputField);
     this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-    Platform.runLater(() -> {
-      inputField.requestFocus();
-      //position caret again??? only then it works :-(
-      positionCaretOrSelect();
 
-      ((FileTableView) getTableColumn().getTableView()).resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
-      lastCaretPositionValid = false; //also consume last caret position
-    });
+    inputField.requestFocus();
+     //position caret again??? only then it works :-(
+     positionCaretOrSelect();
+
+    ((FileTableView) getTableColumn().getTableView()).resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
+    lastCaretPositionValid = false; //also consume last caret position
   }
 
-  private void positionCaretOrSelect() {
+  /**
+   * restore the CaretPostion which is stored statically e.g.
+   * <ul>
+   *  <li>after changing the line in edit mode (here a new Cell is generated, but static infomation can be restored)</li>
+   *  <li>after saving: FileTable has no access to the cell, but can use static</li>
+   * </ul>
+   */
+  private void restoreCaretPositionIfValid() {
+    if (lastCaretPositionValid) {
+      inputField.deselect();
+      inputField.positionCaret(lastCaretPosition); //move to last text cursor position in the new row
+    }
+  }
+  public void positionCaretOrSelect() {
     //select searchResult if available
     if (((FileTableView) getTableColumn().getTableView()).isSelectSearchResultOnNextStartEdit()) {
       //select Search Result
@@ -78,11 +88,8 @@ class TextFieldCell extends TableCell<MediaFile, String> {
       ((FileTableView) getTableColumn().getTableView()).getPrimaryStage().requestFocus();  //put focus from dialog to main window
 
       // or select same Caret Position as in last row
-    } else if (lastCaretPositionValid) {
-      inputField.deselect();
-      inputField.positionCaret(lastCaretPosition); //move to last text cursor position in the new row
-
-      //select all
+    } else {
+      restoreCaretPositionIfValid();
     }
     //else {
       //default behavior of TableView is already selectAll...
@@ -97,7 +104,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
     setText(getItem());
     this.setContentDisplay(ContentDisplay.TEXT_ONLY);
     setGraphic(null);
-    if (!stayInEditMode) getTableColumn().getTableView().setEditable(false);
+    getTableColumn().getTableView().setEditable(false);
   }
 
   @Override
@@ -135,6 +142,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
       if (isEditing()) {
         if (inputField != null) {
           inputField.setText(getString());
+          restoreCaretPositionIfValid();
         }
         setText(null);
         setGraphic((Node) inputField);
@@ -212,12 +220,23 @@ class TextFieldCell extends TableCell<MediaFile, String> {
             moveCaretUpOrDown(false);
             event.consume();
             break;
+          case S:
+            if (event.isControlDown()) { //ctrl-S (saving) will take over current changes
+              fileTableView.saveEditedValue(fileTableView.getSelectionModel().getSelectedItem(), getTableColumn(), inputField.getText());
+              lastCaretPosition = inputField.getCaretPosition(); //remember last caretPosition so that it can be used again when saving is complete
+              lastCaretPositionValid = true;
+              //but does not consume the event, so that FileTable can initiate saving afterwards
+            }
+            break;
           case U:
             if (event.isControlDown()) {
               copyDescriptionDown();
               inputField.deselect();
               inputField.positionCaret(inputField.getLength()); //[end]: move caret to the end
             }
+            break;
+          case F3: //find next (menu not accessible while cell has focus)
+            fileTableView.findNext();
             break;
         }
       }
@@ -252,12 +271,9 @@ class TextFieldCell extends TableCell<MediaFile, String> {
       private void selectNextColumn() {
         int currentLine = fileTableView.getSelectionModel().getSelectedIndex();
 
-        stayInEditMode = true; //for commitEdit of old column
         commitEdit(inputField.getText());
         lastCaretPosition = 0; //place caret at the beginning of next column
         lastCaretPositionValid = true;
-
-        stayInEditMode = false;
 
         TableColumn<MediaFile, String> nextColumn;
         if (getTableColumn() == fileTableView.getPrefixColumn()) {
@@ -277,7 +293,8 @@ class TextFieldCell extends TableCell<MediaFile, String> {
           nextColumn = fileTableView.getDescriptionColumn();
         }
 
-        Platform.runLater(() -> fileTableView.edit(currentLine, nextColumn));
+        getTableColumn().getTableView().setEditable(true); //CommitEdit for the previous cell had ended edit mode
+        fileTableView.edit(currentLine, nextColumn);
       }
 
       /**
@@ -286,11 +303,9 @@ class TextFieldCell extends TableCell<MediaFile, String> {
       private void selectPrevColumn() {
         int currentLine = fileTableView.getSelectionModel().getSelectedIndex();
 
-        stayInEditMode = true; //for commitEdit of old column
         commitEdit(inputField.getText());
         lastCaretPosition = Integer.MAX_VALUE; //place caret at the end of previous column
         lastCaretPositionValid = true;
-        stayInEditMode = false;
 
         TableColumn<MediaFile, String> prevColumn;
         if (getTableColumn() == fileTableView.getPrefixColumn()) {
@@ -309,8 +324,8 @@ class TextFieldCell extends TableCell<MediaFile, String> {
           //default
           prevColumn = fileTableView.getDescriptionColumn();
         }
-
-        Platform.runLater(() -> fileTableView.edit(currentLine, prevColumn));
+        getTableColumn().getTableView().setEditable(true); //CommitEdit for the previous cell had ended edit mode
+        fileTableView.edit(currentLine, prevColumn);
       }
 
       /**
@@ -323,7 +338,6 @@ class TextFieldCell extends TableCell<MediaFile, String> {
         //selectAbove/BelowCell() does not work as expected when running over borders of viewport/flow
         int currentLineEdited = fileTableView.getSelectionModel().getSelectedIndex();
 
-        stayInEditMode = true; //for commitEdit of old row
         lastCaretPosition = inputField.getCaretPosition(); //remember last caretPosition so that it can be used again in next/prev line
         lastCaretPositionValid = true;
         if (up) {
@@ -337,7 +351,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
             currentLineEdited++;
           }
         }
-        stayInEditMode = false;
+        getTableColumn().getTableView().setEditable(true); //CommitEdit for the previous cell had ended edit mode
 
         if (up)
           fileTableView.scrollViewportToIndex(currentLineEdited, FileTableView.Alignment.TOP);
@@ -347,7 +361,7 @@ class TextFieldCell extends TableCell<MediaFile, String> {
         fileTableView.getSelectionModel().focus(currentLineEdited);
         fileTableView.getSelectionModel().clearAndSelect(currentLineEdited, editingColumn);
 
-        Platform.runLater(() -> fileTableView.edit(fileTableView.getSelectionModel().getSelectedIndex(), editingColumn));
+        fileTableView.edit(fileTableView.getSelectionModel().getSelectedIndex(), editingColumn);
       }
     });
   }

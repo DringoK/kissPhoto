@@ -17,7 +17,7 @@ import static de.kissphoto.KissPhoto.language;
 /**
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
- * The status bar is shown at the bottom of the main window
+ * The status bar is shown at the bottom of the main window (and in the
  * it can show one line of text-information on top of a progress bar
  * and a statistics area at the right bottom side showing number of files, number of selected files etc.
  * <p/>
