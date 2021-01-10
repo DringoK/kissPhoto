@@ -23,8 +23,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.MessageFormat;
 
 import static de.kissphoto.KissPhoto.language;
@@ -119,12 +117,13 @@ public class MediaContentView extends Pane {
     if (playerViewer == null || !((PlayerViewerVLCJ) playerViewer).isVlcAvailable()) {
       //try 2: JavaFX
       try {
-        if (!InetAddress.getLocalHost().getHostName().startsWith("CMTC"))  //videos cannot be played by JavaFX on Daimler-Installations
+       // if (!InetAddress.getLocalHost().getHostName().startsWith("CMTC"))  //videos could not be played by JavaFX on Daimler-Installations with Java 8
+       if (!KissPhoto.optionNoFX)
           playerViewer = new PlayerViewerFX(this);
         else //3: Dummy
           playerViewer = new PlayerViewerDummy(this);
 
-      } catch (UnknownHostException e) {
+      } catch (Exception e) {
         playerViewer = new PlayerViewerDummy(this);
         e.printStackTrace();
       }

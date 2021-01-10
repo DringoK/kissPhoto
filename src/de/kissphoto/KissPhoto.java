@@ -68,13 +68,14 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.01.08 work in progress"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.0109 work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
   //set in void main(args) = in static context, so the need to be static
   private static String initialFileOrFolder = "";
   public static boolean optionNoVLC = false; //if -noVLC is provided then prevent from searching for and using of vlc
+  public static boolean optionNoFX = false;  //if -noFX is provided then use the DummyPlayerViewer (for FX incompatible installations without VLC)
   private static boolean optionHelp = false; //-Help will println a short helptext
 
   private FileTableView fileTableView;
@@ -114,7 +115,7 @@ public class KissPhoto extends Application {
    *             -help: a short help text about parameters
    */
   public static void main(String[] args) {
-    //Debug-Level currently used in mediaUtil an ImageFileRotater
+    //Debug-Level currently used in mediaUtil and ImageFileRotater
     Log.debugLevel = Log.LEVEL_NONE; //please no output on console (default is 3=Log.LEVEL_INFO) which shows ERROR, WARNING and INFO)
     //Log.debugLevel = Log.LEVEL_DEBUG;
 
@@ -140,12 +141,13 @@ public class KissPhoto extends Application {
       //options
       while (i < args.length) {
         if (args[i].equalsIgnoreCase("-noVLC") || args[i].equalsIgnoreCase("/noVLC")) optionNoVLC = true;
+        else if (args[i].equalsIgnoreCase("-noFX") || args[i].equalsIgnoreCase("/noFX")) optionNoFX = true;
         else if (args[i].equalsIgnoreCase("-help") || args[i].equalsIgnoreCase("/help")) optionHelp = true;
         i++;
       }
 
     }
-    System.out.println("Java-Version "+System.getProperty("java.version"));
+    //System.out.println("Java-Version "+System.getProperty("java.version"));
 
     Application.launch(args);
 }

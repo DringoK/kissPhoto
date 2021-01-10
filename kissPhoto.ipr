@@ -18,6 +18,34 @@
         <element id="module-output" name="vlcj-file-filters" />
       </root>
     </artifact>
+    <artifact type="javafx" name="kissPhotoFX">
+      <output-path>$PROJECT_DIR$/out/artifacts/kissPhotoFX</output-path>
+      <properties id="javafx-properties">
+        <options>
+          <option name="appClass" value="de.kissphoto.KissPhoto" />
+          <option name="description" value="Rename, Renumber, Sort, Find/Replace Files&#13;&#10;Sort Photo and Media&#13;&#10;Show Photos, Videos and Play Audio Files&#13;&#10;Keep it Simple: No Database, just the file names, directories and files" />
+          <option name="htmlPlaceholderId" value="" />
+          <option name="nativeBundle" value="all" />
+          <option name="title" value="KissPhoto" />
+          <option name="vendor" value="Ingo Kreuz" />
+          <option name="version" value="0.21.01" />
+        </options>
+      </properties>
+      <root id="root">
+        <element id="archive" name="kissPhoto.jar">
+          <element id="module-output" name="kissPhoto" />
+          <element id="module-output" name="adobe-xmp-core" />
+          <element id="module-output" name="vlcj-natives" />
+          <element id="module-output" name="vlcj-javafx" />
+          <element id="module-output" name="vlcj-file-filters" />
+          <element id="module-output" name="vlcj" />
+          <element id="module-output" name="metadata-extractor" />
+          <element id="dir-copy" path="$PROJECT_DIR$/src/META-INF" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/../jna/dist/jna-platform.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/../jna/dist/jna.jar" path-in-jar="/" />
+        </element>
+      </root>
+    </artifact>
   </component>
   <component name="CompilerConfiguration">
     <wildcardResourcePatterns>
@@ -233,14 +261,14 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_15" default="false" project-jdk-name="15" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_15" project-jdk-name="15" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectRunConfigurationManager">
     <configuration default="false" name="kissphoto" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="de.kissphoto.KissPhoto" />
       <module name="kissPhoto" />
-      <option name="PROGRAM_PARAMETERS" value="-noVLCdoch" />
+      <option name="PROGRAM_PARAMETERS" value="-noVLCDoch -noFXDoch" />
       <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg " />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="" />
