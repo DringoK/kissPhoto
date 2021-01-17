@@ -11,23 +11,23 @@ package de.kissphoto.view.inputFields;
  */
 public interface RestrictedInputField {
   //as is in RestrictedTextField, mapped to setValue in ComboBox
-  public void setText(String newValue);
+  void setText(String newValue);
 
-  public String getText();
+  String getText();
 
-  public void selectRange(int startPos, int endPos);
+  void selectRange(int startPos, int endPos);
 
-  public void selectAll();
+  void selectAll();
 
-  public void deselect();
+  void deselect();
 
-  public void positionCaret(int pos);
+  void positionCaret(int pos);
 
-  public int getCaretPosition();
+  int getCaretPosition();
 
-  public int getLength();
+  int getLength();
 
-  public void setMinWidth(double minWidth);
+  void setMinWidth(double minWidth);
 
-  public void requestFocus();
+  void requestFocus();
 }

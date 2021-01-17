@@ -13,6 +13,7 @@ import de.kissphoto.model.MediaFileListSavingTask;
 import de.kissphoto.view.dialogs.*;
 import de.kissphoto.view.fileTableHelpers.FileHistory;
 import de.kissphoto.view.fileTableHelpers.TextFieldCellFactory;
+import de.kissphoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.FXCollections;
@@ -24,7 +25,6 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.skin.TableViewSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.Dragboard;
@@ -48,6 +48,7 @@ import static de.kissphoto.KissPhoto.language;
  * <p/>
  *
  * @author Ingo
+ * @version 2021-01-16 eliminating the slow and error-prone reflection: column.setCellValueFactory(new PropertyValueFactory<>("propertyname") replaced with call back. ToolTipText added
  * @version 2021-01-09 improve scrolling, save also currently edited value, improve findNext (F3-support)
  * @version 2014-05-02 I18Support, Cursor in Edit-Mode over lines, reopen added etc
  * @since 2012-09-06
@@ -62,7 +63,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   public static final String EXTENSION = "extension";
   public static final String MODIFIED = "modified";
   public static final String NOTHING_FOUND = "nothing.found";
-  private static final String FILE_DATE = "fileDate";
   //Default Column Widths
   private static final int STATUS_COL_DEFAULT_WIDTH = 20;
   private static final int PREFIX_COL_DEFAULT_WIDTH = 50;
@@ -122,6 +122,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private boolean selectSearchResultOnNextStartEdit = false;  //during SearchNext searchRec Cursor needs to be set on StartEdit
   private boolean renameDialogActive = false;
 
+  private final Tooltip tooltip = new Tooltip();
+
   private boolean isMovingFiles = false; //ignore selection refresh events while movingUp/Dn because selection has to be rebuilt with every step there, but effectively it does not change
   /**
    * constructor will try to open the passed file or foldername
@@ -131,7 +133,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * @param mediaContentView link to the view where media is displayed if focus changes
    * @param statusBar        link to statusBar for showing information/errors
    */
-  public FileTableView(@NotNull Stage primaryStage, final MediaContentView mediaContentView, StatusBar statusBar) {
+  public FileTableView(Stage primaryStage, final MediaContentView mediaContentView, StatusBar statusBar) {
     //remember connections to main window etc
     this.primaryStage = primaryStage;
     this.mediaContentView = mediaContentView;
@@ -149,21 +151,25 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     statusColumn = new TableColumn<>(language.getString("status"));
     statusColumn.setPrefWidth(STATUS_COL_DEFAULT_WIDTH);
     statusColumn.setEditable(false);
-    statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+    //statusColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>("status"));
+    statusColumn.setCellValueFactory(p -> p.getValue().statusProperty());
+    getColumns().add(statusColumn);
 
     //prefix
     prefixColumn = new TableColumn<>(language.getString(PREFIX));
     prefixColumn.setPrefWidth(PREFIX_COL_DEFAULT_WIDTH);
     prefixColumn.setEditable(true);
-    prefixColumn.setCellValueFactory(new PropertyValueFactory<>(PREFIX));
-    prefixColumn.setCellFactory(textFieldCellFactory);
     prefixColumn.setOnEditCommit(cellEditCommitEventHandler);
+    prefixColumn.setCellFactory(textFieldCellFactory);
+    //prefixColumn.setCellValueFactory(new PropertyValueFactory<>(PREFIX));
+    prefixColumn.setCellValueFactory(p -> p.getValue().prefixProperty());
+    getColumns().add(prefixColumn);
+
 
     //counter
     counterColumn = new TableColumn<>(language.getString(COUNTER));
     counterColumn.setPrefWidth(COUNTER_COL_DEFAULT_WIDTH);
     counterColumn.setEditable(true); //as a default counter is editable until renumbering is set to auto-mode
-    counterColumn.setCellValueFactory(new PropertyValueFactory<>(COUNTER));
     counterColumn.setCellFactory(textFieldCellFactory);
     counterColumn.setOnEditCommit(cellEditCommitEventHandler);
     counterColumn.setComparator((o1, o2) -> {    //should sort numeric even without leading zeros in the filename
@@ -175,46 +181,50 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         return 0;
       }
     });
+    //counterColumn.setCellValueFactory(new PropertyValueFactory<>(COUNTER));
+    counterColumn.setCellValueFactory(p -> p.getValue().counterProperty());
+    getColumns().add(counterColumn);
 
     //separator
     separatorColumn = new TableColumn<>(language.getString(SEPARATOR));
     separatorColumn.setEditable(true);
     separatorColumn.setPrefWidth(SEPARATOR_COL_DEFAULT_WIDTH);
-    separatorColumn.setCellValueFactory(new PropertyValueFactory<>(SEPARATOR));
     separatorColumn.setCellFactory(textFieldCellFactory);
     separatorColumn.setOnEditCommit(cellEditCommitEventHandler);
+    //separatorColumn.setCellValueFactory(new PropertyValueFactory<>(SEPARATOR));
+    separatorColumn.setCellValueFactory(p -> p.getValue().separatorProperty());
+    getColumns().add(separatorColumn);
 
     //description
     descriptionColumn = new TableColumn<>(language.getString(DESCRIPTION));
     descriptionColumn.setEditable(true);
     descriptionColumn.setPrefWidth(DESCRIPTION_COL_DEFAULT_WIDTH);
-    descriptionColumn.setCellValueFactory(new PropertyValueFactory<>(DESCRIPTION));
     descriptionColumn.setCellFactory(textFieldCellFactory);
     descriptionColumn.setOnEditCommit(cellEditCommitEventHandler);
+    //descriptionColumn.setCellValueFactory(new PropertyValueFactory<>(DESCRIPTION));
+    descriptionColumn.setCellValueFactory(p -> p.getValue().descriptionProperty());
+    getColumns().add(descriptionColumn);
 
     //file type (extension)
     extensionColumn = new TableColumn<>(language.getString(EXTENSION));
     extensionColumn.setPrefWidth(EXTENSION_COL_DEFAULT_WIDTH);
     extensionColumn.setEditable(true);
-    extensionColumn.setCellValueFactory(new PropertyValueFactory<>(EXTENSION));
     extensionColumn.setCellFactory(textFieldCellFactory);
     extensionColumn.setOnEditCommit(cellEditCommitEventHandler);
+    //extensionColumn.setCellValueFactory(new PropertyValueFactory<>(EXTENSION));
+    extensionColumn.setCellValueFactory(p -> p.getValue().extensionProperty());
+    getColumns().add(extensionColumn);
 
     //file date
     fileDateColumn = new TableColumn<>(language.getString(MODIFIED));
     fileDateColumn.setPrefWidth(FILEDATE_COL_DEFAULT_WIDTH);
     fileDateColumn.setEditable(true);
-    fileDateColumn.setCellValueFactory(new PropertyValueFactory<>(FILE_DATE));
     fileDateColumn.setCellFactory(textFieldCellFactory);
     fileDateColumn.setOnEditCommit(cellEditCommitEventHandler);
-
-    getColumns().add(statusColumn);
-    getColumns().add(prefixColumn);
-    getColumns().add(counterColumn);
-    getColumns().add(separatorColumn);
-    getColumns().add(descriptionColumn);
-    getColumns().add(extensionColumn);
+    //fileDateColumn.setCellValueFactory(new PropertyValueFactory<>(FILE_DATE));
+    fileDateColumn.setCellValueFactory(p -> p.getValue().fileDateProperty());
     getColumns().add(fileDateColumn);
+
 
     //install SortOrder-ChangeListener to keep Selection
     this.getSortOrder().addListener((ListChangeListener<TableColumn<MediaFile, ?>>) change -> restoreLastSelection());
@@ -225,6 +235,10 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     getViewPort();
     installDragDropHandlers(primaryStage);
     installSelectionHandler(mediaContentView);
+
+    //-----install bubble help ------------
+    tooltip.setShowDelay(ViewerControlPanel.TOOLTIP_DELAY); //same delay like in viewer control panel
+    setTooltip(tooltip); //the text will be set whenever selection is changed (focus change listener)
   }
 
   private void installSelectionHandler(MediaContentView mediaContentView) {
@@ -234,7 +248,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       //set selected media in mediaContentView (or null if not valid)
       if (newValue.intValue() >= 0) { //only if selection is valid
         lastSelection = mediaFileList.getFileList().get(newValue.intValue());
-        mediaContentView.setMedia(mediaFileList.getFileList().get(newValue.intValue()), null);
+        mediaContentView.setMedia(lastSelection, null);
+        setTooltipText(lastSelection);
         mediaFileList.preLoadMedia(newValue.intValue(), mediaContentView);
       } else {
         if (mediaFileList.getFileList().size() <= 0) {
@@ -247,6 +262,20 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         }
       }
     });
+  }
+
+  /**
+   * reflect all changes of the given media file in the tooltip of the filetable
+   * @param focusedMediaFile the mediafile which changes are reported in the tooltip
+   */
+  private void setTooltipText(MediaFile focusedMediaFile){
+    String s= focusedMediaFile.getChangesText();
+    if (s.length()>0) {
+      setTooltip(tooltip);
+      tooltip.setText(focusedMediaFile.getChangesText());
+    }else{
+      setTooltip(null);
+    }
   }
 
   private void installDragDropHandlers(@NotNull Stage primaryStage) {
@@ -446,20 +475,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * Save the string value that was edited using some TextField
    * depending from the current column into the correct property
    *
-   * @param row      the table row indicating the the mediaFile where to set the values
-   * @param column   the column indicating the property  to be set
-   * @param newValue the value to be set
-   */
-  public synchronized void saveEditedValue(TableRow<MediaFile> row, TableColumn<MediaFile, String> column, String newValue) {
-    MediaFile mediaFile = row.getItem();
-    saveEditedValue(mediaFile, column, newValue);
-  }
-
-  /**
-   * Save the string value that was edited using some TextField
-   * depending from the current column into the correct property
-   *
-   * @param mediaFile the the mediaFile where to set the values
+   * @param mediaFile the the focusedMediaFile where to set the values
    * @param column    the column indicating the property  to be set
    * @param newValue  the value to be set
    */
@@ -478,6 +494,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       } else if (column == fileDateColumn) {
         mediaFile.setModifiedDate(newValue);
       }
+      ((FileTableView)column.getTableView()).setTooltipText(mediaFile);
     }
   }
 
@@ -696,7 +713,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
           //in Case of error the function does not exist to update the folder in background..so what...
         }
         //set default sorting
-        Platform.runLater(()->resetSortOrder());
+        Platform.runLater(this::resetSortOrder);
 
       } finally {
         //empty directory?
@@ -1106,7 +1123,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   }
 
   /**
-   * @return the mediaFile which is one line above the selected mediaFile or null if current media file is the first
+   * @return the focusedMediaFile which is one line above the selected focusedMediaFile or null if current media file is the first
    */
   public MediaFile getAboveMediaFile() {
     int selection = getSelectionModel().getSelectedIndex();
@@ -1259,6 +1276,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     else
       statusBar.showMessage(MessageFormat.format(language.getString("0.files.cannot.save.the.rotation"), notRotatable)
         + " " + MessageFormat.format(language.getString("0.images.rotated"), filesCount));
+
+    setTooltipText(getFocusModel().getFocusedItem());
   }
 
   /**
@@ -1276,6 +1295,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     else
       statusBar.showMessage(MessageFormat.format(language.getString("0.files.cannot.save.the.flipping"), notRotatable)
         + " " + MessageFormat.format(language.getString("0.images.flipped"), filesCount));
+    setTooltipText(getFocusModel().getFocusedItem());
   }
 
   public synchronized void setOrientationAccordingExif() {
@@ -1287,6 +1307,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     else
       statusBar.showMessage(MessageFormat.format(language.getString("0.could.not.be.orientated.according.to.exif"), notRotatable)
         + " " + MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), filesCount - notRotatable));
+
+    setTooltipText(getFocusModel().getFocusedItem());
   }
 
   private ObservableList<Integer> getCopyOfSelectedIndicesSortedAndUnique() {
@@ -1442,9 +1464,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
         if (indexToShow < firstLineWithExtraLines || indexToShow > lastLineWithExtraLines) {
           int index = switch (alignment) {
-            case TOP -> indexToShow - extraLines;         //calculates the first line to be in the viewport
-            //case CENTER -> indexToShow - (height / 2);    //calculates the first line to be in the viewport
-            default -> indexToShow + extraLines;      //bottom: calculates the last line to be in the viewport
+            case TOP -> indexToShow - extraLines;     //calculates the first line to be in the viewport
+            case CENTER -> indexToShow - extraLines;  //calculates the first line to be in the viewport
+            default -> indexToShow + extraLines;      //BOTTOM: calculates the last line to be in the viewport
           }; //the resulting index where to jump to
           //calculate index to be shown as first line according alignment
           if (index > mediaFileList.getFileList().size() - 1) index = mediaFileList.getFileList().size() - 1;
@@ -1532,9 +1554,10 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       selectSearchResultOnNextStartEdit = true;
       setEditable(true);
       edit(foundIndex, foundCol);
-    }
 
-    return searchRec.found;
+      return searchRec.found; //only if searchRec not null
+    }
+    return false; //default return value if searchRec or foundMediaFile is null
   }
 
   /**
@@ -1632,10 +1655,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     return statusBar;
   }
 
-  //Column-Getters are necessary for Cell in Cellfactory:
-//As all Cells are from same type/class it is necessary to choose the correct type of input field dependent from the column
-//With these getters the Cell can compare in which column editing is started.
-//Alternatively every column would need a differt CellFactory...
+  //------- getters for columns are used to determine the currently changed column --------------
   public TableColumn<MediaFile, String> getStatusColumn() {
     return statusColumn;
   }
@@ -1692,6 +1712,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   /**
    * EventHandler to handle CommitEdit() events from FieldCell in context of FileTableView
+   * this handler is registered when the columns are built in the constructor
+   * same handler for all columns
+   * it is fired in TextFieldCell.commitEdit
    */
   private class CellEditCommitEventHandler implements EventHandler<TableColumn.CellEditEvent<MediaFile, String>> {
     @Override

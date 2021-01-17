@@ -51,7 +51,6 @@ import java.util.ResourceBundle;
  * todo Meldung initalFile genauer: 1. übergebene Datei nicht gefunden ... +2. vorheriges Verzeichnis nicht gefunden
  * todo overscan mit padding im ContenView (FullScreen only) und auch speichern in globalSettings (nur context-Menü und Tastenkombi/Mausrad)
  * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger)
- * todo hoover über Filetable: Umbenennung anzeigen (aktuellerName --> neuer ResultingFilename)
  * todo Meta-Daten anzeigen. Fenster ausblendbar
  * todo Editierbar: Datum, Autor, Beschreibung, Copyright
  * todo Multi-Edit-Dialog: Hilfe nur auf Knopfdruck ("Hilfe zu %p %d..."), Aufruf Nummerieren-Dialog rein, EXIF-Kommentar rein (der bekommt %k, damit Übernahme möglich)
@@ -68,7 +67,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.0109 work in progress"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.0118 work in progress"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 

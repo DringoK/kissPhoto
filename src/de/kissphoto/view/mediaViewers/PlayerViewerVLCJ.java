@@ -17,6 +17,7 @@ import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 import uk.co.caprica.vlcj.support.version.LibVlcVersion;
 
+import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
 
@@ -38,6 +39,7 @@ import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactor
  * </ul>
  *
  * @author Dr. Ingo Kreuz
+ * @version 2021-01-16 workaround for changing media if "paused" (vlc will crash)
  * @version 2021-01-08 resetPlayer() reworked to avoid blocking during saveFolder()
  * @version 2020-11-08 bugfixing
  * @since 2020-10-25
@@ -58,6 +60,7 @@ public class PlayerViewerVLCJ extends PlayerViewer {
   private static final String requiredVLCVersion = LibVlcVersion.requiredVersion.version();
   private static String currentVLCVersion = null;
   private final PlayerControlPanel playerControlPanel;
+  private boolean startPaused=false;    //workaround because vlcj.startPaused results in crash of vlc (assertion in C)
 
 
   /**
@@ -147,12 +150,14 @@ public class PlayerViewerVLCJ extends PlayerViewer {
       //do not call vlcj methods within vlcj events (see docu in vlcj)
       //use Platform.runLater except for stop(), play(), pause() which are asynchronous
       //use Platform.runLater also for GUI access
+
       @Override
       public void mediaPlayerReady(MediaPlayer mediaPlayer) {
         Platform.runLater(() -> {
           //show progress as soon as totalDuration is available
           playerControlPanel.setSliderScaling(getTotalDuration());
           playerControlPanel.showProgress(Duration.ZERO);
+          if (startPaused) pause();      //workaround because VLC would crash when VLCJ startPaused() would be used in setMediaFileIfCompatible()
         });
       }
 
@@ -222,16 +227,20 @@ public class PlayerViewerVLCJ extends PlayerViewer {
    */
   @Override
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
-    if (!(mediaFile instanceof PlayableFile)) { //includes test on null
+    if (!(mediaFile instanceof PlayableFile)) { //instanceof includes test on null
       return false;
     }
     boolean compatible = true;
 
     try {
-      if (((PlayerControlPanel) viewerControlPanel).isUserHasPaused())
-        mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString());
-      else
+      if (((PlayerControlPanel) viewerControlPanel).isUserHasPaused()) {
+        //mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString());
         mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
+        startPaused = true;
+      }else {
+        mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
+        startPaused=false;
+      }
       wasReset = false;
     } catch (Exception e) {
       e.printStackTrace();
@@ -408,18 +417,24 @@ public class PlayerViewerVLCJ extends PlayerViewer {
 
   @Override
   public double getMediaWidth() {
-    if (mediaPlayer != null && mediaPlayer.video().videoDimension() != null)
-      return mediaPlayer.video().videoDimension().getWidth();
-    else
-      return 0;
+    if (mediaPlayer != null) {
+      Dimension vd = mediaPlayer.video().videoDimension();
+      if (vd != null)
+        return vd.getWidth(); //<--------- this is the regular return value
+    }
+
+    return 0;  //default if something is null
   }
 
   @Override
   public double getMediaHeight() {
-    if (mediaPlayer != null && mediaPlayer.video().videoDimension() != null)
-      return mediaPlayer.video().videoDimension().getHeight();
-    else
-      return 0;
+    if (mediaPlayer != null) {
+      Dimension vd = mediaPlayer.video().videoDimension();
+      if (vd != null)
+        return vd.getHeight(); //<--------- this is the regular return value
+    }
+
+    return 0;  //default if something is null
   }
 
   @Override

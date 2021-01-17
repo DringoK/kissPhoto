@@ -45,6 +45,7 @@ import static de.kissphoto.KissPhoto.language;
  *
  * @author Dr. Ingo Kreuz
  * @since 2014-07-18
+ * @version 2021-01-16 bugfix tooltip help of repeat/playListMode buttons
  * @version 2020-12-13 PlayerControls now one of the ViewerControls
  * @version 2020-11-30 option pane added (repeat, playListMode)
  * @version 2017-10-08 show the Player a longer time, higher player area
@@ -71,14 +72,16 @@ public class PlayerControlPanel extends ViewerControlPanel {
    * @param viewer to be conntected to
    */
   public PlayerControlPanel(PlayerViewer viewer) {
-    super(viewer);
+    super(viewer);   //builds control and option area and installs hiding thread
 
     playerViewer = viewer;
 
-    //default values (not using set...Mode(), because they overwrite the settings)
-    repeatButton.playListModeProperty().bind(playlistButton.playListModeProperty()); //keep playListMode synced for repeat and playlistbutton for better Tooltips (see RepeatButton.setTooltipText())
-    playlistButton.setPlayListMode(true);
-    repeatButton.setRepeatMode(false);
+    //default values using direct set method to avoid changing the settings file
+    playlistButton.setPlayListMode(false); //initalize with "not default value" to force a change event to initialize the tooltip
+    playlistButton.setPlayListMode(true);  //this is the default value
+    repeatButton.setRepeatMode(true);      //initalize with "not default value" to force a change event to initialize the tooltip
+    repeatButton.setRepeatMode(false);     //this is the default value
+
     playPauseButton.setPaused(false); //if playing then show pause
     //then try to load the last values
     restoreLastPlayerStatus();
@@ -90,6 +93,11 @@ public class PlayerControlPanel extends ViewerControlPanel {
     });
   }
 
+  /**
+   * overwrite the behavior of ViewerControlPanel
+   * and build the control area additionally with player controls
+   * called from ViewerControl constructor
+   */
   protected void createControlArea() {
     super.createControlArea();
 
@@ -107,6 +115,11 @@ public class PlayerControlPanel extends ViewerControlPanel {
     controlArea.getChildren().addAll(playPauseButton, progressSlider, progressText, spaceBeforeBurgerMenu);
   }
 
+  /**
+   * overwrite the behavior of ViewerControlPanel
+   * and build the options area additionally with repeat and playList Option
+   * called from ViewerControl constructor
+   */
   protected void createOptionArea() {
     super.createOptionArea();
 
@@ -122,6 +135,8 @@ public class PlayerControlPanel extends ViewerControlPanel {
       setRepeatMode(!isRepeatMode());
       mouseEvent.consume();
     });
+
+    repeatButton.playListModeProperty().bind(playlistButton.playListModeProperty()); //keep playListMode synced for repeat and playlistbutton for better Tooltips (see RepeatButton.setTooltipText())
 
     optionArea.getChildren().addAll(playlistButton, repeatButton);
   }

@@ -684,6 +684,9 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    */
   public abstract long getContentApproxMemSize();
 
+  /*
+   * --------------------- getters and setters---------------------
+   */
 
   @Override
   public String toString() {
@@ -708,15 +711,40 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     return filenameChanged;
   }
 
-  /*
-   * --------------------- getters and setters---------------------
-   */
 
   private void setFilenameChanged(boolean value) {
     filenameChanged = value;
     updateStatusProperty();
   }
 
+  /**
+   *
+   * @return a text that describes the user, what has been changed
+   */
+  public String getChangesText(){
+    String s = "";
+    if (filenameChanged) s += MessageFormat.format(language.getString("rename.0.1"), getFileOnDiskName(),getResultingFilename());
+
+
+    if (timeStampChanged){
+      if (s.length()>0) s+= "\n";
+      s += language.getString("time.stamp.changed");
+    }
+
+    if (isTransformed()){
+      if (s.length()>0) s+= "\n";
+      if (isRotated()) {
+        if (isFlippedHorizontally() || isFlippedVertically())
+          s+= language.getString("image.rotated.and.flipped");
+        else
+          s+= language.getString("image.rotated");
+      }else{
+        if (isFlippedHorizontally() || isFlippedVertically())
+          s+= language.getString("image.flipped");
+      }
+    }
+    return s;
+  }
 
   /*
    * --------------------- TableView getters and setters---------------------

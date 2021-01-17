@@ -30,7 +30,7 @@ import javafx.scene.input.KeyEvent;
  *
  * @author Ingo
  * @since 2016-11-04
- * @version 2021-01-09 support saving the currently editing line
+ * @version 2021-01-17 support saving the currently editing line, simplify commitEdit and cancelEdit
  * @version 2020-12-20 lambda expressions for event handlers
  * @version 2018-11-17 Ctrl-U now copies information from the line above in edit mode, (Shift) TAB moves to next (prev) column, fixed: keeping caret position fixed
  */
@@ -48,7 +48,6 @@ public class TextFieldCell extends TableCell<MediaFile, String> {
     createInputField();        //every time a new TextField
 
     inputField.setText(getString());
-    positionCaretOrSelect();   //according values in SearchResult
 
 
     setText(null);
@@ -56,8 +55,7 @@ public class TextFieldCell extends TableCell<MediaFile, String> {
     this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
     inputField.requestFocus();
-     //position caret again??? only then it works :-(
-     positionCaretOrSelect();
+    positionCaretOrSelect(); //works only, if it has the focus ;_)
 
     ((FileTableView) getTableColumn().getTableView()).resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
     lastCaretPositionValid = false; //also consume last caret position
@@ -66,7 +64,7 @@ public class TextFieldCell extends TableCell<MediaFile, String> {
   /**
    * restore the CaretPostion which is stored statically e.g.
    * <ul>
-   *  <li>after changing the line in edit mode (here a new Cell is generated, but static infomation can be restored)</li>
+   *  <li>after changing the line in edit mode (here a new Cell is generated, but static information can be restored)</li>
    *  <li>after saving: FileTable has no access to the cell, but can use static</li>
    * </ul>
    */
@@ -97,35 +95,33 @@ public class TextFieldCell extends TableCell<MediaFile, String> {
     //}
   }
 
-  /**
-   * Perform all the special actions that are common to CommitEdit and CancelEdit
-   */
-  private void completeCommitAndCancelEdit() {
-    setText(getItem());
-    this.setContentDisplay(ContentDisplay.TEXT_ONLY);
-    setGraphic(null);
-    getTableColumn().getTableView().setEditable(false);
+  @Override
+  public void commitEdit(String newValue) {
+    super.commitEdit(newValue);   //this will fire the change event, sets editing to false  and calls updateItem
+    hideInputField();
   }
-
   @Override
   public void cancelEdit() {
     if (!escPressed) { //if just focus lost (e.g. by clicking on different line) then behave like commitEdit (saveEditedValue is called)
       //calling commitEdit in cancelEdit would lead to NullPointerException! Therefore just call saveEditedValue
-      ((FileTableView) getTableColumn().getTableView()).saveEditedValue(getTableRow(), getTableColumn(), inputField.getText());
+      MediaFile mediaFile = getTableRow().getItem();
+      ((FileTableView) getTableColumn().getTableView()).saveEditedValue(mediaFile, getTableColumn(), inputField.getText());
     }
-    super.cancelEdit();
+    super.cancelEdit(); //sets editing to false
 
-    completeCommitAndCancelEdit();
+    setText(getItem());          //reset the displayed text to the original item's (cell's) value
+    hideInputField();
   }
-
-  @Override
-  public void commitEdit(String newValue) {
-    super.commitEdit(newValue);
-    completeCommitAndCancelEdit();
+  /**
+   * Perform all the special actions that are common to CommitEdit and CancelEdit
+   */
+  private void hideInputField() {
+    this.setContentDisplay(ContentDisplay.TEXT_ONLY);   //switch back to string mode
+    setGraphic(null);                                   //end graphic mode
   }
 
   /**
-   * refresh the cell content
+   * refresh the cell content: synchronize inputField or cell's text with the item String
    *
    * @param item  show this string either in Label (non editing) or in editInputField (when editing)
    * @param empty if true the cell is cleared (null)
@@ -179,10 +175,6 @@ public class TextFieldCell extends TableCell<MediaFile, String> {
     }
 
     inputField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
-
-    //doesn't work??? I wanted to color the highlight-fill to gray when focus lost (e.g. while searching)
-    //editInputField.setStyle("-fx-highlight-fill: lightgray");       //see http://docs.oracle.com/javafx/2/css_tutorial/jfxpub-css_tutorial.htm
-
 
     // CommitEdit on Focus lost of FileTableView
     ((Node) inputField).focusedProperty().addListener((observable, oldValue, newValue) -> {
