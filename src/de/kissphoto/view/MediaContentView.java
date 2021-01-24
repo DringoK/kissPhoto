@@ -149,7 +149,10 @@ public class MediaContentView extends Pane {
 
     setOnScroll(scrollEvent -> {
       if (!scrollEvent.isControlDown() && !scrollEvent.isAltDown() && !scrollEvent.isShiftDown()) {
-        if (scrollEvent.getDeltaY() > 0)
+
+        if (scrollEvent.getDeltaY()==0)
+          return; //ignore "zero" scrolls which occur in Kubuntu-Linux
+        else if (scrollEvent.getDeltaY() > 0)
           showPreviousMedia();
         else
           showNextMedia();

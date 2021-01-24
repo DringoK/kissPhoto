@@ -461,7 +461,11 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
    */
   public boolean handleMouseScroll(ScrollEvent scrollEvent) {
     boolean handled = false;
-    if (scrollEvent.isControlDown()) {
+
+
+    if (scrollEvent.getDeltaY()==0)
+      return false; //ignore "zero" scrolls which occur in Kubuntu-Linux
+    else if (scrollEvent.isControlDown()) {
       if (scrollEvent.getDeltaY() > 0)
         zoomIn();
       else
