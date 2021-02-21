@@ -265,10 +265,10 @@
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectRunConfigurationManager">
-    <configuration default="false" name="kissphoto" type="Application" factoryName="Application">
-      <option name="MAIN_CLASS_NAME" value="de.kissphoto.KissPhoto" />
+    <configuration default="false" name="kissPhoto" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="dringo.kissPhoto.KissPhoto" />
       <module name="kissPhoto" />
-      <option name="PROGRAM_PARAMETERS" value="-noVLCDoch -noFXDoch" />
+      <option name="PROGRAM_PARAMETERS" value="-noVLCdoch -noFXdoch /helpno" />
       <option name="VM_PARAMETERS" value="-splash:resources/images/KissPhotoSplash.jpg " />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="" />
