@@ -1,4 +1,8 @@
-![kissPhotoLogo](resources/images/KissPhotoSplash.jpg)
+![kissPhotoLogo](resources/images/KissPhotoIconLarge.png)
+
+# User Manual
+
+[click here to open User Manual](docs/manual.md)
 
 # Setting up Developer Environment: Libraries used in kissPhoto
 
