@@ -25,6 +25,9 @@ import java.nio.file.Paths;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * this dialog is for copying filedates from a "master-extension".
  * Imagine you've converted your video clips from mov-container to mp4 container, e.g. using XMediaRecode.
  * Then the mp4 version of the clips have the conversion date as their file date.

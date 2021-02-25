@@ -6,6 +6,9 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This solves a problem with layouting rotated Panes:

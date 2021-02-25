@@ -28,6 +28,9 @@ import java.text.MessageFormat;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is the Dialog Window for choosing a root folder and
  * a target csv-filename for writing a folder structure to csv
  *

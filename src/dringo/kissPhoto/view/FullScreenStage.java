@@ -8,7 +8,10 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 /**
- * **
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p>
  * This is the full screen version of MediaContentView<br>

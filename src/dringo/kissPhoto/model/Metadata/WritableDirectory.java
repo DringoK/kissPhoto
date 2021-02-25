@@ -5,6 +5,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * wrapper for a com.drew.metada.Directory
  * This wrapper collects all changes as WritableEntries in list in memory that shall be applied to it in the file later
  * --> i.e. the setter methods add changes to the list (no duplicates, last change wins)

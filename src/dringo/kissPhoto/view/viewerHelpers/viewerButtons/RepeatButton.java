@@ -11,6 +11,9 @@ import javafx.scene.shape.*;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class implements an Option Button for Repeat-Mode (two arrows in opposite direction)<br>

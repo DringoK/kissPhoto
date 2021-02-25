@@ -42,6 +42,9 @@ import java.text.MessageFormat;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
  * JavaFX Table View that is the GUI for MediaFileList

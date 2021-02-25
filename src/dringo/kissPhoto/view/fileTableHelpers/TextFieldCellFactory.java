@@ -6,6 +6,9 @@ import javafx.scene.control.TableColumn;
 import javafx.util.Callback;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
  * This factory is used for showing a FileTableView table:

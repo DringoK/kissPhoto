@@ -12,6 +12,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto: keep it simple stupid when organizing your photos
  * <p/>
  * This helper class is for launching external applications

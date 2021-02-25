@@ -7,6 +7,9 @@ import static dringo.kissPhoto.KissPhoto.language;
 
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is an input field (TextField) which accepts numbers (digits) only
  * A tooltip is shown with explanation which characters are allowed if illegal characters are tried to enter
  * Illegal characters are ignored.

@@ -8,6 +8,9 @@ import java.nio.file.*;
 import static java.nio.file.StandardWatchEventKinds.*;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+
  * A thread uses a FileSystem.WatchService
  * to monitor if files if a directory have been changed externally
  * <p/>

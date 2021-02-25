@@ -28,6 +28,9 @@ import java.text.MessageFormat;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
  * This is the Pane where visible Media (photo, video) is shown<br>

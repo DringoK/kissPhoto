@@ -13,6 +13,9 @@ import javafx.util.Duration;
 import java.util.Objects;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class implements a viewer for movie clips using JavaFX's media player component

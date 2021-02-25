@@ -5,13 +5,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
  * Heuristic to guess the position of the counter in the filenames of MediaFileList
  * The nth number in the filename will be used in MediaFiles to auto (re)number the files
  * <p/>
  *
- * @author Ingo
+ * @author Dringo
  * @since 2012-09-02
  * @version 2020-12-20: bug fixing with string compare
  * @version 2014-06-05: java.nio used (except conversion to file array)

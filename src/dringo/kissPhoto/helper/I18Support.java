@@ -4,6 +4,9 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * <p/>
  * provide the language resource bundle for all classes of kissphoto
  * @author Dringo

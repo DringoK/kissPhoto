@@ -1,6 +1,9 @@
 package dringo.kissPhoto.view.mediaViewers;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This interface has to be implemented by all views that want to use ViewportZoomerMover to enable

@@ -3,6 +3,9 @@ package dringo.kissPhoto.model.Metadata;
 import java.io.RandomAccessFile;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is an entry of an EXIF Directory (IFD=ImageFileDirectory)
  * and a wrapper for com.drew.metadata.Tag
  * Tag, Type, Size, Offset/data

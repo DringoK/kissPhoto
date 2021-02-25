@@ -23,6 +23,9 @@ import java.util.Date;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * <p>
  * MediaFile is a file-object displayed and edited in the FileTableView of kissPhoto
  * It is a wrapper around a file which is tried to be interpreted as a media file (photo, movie, ...)

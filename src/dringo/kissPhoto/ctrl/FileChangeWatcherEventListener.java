@@ -3,6 +3,9 @@ package dringo.kissPhoto.ctrl;
 import java.nio.file.WatchEvent;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * The interface which is used by FileChangeWatcher to execute an action if a change to the watched folder appears
  * <p/>
  *

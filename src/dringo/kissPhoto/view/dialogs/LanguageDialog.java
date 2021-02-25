@@ -22,6 +22,9 @@ import javafx.stage.StageStyle;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * A dialog to change the language of the GUI of kissPhoto
  * Changes are written to the settings file only and effects are only applied after a restart
  * <p/>

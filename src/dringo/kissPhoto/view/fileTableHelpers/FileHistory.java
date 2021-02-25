@@ -17,6 +17,9 @@ import static dringo.kissPhoto.KissPhoto.globalSettings;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
  * The "recently opened files' list is managed here

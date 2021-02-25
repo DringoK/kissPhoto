@@ -1,6 +1,9 @@
 package dringo.kissPhoto.model;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
  * Helper for rotating, mirroring media files (lossless if possible)

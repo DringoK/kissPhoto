@@ -8,6 +8,9 @@ import javafx.stage.StageStyle;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is the Dialog ancestor for all dialogs in KissPhoto
  * It is not shown directly but concentrates all methods that are common for all dialogs.
  * <li>showing the About Window

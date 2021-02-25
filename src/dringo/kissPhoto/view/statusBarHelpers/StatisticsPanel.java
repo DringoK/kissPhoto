@@ -9,6 +9,9 @@ import javafx.scene.layout.Region;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
  * Standard-Status-Bar - Display showing statistics:

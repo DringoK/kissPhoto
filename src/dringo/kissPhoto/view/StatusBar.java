@@ -14,6 +14,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
  * The status bar is shown at the bottom of the main window (and in the

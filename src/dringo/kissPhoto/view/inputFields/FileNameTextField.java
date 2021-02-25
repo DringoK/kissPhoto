@@ -7,6 +7,9 @@ import static dringo.kissPhoto.KissPhoto.language;
 
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is an input field (TextField) which does not accepts characters that are not allowed in filenames (e.g. :,+,?...)
  * A tooltip is shown with explanation which characters are allowed if illegal characters are tried to enter
  *

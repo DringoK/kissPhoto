@@ -7,6 +7,9 @@ import javafx.collections.ObservableList;
 import java.nio.file.Path;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>This Class wrappes all files that cannot be displayed/played.
  * Nevertheless the filenames can be changed

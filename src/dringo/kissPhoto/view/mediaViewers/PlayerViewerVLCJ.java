@@ -25,6 +25,9 @@ import static javafx.scene.media.MediaPlayer.Status;
 import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory.videoSurfaceForImageView;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class implements a viewer for movie clips using VLCJ from Mark Lee/Caprica Software Limited which again uses a previously installed VLC-Player's dll .

@@ -1,6 +1,9 @@
 package dringo.kissPhoto.view.inputFields;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * Interface common to all Input Fields
  * either derived from restrictedTextField
  * or implementing TextFieldComboBox

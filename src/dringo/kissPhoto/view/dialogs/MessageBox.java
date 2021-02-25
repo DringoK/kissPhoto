@@ -16,6 +16,9 @@ import javafx.stage.StageStyle;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * A simple MessageBox consisting of
  * <ul>
  * <li>a message</li>

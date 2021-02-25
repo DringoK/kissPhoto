@@ -17,6 +17,9 @@ import javafx.stage.WindowEvent;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
  * The main menu bar is defined here

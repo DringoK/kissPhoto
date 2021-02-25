@@ -4,7 +4,10 @@ import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
 /**
- * @author Ingo
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
+ * @author Dringo
  * @since 2016-11-01
  * <p>
  * Restricted Textfield that accepts all characters but supports all interfaces

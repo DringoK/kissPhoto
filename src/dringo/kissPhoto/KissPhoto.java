@@ -26,12 +26,15 @@ import java.util.ResourceBundle;
 
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * Keep it simple! File renaming and Photo/Media File Management Main Class<br>
  * ========================================================<p>
  * The main KISS ideas of the application are
  * <ul>
  * <li>Rename files like in a wordprocesser's table: move around with the cursor, search and replace + mass rename, renumbering and sorting</li>
- * <li>photo management and photo show without installation or database</li>
+ * <li>photo management and photo show without any additional files or database</li>
  * <li>self containing: all information is in the picture files, filenames or directory names</li>
  * <li>auto numbering: file order can be changed, file numbering will follow</li>
  * <li>file date maintaining</li>

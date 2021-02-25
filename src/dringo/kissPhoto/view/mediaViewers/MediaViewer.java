@@ -7,6 +7,9 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.layout.StackPane;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This is the base class for all MediaViewers.

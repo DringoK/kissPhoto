@@ -12,6 +12,9 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.input.KeyEvent;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
  * TextFieldCells represent a single cell of FileTableView-tables and are generated bei TextFieldCellFactory for every

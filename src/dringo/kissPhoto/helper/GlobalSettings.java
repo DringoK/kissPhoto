@@ -9,6 +9,9 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
  * store and restore global settings such as the last opened file or folder
@@ -21,7 +24,7 @@ import java.util.Properties;
  * load is invoked at startup in KissPhoto start method
  * store is invoked in KissPhoto in the setOnCloseRequest Event Handle
  * <p/>
- * @author Ingo
+ * @author Dringo
  * @since 2013-10-09
  * @version 2020-11-06 changed to XML format to support UTF-8 encoding
  *

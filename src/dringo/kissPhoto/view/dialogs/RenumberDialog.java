@@ -18,6 +18,9 @@ import javafx.stage.Stage;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is the Dialog Window for Renumbering
  *
  * @author Dringo

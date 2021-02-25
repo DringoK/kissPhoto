@@ -10,6 +10,9 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is a special MediaFile, namely an image.
  * As a content in getCachedMediaContent() it delivers an Image-Object which will be loaded in background
  * It allows access to the Metadata (Exif, IPTC-Tags, ...)

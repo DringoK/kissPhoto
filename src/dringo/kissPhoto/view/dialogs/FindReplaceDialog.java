@@ -24,6 +24,9 @@ import java.text.MessageFormat;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is the Dialog Window for Find and Replace
  *
  * @author Ingo Kreuz

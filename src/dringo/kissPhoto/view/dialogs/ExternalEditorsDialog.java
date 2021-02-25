@@ -28,6 +28,9 @@ import java.io.File;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is the Dialog Window for changing the external editors
  * Every Media-File Subclass has one
  * <p/>

@@ -4,6 +4,11 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
+ */
 public class PathHelpers {
 
   public static Path extractFolder(Path fileOrFolder) {

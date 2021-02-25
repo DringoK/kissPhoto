@@ -12,6 +12,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * View to show meta data, i.e. EXIF data etc.
  * <p/>
  * @author Dringo

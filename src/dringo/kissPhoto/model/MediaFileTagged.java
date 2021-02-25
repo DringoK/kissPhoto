@@ -12,6 +12,9 @@ import javafx.collections.ObservableList;
 import java.nio.file.Path;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is a MediaFile that can have tags
  * I use metadata-extractor to read the tags
  * see: https://github.com/drewnoakes/metadata-extractor/releases

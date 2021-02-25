@@ -5,6 +5,9 @@ import javafx.scene.input.KeyCode;
 
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is an input field (Combo-Box) which presents all supported separator characters (after counter)
  *
  * @author Dringo

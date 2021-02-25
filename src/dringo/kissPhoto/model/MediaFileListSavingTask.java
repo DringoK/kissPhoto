@@ -5,6 +5,9 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br>
  * Here is the task defined to save the changes. Especially because rotation of images might be slow

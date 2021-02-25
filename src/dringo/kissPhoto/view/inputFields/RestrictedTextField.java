@@ -8,6 +8,9 @@ import javafx.stage.Stage;
 
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is an abstract input field (TextField) which supports verification of input
  * it installs event listener and calls abstract verification methods
  * A tooltip is shown with explanation which characters are allowed if illegal characters are tried to enter

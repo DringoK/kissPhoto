@@ -13,6 +13,9 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class implements the basics of the controls area of viewers

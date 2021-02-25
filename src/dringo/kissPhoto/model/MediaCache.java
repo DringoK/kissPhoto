@@ -9,6 +9,9 @@ import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class implements a cache strategy for speeding up displaying of pictures/movies:

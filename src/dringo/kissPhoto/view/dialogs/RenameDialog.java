@@ -26,6 +26,9 @@ import java.text.MessageFormat;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * This is the Dialog for Renaming Files.
  *
  * @author Dringo

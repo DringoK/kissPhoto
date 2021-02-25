@@ -7,6 +7,9 @@ import javafx.collections.ObservableList;
 import java.nio.file.Path;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * MovieFiles are PlayableMediaFiles
  * Here just the External Editors are managed for this kind of files
  *

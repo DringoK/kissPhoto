@@ -12,6 +12,9 @@ import javafx.util.Duration;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class is the base class for all viewer with MediaPlayers (i.e. MovieViewerFX (implemented) and MovieViewerVLC

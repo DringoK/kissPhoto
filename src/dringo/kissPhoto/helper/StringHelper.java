@@ -7,6 +7,9 @@ import javafx.scene.text.TextBoundsType;
 import java.text.DecimalFormatSymbols;
 
 /**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
  * <p/>
  * String utilities.
  * These simple routines avoid to import the complete apache StringUtils-jar
