@@ -71,7 +71,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.220"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.314"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -255,7 +255,7 @@ static private boolean isOption(String arg){
 
   @Override
   public final void stop() {
-    //release all external ressources e.g. VLC.dll
+    //release all external resources e.g. VLC.dll
     mediaContentView.cleanUp();
   }
 

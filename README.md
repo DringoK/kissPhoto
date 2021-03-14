@@ -82,7 +82,7 @@ Check in ProjectStructure
   * jna\dist\jna-platform.jar
   * jna\dist\jna.jar
 
-**Used from VLCJ-Natives**
+**Used from VLCJ-Natives and VLCJ**
 
 ## Caprica VLCJ-Natives
 

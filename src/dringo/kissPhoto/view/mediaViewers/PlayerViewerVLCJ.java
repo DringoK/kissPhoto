@@ -63,10 +63,6 @@ public class PlayerViewerVLCJ extends PlayerViewer {
   private static final String requiredVLCVersion = LibVlcVersion.requiredVersion.version();
   private static String currentVLCVersion = null;
   private final PlayerControlPanel playerControlPanel;
-  private boolean startPaused=false;    //todo: workaround because vlcj.startPaused results in crash of vlc (assertion in C)
-  private boolean seekPaused=false;    //todo: workaround because vlcj.setTime while paused results in crash of vlc (assertion in C)
-  private Duration seekPausedPos=null;
-
 
   /**
    * Determine if a given file could be played with this PlayerViewer
@@ -162,18 +158,11 @@ public class PlayerViewerVLCJ extends PlayerViewer {
           //show progress as soon as totalDuration is available
           playerControlPanel.setSliderScaling(getTotalDuration());
           playerControlPanel.showProgress(Duration.ZERO);
-          if (startPaused) pause();      //todo: workaround because VLC would crash when VLCJ startPaused() would be used in setMediaFileIfCompatible()
         });
       }
 
       @Override
       public void positionChanged(MediaPlayer mediaPlayer, float newPosition) {
-        //todo: workaround because vlcj.setTime while paused results in crash of vlc (assertion in C)
-        if (seekPaused){
-          //System.out.println("PlayerViewerVLCJ.PositionChanged: seek while paused.");
-          pause();
-          seekPaused = false;
-        }
       }
 
       @Override
@@ -181,17 +170,6 @@ public class PlayerViewerVLCJ extends PlayerViewer {
         Platform.runLater(() -> {
           playerStatus = Status.PLAYING;
           finished = false;
-
-          //todo: workaround because vlcj.setTime while paused results in crash of vlc (assertion in C)
-          if (seekPaused && isMediaValid()) {
-            //System.out.println("PlayerViewerVLCJ.Playing: seek while paused. New Pos = " + seekPausedPos);
-
-            if (seekPausedPos == null)
-              mediaPlayer.controls().setTime(0, false);
-            else
-              mediaPlayer.controls().setTime((long) seekPausedPos.toMillis(), false); //true=fast positioning
-          }
-
         });
       }
 
@@ -260,13 +238,9 @@ public class PlayerViewerVLCJ extends PlayerViewer {
 
     try {
       if (((PlayerControlPanel) viewerControlPanel).isUserHasPaused()) {
-        //todo: workaround for VLC4.0.0 nightly bug: setTime while paused runs into assertion error
-        //mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString());
-        mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
-        startPaused = true;
+        mediaPlayer.media().startPaused(mediaFile.getFileOnDisk().toFile().toString());
       }else {
         mediaPlayer.media().start(mediaFile.getFileOnDisk().toFile().toString()); //start() blocks until playing in contrast to play()
-        startPaused=false;
       }
       wasReset = false;
     } catch (Exception e) {
@@ -351,13 +325,6 @@ public class PlayerViewerVLCJ extends PlayerViewer {
       play(); // finished=false; //seeking results in not being at the end of the media any more
     }
 
-    //todo: workaround because vlcj.setTime while paused results in crash of vlc (assertion in C)
-    if (((PlayerControlPanel) viewerControlPanel).isUserHasPaused()) {
-      seekPaused = true;
-      seekPausedPos = newPos;
-      //System.out.println("PlayerViewerVLCJ.seek: seek while paused");
-      play(); //as a workaround seek in the playing Event
-    } else
     if (isMediaValid()) {
       if (newPos == null)
         mediaPlayer.controls().setTime(0, false);
