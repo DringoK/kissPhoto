@@ -2,6 +2,8 @@ package dringo.kissPhoto.model;
 
 import dringo.kissPhoto.helper.AppStarter;
 import dringo.kissPhoto.helper.StringHelper;
+import dringo.kissPhoto.model.Metadata.MetaInfoTreeItem;
+import dringo.kissPhoto.view.MetaInfoView;
 import dringo.kissPhoto.view.inputFields.SeparatorInputField;
 import dringo.kissPhoto.view.mediaViewers.MediaViewer;
 import dringo.kissPhoto.view.mediaViewers.PhotoViewer;
@@ -81,7 +83,8 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static final String STATUSFLAGS_HELPTEXT = language.getString("statusFlags.Helptext");
   protected Path fileOnDisk;   //including physical filename on Disk...to be renamed
   protected MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
-  protected Object content = null;
+  protected Object content = null;            //cached content
+  protected MetaInfoTreeItem metaInfoTreeItem = null; //cached metaInfo root?
   //planned operation when saved next time: first rotate then flip vertical then horizontal!!!
   protected MediaFileRotater.RotateOperation rotateOperation = MediaFileRotater.RotateOperation.ROTATE0;
   protected boolean flipHorizontally = false;
@@ -639,6 +642,20 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       mediaCache.addAsLatest(this);//and remember that it is now in memory and the youngest entry of the cache
 
     return content;
+  }
+
+  /**
+   * cache strategy for metadata TreeTableView: Cache the root of the Tree on first access
+   * @param metaInfoView link to the viewer that knows how to fill the cache
+   * @return the cached element or null if *this* is not a MediaFileTagged
+   */
+  public MetaInfoTreeItem getCachedMetaInfo(MetaInfoView metaInfoView){
+    if (metaInfoTreeItem ==null  && this instanceof MediaFileTagged){ //if invalid and only available for Subclass MediaFileTagged which can have MetaInfos
+      //if not in cache then ask the viewer to load it
+      mediaCache.maintainCacheSizeByFlushingOldest(); //
+      metaInfoTreeItem = metaInfoView.getViewerSpecificMediaInfo((MediaFileTagged) this);
+    }
+    return metaInfoTreeItem;
   }
 
   public boolean shouldRetryLoad(){

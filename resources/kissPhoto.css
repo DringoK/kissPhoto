@@ -1,0 +1,67 @@
+/*
+* MIT License
+ * <p>
+ * Copyright (c)2021 kissPhoto
+ * </p>
+ *
+ * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
+ * <p/>
+ * css applied on scene in kissPhoto.java start().method and therefore for all elements
+ * <p/>
+ *
+ * @author Dringo
+ * @version 2021-03-21 First implementation
+ * @since 2021-03-11
+*/
+
+/*
+--------------- TreeTableView ------------
+Make them the same color as TableViews
+Hide empty trailing lines
+*/
+.tree-table-row-cell {
+    -fx-background-color: -fx-table-cell-border-color, -fx-control-inner-background;
+    -fx-background-insets: 0, 0 0 1 0;
+}
+
+.tree-table-row-cell:odd {
+    -fx-background-color: -fx-table-cell-border-color, #F9F9F9;
+    -fx-background-insets: 0, 0 0 1 0;
+}
+
+.tree-table-row-cell:selected,
+.tree-table-row-cell:selected:odd {
+    -fx-background-color: -fx-focus-color, -fx-cell-focus-inner-border, -fx-focus-color;
+    -fx-background-insets: 0, 1, 2;
+}
+
+.tree-table-row-cell:selected .tree-table-cell {
+    -fx-text-fill: white;
+}
+
+.tree-table-row-cell:empty {
+    -fx-background-color: transparent;
+}
+
+.tree-table-row-cell:empty .tree-table-cell {
+    -fx-border-width: 0px;
+}
+
+/*
+--------------- TableView ------------
+hide trailing empty lines
+*/
+
+.table-row-cell:empty {
+    -fx-background-color: transparent;
+}
+
+.table-row-cell:empty .table-cell {
+    -fx-border-width: 0px;
+}
+/*do not gray out selection if not focused*/
+.table-row-cell:selected,
+.table-row-cell:selected:odd {
+    -fx-background-color: -fx-focus-color, -fx-cell-focus-inner-border, -fx-focus-color;
+    -fx-background-insets: 0, 1, 2;
+}

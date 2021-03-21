@@ -39,7 +39,7 @@ public abstract class MediaFileTagged extends MediaFile {
    *
    * @return Metadata structure
    */
-  public Metadata readMetadata() {
+  public Metadata getMetadata() {
     if (metadata == null)  //lazy load
       try {
         metadata = ImageMetadataReader.readMetadata(fileOnDisk.toFile());
@@ -58,7 +58,7 @@ public abstract class MediaFileTagged extends MediaFile {
    * @return iterable for the directories found in Metadata
    */
   public Iterable<Directory> getMetadataDirectories() {
-    if (metadata == null) readMetadata();
+    if (metadata == null) getMetadata();
     if (metadata != null) //no error while loading?
       return metadata.getDirectories();
     else

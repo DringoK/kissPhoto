@@ -13,8 +13,9 @@ import javafx.stage.Stage;
 
 /**
  * MIT License
+ * <p>
  * Copyright (c)2021 kissPhoto
- *
+ *</p>
  * View to show meta data, i.e. EXIF data etc.
  * <p/>
  * @author Dringo

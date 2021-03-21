@@ -2,10 +2,7 @@ package dringo.kissPhoto;
 
 import dringo.kissPhoto.helper.GlobalSettings;
 import dringo.kissPhoto.helper.I18Support;
-import dringo.kissPhoto.view.FileTableView;
-import dringo.kissPhoto.view.MainMenuBar;
-import dringo.kissPhoto.view.MediaContentView;
-import dringo.kissPhoto.view.StatusBar;
+import dringo.kissPhoto.view.*;
 import dringo.kissPhoto.view.dialogs.ExternalEditorsDialog;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -48,6 +45,17 @@ import java.util.ResourceBundle;
  * @since 2014-04-29
  * @version see below in constant KISS_PHOTO_VERSION
  * <p>
+ * >>>>>>>>>>>>>>>>>Next:
+ * - Ein-/Ausblenden von MetaInfo View und dabei den Slider verschieben.
+ *   - Menüpunkt im Ansicht-Menü und Speichern in Settings (fertig machen)
+ *   - Icon für's Ein-Ausblenden unten im Content-View
+ * - Offenen Pfad in andere Bilder kopieren
+ * - Einzelnen Wert in Tabelle rüberziehen (readonly)
+ * - Werte editierbar machen, die mediautil unterstützt
+ *   - Bemerkung
+ *   - Datum
+ *     - Zeit-Korrektur-Dialog. Mit Differenz-Berechnungsfunktion von 2 gewählten Dateien
+ *   - in Massen-Umbenennungs-Dialog aufnehmen. Inkl. Default-Wert für Copyright
  * Bugs:
  * ======================
  * planned features:
@@ -71,7 +79,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.314"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.314+metaDataViewer"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -83,6 +91,7 @@ public class KissPhoto extends Application {
 
   private FileTableView fileTableView;
   private MediaContentView mediaContentView;
+  private MetaInfoView metaInfoView =new MetaInfoView();
   protected Stage primaryStage;
   protected Scene scene;
 
@@ -98,7 +107,7 @@ public class KissPhoto extends Application {
   private static final double default_width = 1000;
   private static final double default_height = 800;
   private static final double MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS = 0.5;
-  private static final double DETAILS_AREA_DEFAULT_DIVIDER_POS = 0.99;
+  private static final double DETAILS_AREA_DEFAULT_DIVIDER_POS = 0.9;
 
   //------------- IDs for GlobalSettings-File
   private static final String STAGE_X = "StageX";
@@ -108,6 +117,7 @@ public class KissPhoto extends Application {
 
   private static final String MAIN_SPLIT_PANE_DIVIDER_POSITION = "mainSplitPane_DividerPosition";
   private static final String DETAILS_AREA_DIVIDER_POSITION = "detailsArea_DividerPosition";
+  private static final String METAINFO_VIEW_VISIBLE = "metaInfoView_Visible";
 
   /**
    * Entry point
@@ -181,6 +191,7 @@ static private boolean isOption(String arg){
     primaryStage.setTitle(KISS_PHOTO + KISS_PHOTO_VERSION);
     Group root = new Group();
     scene = new Scene(root, default_width, default_height);
+    scene.getStylesheets().add(getClass().getResource("/kissPhoto.css").toExternalForm());      //styling esp. for TreeTableView to look like a TableView
     primaryStage.setScene(scene);
 
     stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/KissPhotoIcon.jpg")));
@@ -190,7 +201,7 @@ static private boolean isOption(String arg){
     statusBar.showMessage("");
     mediaContentView = new MediaContentView(primaryStage); //Area for showing Media
 
-    fileTableView = new FileTableView(primaryStage, mediaContentView, statusBar); //File table and directory
+    fileTableView = new FileTableView(primaryStage, mediaContentView, metaInfoView, statusBar); //File table and directory
     statusBar.connectUndeleteDialog(fileTableView);
     mediaContentView.setFileTableView(fileTableView);
 
@@ -205,10 +216,8 @@ static private boolean isOption(String arg){
     detailsArea.setOrientation(Orientation.VERTICAL);
     detailsArea.prefHeightProperty().bind(scene.heightProperty());
     detailsArea.prefWidthProperty().bind(scene.widthProperty());
-    //todo: folgende Zeile aktivieren, sobald MetadataView in detailsArea eingefügt ist
     detailsArea.setDividerPosition(0, DETAILS_AREA_DEFAULT_DIVIDER_POS);
-
-    detailsArea.getItems().addAll(mediaContentView);
+    detailsArea.getItems().addAll(mediaContentView, metaInfoView);
 
     mainSplitPane.getItems().addAll(fileTableView, detailsArea);
 
@@ -273,8 +282,8 @@ static private boolean isOption(String arg){
 
     globalSettings.setProperty(MAIN_SPLIT_PANE_DIVIDER_POSITION, Double.toString(mainSplitPane.getDividerPositions()[0]));
 
-    //todo: folgenden Block aktivieren, sobald MetadataView in detailsArea eingefügt ist
-    //globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(detailsArea.getDividerPositions()[0]));
+    globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(detailsArea.getDividerPositions()[0]));
+    globalSettings.setProperty(METAINFO_VIEW_VISIBLE, Boolean.toString(metaInfoView.isVisible()));
     fileTableView.storeLastSettings();
   }
 
@@ -315,13 +324,17 @@ static private boolean isOption(String arg){
       mainSplitPane.setDividerPosition(0, MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS);
     }
 
-    //todo: folgenden Block aktivieren, sobald MetadataView in detailsArea eingefügt ist
-/*    try {
+    try {
       detailsArea.setDividerPosition(0, Double.parseDouble(globalSettings.getProperty(DETAILS_AREA_DIVIDER_POSITION)));
     } catch (Exception e) {
       detailsArea.setDividerPosition(0,DETAILS_AREA_DEFAULT_DIVIDER_POS);
     }
-*/
+
+    try {
+      metaInfoView.setVisible(Boolean.parseBoolean(globalSettings.getProperty(METAINFO_VIEW_VISIBLE)));
+    } catch (Exception e) {
+      metaInfoView.setVisible(true);
+    }
     fileTableView.restoreLastSettings();
   }
 

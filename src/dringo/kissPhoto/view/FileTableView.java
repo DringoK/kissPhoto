@@ -31,6 +31,7 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -92,13 +93,15 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   protected final TableColumn<MediaFile, String> fileDateColumn;
   //---- views linking
   private final Stage primaryStage;  //main window
+  protected MediaContentView mediaContentView; //mediaContentView to show media if selection changes
+  private final MetaInfoView metaInfoView;
   private final StatusBar statusBar;  //messages
   //---- the content to be displayed
   private final MediaFileList mediaFileList = new MediaFileList();
   //---- listen if an external program changes the currently loaded folder
   private final FileChangeWatcher fileChangeWatcher = new FileChangeWatcher();  //check for external changes to an opened folder
   private final FileHistory fileHistory;
-  protected MediaContentView mediaContentView; //mediaContentView to show media if selection changes
+
   protected VirtualFlow<?> flow;  //viewport for scrolling
   //----- Define Cell Factory and EditEventHandler
   //will be the identical for all columns (except statusColumn, see FileTableView constructor)
@@ -136,10 +139,11 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * @param mediaContentView link to the view where media is displayed if focus changes
    * @param statusBar        link to statusBar for showing information/errors
    */
-  public FileTableView(Stage primaryStage, final MediaContentView mediaContentView, StatusBar statusBar) {
+  public FileTableView(Stage primaryStage, final MediaContentView mediaContentView, final MetaInfoView metaInfoView, StatusBar statusBar) {
     //remember connections to main window etc
     this.primaryStage = primaryStage;
     this.mediaContentView = mediaContentView;
+    this.metaInfoView = metaInfoView;
     this.statusBar = statusBar;
     fileHistory = new FileHistory(this);
 
@@ -251,7 +255,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       //set selected media in mediaContentView (or null if not valid)
       if (newValue.intValue() >= 0) { //only if selection is valid
         lastSelection = mediaFileList.getFileList().get(newValue.intValue());
-        mediaContentView.setMedia(lastSelection, null);
+        showMedia(lastSelection, null);
         setTooltipText(lastSelection);
         mediaFileList.preLoadMedia(newValue.intValue(), mediaContentView);
       } else {
@@ -260,7 +264,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
           //keep lastSelection, so the sortOrderChange-Listener can restore selection
 
           //invalid selection
-          mediaContentView.setMedia(null, null);
+          showMedia(null, null);
           lastSelection = null;
         }
       }
@@ -618,7 +622,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     /*mediaFileList.onFolderChanged(filename, kind);
     if modified file was currently selected then update mediaContentView
     if (getSelectionModel().getSelectedItem() == mediaFileList.getMediaFile(filename)) {
-      mediaContentView.setMedia((MediaFile) getFocusModel().getFocusedItem());
+      showMedia((MediaFile) getFocusModel().getFocusedItem());
     }
     */
     statusBar.showError(language.getString("underlying.directory.has.changed.new.file.s.have.been.added.to.the.end.of.the.list"));
@@ -722,7 +726,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         //empty directory?
         if (mediaFileList.getFileList().size() < 1) {
           //clear any visible image shown before
-          mediaContentView.setMedia(null, null);
+          showMedia(null,null);
         }
         if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
         if (errMsg.length() > 0) {
@@ -795,7 +799,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       //MediaFile.flushAllMediaFromCache(); //not necessary because flush is executed if necessary while saving in MediaFile.saveChanges...
 
       mediaContentView.setMedia(null, null); //provoke a change in next line
-      mediaContentView.setMedia(currentFile, null); //reload media, continue playing
+      showMedia(currentFile, null);
       mediaFileList.preLoadMedia(currentIndex, mediaContentView);
 
       fileChangeWatcher.continueWatching();
@@ -823,6 +827,11 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 //        savingTask.cancel(true);  //mayInterruptIfRunning really true? think over...
 //      }
 //    });
+  }
+
+  private void showMedia(MediaFile mediaFile, Duration lastPlayerPos) {
+    mediaContentView.setMedia(mediaFile, lastPlayerPos); //reload media, continue playing
+    metaInfoView.setMediaFile(mediaFile);
   }
 
   /**
