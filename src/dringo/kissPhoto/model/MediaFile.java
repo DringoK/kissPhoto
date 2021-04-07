@@ -2,8 +2,6 @@ package dringo.kissPhoto.model;
 
 import dringo.kissPhoto.helper.AppStarter;
 import dringo.kissPhoto.helper.StringHelper;
-import dringo.kissPhoto.model.Metadata.MetaInfoTreeItem;
-import dringo.kissPhoto.view.MetaInfoView;
 import dringo.kissPhoto.view.inputFields.SeparatorInputField;
 import dringo.kissPhoto.view.mediaViewers.MediaViewer;
 import dringo.kissPhoto.view.mediaViewers.PhotoViewer;
@@ -39,6 +37,7 @@ import static dringo.kissPhoto.KissPhoto.language;
  *
  * @author ikreuz
  * @since 2012-08-28
+ * @version 2021-04-07 metadata stuff (cache!) now completely in subclass MediaFileTagged
  * @version 2020-12-20 cache now directly in this class. What to put into cache is asked from according viewer.
  * @version 2019-06-22 cache issue fixed: isMediaContentValid() and getMediaContentException() added
  * @version 2018-10-21 support rotation in general (for subclasses which provide a MediaFileRotater sybling)
@@ -49,7 +48,7 @@ import static dringo.kissPhoto.KissPhoto.language;
  * @version 2014-06-07 getContent interface to cache simplified, java.io operations changed into java.nio
  */
 public abstract class MediaFile implements Comparable<MediaFile> {
-  private final static MediaCache mediaCache = new MediaCache(); //implements the Cache strategy for all MediaFiles
+  protected final static MediaCache mediaCache = new MediaCache(); //implements the Cache strategy for all MediaFiles
 
   public static final String PLACEHOLDER_PREFIX = "%p";
   public static final String PLACEHOLDER_COUNTER = "%c";
@@ -84,7 +83,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   protected Path fileOnDisk;   //including physical filename on Disk...to be renamed
   protected MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
   protected Object content = null;            //cached content
-  protected MetaInfoTreeItem metaInfoTreeItem = null; //cached metaInfo root?
   //planned operation when saved next time: first rotate then flip vertical then horizontal!!!
   protected MediaFileRotater.RotateOperation rotateOperation = MediaFileRotater.RotateOperation.ROTATE0;
   protected boolean flipHorizontally = false;
@@ -634,7 +632,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     //prevent from infinite load-retry
     if (isMediaContentInValid()){
       //if not in cache then ask the viewer to load it
-      mediaCache.maintainCacheSizeByFlushingOldest(); //
+      mediaCache.maintainCacheSizeByFlushingOldest(); //housekeeping before load for having enough memory to laod
       content = mediaViewer.getViewerSpecificMediaContent(this);
     }
 
@@ -642,20 +640,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       mediaCache.addAsLatest(this);//and remember that it is now in memory and the youngest entry of the cache
 
     return content;
-  }
-
-  /**
-   * cache strategy for metadata TreeTableView: Cache the root of the Tree on first access
-   * @param metaInfoView link to the viewer that knows how to fill the cache
-   * @return the cached element or null if *this* is not a MediaFileTagged
-   */
-  public MetaInfoTreeItem getCachedMetaInfo(MetaInfoView metaInfoView){
-    if (metaInfoTreeItem ==null  && this instanceof MediaFileTagged){ //if invalid and only available for Subclass MediaFileTagged which can have MetaInfos
-      //if not in cache then ask the viewer to load it
-      mediaCache.maintainCacheSizeByFlushingOldest(); //
-      metaInfoTreeItem = metaInfoView.getViewerSpecificMediaInfo((MediaFileTagged) this);
-    }
-    return metaInfoTreeItem;
   }
 
   public boolean shouldRetryLoad(){
@@ -671,9 +655,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
   /**
    * invalidate content cache for this mediaFile and free memory
+   * remove entry from cache list
    */
   public void flushFromCache(){
-    content = null;
+    flushMediaContent();
     mediaCache.flush(this);
   }
 

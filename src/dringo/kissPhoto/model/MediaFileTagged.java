@@ -5,7 +5,9 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
+import dringo.kissPhoto.model.Metadata.MetaInfoTreeItem;
 import dringo.kissPhoto.model.Metadata.WritableEntry;
+import dringo.kissPhoto.view.MetaInfoView;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -22,11 +24,14 @@ import java.nio.file.Path;
  *
  * @author Dringo
  * @since 2014-06-10
+ * @version 2021-04-07 metaInfoView supported. Cache support completed
  * @version 2017-10-28 updated to latest meatadata-extractor version. Now I use source instead of jar because drew noaks does not deliver jar for latest version
  */
 public abstract class MediaFileTagged extends MediaFile {
   ObservableList<WritableEntry> exifChanges = FXCollections.observableArrayList();     //for future extensions when exif field editing is supported
   Metadata metadata;                 //see http://code.google.com/p/metadata-extractor/wiki/GettingStarted
+  protected MetaInfoTreeItem metaInfoTreeItem = null; //cached metaInfo root?
+
 
   protected MediaFileTagged(Path file, MediaFileList parent) {
     super(file, parent);
@@ -47,8 +52,33 @@ public abstract class MediaFileTagged extends MediaFile {
         //e.printStackTrace();
       }
 
-
     return metadata;
+  }
+  /**
+   * cache strategy for metadata TreeTableView: Cache the root of the Tree on first access
+   * @param metaInfoView link to the viewer that knows how to fill the cache
+   * @return the cached element or null if *this* is not a MediaFileTagged
+   */
+  public MetaInfoTreeItem getMetaInfoCached(MetaInfoView metaInfoView){
+    if (metaInfoTreeItem ==null){ //if invalid and only available for Subclass MediaFileTagged which can have MetaInfos
+      //if not in cache then ask the viewer to load it
+      mediaCache.maintainCacheSizeByFlushingOldest(); //
+      metaInfoTreeItem = metaInfoView.getViewerSpecificMediaInfo(this);
+    }
+    return metaInfoTreeItem;
+  }
+
+
+  /**
+   * Flush the media content to free memory
+   * don't forget to clear it in the cache also (or use flushFromCache instead)
+   */
+  @Override
+  public void flushMediaContent() {
+    super.flushMediaContent();
+    metadata=null;
+    metaInfoTreeItem=null;
+
   }
 
   /**

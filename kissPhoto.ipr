@@ -18,34 +18,6 @@
         <element id="module-output" name="vlcj-file-filters" />
       </root>
     </artifact>
-    <artifact type="javafx" name="kissPhotoFX">
-      <output-path>$PROJECT_DIR$/out/artifacts/kissPhotoFX</output-path>
-      <properties id="javafx-properties">
-        <options>
-          <option name="appClass" value="de.kissphoto.KissPhoto" />
-          <option name="description" value="Rename, Renumber, Sort, Find/Replace Files&#13;&#10;Sort Photo and Media&#13;&#10;Show Photos, Videos and Play Audio Files&#13;&#10;Keep it Simple: No Database, just the file names, directories and files" />
-          <option name="htmlPlaceholderId" value="" />
-          <option name="nativeBundle" value="all" />
-          <option name="title" value="KissPhoto" />
-          <option name="vendor" value="Ingo Kreuz" />
-          <option name="version" value="0.21.01" />
-        </options>
-      </properties>
-      <root id="root">
-        <element id="archive" name="kissPhoto.jar">
-          <element id="module-output" name="kissPhoto" />
-          <element id="module-output" name="adobe-xmp-core" />
-          <element id="module-output" name="vlcj-natives" />
-          <element id="module-output" name="vlcj-javafx" />
-          <element id="module-output" name="vlcj-file-filters" />
-          <element id="module-output" name="vlcj" />
-          <element id="module-output" name="metadata-extractor" />
-          <element id="dir-copy" path="$PROJECT_DIR$/src/META-INF" />
-          <element id="extracted-dir" path="$PROJECT_DIR$/../jna/dist/jna-platform.jar" path-in-jar="/" />
-          <element id="extracted-dir" path="$PROJECT_DIR$/../jna/dist/jna.jar" path-in-jar="/" />
-        </element>
-      </root>
-    </artifact>
   </component>
   <component name="CompilerConfiguration">
     <wildcardResourcePatterns>
@@ -231,11 +203,6 @@
   </component>
   <component name="ProjectCodeStyleConfiguration">
     <option name="PREFERRED_PROJECT_CODE_STYLE" value="Default (1)" />
-    <code_scheme name="Project" version="173">
-      <XML>
-        <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
-      </XML>
-    </code_scheme>
   </component>
   <component name="ProjectCodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS">

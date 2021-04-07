@@ -46,10 +46,6 @@ import java.util.ResourceBundle;
  * @version see below in constant KISS_PHOTO_VERSION
  * <p>
  * >>>>>>>>>>>>>>>>>Next:
- * - Ein-/Ausblenden von MetaInfo View und dabei den Slider verschieben.
- *   - Menüpunkt im Ansicht-Menü und Speichern in Settings (fertig machen)
- *   - Icon für's Ein-Ausblenden unten im Content-View
- * - Offenen Pfad in andere Bilder kopieren
  * - Einzelnen Wert in Tabelle rüberziehen (readonly)
  * - Werte editierbar machen, die mediautil unterstützt
  *   - Bemerkung
@@ -63,7 +59,6 @@ import java.util.ResourceBundle;
  * todo Meldung initalFile genauer: 1. übergebene Datei nicht gefunden ... +2. vorheriges Verzeichnis nicht gefunden
  * todo overscan mit padding im ContenView (FullScreen only) und auch speichern in globalSettings (nur context-Menü und Tastenkombi/Mausrad)
  * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger)
- * todo Meta-Daten anzeigen. Fenster ausblendbar
  * todo Editierbar: Datum, Autor, Beschreibung, Copyright
  * todo Multi-Edit-Dialog: Hilfe nur auf Knopfdruck ("Hilfe zu %p %d..."), Aufruf Nummerieren-Dialog rein, EXIF-Kommentar rein (der bekommt %k, damit Übernahme möglich)
  * todo   Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
@@ -79,7 +74,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.314+metaDataViewer"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.407"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -89,17 +84,18 @@ public class KissPhoto extends Application {
   public static boolean optionNoFX = false;  //if -noFX is provided then use the DummyPlayerViewer (for FX incompatible installations without VLC)
   private static boolean optionHelp = false; //-Help will println a short helptext
 
+  private final SplitPane mainSplitPane = new SplitPane();
+  private final SplitPane detailsSplitPane = new SplitPane();
+
   private FileTableView fileTableView;
   private MediaContentView mediaContentView;
-  private MetaInfoView metaInfoView =new MetaInfoView();
+  private MetaInfoView metaInfoView;
   protected Stage primaryStage;
   protected Scene scene;
 
   //all classes can access the settings file
   public static GlobalSettings globalSettings = new GlobalSettings();
 
-  SplitPane mainSplitPane = new SplitPane();
-  SplitPane detailsArea = new SplitPane();
 
   //------- Default Window size/position if no valid settings file found
   private static final double default_X = 0;
@@ -107,7 +103,6 @@ public class KissPhoto extends Application {
   private static final double default_width = 1000;
   private static final double default_height = 800;
   private static final double MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS = 0.5;
-  private static final double DETAILS_AREA_DEFAULT_DIVIDER_POS = 0.9;
 
   //------------- IDs for GlobalSettings-File
   private static final String STAGE_X = "StageX";
@@ -116,8 +111,6 @@ public class KissPhoto extends Application {
   private static final String STAGE_HEIGHT = "StageHeight";
 
   private static final String MAIN_SPLIT_PANE_DIVIDER_POSITION = "mainSplitPane_DividerPosition";
-  private static final String DETAILS_AREA_DIVIDER_POSITION = "detailsArea_DividerPosition";
-  private static final String METAINFO_VIEW_VISIBLE = "metaInfoView_Visible";
 
   /**
    * Entry point
@@ -177,7 +170,6 @@ static private boolean isOption(String arg){
   @Override
   public void start(Stage stage) {
     globalSettings.load();
-
     try {
       I18Support.setLanguage(globalSettings.getProperty(I18Support.LANGUAGE));
     } catch (Exception e) {
@@ -201,25 +193,27 @@ static private boolean isOption(String arg){
     statusBar.showMessage("");
     mediaContentView = new MediaContentView(primaryStage); //Area for showing Media
 
+    metaInfoView = new MetaInfoView(detailsSplitPane); //it needs a handle to the SplitPane where it resides because its size controls the split position
     fileTableView = new FileTableView(primaryStage, mediaContentView, metaInfoView, statusBar); //File table and directory
     statusBar.connectUndeleteDialog(fileTableView);
     mediaContentView.setFileTableView(fileTableView);
 
-    MainMenuBar mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, KISS_PHOTO_VERSION);
+
+    MainMenuBar mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, metaInfoView);
     mainMenuBar.addRecentlyMenu(fileTableView.getFileHistory().getRecentlyFilesMenu());
     // Left and right split pane
     mainSplitPane.prefWidthProperty().bind(scene.widthProperty());
     mainSplitPane.prefHeightProperty().bind(scene.heightProperty());
     mainSplitPane.setDividerPosition(0, MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS);
 
-    // File Details: Upper (picture/player) and lower (EXIF) split pane
-    detailsArea.setOrientation(Orientation.VERTICAL);
-    detailsArea.prefHeightProperty().bind(scene.heightProperty());
-    detailsArea.prefWidthProperty().bind(scene.widthProperty());
-    detailsArea.setDividerPosition(0, DETAILS_AREA_DEFAULT_DIVIDER_POS);
-    detailsArea.getItems().addAll(mediaContentView, metaInfoView);
+    //File Details: Upper (picture/player) and lower (EXIF) split pane
+    //note: the position of the detailsArea's divider is managed in MetaInfoView!
+    detailsSplitPane.setOrientation(Orientation.VERTICAL);
+    detailsSplitPane.prefHeightProperty().bind(scene.heightProperty());
+    detailsSplitPane.prefWidthProperty().bind(scene.widthProperty());
+    detailsSplitPane.getItems().addAll(mediaContentView, metaInfoView);
 
-    mainSplitPane.getItems().addAll(fileTableView, detailsArea);
+    mainSplitPane.getItems().addAll(fileTableView, detailsSplitPane);
 
     //root-Area
     final BorderPane rootArea = new BorderPane();
@@ -251,8 +245,8 @@ static private boolean isOption(String arg){
     final SplashScreen splash = SplashScreen.getSplashScreen();
     if (splash != null) splash.close();
 
-    restoreLastMainWindowSettings();
     primaryStage.show();  //show main window before opening files to show messages while loading
+    restoreLastMainWindowSettings();
 
 
     //wait until resizing has been performed and scene width has followed stage width
@@ -282,8 +276,7 @@ static private boolean isOption(String arg){
 
     globalSettings.setProperty(MAIN_SPLIT_PANE_DIVIDER_POSITION, Double.toString(mainSplitPane.getDividerPositions()[0]));
 
-    globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(detailsArea.getDividerPositions()[0]));
-    globalSettings.setProperty(METAINFO_VIEW_VISIBLE, Boolean.toString(metaInfoView.isVisible()));
+    metaInfoView.storeVisibilityInGlobalSettings();
     fileTableView.storeLastSettings();
   }
 
@@ -324,17 +317,7 @@ static private boolean isOption(String arg){
       mainSplitPane.setDividerPosition(0, MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS);
     }
 
-    try {
-      detailsArea.setDividerPosition(0, Double.parseDouble(globalSettings.getProperty(DETAILS_AREA_DIVIDER_POSITION)));
-    } catch (Exception e) {
-      detailsArea.setDividerPosition(0,DETAILS_AREA_DEFAULT_DIVIDER_POS);
-    }
-
-    try {
-      metaInfoView.setVisible(Boolean.parseBoolean(globalSettings.getProperty(METAINFO_VIEW_VISIBLE)));
-    } catch (Exception e) {
-      metaInfoView.setVisible(true);
-    }
+    metaInfoView.restoreVisibilityFromGlobalSettings();
     fileTableView.restoreLastSettings();
   }
 

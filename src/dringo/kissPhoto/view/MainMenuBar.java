@@ -14,6 +14,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+import static dringo.kissPhoto.KissPhoto.KISS_PHOTO_VERSION;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
@@ -40,10 +41,10 @@ import static dringo.kissPhoto.KissPhoto.language;
  * @version 2014-04-29 added about menu and no longer used the MenuItemBuilder (which is deprecated now)
  */
 public class MainMenuBar extends MenuBar {
-  protected FileTableView fileTableView; //link to fileTableView to call methods via menu/shortcut
-  protected MediaContentView mediaContentView; //link to mediaContentView for full screen etc
   private final Stage primaryStage; //link to embedding window
-  private final String versionString; //link to versionString of Main Window for About Dialog
+  private final FileTableView fileTableView; //link to fileTableView to call methods via menu
+  private final MediaContentView mediaContentView; //link to mediaContentView for full screen etc
+  private final MetaInfoView metaInfoView; //link to metaInfoView for showing/hiding it via view menu
 
   private final Menu fileMenu = new Menu(language.getString("fileMenu"));
   private final Menu editMenu = new Menu(language.getString("editMenu"));
@@ -67,14 +68,13 @@ public class MainMenuBar extends MenuBar {
    *
    * @param primaryStage   link to the main window
    * @param fileTableView  link for calling of most of the methods, i.e. Filetable.open etc.
-   * @param versionString  link for the about Dialog
    */
-  public MainMenuBar(Stage primaryStage, FileTableView fileTableView, MediaContentView mediaContentView, String versionString) {
+  public MainMenuBar(Stage primaryStage, FileTableView fileTableView, MediaContentView mediaContentView, MetaInfoView metaInfoView) {
     super();
     this.primaryStage = primaryStage;
     this.fileTableView = fileTableView;
     this.mediaContentView = mediaContentView;
-    this.versionString = versionString;
+    this.metaInfoView = metaInfoView;
 
     createFileMenu();
     createEditMenu();
@@ -308,6 +308,7 @@ public class MainMenuBar extends MenuBar {
    * ########################### View Menu Items ###########################
    */
   private void createViewMenu() {
+    //--------------- FileTableViews's View
     final MenuItem resetSortingItem = new MenuItem(language.getString("reset.sortingMenu"));
     resetSortingItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN, KeyCodeCombination.SHIFT_DOWN));
     resetSortingItem.setOnAction(event -> {
@@ -324,6 +325,23 @@ public class MainMenuBar extends MenuBar {
     });
     viewMenu.getItems().add(resetColWidthItem);
 
+    //----------------- MetaInfoView's View
+    viewMenu.getItems().add(new SeparatorMenuItem());
+
+    final CheckMenuItem showMetaInfoItem = new CheckMenuItem("show Meta Infos");
+    showMetaInfoItem.setAccelerator(new KeyCodeCombination(KeyCode.M, KeyCombination.CONTROL_DOWN));
+    showMetaInfoItem.selectedProperty().bindBidirectional(metaInfoView.visibleProperty());
+    showMetaInfoItem.setOnAction(event -> {
+      event.consume();
+      //because the changed selection is bound to visibility it is not necessary to set it here again
+      if (showMetaInfoItem.isSelected()) { //i.e. if metaInfoView is visible
+        metaInfoView.guaranteeMinimumHeight(); //after manual showing guarantee a minimum height to ensure it really became visible
+      }
+    });
+    viewMenu.getItems().add(showMetaInfoItem);
+
+
+    //----------------- MediaView's View
     viewMenu.getItems().add(new SeparatorMenuItem());
 
     final MenuItem fullScreenItem = new MenuItem();
@@ -342,9 +360,10 @@ public class MainMenuBar extends MenuBar {
 
     viewMenu.getItems().addAll(fullScreenItem, showOnNextScreenItem);
 
-    final MenuItem slideShowItem = new MenuItem(language.getString("slide.showMenu"));
-    slideShowItem.setDisable(true); //not yet implemented
-    viewMenu.getItems().add(slideShowItem);
+    //final MenuItem slideShowItem = new MenuItem(language.getString("slide.showMenu"));
+    //slideShowItem.setDisable(true); //not yet implemented
+    //viewMenu.getItems().add(slideShowItem);
+
     getMenus().add(viewMenu);
   }
 
@@ -451,7 +470,7 @@ public class MainMenuBar extends MenuBar {
     aboutItem.setAccelerator(new KeyCodeCombination(KeyCode.F1));
     aboutItem.setOnAction(event -> {
       event.consume();
-      if (aboutDialog == null) aboutDialog = new AboutDialog(primaryStage, versionString);
+      if (aboutDialog == null) aboutDialog = new AboutDialog(primaryStage, KISS_PHOTO_VERSION);
       aboutDialog.showModal();
     });
     helpMenu.getItems().add(aboutItem);

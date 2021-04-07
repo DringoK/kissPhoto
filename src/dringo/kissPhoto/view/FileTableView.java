@@ -40,6 +40,7 @@ import java.nio.file.Paths;
 import java.nio.file.WatchEvent;
 import java.text.MessageFormat;
 
+import static dringo.kissPhoto.KissPhoto.globalSettings;
 import static dringo.kissPhoto.KissPhoto.language;
 
 /**
@@ -416,13 +417,13 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * - stage not null
    */
   public void storeLastSettings() {
-    KissPhoto.globalSettings.setProperty(STATUS_COL_WIDTH, Double.toString(statusColumn.getWidth()));
-    KissPhoto.globalSettings.setProperty(PREFIX_COL_WIDTH, Double.toString(prefixColumn.getWidth()));
-    KissPhoto.globalSettings.setProperty(COUNTER_COL_WIDTH, Double.toString(counterColumn.getWidth()));
-    KissPhoto.globalSettings.setProperty(SEPARATOR_COL_WIDTH, Double.toString(separatorColumn.getWidth()));
-    KissPhoto.globalSettings.setProperty(DESCRIPTION_COL_WIDTH, Double.toString(descriptionColumn.getWidth()));
-    KissPhoto.globalSettings.setProperty(EXTENSION_COL_WIDTH, Double.toString(extensionColumn.getWidth()));
-    KissPhoto.globalSettings.setProperty(FILEDATE_COL_WIDTH, Double.toString(fileDateColumn.getWidth()));
+    globalSettings.setProperty(STATUS_COL_WIDTH, Double.toString(statusColumn.getWidth()));
+    globalSettings.setProperty(PREFIX_COL_WIDTH, Double.toString(prefixColumn.getWidth()));
+    globalSettings.setProperty(COUNTER_COL_WIDTH, Double.toString(counterColumn.getWidth()));
+    globalSettings.setProperty(SEPARATOR_COL_WIDTH, Double.toString(separatorColumn.getWidth()));
+    globalSettings.setProperty(DESCRIPTION_COL_WIDTH, Double.toString(descriptionColumn.getWidth()));
+    globalSettings.setProperty(EXTENSION_COL_WIDTH, Double.toString(extensionColumn.getWidth()));
+    globalSettings.setProperty(FILEDATE_COL_WIDTH, Double.toString(fileDateColumn.getWidth()));
 
 
     try {
@@ -442,39 +443,39 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    */
   public void restoreLastSettings() {
     try {
-      statusColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(STATUS_COL_WIDTH)));
+      statusColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(STATUS_COL_WIDTH)));
     } catch (Exception e) {
-      primaryStage.setX(STATUS_COL_DEFAULT_WIDTH);
+      statusColumn.setPrefWidth(STATUS_COL_DEFAULT_WIDTH);
     }
     try {
-      prefixColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(PREFIX_COL_WIDTH)));
+      prefixColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(PREFIX_COL_WIDTH)));
     } catch (Exception e) {
-      primaryStage.setX(PREFIX_COL_DEFAULT_WIDTH);
+      prefixColumn.setPrefWidth(PREFIX_COL_DEFAULT_WIDTH);
     }
     try {
-      counterColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(COUNTER_COL_WIDTH)));
+      counterColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(COUNTER_COL_WIDTH)));
     } catch (Exception e) {
-      primaryStage.setX(COUNTER_COL_DEFAULT_WIDTH);
+      counterColumn.setPrefWidth(COUNTER_COL_DEFAULT_WIDTH);
     }
     try {
-      separatorColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(SEPARATOR_COL_WIDTH)));
+      separatorColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(SEPARATOR_COL_WIDTH)));
     } catch (Exception e) {
-      primaryStage.setX(SEPARATOR_COL_DEFAULT_WIDTH);
+      separatorColumn.setPrefWidth(SEPARATOR_COL_DEFAULT_WIDTH);
     }
     try {
-      descriptionColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(DESCRIPTION_COL_WIDTH)));
+      descriptionColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(DESCRIPTION_COL_WIDTH)));
     } catch (Exception e) {
-      primaryStage.setX(DESCRIPTION_COL_DEFAULT_WIDTH);
+      descriptionColumn.setPrefWidth(DESCRIPTION_COL_DEFAULT_WIDTH);
     }
     try {
-      extensionColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(EXTENSION_COL_WIDTH)));
+      extensionColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(EXTENSION_COL_WIDTH)));
     } catch (Exception e) {
-      primaryStage.setX(EXTENSION_COL_DEFAULT_WIDTH);
+      extensionColumn.setPrefWidth(EXTENSION_COL_DEFAULT_WIDTH);
     }
     try {
-      fileDateColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(FILEDATE_COL_WIDTH)));
+      fileDateColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(FILEDATE_COL_WIDTH)));
     } catch (Exception e) {
-      primaryStage.setX(FILEDATE_COL_DEFAULT_WIDTH);
+      fileDateColumn.setPrefWidth(FILEDATE_COL_DEFAULT_WIDTH);
     }
   }
 
