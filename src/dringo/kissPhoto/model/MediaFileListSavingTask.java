@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -69,7 +70,9 @@ public class MediaFileListSavingTask extends Task<Integer> {
           //perform deletion on disk
           if (mediaFile.performDeleteFile())
             //if successful
-            deletedFileList.remove(mediaFile);    //delete from list with files to delete (the undelete list ;-)
+            Platform.runLater(() -> {               //do this in main task, because change listener will try to update the UI, which is not allowed in this Thread-Context
+              deletedFileList.remove(mediaFile);    //delete from list with files to delete (the undelete list ;-)
+            });
             //it already has been immediately deleted from the view when moving to deletion list, so not necessary to delete from fileList
           else
             errorCount++;

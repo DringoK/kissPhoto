@@ -4,7 +4,7 @@ jpackage \
   --type deb \
   --input out/artifacts \
   --main-jar kissPhoto.jar \
-  --app-version 00.21.0407 \
+  --app-version 00.21.0409 \
   --name kissPhoto \
   --copyright '(c)2021 Dr. Ingo Kreuz' \
   --vendor 'Ingo Kreuz' \

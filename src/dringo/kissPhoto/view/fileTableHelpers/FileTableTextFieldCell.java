@@ -37,7 +37,7 @@ import javafx.scene.input.KeyEvent;
  * @version 2020-12-20 lambda expressions for event handlers
  * @version 2018-11-17 Ctrl-U now copies information from the line above in edit mode, (Shift) TAB moves to next (prev) column, fixed: keeping caret position fixed
  */
-public class TextFieldCell extends TableCell<MediaFile, String> {
+public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   static int lastCaretPosition = 0; //this is to save the caretPosition when moving up/down lines in editMode
   static boolean lastCaretPositionValid = false;
   static RestrictedInputField inputField;
@@ -75,6 +75,8 @@ public class TextFieldCell extends TableCell<MediaFile, String> {
     if (lastCaretPositionValid) {
       inputField.deselect();
       inputField.positionCaret(lastCaretPosition); //move to last text cursor position in the new row
+    }else{
+      inputField.selectAll();
     }
   }
   public void positionCaretOrSelect() {
@@ -92,10 +94,6 @@ public class TextFieldCell extends TableCell<MediaFile, String> {
     } else {
       restoreCaretPositionIfValid();
     }
-    //else {
-      //default behavior of TableView is already selectAll...
-      //inputField.selectAll();
-    //}
   }
 
   @Override

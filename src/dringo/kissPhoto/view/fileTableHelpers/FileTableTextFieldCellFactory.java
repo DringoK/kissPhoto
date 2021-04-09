@@ -21,11 +21,11 @@ import javafx.util.Callback;
  * @since 2016-11-04
  * @version initial version
  */
-public class TextFieldCellFactory implements Callback<TableColumn<MediaFile, String>, TableCell<MediaFile, String>> {
+public class FileTableTextFieldCellFactory implements Callback<TableColumn<MediaFile, String>, TableCell<MediaFile, String>> {
 
   @Override
   public TableCell<MediaFile, String> call(TableColumn<MediaFile, String> param) {
-    return new TextFieldCell();
+    return new FileTableTextFieldCell();
   }
 
 } //class TextFieldCellFactory

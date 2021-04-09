@@ -74,7 +74,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.407"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.409"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -197,6 +197,7 @@ static private boolean isOption(String arg){
     fileTableView = new FileTableView(primaryStage, mediaContentView, metaInfoView, statusBar); //File table and directory
     statusBar.connectUndeleteDialog(fileTableView);
     mediaContentView.setFileTableView(fileTableView);
+    metaInfoView.setOtherViews(fileTableView, mediaContentView);
 
 
     MainMenuBar mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, metaInfoView);

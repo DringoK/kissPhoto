@@ -51,6 +51,8 @@ public class MetaInfoView extends StackPane {
 
 
   private final SplitPane surroundingPane;    //surroundingPane the splitPane where the metaView lies in. When showing/hiding the dividerPos will be restored
+  private FileTableView fileTableView;        //some key presses are led to fileTableView
+  private MediaContentView mediaContentView;  //some key presses are led to mediaContentView
   private final TreeTableView<MetaInfoItem> treeTableView = new TreeTableView<>();
 
   //connect columns to data
@@ -83,6 +85,10 @@ public class MetaInfoView extends StackPane {
 
     valueColumn.setCellValueFactory(param -> param.getValue().getValue().getValueString());
     valueColumn.prefWidthProperty().bind(widthProperty().subtract(keyColumn.widthProperty())); //the rest of the available space
+//    valueColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+//    valueColumn.setEditable(true);
+//    treeTableView.setEditable(true);
+
     treeTableView.getColumns().add(valueColumn);
 
     treeTableView.setShowRoot(false);
@@ -91,8 +97,14 @@ public class MetaInfoView extends StackPane {
     visibleProperty().addListener((observable, oldValue, newValue) -> onShowHide());
 
     installSelectionListener();
+    installKeyHandlers();
 
     getChildren().add(treeTableView);
+  }
+
+  public void setOtherViews(FileTableView fileTableView, MediaContentView mediaContentView) {
+    this.fileTableView = fileTableView;
+    this.mediaContentView = mediaContentView;
   }
 
   private void installSelectionListener() {
@@ -104,6 +116,29 @@ public class MetaInfoView extends StackPane {
       }
     });
   }
+
+  private void installKeyHandlers() {
+    setOnKeyReleased(keyEvent -> {   //KeyPressed and KeyTyped are not fired for F2
+      switch (keyEvent.getCode()) {
+        //Edit
+        case F2: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
+            keyEvent.consume();
+            fileTableView.rename();
+          }
+          break;
+
+        //Player
+        case SPACE:
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && mediaContentView.getPlayerViewer().isVisible()) {
+            keyEvent.consume();
+            mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
+          }
+          break;
+      }
+    });
+  }
+
 
   /**
    * update the userSelectionPath variable if necessary
@@ -164,12 +199,9 @@ public class MetaInfoView extends StackPane {
     }
     if (item !=null && item != treeTableView.getRoot()) {     //something valid (at least a part of the path) has been found and will be selected now
       treeTableView.getSelectionModel().select(item);
-      userSelection = item;
       treeTableView.scrollTo(treeTableView.getRow(item));
     } else {                                                 //not even the first part was valid so clear selection
       treeTableView.getSelectionModel().clearSelection();
-      userSelectionPath = null;
-      userSelection = null;
     }
   }
 
@@ -223,7 +255,7 @@ public class MetaInfoView extends StackPane {
 
 
   /**
-   * AutoHide (=Disable) is performed if SouroundingSplitPane's Divider makes this Pane's height =0
+   * AutoHide (=Disable) is performed if SurroundingSplitPane's Divider makes this Pane's height =0
    * AutoShow (=Enable) if the Slider is moved to make the Pane's Height >0
    * @param newHeight the new window height is handed over by the event
    */
