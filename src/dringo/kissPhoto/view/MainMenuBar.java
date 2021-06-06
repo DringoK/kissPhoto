@@ -328,7 +328,7 @@ public class MainMenuBar extends MenuBar {
     //----------------- MetaInfoView's View
     viewMenu.getItems().add(new SeparatorMenuItem());
 
-    final CheckMenuItem showMetaInfoItem = new CheckMenuItem("show Meta Infos");
+    final CheckMenuItem showMetaInfoItem = new CheckMenuItem(language.getString("show.meta.data"));
     showMetaInfoItem.setAccelerator(new KeyCodeCombination(KeyCode.M, KeyCombination.CONTROL_DOWN));
     showMetaInfoItem.selectedProperty().bindBidirectional(metaInfoView.visibleProperty());
     showMetaInfoItem.setOnAction(event -> {
@@ -339,6 +339,14 @@ public class MainMenuBar extends MenuBar {
       }
     });
     viewMenu.getItems().add(showMetaInfoItem);
+
+    final MenuItem showGPSLocationItem = new MenuItem(language.getString("show.gps.location.in.google.maps"));
+    showGPSLocationItem.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN));
+    showGPSLocationItem.setOnAction(event -> {
+      event.consume();
+      metaInfoView.showGPSPositionInGoogleMaps();
+    });
+    viewMenu.getItems().add(showGPSLocationItem);
 
 
     //----------------- MediaView's View
@@ -363,6 +371,17 @@ public class MainMenuBar extends MenuBar {
     //final MenuItem slideShowItem = new MenuItem(language.getString("slide.showMenu"));
     //slideShowItem.setDisable(true); //not yet implemented
     //viewMenu.getItems().add(slideShowItem);
+
+
+    viewMenu.setOnShowing(event -> {
+      //enable the menu item only if gps data is available
+      showGPSLocationItem.setDisable(!metaInfoView.isValidGPSavailable());
+    });
+
+    viewMenu.setOnHiding(event -> {
+      //while hidden enable the menu item to enable the accelerator-key
+      showGPSLocationItem.setDisable(false);
+    });
 
     getMenus().add(viewMenu);
   }

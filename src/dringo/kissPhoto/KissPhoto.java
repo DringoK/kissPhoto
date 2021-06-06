@@ -74,7 +74,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.409"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.606"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -87,11 +87,13 @@ public class KissPhoto extends Application {
   private final SplitPane mainSplitPane = new SplitPane();
   private final SplitPane detailsSplitPane = new SplitPane();
 
+  private Stage primaryStage;
+  private Scene scene;
+
   private FileTableView fileTableView;
   private MediaContentView mediaContentView;
   private MetaInfoView metaInfoView;
-  protected Stage primaryStage;
-  protected Scene scene;
+  private StatusBar statusBar;
 
   //all classes can access the settings file
   public static GlobalSettings globalSettings = new GlobalSettings();
@@ -189,15 +191,15 @@ static private boolean isOption(String arg){
     stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/KissPhotoIcon.jpg")));
 
     //Create the View-Areas
-    StatusBar statusBar = new StatusBar();
+    statusBar = new StatusBar();
     statusBar.showMessage("");
     mediaContentView = new MediaContentView(primaryStage); //Area for showing Media
 
     metaInfoView = new MetaInfoView(detailsSplitPane); //it needs a handle to the SplitPane where it resides because its size controls the split position
     fileTableView = new FileTableView(primaryStage, mediaContentView, metaInfoView, statusBar); //File table and directory
     statusBar.connectUndeleteDialog(fileTableView);
-    mediaContentView.setFileTableView(fileTableView);
-    metaInfoView.setOtherViews(fileTableView, mediaContentView);
+    mediaContentView.setOtherViews(fileTableView, metaInfoView);
+    metaInfoView.setOtherViews(fileTableView, mediaContentView, statusBar);
 
 
     MainMenuBar mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, metaInfoView);
@@ -401,4 +403,19 @@ static private boolean isOption(String arg){
       stage.setHeight(maxY + decoWidth); //maxY already includes lower decoWidth, add upper decoWidth
     }
   }
+
+  public FileTableView getFileTableView() {
+    return fileTableView;
+  }
+
+  public StatusBar getStatusBar() {
+    return statusBar;
+  }
+  public MediaContentView getMediaContentView() {
+    return mediaContentView;
+  }
+  public MetaInfoView getMetaInfoView() {
+    return metaInfoView;
+  }
+
 }

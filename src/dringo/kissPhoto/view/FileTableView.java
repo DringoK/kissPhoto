@@ -233,6 +233,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     fileDateColumn.setCellValueFactory(p -> p.getValue().fileDateProperty());
     getColumns().add(fileDateColumn);
 
+    setTableMenuButtonVisible(true); //enable user to show/hide columns
 
     //install SortOrder-ChangeListener to keep Selection
     this.getSortOrder().addListener((ListChangeListener<TableColumn<MediaFile, ?>>) change -> restoreLastSelection());

@@ -34,7 +34,7 @@ class FullScreenStage extends Stage {
    * @param primaryMediaContentView link back to main window for taking over all settings
    * Create new MediaContentView link it to the primary one and take over currentPlayerPosition if possible
    */
-  public FullScreenStage(MediaContentView primaryMediaContentView) {
+  public FullScreenStage(MediaContentView primaryMediaContentView, MetaInfoView metaInfoView) {
     super();
     initOwner(primaryMediaContentView.getOwner()); //link to main Application, so that it will be closed together
 
@@ -45,7 +45,7 @@ class FullScreenStage extends Stage {
 
     //build new MediaContentView for fullScreen Stage and link it to main window / primaryMediaContentView
     mediaContentView = new MediaContentView(this, primaryMediaContentView); //link to primaryMediaContentView
-    mediaContentView.setFileTableView(primaryMediaContentView.getFileTableView());
+    mediaContentView.setOtherViews(primaryMediaContentView.getFileTableView(), metaInfoView);
 
     mediaContentView.prefHeightProperty().bind(scene.heightProperty());
     mediaContentView.prefWidthProperty().bind(scene.widthProperty());

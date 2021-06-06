@@ -51,6 +51,7 @@ public class MediaContentView extends Pane {
   private int enteredLineNumber = -1; //negative means: nothing entered
 
   private FileTableView fileTableView = null; //optional link to the fileTableView connected with this MediaContentView (for selecting pictures while focus is in MediaContentView
+  private MetaInfoView metaInfoView = null;
 
   private final Stage owner; //normal mediaContentView is in the primary stage, full-Screen MediaContentView is in a dialog-stage which is in fullScreenMode
 
@@ -759,7 +760,7 @@ public class MediaContentView extends Pane {
 
       //Singleton: only build it once and only when needed for the first time otherwise reuse
       if (fullScreenStage==null){
-        fullScreenStage = new FullScreenStage(this); //use a new mediaContentView for fullScreen and link to "this" =normal view
+        fullScreenStage = new FullScreenStage(this, metaInfoView); //use a new mediaContentView for fullScreen and link to "this" =normal view
         //bind controls together
         playerViewer.getPlayerControls().bindBidirectionalPlayPauseButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getPlayPauseButton());
         playerViewer.getPlayerControls().bindBidirectionalPlaylistModeButtons(fullScreenStage.mediaContentView.getPlayerViewer().getPlayerControls().getPlaylistButton());
@@ -900,6 +901,16 @@ public class MediaContentView extends Pane {
     }
 
     contextMenu.getItems().addAll(new SeparatorMenuItem(), fullScreenItem, showOnNextScreenItem);
+  //---------- Metadata
+    final MenuItem showGPSLocationItem = new MenuItem(language.getString("show.gps.location.in.google.maps"));
+    showGPSLocationItem.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN));
+    showGPSLocationItem.setOnAction(event -> {
+      event.consume();
+    metaInfoView.showGPSPositionInGoogleMaps();
+    });
+    contextMenu.getItems().add(showGPSLocationItem);
+    //-----> see below: setOnShowing/Hiding for enabling/disabling this menu item
+
 
 //-------- Attributes
     final CheckMenuItem showAttrItem = new CheckMenuItem(language.getString("display.description"));
@@ -937,7 +948,19 @@ public class MediaContentView extends Pane {
 
       showFileDateItem.setSelected(attrViewer.isDisplayFileDate());
       showFileDateItem.setDisable(!attrViewer.isVisible());
+
+      //enable the menu item only if gps data is available
+      showGPSLocationItem.setDisable(!metaInfoView.isValidGPSavailable());
+      System.out.println("showing: " + showGPSLocationItem.isDisable());
     });
+
+    contextMenu.setOnHiding(event -> {
+      //while hidden enable the menu item to enable the accelerator-key
+      showGPSLocationItem.setDisable(false);
+      System.out.println("hiding: " + showGPSLocationItem.isDisable());
+    });
+
+
   }
 
   public AttributesViewer getAttrViewer() {
@@ -960,9 +983,10 @@ public class MediaContentView extends Pane {
     return fileTableView;
   }
 
-  public void setFileTableView(FileTableView fileTableView) {
+  public void setOtherViews(FileTableView fileTableView, MetaInfoView metaInfoView) {
 
     this.fileTableView = fileTableView;
+    this.metaInfoView = metaInfoView;
   }
 
   public MediaFile getCurrentMediaFile() {

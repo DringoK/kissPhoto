@@ -1,6 +1,9 @@
 package dringo.kissPhoto.view;
 
 import com.drew.metadata.Metadata;
+import com.drew.metadata.Tag;
+import com.drew.metadata.exif.GpsDirectory;
+import dringo.kissPhoto.helper.AppStarter;
 import dringo.kissPhoto.helper.ObservableStringList;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileTagged;
@@ -21,7 +24,7 @@ import static dringo.kissPhoto.KissPhoto.language;
  * <p>
  * Copyright (c)2021 kissPhoto
  * </p>
- *
+ * <p>
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
  * View for showing all metadata info of media files. Eg. Exif or IPTC
@@ -33,6 +36,7 @@ import static dringo.kissPhoto.KissPhoto.language;
  * </p>
  *
  * @author Dringo
+ * @version 2021-06-06 call to Google maps added for Exif GPS data. e.g. https://www.google.com/maps/place/47°05'29.0"N+8°27'52.0"E
  * @version 2021-03-20 First implementation
  * @since 2021-03-14
  */
@@ -42,7 +46,7 @@ public class MetaInfoView extends StackPane {
   //default values if value not in global settings
   private static final boolean DEFAULT_VISIBILITY = true;
   private static final double DETAILS_AREA_DEFAULT_DIVIDER_POS = 0.9;
-  private static final double DEFAULT_KEYCOLUMN_WIDTH=250;
+  private static final double DEFAULT_KEYCOLUMN_WIDTH = 250;
   //IDs for globalSettings
   private static final String METAINFO_VIEW_VISIBLE = "metaInfoView_Visible";
   private static final String DETAILS_AREA_DIVIDER_POSITION = "detailsArea_DividerPosition";
@@ -51,19 +55,18 @@ public class MetaInfoView extends StackPane {
 
 
   private final SplitPane surroundingPane;    //surroundingPane the splitPane where the metaView lies in. When showing/hiding the dividerPos will be restored
-  private FileTableView fileTableView;        //some key presses are led to fileTableView
-  private MediaContentView mediaContentView;  //some key presses are led to mediaContentView
   private final TreeTableView<MetaInfoItem> treeTableView = new TreeTableView<>();
-
   //connect columns to data
 // param.getValue() returns the TreeItem<MetaInfoItem> instance for a particular TreeTableView row,
 // param.getValue().getValue() returns the MetaInfoItem instance inside the TreeItem<MetaInfoItem>
   private final TreeTableColumn<MetaInfoItem, String> keyColumn = new TreeTableColumn<>(language.getString("key"));
   private final TreeTableColumn<MetaInfoItem, String> valueColumn = new TreeTableColumn<>(language.getString("value"));
-
+  private FileTableView fileTableView;        //some key presses are led to fileTableView
+  private MediaContentView mediaContentView;  //some key presses are led to mediaContentView
+  private StatusBar statusBar;
   private double rememberDividerPos = 0; //keep old DividerPos if MetaInfoView becomes visible again, i.e. valid while MetaInfoView is not visible. maintained in onShowHide
 
-  private MediaFile mediaFileWhileHidden = null; //if invisible then setMedia only stores here what has to be loaded if MetaInfoView becomes visible (=active), null while visible
+  private MediaFile currentMediaFile = null; //if invisible then setMedia only stores here what has to be loaded if MetaInfoView becomes visible (=active), null while visible
 
   //try to keep selection when changing media
   private TreeItem<MetaInfoItem> userSelection = null;  //always try to keep the current selection if the next mediaFile is selected. It is valid from the moment a user has selected something or the last value has been read out of globalSettings
@@ -73,6 +76,7 @@ public class MetaInfoView extends StackPane {
   /**
    * Create an empty TreeTableView.
    * setMediaFile(mediaFile) will connect it later to the current mediaFile
+   *
    * @param surroundingPane the splitPane where the metaView lies in. When showing/hiding the dividerPos will be restored
    */
   public MetaInfoView(SplitPane surroundingPane) {
@@ -102,9 +106,10 @@ public class MetaInfoView extends StackPane {
     getChildren().add(treeTableView);
   }
 
-  public void setOtherViews(FileTableView fileTableView, MediaContentView mediaContentView) {
+  public void setOtherViews(FileTableView fileTableView, MediaContentView mediaContentView, StatusBar statusBar) {
     this.fileTableView = fileTableView;
     this.mediaContentView = mediaContentView;
+    this.statusBar = statusBar;
   }
 
   private void installSelectionListener() {
@@ -142,9 +147,10 @@ public class MetaInfoView extends StackPane {
 
   /**
    * update the userSelectionPath variable if necessary
+   *
    * @return the cached or updated userSelectionPath variable
    */
-  private ObservableStringList getUserSelectionPath(){
+  private ObservableStringList getUserSelectionPath() {
     if (userSelectionPath == null)  //update only if selection has been changed since last time
       userSelectionPath = getPath(userSelection);
 
@@ -159,12 +165,12 @@ public class MetaInfoView extends StackPane {
    * @param item for this tree item the path to the root is extracted
    * @return the Path (=StringList) for the TreeItem so that it can be restored for another MediaFileTagged using selectPath
    */
-  private ObservableStringList getPath(TreeItem<MetaInfoItem> item){
+  private ObservableStringList getPath(TreeItem<MetaInfoItem> item) {
     ObservableStringList path = new ObservableStringList();
 
     //walk up to the root. item will be the first in the list (index 0)
     TreeItem<MetaInfoItem> i = item;
-    while (i != null){
+    while (i != null) {
       path.add(i.getValue().getKeyString().getValue());
       i = i.getParent();
     }
@@ -177,17 +183,18 @@ public class MetaInfoView extends StackPane {
    * if a sub element is not found then stop expanding and select the last found element
    * if the complete path is found, then select the leaf (index 0)
    * if not even the root is found then the selection is cleared
+   *
    * @param path the tree path to be expanded and selected
    */
-  private void selectPath(ObservableStringList path){
+  private void selectPath(ObservableStringList path) {
     TreeItem<MetaInfoItem> item = treeTableView.getRoot();
-    int pathIndex=path.size()-2; //start at the end of the list (-1 because indices are 0-based), ignore the invisible root (-1)
+    int pathIndex = path.size() - 2; //start at the end of the list (-1 because indices are 0-based), ignore the invisible root (-1)
     boolean found = true; //if element has been found
-    while (pathIndex>=0){
+    while (pathIndex >= 0) {
       //search for element in children
-      for (TreeItem<MetaInfoItem> child:item.getChildren()) {
+      for (TreeItem<MetaInfoItem> child : item.getChildren()) {
         found = (child.getValue().getKeyString().getValue().equalsIgnoreCase(path.get(pathIndex)));
-        if (found){
+        if (found) {
           item = child; //take over as current item
           item.setExpanded(true);
           break;   //for
@@ -197,7 +204,7 @@ public class MetaInfoView extends StackPane {
         break;    //while
       pathIndex--;
     }
-    if (item !=null && item != treeTableView.getRoot()) {     //something valid (at least a part of the path) has been found and will be selected now
+    if (item != null && item != treeTableView.getRoot()) {     //something valid (at least a part of the path) has been found and will be selected now
       treeTableView.getSelectionModel().select(item);
       treeTableView.scrollTo(treeTableView.getRow(item));
     } else {                                                 //not even the first part was valid so clear selection
@@ -209,16 +216,18 @@ public class MetaInfoView extends StackPane {
   /**
    * try to set the root on metadata of the mediaFile to display its meta info
    * for speeding up reasons this is only performed if MetaInfoView is visible (=active)
+   *
    * @param mediaFile for which meta info shall be displayed
    * @return true if the media file is compatible with metadataViewer (i.e. mediaFile is a MediaFileTagged)
    */
-  public boolean setMediaFile(MediaFile mediaFile){
+  public boolean setMediaFile(MediaFile mediaFile) {
+    currentMediaFile = mediaFile;
+
     if (isVisible()) {
-      mediaFileWhileHidden = null; //not used while visible
 
       if (mediaFile instanceof MediaFileTagged) {
         //status here: mediaFile is tagged and not null
-        MetaInfoTreeItem metaInfoTreeItem = ((MediaFileTagged)mediaFile).getMetaInfoCached(this);
+        MetaInfoTreeItem metaInfoTreeItem = ((MediaFileTagged) mediaFile).getMetaInfoCached(this);
 
         freezeUserSelection = true;
         getUserSelectionPath();  //update the variable if necessary
@@ -232,23 +241,23 @@ public class MetaInfoView extends StackPane {
         treeTableView.setRoot(null); //do not show anything
         return false;
       }
-    } else
-      mediaFileWhileHidden = mediaFile; //used only in this case to load Metadata in onShowHide()
-      return (mediaFile instanceof MediaFileTagged);
+    }
+    return (mediaFile instanceof MediaFileTagged);
   }
 
   /**
    * Cache support: lazy load the meta infos from media
+   *
    * @param mediaFileTagged link back to the mediaFile which tries to fill it's cache for this view
    * @return the MetadataTreeItem that should be cached
    */
-  public MetaInfoTreeItem getViewerSpecificMediaInfo(MediaFileTagged mediaFileTagged){
+  public MetaInfoTreeItem getViewerSpecificMediaInfo(MediaFileTagged mediaFileTagged) {
     //lazy Load MetaData by calling getMetadata()
     //lazy load the MetaDataTreeItem if possible from cache (see MediaFile.getCachedMetaInfo())
     Metadata metadata = mediaFileTagged.getMetadata(); //get the cached value from the model
-    if (metadata!=null) { //if Metadata could be loaded or had been loaded before
+    if (metadata != null) { //if Metadata could be loaded or had been loaded before
       return new MetaInfoTreeItem(new MetadataItem(metadata));
-    }else {
+    } else {
       return null;
     }
   }
@@ -257,22 +266,24 @@ public class MetaInfoView extends StackPane {
   /**
    * AutoHide (=Disable) is performed if SurroundingSplitPane's Divider makes this Pane's height =0
    * AutoShow (=Enable) if the Slider is moved to make the Pane's Height >0
+   *
    * @param newHeight the new window height is handed over by the event
    */
-  public void onHeightChanged(double newHeight){
+  public void onHeightChanged(double newHeight) {
     setVisible(newHeight > 0.001);
   }
+
   /**
    * Maintain the Surrounding SplitPane if MetaInfo is shown/activated or hidden/disabled
    * while it is inactive no metadata is read or cached to speed up the application
    * when hiding (visible=false) the current position of the divider is stored and restored when showing again
    */
-  public void onShowHide(){
+  public void onShowHide() {
     if (isVisible()) {       //i.e. just became visible
       surroundingPane.setDividerPosition(0, rememberDividerPos);
-      if (mediaFileWhileHidden !=null)
-        setMediaFile(mediaFileWhileHidden);
-    }else{
+      if (currentMediaFile != null)
+        setMediaFile(currentMediaFile);
+    } else {
       rememberDividerPos = surroundingPane.getDividerPositions()[0];
       surroundingPane.setDividerPosition(0, 1); //100%=only media is shown
     }
@@ -284,9 +295,9 @@ public class MetaInfoView extends StackPane {
    * to make the view really become visible.
    * It is not(!) used if the user moves the divider with the mouse.
    */
-  public void guaranteeMinimumHeight(){
+  public void guaranteeMinimumHeight() {
     //note: 1.0=100%= MetaInfoView is invisible
-    if (surroundingPane.getDividerPositions()[0]> DETAILS_AREA_DEFAULT_DIVIDER_POS) {
+    if (surroundingPane.getDividerPositions()[0] > DETAILS_AREA_DEFAULT_DIVIDER_POS) {
       surroundingPane.setDividerPosition(0, DETAILS_AREA_DEFAULT_DIVIDER_POS);
       rememberDividerPos = DETAILS_AREA_DEFAULT_DIVIDER_POS;
     }
@@ -303,9 +314,9 @@ public class MetaInfoView extends StackPane {
     globalSettings.setProperty(METAINFO_VIEW_VISIBLE, Boolean.toString(isVisible()));
     globalSettings.setProperty(KEYCOLUMN_WIDTH, Double.toString(keyColumn.getWidth()));
 
-    if (isVisible()){
+    if (isVisible()) {
       globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(surroundingPane.getDividerPositions()[0]));
-    }else{
+    } else {
       globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(rememberDividerPos));
     }
   }
@@ -317,7 +328,7 @@ public class MetaInfoView extends StackPane {
     try {
       userSelectionPath = new ObservableStringList();
       userSelectionPath.appendFromCSVString(globalSettings.getProperty(SELECTED_KEYPATH));
-    } catch (Exception e){
+    } catch (Exception e) {
       userSelectionPath = null; //nothing selected
     }
 
@@ -328,16 +339,71 @@ public class MetaInfoView extends StackPane {
     }
 
     try {
-      rememberDividerPos= Double.parseDouble(globalSettings.getProperty(DETAILS_AREA_DIVIDER_POSITION));
+      rememberDividerPos = Double.parseDouble(globalSettings.getProperty(DETAILS_AREA_DIVIDER_POSITION));
     } catch (Exception e) {
-      rememberDividerPos=DETAILS_AREA_DEFAULT_DIVIDER_POS;
+      rememberDividerPos = DETAILS_AREA_DEFAULT_DIVIDER_POS;
     }
-    if (isVisible()) surroundingPane.setDividerPosition(0,rememberDividerPos);
+    if (isVisible()) surroundingPane.setDividerPosition(0, rememberDividerPos);
 
     try {
       keyColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(KEYCOLUMN_WIDTH)));
     } catch (Exception e) {
       keyColumn.setPrefWidth(DEFAULT_KEYCOLUMN_WIDTH);
     }
+  }
+
+  /**
+   * try to build a string with GPS coordinates like 47°05'29.0"N+8°27'52.0"E
+   * from the metadata directory "GPS"
+   *
+   * @return a string with GPS coordinates or null if not available
+   */
+  private String getGpsCoordinates() {
+    String gpsCoordinates = null;
+    String latitudeRef = null;
+    String latitude = null;
+    String longitudeRef = null;
+    String longitude = null;
+
+    if (currentMediaFile instanceof MediaFileTagged) {
+      Metadata metadata = ((MediaFileTagged) currentMediaFile).getMetadata();
+      GpsDirectory gpsDirectory = metadata.getFirstDirectoryOfType(GpsDirectory.class);
+      if (gpsDirectory != null) {//if found
+        //look up the necessary tags
+        for (Tag tag : gpsDirectory.getTags()) {
+          if (tag.getTagType() == GpsDirectory.TAG_LATITUDE_REF) latitudeRef = tag.getDescription();
+          else if (tag.getTagType() == GpsDirectory.TAG_LATITUDE) latitude = tag.getDescription();
+          else if (tag.getTagType() == GpsDirectory.TAG_LONGITUDE_REF) longitudeRef = tag.getDescription();
+          else if (tag.getTagType() == GpsDirectory.TAG_LONGITUDE) longitude = tag.getDescription();
+        }
+      }
+      //only return a string if all components of the GPS coordinate are available
+      if (latitudeRef != null && latitude != null && longitudeRef != null && latitude != null)
+        gpsCoordinates = latitude + latitudeRef + "+" + longitude + longitudeRef;
+    }
+    return gpsCoordinates;
+  }
+  public boolean isValidGPSavailable(){
+    return getGpsCoordinates() != null;
+  }
+  /**
+   * Try to open maps.google.com in the default browser
+   * at the coordinates given in the GPS directory of the current media file
+   * e.g.
+   * https://www.google.com/maps/place/47°05'29.0"N+8°27'52.0"E
+   */
+  public void showGPSPositionInGoogleMaps() {
+
+    boolean successful = false;
+    String gpsCoordinates = getGpsCoordinates();
+    if (gpsCoordinates != null){
+      String url = "https://www.google.com/maps/place/" + gpsCoordinates;
+      successful = AppStarter.tryToBrowse(url);
+    }
+    if (successful)
+      statusBar.showMessage(gpsCoordinates + " " + language.getString("opened.in.google.maps"));
+    else
+      statusBar.showError(language.getString("no.valid.gps.data.available.for.the.current.media.file"));
+
   }
 }

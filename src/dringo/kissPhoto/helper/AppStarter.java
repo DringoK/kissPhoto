@@ -26,6 +26,7 @@ import java.net.URISyntaxException;
  * <p/>
  * @author Dringo
  * @since 2014-05-17
+ * @version 2021-06-06 tryToBrowse now uses %22 for quotes and %20 for spaces
  * @version 2014-06-05 java.io operations changed into java.nio
  */
 public class AppStarter {
@@ -116,24 +117,31 @@ public class AppStarter {
    * start the external default browser if possible
    * seen on stackoverflow:
    * https://stackoverflow.com/questions/5226212/how-to-open-the-default-webbrowser-using-java
-   * @param url the address to be loaded from the browser
+   *
+   * @param url the address to be loaded from the browser (quotes are replaced by %22 and spaces are replaced by %20)
+   * @return true if successful
    */
-  public static void tryToBrowse(String url){
+  public static boolean tryToBrowse(String url){
+    boolean successful = false;
     if(Desktop.isDesktopSupported()){
       Desktop desktop = Desktop.getDesktop();
       try {
-        desktop.browse(new URI(url));
+        URI uri = new URI(url.replaceAll("\"","%22").replaceAll(" ", "%20")); //escape any quotes and spaces
+        desktop.browse(uri);
+        successful = true;
       } catch (IOException | URISyntaxException e) {
-        //e.printStackTrace();
+        e.printStackTrace();
       }
     }else{
       Runtime runtime = Runtime.getRuntime();
       try {
         runtime.exec("xdg-open " + url);
+        successful = true;
       } catch (IOException e) {
-        //e.printStackTrace();
+        e.printStackTrace();
       }
     }
+    return successful;
   }
 
 
