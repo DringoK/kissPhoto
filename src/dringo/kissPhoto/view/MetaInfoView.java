@@ -378,7 +378,7 @@ public class MetaInfoView extends StackPane {
         }
       }
       //only return a string if all components of the GPS coordinate are available
-      if (latitudeRef != null && latitude != null && longitudeRef != null && latitude != null)
+      if (latitudeRef != null && latitude != null && longitudeRef != null && longitude != null)
         gpsCoordinates = latitude + latitudeRef + "+" + longitude + longitudeRef;
     }
     return gpsCoordinates;
