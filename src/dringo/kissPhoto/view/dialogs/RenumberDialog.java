@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.dialogs;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.inputFields.NumberTextField;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -14,8 +15,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -41,14 +40,14 @@ public class RenumberDialog extends KissDialog {
   NumberTextField digitsTextField = new NumberTextField(this);
   CheckBox globalField = new CheckBox();
 
-  final static String startLabelGlobalText = language.getString("offset");
-  final static String startLabelLocalText = language.getString("start.with");
+  final static String startLabelGlobalText = KissPhoto.language.getString("offset");
+  final static String startLabelLocalText = KissPhoto.language.getString("start.with");
   Label startLabel = new Label();
 
   public RenumberDialog(Stage owner) {
     super(owner);
 
-    setTitle(language.getString("kissphoto.renumber.media.files"));
+    setTitle(KissPhoto.language.getString("kissphoto.renumber.media.files"));
     setHeight(270);
     setWidth(520);
     setMinHeight(getHeight());
@@ -73,23 +72,23 @@ public class RenumberDialog extends KissDialog {
 
 
     globalField.setOnAction(actionEvent -> setStartLabelAccordingGlobalValue());
-    Label globalLabel = new Label(language.getString("global.numbering"));
-    globalLabel.setTooltip(new Tooltip(language.getString("global.Explanation")));
+    Label globalLabel = new Label(KissPhoto.language.getString("global.numbering"));
+    globalLabel.setTooltip(new Tooltip(KissPhoto.language.getString("global.Explanation")));
     gridPane.add(globalLabel, 0, 0);
     gridPane.add(globalField, 1, 0);
 
     startLabel.setText(startLabelLocalText); //the longer text
-    startLabel.setTooltip(new Tooltip(language.getString("offset.which.value.to.start.numbering.with")));
+    startLabel.setTooltip(new Tooltip(KissPhoto.language.getString("offset.which.value.to.start.numbering.with")));
     gridPane.add(startLabel, 0, 1);
     gridPane.add(startTextField, 1, 1);
 
-    Label stepLabel = new Label(language.getString("step.size"));
-    stepLabel.setTooltip(new Tooltip(language.getString("StepSize.Explanation")));
+    Label stepLabel = new Label(KissPhoto.language.getString("step.size"));
+    stepLabel.setTooltip(new Tooltip(KissPhoto.language.getString("StepSize.Explanation")));
     gridPane.add(stepLabel, 0, 2);
     gridPane.add(stepTextField, 1, 2);
 
-    Label digitsLabel = new Label(language.getString("digits.0.auto"));
-    digitsLabel.setTooltip(new Tooltip(language.getString("how.many.digits.shall.be.used.for.the.numbers.using.leading.zeros")));
+    Label digitsLabel = new Label(KissPhoto.language.getString("digits.0.auto"));
+    digitsLabel.setTooltip(new Tooltip(KissPhoto.language.getString("how.many.digits.shall.be.used.for.the.numbers.using.leading.zeros")));
     gridPane.add(digitsLabel, 0, 3);
     gridPane.add(digitsTextField, 1, 3);
 
@@ -99,13 +98,13 @@ public class RenumberDialog extends KissDialog {
     buttonBox.setPadding(mainPadding);
     buttonBox.setAlignment(Pos.CENTER);
 
-    Button renumAllBtn = new Button(language.getString("renumber.all"));
+    Button renumAllBtn = new Button(KissPhoto.language.getString("renumber.all"));
     renumAllBtn.setDefaultButton(true);
     renumAllBtn.setOnAction(actionEvent -> {
       modalResult = RENUM_ALL_BTN;
       close();
     });
-    Button renumSelectionBtn = new Button(language.getString("renumber.selection"));
+    Button renumSelectionBtn = new Button(KissPhoto.language.getString("renumber.selection"));
     renumSelectionBtn.setOnAction(actionEvent -> {
       modalResult = RENUM_SELECTION_BTN;
       close();

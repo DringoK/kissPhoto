@@ -1,6 +1,7 @@
 package dringo.kissPhoto.view;
 
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.model.ImageFileRotater;
 import dringo.kissPhoto.view.dialogs.AboutDialog;
 import dringo.kissPhoto.view.dialogs.ExternalEditorsDialog;
@@ -13,9 +14,6 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-
-import static dringo.kissPhoto.KissPhoto.KISS_PHOTO_VERSION;
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -46,13 +44,13 @@ public class MainMenuBar extends MenuBar {
   private final MediaContentView mediaContentView; //link to mediaContentView for full screen etc
   private final MetaInfoView metaInfoView; //link to metaInfoView for showing/hiding it via view menu
 
-  private final Menu fileMenu = new Menu(language.getString("fileMenu"));
-  private final Menu editMenu = new Menu(language.getString("editMenu"));
-  private final Menu viewMenu = new Menu(language.getString("viewMenu"));
-  private final Menu imageMenu = new Menu(language.getString("image"));
-  private final Menu playerMenu = new Menu(language.getString("player"));
-  private final Menu extrasMenu = new Menu(language.getString("extrasMenu"));
-  private final Menu helpMenu = new Menu(language.getString("helpMenu"));
+  private final Menu fileMenu = new Menu(KissPhoto.language.getString("fileMenu"));
+  private final Menu editMenu = new Menu(KissPhoto.language.getString("editMenu"));
+  private final Menu viewMenu = new Menu(KissPhoto.language.getString("viewMenu"));
+  private final Menu imageMenu = new Menu(KissPhoto.language.getString("image"));
+  private final Menu playerMenu = new Menu(KissPhoto.language.getString("player"));
+  private final Menu extrasMenu = new Menu(KissPhoto.language.getString("extrasMenu"));
+  private final Menu helpMenu = new Menu(KissPhoto.language.getString("helpMenu"));
 
   public final static KeyCodeCombination PLAY_PAUSE_KEYCODE = new KeyCodeCombination(KeyCode.SPACE);
   public final static KeyCodeCombination REWIND_KEYCODE = new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.CONTROL_DOWN);
@@ -96,7 +94,7 @@ public class MainMenuBar extends MenuBar {
    */
   private void createFileMenu() {
 
-    final MenuItem openItem = new MenuItem(language.getString("openMenu"));
+    final MenuItem openItem = new MenuItem(KissPhoto.language.getString("openMenu"));
     openItem.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN));
     openItem.setOnAction(event -> {
       event.consume();
@@ -104,7 +102,7 @@ public class MainMenuBar extends MenuBar {
     });
     fileMenu.getItems().add(openItem);
 
-    MenuItem saveItem = new MenuItem(language.getString("saveMenu"));
+    MenuItem saveItem = new MenuItem(KissPhoto.language.getString("saveMenu"));
     saveItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN));
     saveItem.setOnAction(event -> {
       event.consume();
@@ -114,7 +112,7 @@ public class MainMenuBar extends MenuBar {
 
     fileMenu.getItems().add(new SeparatorMenuItem());
 
-    MenuItem exportCSVItem = new MenuItem(language.getString("exportCSVMenu"));
+    MenuItem exportCSVItem = new MenuItem(KissPhoto.language.getString("exportCSVMenu"));
     exportCSVItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN));
     exportCSVItem.setOnAction(event -> {
       event.consume();
@@ -122,7 +120,7 @@ public class MainMenuBar extends MenuBar {
     });
     fileMenu.getItems().add(exportCSVItem);
 
-    MenuItem exportFolderCSVItem = new MenuItem(language.getString("writeFolderStructureCSVMenu"));
+    MenuItem exportFolderCSVItem = new MenuItem(KissPhoto.language.getString("writeFolderStructureCSVMenu"));
     exportFolderCSVItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
     exportFolderCSVItem.setOnAction(event -> {
       event.consume();
@@ -133,7 +131,7 @@ public class MainMenuBar extends MenuBar {
 
     fileMenu.getItems().add(new SeparatorMenuItem());
 
-    MenuItem exitItem = new MenuItem(language.getString("exitMenu"));
+    MenuItem exitItem = new MenuItem(KissPhoto.language.getString("exitMenu"));
     exitItem.setAccelerator(new KeyCodeCombination(KeyCode.F4, KeyCombination.ALT_DOWN));
     exitItem.setOnAction(event -> {
       event.consume();
@@ -153,7 +151,7 @@ public class MainMenuBar extends MenuBar {
    * ########################### Edit Menu Items ###########################
    */
   private void createEditMenu() {
-    final MenuItem findReplaceItem = new MenuItem(language.getString("findReplaceMenu"));
+    final MenuItem findReplaceItem = new MenuItem(KissPhoto.language.getString("findReplaceMenu"));
     findReplaceItem.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
     findReplaceItem.setOnAction(event -> {
       event.consume();
@@ -161,7 +159,7 @@ public class MainMenuBar extends MenuBar {
     });
     editMenu.getItems().add(findReplaceItem);
 
-    final MenuItem findNextItem = new MenuItem(language.getString("find.next"));
+    final MenuItem findNextItem = new MenuItem(KissPhoto.language.getString("find.next"));
     findNextItem.setAccelerator(new KeyCodeCombination(KeyCode.F3));
     findNextItem.disableProperty().bind(fileTableView.getFindReplaceDialogShowingProperty().not());
     findNextItem.setOnAction(event -> {
@@ -172,7 +170,7 @@ public class MainMenuBar extends MenuBar {
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
-    final MenuItem renameItem = new MenuItem(language.getString("renameMenu"));
+    final MenuItem renameItem = new MenuItem(KissPhoto.language.getString("renameMenu"));
     renameItem.setAccelerator(new KeyCodeCombination(KeyCode.F2));
     renameItem.setOnAction(event -> {
       event.consume();
@@ -180,7 +178,7 @@ public class MainMenuBar extends MenuBar {
     });
     editMenu.getItems().add(renameItem);
 
-    final MenuItem autoFillDownItem = new MenuItem(language.getString("autofill.copy.down"));
+    final MenuItem autoFillDownItem = new MenuItem(KissPhoto.language.getString("autofill.copy.down"));
     autoFillDownItem.setAccelerator(new KeyCodeCombination(KeyCode.U, KeyCombination.CONTROL_DOWN));
     autoFillDownItem.setOnAction(event -> {
       event.consume();
@@ -188,7 +186,7 @@ public class MainMenuBar extends MenuBar {
     });
     editMenu.getItems().add(autoFillDownItem);
 
-    final MenuItem externalMainEditorItem = new MenuItem(language.getString("external.editor.1"));
+    final MenuItem externalMainEditorItem = new MenuItem(KissPhoto.language.getString("external.editor.1"));
     externalMainEditorItem.setAccelerator(new KeyCodeCombination(KeyCode.F2, KeyCombination.CONTROL_DOWN));
     externalMainEditorItem.setOnAction(event -> {
       event.consume();
@@ -196,7 +194,7 @@ public class MainMenuBar extends MenuBar {
     });
     editMenu.getItems().add(externalMainEditorItem);
 
-    final MenuItem external2ndEditorItem = new MenuItem(language.getString("external.editor.2"));
+    final MenuItem external2ndEditorItem = new MenuItem(KissPhoto.language.getString("external.editor.2"));
     external2ndEditorItem.setAccelerator(new KeyCodeCombination(KeyCode.F2, KeyCombination.SHIFT_DOWN));
     external2ndEditorItem.setOnAction(event -> {
       event.consume();
@@ -206,17 +204,17 @@ public class MainMenuBar extends MenuBar {
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
-    final MenuItem timeStampItem = new MenuItem(language.getString("timeStampMenu"));
+    final MenuItem timeStampItem = new MenuItem(KissPhoto.language.getString("timeStampMenu"));
     timeStampItem.setDisable(true); //not yet implemented
     editMenu.getItems().add(timeStampItem);
 
-    final MenuItem copyTimeStampExtItem = new MenuItem(language.getString("copy.file.dates.by.extension"));
+    final MenuItem copyTimeStampExtItem = new MenuItem(KissPhoto.language.getString("copy.file.dates.by.extension"));
     copyTimeStampExtItem.setOnAction(actionEvent -> fileTableView.copyFileDatesByExtension());
     editMenu.getItems().add(copyTimeStampExtItem);
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
-    final MenuItem deleteItem = new MenuItem(language.getString("deleteMenu"));
+    final MenuItem deleteItem = new MenuItem(KissPhoto.language.getString("deleteMenu"));
     deleteItem.setAccelerator(new KeyCodeCombination(KeyCode.DELETE));
     deleteItem.setOnAction(event -> {
       event.consume();
@@ -224,7 +222,7 @@ public class MainMenuBar extends MenuBar {
     });
     editMenu.getItems().add(deleteItem);
 
-    final MenuItem unDeleteItem = new MenuItem(language.getString("undeleteMenu"));
+    final MenuItem unDeleteItem = new MenuItem(KissPhoto.language.getString("undeleteMenu"));
     unDeleteItem.setAccelerator(new KeyCodeCombination(KeyCode.DELETE, KeyCombination.CONTROL_DOWN));
     unDeleteItem.setOnAction(event -> {
       event.consume();
@@ -236,7 +234,7 @@ public class MainMenuBar extends MenuBar {
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
-    final MenuItem cutItem = new MenuItem(language.getString("cutMenu"));
+    final MenuItem cutItem = new MenuItem(KissPhoto.language.getString("cutMenu"));
     cutItem.setAccelerator(new KeyCodeCombination(KeyCode.X, KeyCombination.CONTROL_DOWN));
     cutItem.setOnAction(event -> {
       event.consume();
@@ -244,7 +242,7 @@ public class MainMenuBar extends MenuBar {
     });
     editMenu.getItems().add(cutItem);
 
-    final MenuItem pasteItem = new MenuItem(language.getString("pasteMenu"));
+    final MenuItem pasteItem = new MenuItem(KissPhoto.language.getString("pasteMenu"));
     pasteItem.setAccelerator(new KeyCodeCombination(KeyCode.V, KeyCombination.CONTROL_DOWN));
     pasteItem.setOnAction(event -> {
       event.consume();
@@ -256,7 +254,7 @@ public class MainMenuBar extends MenuBar {
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
-    final MenuItem autoNumberItem = new MenuItem(language.getString("renumber.standardMenu"));
+    final MenuItem autoNumberItem = new MenuItem(KissPhoto.language.getString("renumber.standardMenu"));
     autoNumberItem.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN));
     autoNumberItem.setOnAction(event -> {
       event.consume();
@@ -264,7 +262,7 @@ public class MainMenuBar extends MenuBar {
     });
     editMenu.getItems().add(autoNumberItem);
 
-    final MenuItem reNumberGlobalItem = new MenuItem(language.getString("renumber.globalMenu"));
+    final MenuItem reNumberGlobalItem = new MenuItem(KissPhoto.language.getString("renumber.globalMenu"));
     reNumberGlobalItem.setAccelerator((new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN)));
     reNumberGlobalItem.setOnAction(event -> {
       event.consume();
@@ -272,7 +270,7 @@ public class MainMenuBar extends MenuBar {
     });
     editMenu.getItems().add(reNumberGlobalItem);
 
-    final MenuItem reNumberLocalItem = new MenuItem(language.getString("renumber.localMenu"));
+    final MenuItem reNumberLocalItem = new MenuItem(KissPhoto.language.getString("renumber.localMenu"));
     reNumberLocalItem.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN, KeyCombination.ALT_DOWN));
     reNumberLocalItem.setOnAction(event -> {
       event.consume();
@@ -282,7 +280,7 @@ public class MainMenuBar extends MenuBar {
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
-    final MenuItem moveUpItem = new MenuItem(language.getString("move.upMenu"));
+    final MenuItem moveUpItem = new MenuItem(KissPhoto.language.getString("move.upMenu"));
     //shift-alt ok: compatible with windows: alt+??=menu, shift-alt-arrow = move, compatible with ubuntu: shift-alt used for changing windows
     //here only for displaying the shortcut. It must be set additionally directly in FileTableView constructor to override standard use of Shift-Ctrl-Up/Down=extend selection
     moveUpItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, KeyCombination.SHIFT_DOWN, KeyCombination.ALT_DOWN));
@@ -293,7 +291,7 @@ public class MainMenuBar extends MenuBar {
     });
     editMenu.getItems().add(moveUpItem);
 
-    final MenuItem moveDnItem = new MenuItem(language.getString("move.downMenu"));
+    final MenuItem moveDnItem = new MenuItem(KissPhoto.language.getString("move.downMenu"));
     moveDnItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, KeyCombination.SHIFT_DOWN, KeyCombination.ALT_DOWN));
     moveDnItem.setOnAction(event -> {
       event.consume();
@@ -309,7 +307,7 @@ public class MainMenuBar extends MenuBar {
    */
   private void createViewMenu() {
     //--------------- FileTableViews's View
-    final MenuItem resetSortingItem = new MenuItem(language.getString("reset.sortingMenu"));
+    final MenuItem resetSortingItem = new MenuItem(KissPhoto.language.getString("reset.sortingMenu"));
     resetSortingItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN, KeyCodeCombination.SHIFT_DOWN));
     resetSortingItem.setOnAction(event -> {
       event.consume();
@@ -317,7 +315,7 @@ public class MainMenuBar extends MenuBar {
     });
     viewMenu.getItems().add(resetSortingItem);
 
-    final MenuItem resetColWidthItem = new MenuItem(language.getString("reset.column.widths"));
+    final MenuItem resetColWidthItem = new MenuItem(KissPhoto.language.getString("reset.column.widths"));
     resetColWidthItem.setAccelerator(new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN, KeyCodeCombination.SHIFT_DOWN));
     resetColWidthItem.setOnAction(event -> {
       event.consume();
@@ -328,7 +326,7 @@ public class MainMenuBar extends MenuBar {
     //----------------- MetaInfoView's View
     viewMenu.getItems().add(new SeparatorMenuItem());
 
-    final CheckMenuItem showMetaInfoItem = new CheckMenuItem(language.getString("show.meta.data"));
+    final CheckMenuItem showMetaInfoItem = new CheckMenuItem(KissPhoto.language.getString("show.meta.data"));
     showMetaInfoItem.setAccelerator(new KeyCodeCombination(KeyCode.M, KeyCombination.CONTROL_DOWN));
     showMetaInfoItem.selectedProperty().bindBidirectional(metaInfoView.visibleProperty());
     showMetaInfoItem.setOnAction(event -> {
@@ -340,7 +338,7 @@ public class MainMenuBar extends MenuBar {
     });
     viewMenu.getItems().add(showMetaInfoItem);
 
-    final MenuItem showGPSLocationItem = new MenuItem(language.getString("show.gps.location.in.google.maps"));
+    final MenuItem showGPSLocationItem = new MenuItem(KissPhoto.language.getString("show.gps.location.in.google.maps"));
     showGPSLocationItem.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN));
     showGPSLocationItem.setOnAction(event -> {
       event.consume();
@@ -361,7 +359,7 @@ public class MainMenuBar extends MenuBar {
     });
     mediaContentView.getIsFullScreenActiveProperty().addListener((observable, oldValue, newValue) -> mediaContentView.setFullScreenMenuItemText(fullScreenItem));
 
-    MenuItem showOnNextScreenItem = new MenuItem(language.getString(MediaContentView.SHOW_ON_NEXT_SCREEN_FULLSCREEN));
+    MenuItem showOnNextScreenItem = new MenuItem(KissPhoto.language.getString(MediaContentView.SHOW_ON_NEXT_SCREEN_FULLSCREEN));
     showOnNextScreenItem.setAccelerator((new KeyCodeCombination(KeyCode.TAB))); //TAB, previous shift-Tab is not shown in menu
     showOnNextScreenItem.setOnAction(actionEvent -> mediaContentView.showFullScreenOnNextScreen(true));
     showOnNextScreenItem.disableProperty().bind(mediaContentView.getIsFullScreenActiveProperty().not());  //only enabled if fullScreen-Mode is active
@@ -387,32 +385,32 @@ public class MainMenuBar extends MenuBar {
   }
 
   private void createImageMenu() {
-    MenuItem exifOrientationItem = new MenuItem(language.getString("rotate.and.flip.jpeg.according.exif.lossless"));
+    MenuItem exifOrientationItem = new MenuItem(KissPhoto.language.getString("rotate.and.flip.jpeg.according.exif.lossless"));
     exifOrientationItem.setAccelerator(new KeyCodeCombination(KeyCode.J, KeyCombination.CONTROL_DOWN));
     exifOrientationItem.setOnAction(event -> fileTableView.setOrientationAccordingExif());
     imageMenu.getItems().addAll(exifOrientationItem, new SeparatorMenuItem());
 
-    MenuItem rotateRightItem = new MenuItem(language.getString("rotate.jpeg.90.right.lossless"));
+    MenuItem rotateRightItem = new MenuItem(KissPhoto.language.getString("rotate.jpeg.90.right.lossless"));
     rotateRightItem.setAccelerator(new KeyCodeCombination(KeyCode.R));
     rotateRightItem.setOnAction(event -> fileTableView.rotateSelectedFiles(ImageFileRotater.RotateOperation.ROTATE90));
     imageMenu.getItems().add(rotateRightItem);
 
-    MenuItem rotateLeftItem = new MenuItem(language.getString("rotate.jpeg.90.left.lossless"));
+    MenuItem rotateLeftItem = new MenuItem(KissPhoto.language.getString("rotate.jpeg.90.left.lossless"));
     rotateLeftItem.setAccelerator(new KeyCodeCombination(KeyCode.L));
     rotateLeftItem.setOnAction(event -> fileTableView.rotateSelectedFiles(ImageFileRotater.RotateOperation.ROTATE270));
     imageMenu.getItems().add(rotateLeftItem);
 
-    MenuItem rotate180Item = new MenuItem(language.getString("rotate.jpeg.180.lossless"));
+    MenuItem rotate180Item = new MenuItem(KissPhoto.language.getString("rotate.jpeg.180.lossless"));
     rotate180Item.setAccelerator(new KeyCodeCombination(KeyCode.T));
     rotate180Item.setOnAction(event -> fileTableView.rotateSelectedFiles(ImageFileRotater.RotateOperation.ROTATE180));
     imageMenu.getItems().addAll(rotate180Item, new SeparatorMenuItem());
 
-    MenuItem flipHItem = new MenuItem(language.getString("flip.jpeg.horizontally.lossless"));
+    MenuItem flipHItem = new MenuItem(KissPhoto.language.getString("flip.jpeg.horizontally.lossless"));
     flipHItem.setAccelerator(new KeyCodeCombination(KeyCode.H));
     flipHItem.setOnAction(event -> fileTableView.flipSelectedFiles(true));
     imageMenu.getItems().add(flipHItem);
 
-    MenuItem flipVItem = new MenuItem(language.getString("flip.jpeg.vertically.lossless"));
+    MenuItem flipVItem = new MenuItem(KissPhoto.language.getString("flip.jpeg.vertically.lossless"));
     flipVItem.setAccelerator(new KeyCodeCombination(KeyCode.V));
     flipVItem.setOnAction(event -> fileTableView.flipSelectedFiles(false));
     imageMenu.getItems().add(flipVItem);
@@ -427,7 +425,7 @@ public class MainMenuBar extends MenuBar {
     CheckMenuItem playListModeItem;
     CheckMenuItem repeatModeItem;
 
-    playPauseItem = new MenuItem(language.getString("play"));  //Pause/Play --> two states reflected by setting text
+    playPauseItem = new MenuItem(KissPhoto.language.getString("play"));  //Pause/Play --> two states reflected by setting text
     playPauseItem.setAccelerator(MainMenuBar.PLAY_PAUSE_KEYCODE);
     playPauseItem.setOnAction(actionEvent -> {
       playerControls.togglePlayPause();
@@ -435,16 +433,16 @@ public class MainMenuBar extends MenuBar {
     });
     playerControls.bindPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
 
-    rewindItem = new MenuItem(language.getString("rewind"));  //Pause/Play --> two states reflected by setting text
+    rewindItem = new MenuItem(KissPhoto.language.getString("rewind"));  //Pause/Play --> two states reflected by setting text
     rewindItem.setAccelerator(MainMenuBar.REWIND_KEYCODE);
     rewindItem.setOnAction(actionEvent -> playerControls.rewind());
 
-    playListModeItem = new CheckMenuItem(language.getString("playlist.mode"));
+    playListModeItem = new CheckMenuItem(KissPhoto.language.getString("playlist.mode"));
     playListModeItem.setAccelerator(MainMenuBar.PLAYLIST_MODE_KEYCODE);
     //playListModeItem.setOnAction(actionEvent -> playerControls.setPlayListMode(!playerControls.isPlayListMode())); //toggle --> not necessary, because bidirectional binding
     playerControls.bindBidirectionalPlaylistModeMenuItem(playListModeItem); //keep state of playControls and menuItem synced
 
-    repeatModeItem = new CheckMenuItem(language.getString("repeat.mode"));
+    repeatModeItem = new CheckMenuItem(KissPhoto.language.getString("repeat.mode"));
     repeatModeItem.setAccelerator(MainMenuBar.REPEAT_MODE_KEYCODE);
     //repeatModeItem.setOnAction(actionEvent -> playerControls.setRepeatMode(!playerControls.isRepeatMode())); //toggle --> not necessary, because bidirectional binding
     playerControls.bindBidirectionalRepeatMenuItem(repeatModeItem); //keep state of playControls and menuItem synced
@@ -460,7 +458,7 @@ public class MainMenuBar extends MenuBar {
   ExternalEditorsDialog externalEditorsDialog;
 
   private void createExtrasMenu() {
-    MenuItem languageItem = new MenuItem(language.getString("language.settingsMenu"));
+    MenuItem languageItem = new MenuItem(KissPhoto.language.getString("language.settingsMenu"));
     languageItem.setOnAction(event -> {
       event.consume();
       if (languageDialog == null) languageDialog = new LanguageDialog(primaryStage);
@@ -468,7 +466,7 @@ public class MainMenuBar extends MenuBar {
     });
     extrasMenu.getItems().add(languageItem);
 
-    MenuItem externalEditorsItem = new MenuItem(language.getString("specify.external.editors"));
+    MenuItem externalEditorsItem = new MenuItem(KissPhoto.language.getString("specify.external.editors"));
     externalEditorsItem.setOnAction(event -> {
       event.consume();
       if (externalEditorsDialog == null) externalEditorsDialog = new ExternalEditorsDialog(primaryStage);
@@ -485,11 +483,11 @@ public class MainMenuBar extends MenuBar {
   AboutDialog aboutDialog;
 
   private void createHelpMenu() {
-    MenuItem aboutItem = new MenuItem(language.getString("aboutMenu"));
+    MenuItem aboutItem = new MenuItem(KissPhoto.language.getString("aboutMenu"));
     aboutItem.setAccelerator(new KeyCodeCombination(KeyCode.F1));
     aboutItem.setOnAction(event -> {
       event.consume();
-      if (aboutDialog == null) aboutDialog = new AboutDialog(primaryStage, KISS_PHOTO_VERSION);
+      if (aboutDialog == null) aboutDialog = new AboutDialog(primaryStage, KissPhoto.KISS_PHOTO_VERSION);
       aboutDialog.showModal();
     });
     helpMenu.getItems().add(aboutItem);

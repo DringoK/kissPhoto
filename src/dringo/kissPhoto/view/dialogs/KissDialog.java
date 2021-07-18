@@ -1,11 +1,10 @@
 package dringo.kissPhoto.view.dialogs;
 
+import dringo.kissPhoto.KissPhoto;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -29,10 +28,10 @@ public class KissDialog extends Stage {
 
   protected int modalResult;
 
-  protected static final String OK_LABEL = language.getString("ok");
-  protected static final String CANCEL_LABEL = language.getString("cancel");
-  protected static final String YES_LABEL = language.getString("yes");
-  protected static final String NO_LABEL = language.getString("no");
+  protected static final String OK_LABEL = KissPhoto.language.getString("ok");
+  protected static final String CANCEL_LABEL = KissPhoto.language.getString("cancel");
+  protected static final String YES_LABEL = KissPhoto.language.getString("yes");
+  protected static final String NO_LABEL = KissPhoto.language.getString("no");
   Scene scene;
 
   public KissDialog(StageStyle stageStyle, Stage owner) {

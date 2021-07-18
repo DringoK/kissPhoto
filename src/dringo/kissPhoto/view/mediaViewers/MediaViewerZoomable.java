@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.mediaViewers;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.MediaContentView;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
@@ -7,8 +8,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.input.*;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -354,28 +353,28 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
       contextMenu = new ContextMenu();
 
     //---- zooming menu menu items
-    MenuItem zoomInItem = new MenuItem(language.getString("zoom.in.ctrl.mouse.wheel.up")); //+
+    MenuItem zoomInItem = new MenuItem(KissPhoto.language.getString("zoom.in.ctrl.mouse.wheel.up")); //+
     zoomInItem.setAccelerator(new KeyCodeCombination(KeyCode.PLUS));
     zoomInItem.setOnAction(actionEvent -> {
       zoomIn();
       actionEvent.consume();
     });
 
-    MenuItem zoomOutItem = new MenuItem(language.getString("zoom.out.ctrl.mouse.wheel.down")); //-
+    MenuItem zoomOutItem = new MenuItem(KissPhoto.language.getString("zoom.out.ctrl.mouse.wheel.down")); //-
     zoomOutItem.setAccelerator(new KeyCodeCombination(KeyCode.MINUS));
     zoomOutItem.setOnAction(actionEvent -> {
       zoomOut();
       actionEvent.consume();
     });
 
-    MenuItem zoomFitItem = new MenuItem(language.getString("zoom.to.fit.middle.mouse.button")); //ctrl-space
+    MenuItem zoomFitItem = new MenuItem(KissPhoto.language.getString("zoom.to.fit.middle.mouse.button")); //ctrl-space
     zoomFitItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.CONTROL_DOWN));
     zoomFitItem.setOnAction(actionEvent -> {
       zoomToFit();
       actionEvent.consume();
     });
 
-    MenuItem zoom100Item = new MenuItem(language.getString("zoom.100")); //shift-space
+    MenuItem zoom100Item = new MenuItem(KissPhoto.language.getString("zoom.100")); //shift-space
     zoom100Item.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.SHIFT_DOWN));
     zoom100Item.setOnAction(actionEvent -> {
       zoom100();
@@ -385,35 +384,35 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
     contextMenu.getItems().addAll(zoomInItem, zoomOutItem, zoomFitItem, zoom100Item);
 
     //---- moving menu menu items
-    MenuItem moveToCenterItem = new MenuItem(language.getString("move.to.center"));//ctrl-shift-space
+    MenuItem moveToCenterItem = new MenuItem(KissPhoto.language.getString("move.to.center"));//ctrl-shift-space
     moveToCenterItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
     moveToCenterItem.setOnAction(actionEvent -> {
       centerMedia();
       actionEvent.consume();
     });
 
-    MenuItem moveLeftItem = new MenuItem(language.getString("move.left.drag.mouse.left.button"));//left arrow
+    MenuItem moveLeftItem = new MenuItem(KissPhoto.language.getString("move.left.drag.mouse.left.button"));//left arrow
     moveLeftItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT));
     moveLeftItem.setOnAction(actionEvent -> {
       moveLeft();
       actionEvent.consume();
     });
 
-    MenuItem moveRightItem = new MenuItem(language.getString("move.right.drag.mouse.left.button"));//right arrow
+    MenuItem moveRightItem = new MenuItem(KissPhoto.language.getString("move.right.drag.mouse.left.button"));//right arrow
     moveRightItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT));
     moveRightItem.setOnAction(actionEvent -> {
       moveRight();
       actionEvent.consume();
     });
 
-    MenuItem moveUpItem = new MenuItem(language.getString("move.up.drag.mouse.left.button"));//up arrow
+    MenuItem moveUpItem = new MenuItem(KissPhoto.language.getString("move.up.drag.mouse.left.button"));//up arrow
     moveUpItem.setAccelerator(new KeyCodeCombination(KeyCode.UP));
     moveUpItem.setOnAction(actionEvent -> {
       moveUp();
       actionEvent.consume();
     });
 
-    MenuItem moveDownItem = new MenuItem(language.getString("move.down.drag.mouse.left.button"));//down arrow
+    MenuItem moveDownItem = new MenuItem(KissPhoto.language.getString("move.down.drag.mouse.left.button"));//down arrow
     moveDownItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN));
     moveDownItem.setOnAction(actionEvent -> {
       moveDown();

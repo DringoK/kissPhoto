@@ -1,9 +1,10 @@
 package dringo.kissPhoto.model;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.ctrl.CounterPositionHeuristic;
-import dringo.kissPhoto.helper.PathHelpers;
 import dringo.kissPhoto.view.FileTableView;
 import dringo.kissPhoto.view.MediaContentView;
+import dringo.kissPhoto.helper.PathHelpers;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
@@ -13,8 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.text.MessageFormat;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -89,12 +88,12 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   public String openFolder(Path fileOrFolder) {
     //parameter valid?
     if (fileOrFolder == null) {
-      return language.getString(NO_SUCH_FILE_OR_DIRECTORY);  //------>preliminary exit
+      return KissPhoto.language.getString(NO_SUCH_FILE_OR_DIRECTORY);  //------>preliminary exit
     }
     folder = PathHelpers.extractFolder(fileOrFolder);
 
     if (folder == null || !Files.exists(folder))
-      return MessageFormat.format(language.getString(NO_SUCH_FILE_OR_DIRECTORY), fileOrFolder.toAbsolutePath());  //------>preliminary exit
+      return MessageFormat.format(KissPhoto.language.getString(NO_SUCH_FILE_OR_DIRECTORY), fileOrFolder.toAbsolutePath());  //------>preliminary exit
 
     //folder successfully determined, now open file list:
     //prepare
@@ -109,7 +108,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
           fileList.add(MediaFile.createMediaFile(file, this));//wrap the file as a MediaFile and specialize it according its media type
       }
     } catch (IOException | DirectoryIteratorException x) {
-      return MessageFormat.format(language.getString("error.while.reading.directory.0"), x.getMessage());
+      return MessageFormat.format(KissPhoto.language.getString("error.while.reading.directory.0"), x.getMessage());
     }
 
     return ""; //no error

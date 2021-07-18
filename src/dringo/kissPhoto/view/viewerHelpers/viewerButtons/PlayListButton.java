@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.viewerHelpers.viewerButtons;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Group;
@@ -9,8 +10,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -118,9 +117,9 @@ public class PlayListButton extends Group {
 
   private void setTooltipText() {
     if (playListMode.get())
-        tooltip.setText(language.getString("playlist.mode.play.next.media.file.at.the.end.of.the.current.track"));
+        tooltip.setText(KissPhoto.language.getString("playlist.mode.play.next.media.file.at.the.end.of.the.current.track"));
       else
-        tooltip.setText(language.getString("playlist.mode.off.play.only.current.media.file"));
+        tooltip.setText(KissPhoto.language.getString("playlist.mode.off.play.only.current.media.file"));
   }
 
   public boolean isPlayListMode(){

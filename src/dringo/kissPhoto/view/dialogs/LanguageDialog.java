@@ -19,8 +19,6 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-import static dringo.kissPhoto.KissPhoto.language;
-
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
@@ -51,7 +49,7 @@ public class LanguageDialog extends KissDialog {
     initStyle(StageStyle.DECORATED);
 
     setOpacity(0.8);
-    setTitle(language.getString("kissphoto.select.language"));
+    setTitle(KissPhoto.language.getString("kissphoto.select.language"));
 
     setHeight(250);
     setWidth(400);
@@ -74,7 +72,7 @@ public class LanguageDialog extends KissDialog {
     btn_de.setTextFill(Color.WHITE);
     btn_de.setSelected(I18Support.currentLanguage.equals(I18Support.GERMAN));
 
-    Text messageLabel = new Text(language.getString("restart.kissphoto.to.apply.changes"));
+    Text messageLabel = new Text(KissPhoto.language.getString("restart.kissphoto.to.apply.changes"));
     messageLabel.setFill(Color.WHITE);
     messageLabel.wrappingWidthProperty().bind(scene.widthProperty().subtract(2 * borderSize));
     messageLabel.setTextAlignment(TextAlignment.CENTER);

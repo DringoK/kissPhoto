@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.mediaViewers;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.view.MainMenuBar;
 import dringo.kissPhoto.view.MediaContentView;
@@ -8,8 +9,6 @@ import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.util.Duration;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -65,21 +64,21 @@ abstract public class PlayerViewer extends MediaViewerZoomable {
 
     //---- Player support
     //contextMenu items for controlling checking and disabling
-    MenuItem playPauseItem = new MenuItem(language.getString("play"));  //Pause/Play --> two states reflected by setting text
+    MenuItem playPauseItem = new MenuItem(KissPhoto.language.getString("play"));  //Pause/Play --> two states reflected by setting text
     playPauseItem.setAccelerator(MainMenuBar.PLAY_PAUSE_KEYCODE);
     playPauseItem.setOnAction(actionEvent -> playerControls.togglePlayPause() );
     playerControls.bindPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
 
-    MenuItem rewindItem = new MenuItem(language.getString("rewind"));  //Pause/Play --> two states reflected by setting text
+    MenuItem rewindItem = new MenuItem(KissPhoto.language.getString("rewind"));  //Pause/Play --> two states reflected by setting text
     rewindItem.setAccelerator(MainMenuBar.REWIND_KEYCODE);
     rewindItem.setOnAction(actionEvent -> playerControls.rewind());
 
-    CheckMenuItem playListModeItem = new CheckMenuItem(language.getString("playlist.mode"));
+    CheckMenuItem playListModeItem = new CheckMenuItem(KissPhoto.language.getString("playlist.mode"));
     playListModeItem.setAccelerator(MainMenuBar.PLAYLIST_MODE_KEYCODE);
     //playListModeItem.setOnAction(actionEvent -> playerControls.setPlayListMode(!playerControls.isPlayListMode())); //toggle --> not necessary because of bidirectional binding
     playerControls.bindBidirectionalPlaylistModeMenuItem(playListModeItem); //keep state of playControls and menuItem synced
 
-    CheckMenuItem repeatModeItem = new CheckMenuItem(language.getString("repeat.mode"));
+    CheckMenuItem repeatModeItem = new CheckMenuItem(KissPhoto.language.getString("repeat.mode"));
     repeatModeItem.setAccelerator(MainMenuBar.REPEAT_MODE_KEYCODE);
     //repeatModeItem.setOnAction(actionEvent -> playerControls.setRepeatMode(!playerControls.isRepeatMode())); //toggle --> not necessary because of bidirectional binding
     playerControls.bindBidirectionalRepeatMenuItem(repeatModeItem); //keep state of playControls and menuItem synced

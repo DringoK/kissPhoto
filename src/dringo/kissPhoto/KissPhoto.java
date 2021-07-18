@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
  * ========================================================<p>
  * The main KISS ideas of the application are
  * <ul>
- * <li>Rename files like in a wordprocesser's table: move around with the cursor, search and replace + mass rename, renumbering and sorting</li>
+ * <li>Rename files like in a word processor's table: move around with the cursor, search and replace + mass rename, renumbering and sorting</li>
  * <li>photo management and photo show without any additional files or database</li>
  * <li>self containing: all information is in the picture files, filenames or directory names</li>
  * <li>auto numbering: file order can be changed, file numbering will follow</li>
@@ -74,7 +74,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.606"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.718"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 

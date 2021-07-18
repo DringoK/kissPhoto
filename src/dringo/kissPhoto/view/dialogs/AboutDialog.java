@@ -1,7 +1,8 @@
 package dringo.kissPhoto.view.dialogs;
 
-import dringo.kissPhoto.helper.AppStarter;
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.mediaViewers.PlayerViewerVLCJ;
+import dringo.kissPhoto.helper.AppStarter;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -19,8 +20,6 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.text.MessageFormat;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -43,7 +42,7 @@ public class AboutDialog extends KissDialog {
   public AboutDialog(Stage owner, String versionString) {
     super(StageStyle.UTILITY, owner);
 
-    setTitle(MessageFormat.format(language.getString("about.kissphoto.0"), versionString));
+    setTitle(MessageFormat.format(KissPhoto.language.getString("about.kissphoto.0"), versionString));
     setHeight(530);
     setWidth(700);
     setMinHeight(getHeight());
@@ -127,7 +126,7 @@ public class AboutDialog extends KissDialog {
 
     Label description = new Label();
     description.setStyle(DESCRIPTION_TEXTSTYLE);
-    description.setText(language.getString("about.description"));
+    description.setText(KissPhoto.language.getString("about.description"));
     contentPane.getChildren().add(description);
 
 
@@ -172,12 +171,12 @@ public class AboutDialog extends KissDialog {
   private Label buildVLCInfo() {
     String vlcInfoText;
     if (PlayerViewerVLCJ.isVlcAvailable())
-      vlcInfoText = MessageFormat.format(language.getString("vlc.is.used.version.found.0"), PlayerViewerVLCJ.getCurrentVLCVersion());
+      vlcInfoText = MessageFormat.format(KissPhoto.language.getString("vlc.is.used.version.found.0"), PlayerViewerVLCJ.getCurrentVLCVersion());
     else
       if (PlayerViewerVLCJ.getCurrentVLCVersion().equals(""))
-        vlcInfoText = MessageFormat.format(language.getString("vlc.installation.not.found"), PlayerViewerVLCJ.getRequiredVLCVersion());
+        vlcInfoText = MessageFormat.format(KissPhoto.language.getString("vlc.installation.not.found"), PlayerViewerVLCJ.getRequiredVLCVersion());
       else
-        vlcInfoText =MessageFormat.format(language.getString("vlc.found.version.0.but.required.1"), PlayerViewerVLCJ.getCurrentVLCVersion(),PlayerViewerVLCJ.getRequiredVLCVersion());
+        vlcInfoText =MessageFormat.format(KissPhoto.language.getString("vlc.found.version.0.but.required.1"), PlayerViewerVLCJ.getCurrentVLCVersion(),PlayerViewerVLCJ.getRequiredVLCVersion());
 
     Label vlcInfo = new Label();
     vlcInfo.setStyle("-fx-text-fill: lightblue; -fx-font: bold 14 \"serif\";" );

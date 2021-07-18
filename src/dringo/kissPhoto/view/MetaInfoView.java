@@ -3,21 +3,19 @@ package dringo.kissPhoto.view;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
 import com.drew.metadata.exif.GpsDirectory;
-import dringo.kissPhoto.helper.AppStarter;
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.helper.ObservableStringList;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileTagged;
 import dringo.kissPhoto.model.Metadata.MetaInfoItem;
 import dringo.kissPhoto.model.Metadata.MetaInfoTreeItem;
 import dringo.kissPhoto.model.Metadata.MetadataItem;
+import dringo.kissPhoto.helper.AppStarter;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.StackPane;
-
-import static dringo.kissPhoto.KissPhoto.globalSettings;
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -59,8 +57,8 @@ public class MetaInfoView extends StackPane {
   //connect columns to data
 // param.getValue() returns the TreeItem<MetaInfoItem> instance for a particular TreeTableView row,
 // param.getValue().getValue() returns the MetaInfoItem instance inside the TreeItem<MetaInfoItem>
-  private final TreeTableColumn<MetaInfoItem, String> keyColumn = new TreeTableColumn<>(language.getString("key"));
-  private final TreeTableColumn<MetaInfoItem, String> valueColumn = new TreeTableColumn<>(language.getString("value"));
+  private final TreeTableColumn<MetaInfoItem, String> keyColumn = new TreeTableColumn<>(KissPhoto.language.getString("key"));
+  private final TreeTableColumn<MetaInfoItem, String> valueColumn = new TreeTableColumn<>(KissPhoto.language.getString("value"));
   private FileTableView fileTableView;        //some key presses are led to fileTableView
   private MediaContentView mediaContentView;  //some key presses are led to mediaContentView
   private StatusBar statusBar;
@@ -309,15 +307,15 @@ public class MetaInfoView extends StackPane {
    * or rememberDividerPos (if currently invisible)
    */
   public void storeVisibilityInGlobalSettings() {
-    globalSettings.setProperty(SELECTED_KEYPATH, getUserSelectionPath().toCSVString());
+    KissPhoto.globalSettings.setProperty(SELECTED_KEYPATH, getUserSelectionPath().toCSVString());
 
-    globalSettings.setProperty(METAINFO_VIEW_VISIBLE, Boolean.toString(isVisible()));
-    globalSettings.setProperty(KEYCOLUMN_WIDTH, Double.toString(keyColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(METAINFO_VIEW_VISIBLE, Boolean.toString(isVisible()));
+    KissPhoto.globalSettings.setProperty(KEYCOLUMN_WIDTH, Double.toString(keyColumn.getWidth()));
 
     if (isVisible()) {
-      globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(surroundingPane.getDividerPositions()[0]));
+      KissPhoto.globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(surroundingPane.getDividerPositions()[0]));
     } else {
-      globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(rememberDividerPos));
+      KissPhoto.globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(rememberDividerPos));
     }
   }
 
@@ -327,26 +325,26 @@ public class MetaInfoView extends StackPane {
   public void restoreVisibilityFromGlobalSettings() {
     try {
       userSelectionPath = new ObservableStringList();
-      userSelectionPath.appendFromCSVString(globalSettings.getProperty(SELECTED_KEYPATH));
+      userSelectionPath.appendFromCSVString(KissPhoto.globalSettings.getProperty(SELECTED_KEYPATH));
     } catch (Exception e) {
       userSelectionPath = null; //nothing selected
     }
 
     try {
-      setVisible(Boolean.parseBoolean(globalSettings.getProperty(METAINFO_VIEW_VISIBLE)));
+      setVisible(Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(METAINFO_VIEW_VISIBLE)));
     } catch (Exception e) {
       setVisible(DEFAULT_VISIBILITY);
     }
 
     try {
-      rememberDividerPos = Double.parseDouble(globalSettings.getProperty(DETAILS_AREA_DIVIDER_POSITION));
+      rememberDividerPos = Double.parseDouble(KissPhoto.globalSettings.getProperty(DETAILS_AREA_DIVIDER_POSITION));
     } catch (Exception e) {
       rememberDividerPos = DETAILS_AREA_DEFAULT_DIVIDER_POS;
     }
     if (isVisible()) surroundingPane.setDividerPosition(0, rememberDividerPos);
 
     try {
-      keyColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(KEYCOLUMN_WIDTH)));
+      keyColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(KEYCOLUMN_WIDTH)));
     } catch (Exception e) {
       keyColumn.setPrefWidth(DEFAULT_KEYCOLUMN_WIDTH);
     }
@@ -378,8 +376,11 @@ public class MetaInfoView extends StackPane {
         }
       }
       //only return a string if all components of the GPS coordinate are available
-      if (latitudeRef != null && latitude != null && longitudeRef != null && longitude != null)
+      if (latitudeRef != null && latitude != null && longitudeRef != null && longitude != null){
         gpsCoordinates = latitude + latitudeRef + "+" + longitude + longitudeRef;
+        gpsCoordinates = gpsCoordinates.replaceAll(",","."); //on some computers decimal is represented as comma which is not accepted by google maps
+
+      }
     }
     return gpsCoordinates;
   }
@@ -401,9 +402,12 @@ public class MetaInfoView extends StackPane {
       successful = AppStarter.tryToBrowse(url);
     }
     if (successful)
-      statusBar.showMessage(gpsCoordinates + " " + language.getString("opened.in.google.maps"));
+      statusBar.showMessage(gpsCoordinates + " " + KissPhoto.language.getString("opened.in.google.maps"));
     else
-      statusBar.showError(language.getString("no.valid.gps.data.available.for.the.current.media.file"));
+      statusBar.showError(KissPhoto.language.getString("no.valid.gps.data.available.for.the.current.media.file"));
 
   }
 }
+
+
+

@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.dialogs;
 
+import dringo.kissPhoto.KissPhoto;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -12,8 +13,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -60,7 +59,7 @@ public class MessageBox extends KissDialog {
     }
 
     setOpacity(0.8);
-    setTitle(language.getString("kissphoto.message"));
+    setTitle(KissPhoto.language.getString("kissphoto.message"));
 
     setHeight(250);
     setWidth(400);

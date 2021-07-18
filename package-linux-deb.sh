@@ -1,10 +1,11 @@
 #!/bin/bash
 echo deb
+rm ./*.deb
 jpackage \
   --type deb \
   --input out/artifacts \
   --main-jar kissPhoto.jar \
-  --app-version 00.21.0606 \
+  --app-version 00.21.0718 \
   --name kissPhoto \
   --copyright '(c)2021 Dr. Ingo Kreuz' \
   --vendor 'Ingo Kreuz' \
@@ -19,5 +20,5 @@ jpackage \
   --file-associations Associations/png.aso  --file-associations Associations/qt.aso
 echo debian-installer generated
 echo moving result to KissPhoto base directory
-mv ./*.deb ..
+cp ./*.deb ..
 cp out/artifacts/*.jar ..

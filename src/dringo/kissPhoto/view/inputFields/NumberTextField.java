@@ -1,9 +1,8 @@
 package dringo.kissPhoto.view.inputFields;
 
+import dringo.kissPhoto.KissPhoto;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 
 /**
@@ -50,7 +49,7 @@ public class NumberTextField extends RestrictedTextField {
       i++;
     }
     if (invalidCharFound) {
-      return language.getString(SORRY_ONLY_DIGITS_ALLOWED_HERE);
+      return KissPhoto.language.getString(SORRY_ONLY_DIGITS_ALLOWED_HERE);
     } else {
       return ""; //no error :-)
     }
@@ -72,7 +71,7 @@ public class NumberTextField extends RestrictedTextField {
         )) {
       System.out.println("charAt(0)=" + (int) event.getCharacter().charAt(0));
       event.consume();     //ignore these keys!!
-      return language.getString(SORRY_ONLY_DIGITS_ALLOWED_HERE);
+      return KissPhoto.language.getString(SORRY_ONLY_DIGITS_ALLOWED_HERE);
     } else {
       System.out.println("no error");
       return ""; //no error :-)

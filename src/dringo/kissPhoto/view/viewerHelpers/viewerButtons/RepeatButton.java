@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.viewerHelpers.viewerButtons;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Group;
@@ -7,8 +8,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -137,14 +136,14 @@ public class RepeatButton extends Group {
   private void setTooltipText(){
     if (repeatMode.get()) {
       if (playListMode.get())
-        tooltip.setText(language.getString("repeat.list"));
+        tooltip.setText(KissPhoto.language.getString("repeat.list"));
       else
-        tooltip.setText(language.getString("repeat.current.media.file"));
+        tooltip.setText(KissPhoto.language.getString("repeat.current.media.file"));
     }else{
       if (playListMode.get())
-        tooltip.setText(language.getString("don.t.repeat.play.list.once"));
+        tooltip.setText(KissPhoto.language.getString("don.t.repeat.play.list.once"));
       else
-        tooltip.setText(language.getString("don.t.repeat.play.current.media.once"));
+        tooltip.setText(KissPhoto.language.getString("don.t.repeat.play.current.media.once"));
     }
   }
 

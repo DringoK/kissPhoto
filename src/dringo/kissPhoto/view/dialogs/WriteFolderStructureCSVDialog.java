@@ -1,10 +1,11 @@
 package dringo.kissPhoto.view.dialogs;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.helper.PathHelpers;
-import dringo.kissPhoto.helper.StringHelper;
 import dringo.kissPhoto.model.MediaFileList;
-import dringo.kissPhoto.view.StatusBar;
 import dringo.kissPhoto.view.inputFields.PathNameTextField;
+import dringo.kissPhoto.helper.StringHelper;
+import dringo.kissPhoto.view.StatusBar;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -24,8 +25,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.text.MessageFormat;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -69,7 +68,7 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
     this.mediaFileList = mediaFileList;
     this.statusBar = statusBar;
 
-    setTitle(language.getString("kissphoto.write.folder.structure.to.csv"));
+    setTitle(KissPhoto.language.getString("kissphoto.write.folder.structure.to.csv"));
 
     setHeight(200);
     setWidth(800);
@@ -101,8 +100,8 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
     csvFilenameTextField.setOnKeyReleased(keyEvent -> enableValidButtons());
 
 
-    gridPane.add(new Label(language.getString("root.folder")), 0, 0);      //column, row
-    gridPane.add(new Label(language.getString("output.file")), 0, 1);
+    gridPane.add(new Label(KissPhoto.language.getString("root.folder")), 0, 0);      //column, row
+    gridPane.add(new Label(KissPhoto.language.getString("output.file")), 0, 1);
     gridPane.add(rootFolderTextField, 1, 0);
     gridPane.add(csvFilenameTextField, 1, 1);
     gridPane.add(rootDirEditorBtn, 2, 0);
@@ -132,9 +131,9 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
     okBtn.setOnAction(actionEvent -> {
       try {
         exportFolderStructureToCSV(rootFolderTextField.getText(), csvFilenameTextField.getText());
-        statusBar.showMessage(language.getString("csv.successfully.generated.for.directory.structure"));
+        statusBar.showMessage(KissPhoto.language.getString("csv.successfully.generated.for.directory.structure"));
       } catch (IOException e) {
-        statusBar.showError(MessageFormat.format(language.getString("error.generating.csv.file.for.directory.structure.0"), e.getMessage()));
+        statusBar.showError(MessageFormat.format(KissPhoto.language.getString("error.generating.csv.file.for.directory.structure.0"), e.getMessage()));
       }
       modalResult_bool = OK_BOOL;
       close();
@@ -166,7 +165,7 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
   private void showDirectoryChooser() {
     if (directoryChooserDialog == null) {
       directoryChooserDialog = new DirectoryChooser();
-      directoryChooserDialog.setTitle(language.getString("kissphoto.write.folder.structure.select.root.directory"));
+      directoryChooserDialog.setTitle(KissPhoto.language.getString("kissphoto.write.folder.structure.select.root.directory"));
     }
     Path initDir = Paths.get(rootFolderTextField.getText()); //first try to parse the editInputField
 
@@ -195,11 +194,11 @@ public class WriteFolderStructureCSVDialog extends KissDialog {
   private void showFileChooser() {
     if (fileChooserDialog == null) {
       fileChooserDialog = new FileChooser();
-      fileChooserDialog.setTitle(language.getString("kissphoto.write.folder.structure.provide.a.filename.for.csv.output"));
+      fileChooserDialog.setTitle(KissPhoto.language.getString("kissphoto.write.folder.structure.provide.a.filename.for.csv.output"));
 
       fileChooserDialog.getExtensionFilters().addAll(
-          new FileChooser.ExtensionFilter(language.getString(COMMA_SEPARATED_VALUES_FILE_SPREADSHEET), CSV),
-          new FileChooser.ExtensionFilter(language.getString(ALL_FILES), "*.*")
+          new FileChooser.ExtensionFilter(KissPhoto.language.getString(COMMA_SEPARATED_VALUES_FILE_SPREADSHEET), CSV),
+          new FileChooser.ExtensionFilter(KissPhoto.language.getString(ALL_FILES), "*.*")
       );
     }
 

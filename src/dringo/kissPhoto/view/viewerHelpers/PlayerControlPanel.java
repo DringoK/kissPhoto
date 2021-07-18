@@ -2,10 +2,10 @@ package dringo.kissPhoto.view.viewerHelpers;
 
 import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.MediaContentView;
-import dringo.kissPhoto.view.mediaViewers.PlayerViewer;
 import dringo.kissPhoto.view.viewerHelpers.viewerButtons.PlayListButton;
 import dringo.kissPhoto.view.viewerHelpers.viewerButtons.PlayPauseButton;
 import dringo.kissPhoto.view.viewerHelpers.viewerButtons.RepeatButton;
+import dringo.kissPhoto.view.mediaViewers.PlayerViewer;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
@@ -13,8 +13,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -371,9 +369,9 @@ public class PlayerControlPanel extends ViewerControlPanel {
    */
   protected void syncPlayPauseMenuItemText(MenuItem item) {
         if (playPauseButton.pausedProperty().get())
-          item.setText(language.getString("play")); //if paused menuItem can start play again
+          item.setText(KissPhoto.language.getString("play")); //if paused menuItem can start play again
         else
-          item.setText((language.getString("pause")));  //if playing then the menuItem can pause
+          item.setText((KissPhoto.language.getString("pause")));  //if playing then the menuItem can pause
   }
 
   /**

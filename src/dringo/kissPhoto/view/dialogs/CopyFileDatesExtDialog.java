@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.dialogs;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileList;
 import dringo.kissPhoto.model.OtherFile;
@@ -21,8 +22,6 @@ import javafx.stage.Stage;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -61,7 +60,7 @@ public class CopyFileDatesExtDialog extends KissDialog {
     sortedFileList = FXCollections.observableArrayList(mediaFileList.getFileList()); //copy
     FXCollections.sort(sortedFileList);
 
-    setTitle(language.getString("kissphoto.copy.file.dates.by.master.extension"));
+    setTitle(KissPhoto.language.getString("kissphoto.copy.file.dates.by.master.extension"));
 
     setHeight(600);
     setWidth(800);
@@ -78,7 +77,7 @@ public class CopyFileDatesExtDialog extends KissDialog {
     masterExtAreaBox.setSpacing(30.0);
     masterExtAreaBox.setAlignment(Pos.CENTER);
     masterExtAreaBox.setPadding(new Insets(7));
-    masterExtAreaBox.getChildren().addAll(new Label(language.getString("master.extension")), masterExtTextField);
+    masterExtAreaBox.getChildren().addAll(new Label(KissPhoto.language.getString("master.extension")), masterExtTextField);
 
     masterExtTextField.setOnKeyReleased(keyEvent -> buildClusteredFileList());
 
@@ -103,7 +102,7 @@ public class CopyFileDatesExtDialog extends KissDialog {
     });
     buttonBox.getChildren().addAll(okBtn, cancelBtn);
 
-    inputArea.getChildren().addAll(masterExtAreaBox, buttonBox, new Label("   " + language.getString("preview")));
+    inputArea.getChildren().addAll(masterExtAreaBox, buttonBox, new Label("   " + KissPhoto.language.getString("preview")));
 
     initTreeTableView(mediaFileList);
 
@@ -132,11 +131,11 @@ public class CopyFileDatesExtDialog extends KissDialog {
 
     treeTableView.setRoot(root);
 
-    TreeTableColumn<MediaFile, String> fileNameCol = new TreeTableColumn<>(language.getString("file.name"));
+    TreeTableColumn<MediaFile, String> fileNameCol = new TreeTableColumn<>(KissPhoto.language.getString("file.name"));
     fileNameCol.prefWidthProperty().bind(treeTableView.widthProperty().subtract(FILEDATE_COL_WIDTH + 2)); //two extra pixels to avoid scroll bar
     fileNameCol.setCellValueFactory(new TreeItemPropertyValueFactory<>("ResultingFilename"));
 
-    TreeTableColumn<MediaFile, String> fileDateColumn = new TreeTableColumn<>(language.getString(FileTableView.MODIFIED));
+    TreeTableColumn<MediaFile, String> fileDateColumn = new TreeTableColumn<>(KissPhoto.language.getString(FileTableView.MODIFIED));
     fileDateColumn.setPrefWidth(FILEDATE_COL_WIDTH);
     fileDateColumn.setCellValueFactory(new TreeItemPropertyValueFactory<>("fileDate"));
 

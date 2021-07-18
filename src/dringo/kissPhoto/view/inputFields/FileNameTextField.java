@@ -1,9 +1,8 @@
 package dringo.kissPhoto.view.inputFields;
 
+import dringo.kissPhoto.KissPhoto;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 
 /**
@@ -77,7 +76,7 @@ public class FileNameTextField extends RestrictedTextField {
     }
 
     if (invalidCharFound) {
-      return language.getString(ARE_NOT_ALLOWED_IN_FILENAMES);
+      return KissPhoto.language.getString(ARE_NOT_ALLOWED_IN_FILENAMES);
     } else {
       return ""; //no error :-)
     }
@@ -94,7 +93,7 @@ public class FileNameTextField extends RestrictedTextField {
   protected String verifyKeyTyped(KeyEvent event) {
     if ("\\/:*?\"<>|".contains(event.getCharacter())) {
       event.consume();     //ignore these keys!!
-      return language.getString(ARE_NOT_ALLOWED_IN_FILENAMES);
+      return KissPhoto.language.getString(ARE_NOT_ALLOWED_IN_FILENAMES);
     } else {
       return "";
     }

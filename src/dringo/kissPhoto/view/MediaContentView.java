@@ -25,8 +25,6 @@ import javafx.util.Duration;
 
 import java.text.MessageFormat;
 
-import static dringo.kissPhoto.KissPhoto.language;
-
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
@@ -477,7 +475,7 @@ public class MediaContentView extends Pane {
   }
 
   private void activateEmptyMediaViewer() {
-    activateOtherMediaViewer(false, language.getString("nothing.to.show"));
+    activateOtherMediaViewer(false, KissPhoto.language.getString("nothing.to.show"));
   }
 
   /**
@@ -491,7 +489,7 @@ public class MediaContentView extends Pane {
       activateOtherMediaViewer(true, "");   //no vlc installation hint
     else
       //if vlc is not installed than add a hint
-      activateOtherMediaViewer(true, language.getString("to.support.more.file.formats.install.the.free.vlc.player.from.videolan.on.your.system.kissphoto.will.detect.and.use.it"));
+      activateOtherMediaViewer(true, KissPhoto.language.getString("to.support.more.file.formats.install.the.free.vlc.player.from.videolan.on.your.system.kissphoto.will.detect.and.use.it"));
   }
 
   /**
@@ -518,7 +516,7 @@ public class MediaContentView extends Pane {
     isPlayerActive.set(true);
 
     otherViewer.setMainMessageVisible(false);
-    otherViewer.setAdditionalMessage(language.getString("media.file.is.being.played.in.fullscreen.window"));
+    otherViewer.setAdditionalMessage(KissPhoto.language.getString("media.file.is.being.played.in.fullscreen.window"));
 
     photoViewer.setVisible(false);
     playerViewer.setVisible(false);
@@ -561,7 +559,7 @@ public class MediaContentView extends Pane {
         if (mediaFile.getContentProgressProperty().doubleValue() < 1.0) {
           StatusBar statusBar = fileTableView.getStatusBar();
 
-          statusBar.showMessage(MessageFormat.format(language.getString("loading.0"), mediaFile.getResultingFilename()));
+          statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("loading.0"), mediaFile.getResultingFilename()));
           statusBar.getProgressProperty().bind(mediaFile.getContentProgressProperty());
           statusBar.showProgressBar();
           lastMediaFileBoundtoProgress = mediaFile;
@@ -818,16 +816,16 @@ public class MediaContentView extends Pane {
       showFullScreenOnNextScreen(true); //if multiple screens are available use the "next" initially
       //note: fileTableView = null if in UnDeleteDialog (i.e. no progressBar)
       if (fileTableView != null)
-        fileTableView.getStatusBar().showMessage(language.getString("esc.to.end.full.screen.tab.to.shift.full.screen.panel.between.screens"));
+        fileTableView.getStatusBar().showMessage(KissPhoto.language.getString("esc.to.end.full.screen.tab.to.shift.full.screen.panel.between.screens"));
     }
   }
 
   public void setFullScreenMenuItemText(MenuItem showFullScreenItem){
     if (isFullScreenActiveProperty.get()) {
-      showFullScreenItem.setText(language.getString("end.full.screen.mode"));
+      showFullScreenItem.setText(KissPhoto.language.getString("end.full.screen.mode"));
       showFullScreenItem.setAccelerator(MainMenuBar.fullScreenKeyCombinationEnd);
     }else {
-      showFullScreenItem.setText(language.getString("full.screen"));
+      showFullScreenItem.setText(KissPhoto.language.getString("full.screen"));
       showFullScreenItem.setAccelerator(MainMenuBar.fullScreenKeyCombinationStart);
     }
   }
@@ -841,35 +839,35 @@ public class MediaContentView extends Pane {
   public void addContextMenuItems(final ContextMenu contextMenu) {
 
     //----- select media file from list
-    MenuItem nextItem = new MenuItem(language.getString("next.scroll.mouse.wheel.down")); //PgDn  or ENTER
+    MenuItem nextItem = new MenuItem(KissPhoto.language.getString("next.scroll.mouse.wheel.down")); //PgDn  or ENTER
     nextItem.setAccelerator(new KeyCodeCombination(KeyCode.PAGE_DOWN));
     nextItem.setOnAction(actionEvent -> {
       showNextMedia();
       actionEvent.consume();
     });
 
-    MenuItem previousItem = new MenuItem(language.getString("previous.scroll.mouse.wheel.up")); //PgUp
+    MenuItem previousItem = new MenuItem(KissPhoto.language.getString("previous.scroll.mouse.wheel.up")); //PgUp
     previousItem.setAccelerator(new KeyCodeCombination(KeyCode.PAGE_UP));
     previousItem.setOnAction(actionEvent -> {
       showPreviousMedia();
       actionEvent.consume();
     });
 
-    MenuItem homeItem = new MenuItem(language.getString("first")); //home
+    MenuItem homeItem = new MenuItem(KissPhoto.language.getString("first")); //home
     homeItem.setAccelerator(new KeyCodeCombination(KeyCode.HOME));
     homeItem.setOnAction(actionEvent -> {
       showMediaInLineNumber(1);
       actionEvent.consume();
     });
 
-    MenuItem endItem = new MenuItem(language.getString("last")); //end
+    MenuItem endItem = new MenuItem(KissPhoto.language.getString("last")); //end
     endItem.setAccelerator(new KeyCodeCombination(KeyCode.END));
     endItem.setOnAction(actionEvent -> {
       showMediaInLineNumber(Integer.MAX_VALUE);
       actionEvent.consume();
     });
 
-    MenuItem gotoItem = new MenuItem(language.getString("goto.number.type.digits.then.enter")); //ENTER
+    MenuItem gotoItem = new MenuItem(KissPhoto.language.getString("goto.number.type.digits.then.enter")); //ENTER
     gotoItem.setAccelerator(new KeyCodeCombination(KeyCode.ENTER));
     gotoItem.setOnAction(actionEvent -> {
       showMediaForEnteredLineNumber();
@@ -885,7 +883,7 @@ public class MediaContentView extends Pane {
       actionEvent.consume();
     });
 
-    MenuItem showOnNextScreenItem = new MenuItem(language.getString(SHOW_ON_NEXT_SCREEN_FULLSCREEN));
+    MenuItem showOnNextScreenItem = new MenuItem(KissPhoto.language.getString(SHOW_ON_NEXT_SCREEN_FULLSCREEN));
     showOnNextScreenItem.setAccelerator((new KeyCodeCombination(KeyCode.TAB))); //TAB, previous shift-Tab is not shown in menu
     showOnNextScreenItem.setOnAction(actionEvent -> showFullScreenOnNextScreen(true));
     showOnNextScreenItem.setDisable(true); //enable only in Full screen mode
@@ -902,7 +900,7 @@ public class MediaContentView extends Pane {
 
     contextMenu.getItems().addAll(new SeparatorMenuItem(), fullScreenItem, showOnNextScreenItem);
   //---------- Metadata
-    final MenuItem showGPSLocationItem = new MenuItem(language.getString("show.gps.location.in.google.maps"));
+    final MenuItem showGPSLocationItem = new MenuItem(KissPhoto.language.getString("show.gps.location.in.google.maps"));
     showGPSLocationItem.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN));
     showGPSLocationItem.setOnAction(event -> {
       event.consume();
@@ -913,21 +911,21 @@ public class MediaContentView extends Pane {
 
 
 //-------- Attributes
-    final CheckMenuItem showAttrItem = new CheckMenuItem(language.getString("display.description"));
+    final CheckMenuItem showAttrItem = new CheckMenuItem(KissPhoto.language.getString("display.description"));
     showAttrItem.setAccelerator(new KeyCodeCombination(KeyCode.D, KeyCombination.CONTROL_DOWN));
     showAttrItem.setOnAction(actionEvent -> attrViewer.setVisible(showAttrItem.isSelected()));
 //--------
-    final CheckMenuItem showPrefixItem = new CheckMenuItem(language.getString("show.prefix"));
+    final CheckMenuItem showPrefixItem = new CheckMenuItem(KissPhoto.language.getString("show.prefix"));
     showPrefixItem.setAccelerator(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN));
     showPrefixItem.setOnAction(actionEvent -> attrViewer.setDisplayPrefix(showPrefixItem.isSelected()));
 
-    final CheckMenuItem showCounterItem = new CheckMenuItem(language.getString("show.counter"));
+    final CheckMenuItem showCounterItem = new CheckMenuItem(KissPhoto.language.getString("show.counter"));
     showCounterItem.setAccelerator(new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN));
     showCounterItem.setOnAction(actionEvent -> attrViewer.setDisplayCounter(showCounterItem.isSelected()));
-    final CheckMenuItem showExtensionItem = new CheckMenuItem(language.getString("show.extension"));
+    final CheckMenuItem showExtensionItem = new CheckMenuItem(KissPhoto.language.getString("show.extension"));
     showExtensionItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN));
     showExtensionItem.setOnAction(actionEvent -> attrViewer.setDisplayExtension(showExtensionItem.isSelected()));
-    final CheckMenuItem showFileDateItem = new CheckMenuItem(language.getString("show.file.date"));
+    final CheckMenuItem showFileDateItem = new CheckMenuItem(KissPhoto.language.getString("show.file.date"));
     showFileDateItem.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
     showFileDateItem.setOnAction(actionEvent -> attrViewer.setDisplayFileDate(showFileDateItem.isSelected()));
 

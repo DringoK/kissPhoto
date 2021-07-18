@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.fileTableHelpers;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.FileTableView;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,9 +13,6 @@ import javafx.scene.input.KeyCombination;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import static dringo.kissPhoto.KissPhoto.globalSettings;
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -44,7 +42,7 @@ public class FileHistory {
   public FileHistory(FileTableView fileTableView) {
     this.fileTableView = fileTableView;
 
-    mainMenuItem = new Menu(language.getString("open.recent"));
+    mainMenuItem = new Menu(KissPhoto.language.getString("open.recent"));
 
     loadRecentlyOpenedListFromSettings();
   }
@@ -98,7 +96,7 @@ public class FileHistory {
   private void loadRecentlyOpenedListFromSettings() {
     try { //try to load as many entries as possible
       for (int i = 1; i <= MAX_ENTRIES; i++) {
-        recentlyOpenedList.add(Paths.get(globalSettings.getProperty(LAST_FILE_OPENED + i)));
+        recentlyOpenedList.add(Paths.get(KissPhoto.globalSettings.getProperty(LAST_FILE_OPENED + i)));
       }
     } catch (Exception e) {
       //consume the exception
@@ -110,7 +108,7 @@ public class FileHistory {
   private void saveRecentlyOpenedListToSettings() {
     int i = 1;
     for (Path entry : recentlyOpenedList) {
-      globalSettings.setProperty(LAST_FILE_OPENED + i, entry.toAbsolutePath().toString());
+      KissPhoto.globalSettings.setProperty(LAST_FILE_OPENED + i, entry.toAbsolutePath().toString());
       i++;
     }
   }

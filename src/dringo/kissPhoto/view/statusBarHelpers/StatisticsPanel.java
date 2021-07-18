@@ -1,12 +1,11 @@
 package dringo.kissPhoto.view.statusBarHelpers;
 
-import dringo.kissPhoto.helper.StringHelper;
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.FileTableView;
+import dringo.kissPhoto.helper.StringHelper;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -26,10 +25,10 @@ import static dringo.kissPhoto.KissPhoto.language;
  */
 
 public class StatisticsPanel extends HBox {
-  private final static String filesCaption = language.getString("filesStatistic");
-  private final static String selectedCaption = language.getString("selectedStatistic");
-  private final static String modifiedCaption = language.getString("modifiedStatistic");
-  private final static String deletedCaption = language.getString("deletedStatistic");
+  private final static String filesCaption = KissPhoto.language.getString("filesStatistic");
+  private final static String selectedCaption = KissPhoto.language.getString("selectedStatistic");
+  private final static String modifiedCaption = KissPhoto.language.getString("modifiedStatistic");
+  private final static String deletedCaption = KissPhoto.language.getString("deletedStatistic");
 
   private final Label filesLabel = new Label(filesCaption + " 0");
   private final Label selectedLabel = new Label(selectedCaption + " 0");

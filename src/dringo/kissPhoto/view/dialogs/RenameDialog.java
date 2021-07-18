@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.dialogs;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.view.FileTableView;
 import dringo.kissPhoto.view.inputFields.FileNameTextField;
@@ -22,8 +23,6 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.text.MessageFormat;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -51,10 +50,10 @@ public class RenameDialog extends KissDialog {
   SeparatorInputField separatorTextField = new SeparatorInputField();
   TextField descriptionTextField = new FileNameTextField(this);
   TextField extensionTextField = new FileNameTextField(this);
-  CheckBox prefixCheckBox = new CheckBox(language.getString(FileTableView.PREFIX));
-  CheckBox separatorCheckBox = new CheckBox(language.getString(FileTableView.SEPARATOR));
-  CheckBox descriptionCheckBox = new CheckBox(language.getString(FileTableView.DESCRIPTION));
-  CheckBox extensionCheckBox = new CheckBox(language.getString(FileTableView.EXTENSION));
+  CheckBox prefixCheckBox = new CheckBox(KissPhoto.language.getString(FileTableView.PREFIX));
+  CheckBox separatorCheckBox = new CheckBox(KissPhoto.language.getString(FileTableView.SEPARATOR));
+  CheckBox descriptionCheckBox = new CheckBox(KissPhoto.language.getString(FileTableView.DESCRIPTION));
+  CheckBox extensionCheckBox = new CheckBox(KissPhoto.language.getString(FileTableView.EXTENSION));
 
   Button prefixBtn;
   Button counterBtn;
@@ -67,7 +66,7 @@ public class RenameDialog extends KissDialog {
   public RenameDialog(Stage owner) {
     super(owner);
 
-    setTitle(language.getString("kissphoto.rename.media.files"));
+    setTitle(KissPhoto.language.getString("kissphoto.rename.media.files"));
     setHeight(480);
     setWidth(650);
     setMinHeight(getHeight());
@@ -107,7 +106,7 @@ public class RenameDialog extends KissDialog {
     gridPane.add(extensionCheckBox, 0, 3);
     gridPane.add(extensionTextField, 1, 3);
 
-    Label explanation = new Label(language.getString("check.the.fields.you.want.to.change"));
+    Label explanation = new Label(KissPhoto.language.getString("check.the.fields.you.want.to.change"));
     VBox explanationPane = new VBox();
     explanationPane.setPadding(new Insets(0, INSET, 0, INSET));
     explanationPane.getChildren().addAll(explanation);
@@ -126,7 +125,7 @@ public class RenameDialog extends KissDialog {
     buttonsGridPane.getColumnConstraints().addAll(descCol1, descCol2);
 
 
-    prefixBtn = new Button(language.getString("ctrl.p"));
+    prefixBtn = new Button(KissPhoto.language.getString("ctrl.p"));
     prefixBtn.setFocusTraversable(false);
     prefixBtn.setOnAction(actionEvent -> {
       if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
@@ -138,10 +137,10 @@ public class RenameDialog extends KissDialog {
       }
     });
     buttonsGridPane.add(prefixBtn, 0, 0);
-    Label prefixDesc = new Label(MessageFormat.format(language.getString("0.inserts.the.current.prefix.of.the.file"), MediaFile.PLACEHOLDER_PREFIX));
+    Label prefixDesc = new Label(MessageFormat.format(KissPhoto.language.getString("0.inserts.the.current.prefix.of.the.file"), MediaFile.PLACEHOLDER_PREFIX));
     buttonsGridPane.add(prefixDesc, 1, 0);
 
-    counterBtn = new Button(language.getString("ctrl.c"));
+    counterBtn = new Button(KissPhoto.language.getString("ctrl.c"));
     counterBtn.setFocusTraversable(false);
     counterBtn.setOnAction(actionEvent -> {
       if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
@@ -153,10 +152,10 @@ public class RenameDialog extends KissDialog {
       }
     });
     buttonsGridPane.add(counterBtn, 0, 1);
-    Label counterDesc = new Label(MessageFormat.format(language.getString("0.inserts.the.current.counter.value.of.the.file"), MediaFile.PLACEHOLDER_COUNTER));
+    Label counterDesc = new Label(MessageFormat.format(KissPhoto.language.getString("0.inserts.the.current.counter.value.of.the.file"), MediaFile.PLACEHOLDER_COUNTER));
     buttonsGridPane.add(counterDesc, 1, 1);
 
-    separatorBtn = new Button(language.getString("ctrl.s"));
+    separatorBtn = new Button(KissPhoto.language.getString("ctrl.s"));
     separatorBtn.setFocusTraversable(false);
     separatorBtn.setOnAction(actionEvent -> {
       if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
@@ -168,10 +167,10 @@ public class RenameDialog extends KissDialog {
       }
     });
     buttonsGridPane.add(separatorBtn, 0, 2);
-    Label separatorDesc = new Label(MessageFormat.format(language.getString("0.inserts.the.current.separator.of.the.file"), MediaFile.PLACEHOLDER_SEPARATOR));
+    Label separatorDesc = new Label(MessageFormat.format(KissPhoto.language.getString("0.inserts.the.current.separator.of.the.file"), MediaFile.PLACEHOLDER_SEPARATOR));
     buttonsGridPane.add(separatorDesc, 1, 2);
 
-    descriptionBtn = new Button(language.getString("ctrl.d"));
+    descriptionBtn = new Button(KissPhoto.language.getString("ctrl.d"));
     descriptionBtn.setFocusTraversable(false);
     descriptionBtn.setOnAction(actionEvent -> {
       if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
@@ -183,10 +182,10 @@ public class RenameDialog extends KissDialog {
       }
     });
     buttonsGridPane.add(descriptionBtn, 0, 3);
-    Label descriptionDesc = new Label(MessageFormat.format(language.getString("0.inserts.the.current.description.of.the.file"), MediaFile.PLACEHOLDER_DESCRIPTION));
+    Label descriptionDesc = new Label(MessageFormat.format(KissPhoto.language.getString("0.inserts.the.current.description.of.the.file"), MediaFile.PLACEHOLDER_DESCRIPTION));
     buttonsGridPane.add(descriptionDesc, 1, 3);
 
-    extensionBtn = new Button(language.getString("ctrl.e"));
+    extensionBtn = new Button(KissPhoto.language.getString("ctrl.e"));
     extensionBtn.setFocusTraversable(false);
     extensionBtn.setOnAction(actionEvent -> {
       if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
@@ -198,10 +197,10 @@ public class RenameDialog extends KissDialog {
       }
     });
     buttonsGridPane.add(extensionBtn, 0, 4);
-    Label extensionDesc = new Label(MessageFormat.format(language.getString("0.inserts.the.current.extension.of.the.file"), MediaFile.PLACEHOLDER_EXTENSION));
+    Label extensionDesc = new Label(MessageFormat.format(KissPhoto.language.getString("0.inserts.the.current.extension.of.the.file"), MediaFile.PLACEHOLDER_EXTENSION));
     buttonsGridPane.add(extensionDesc, 1, 4);
 
-    dateBtn = new Button(language.getString("ctrl.m"));
+    dateBtn = new Button(KissPhoto.language.getString("ctrl.m"));
     dateBtn.setFocusTraversable(false);
     dateBtn.setOnAction(actionEvent -> {
       if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
@@ -213,10 +212,10 @@ public class RenameDialog extends KissDialog {
       }
     });
     buttonsGridPane.add(dateBtn, 0, 5);
-    Label dateDesc = new Label(MessageFormat.format(language.getString("0.inserts.the.current.modified.date.of.the.file"), MediaFile.PLACEHOLDER_DATE));
+    Label dateDesc = new Label(MessageFormat.format(KissPhoto.language.getString("0.inserts.the.current.modified.date.of.the.file"), MediaFile.PLACEHOLDER_DATE));
     buttonsGridPane.add(dateDesc, 1, 5);
 
-    timeBtn = new Button(language.getString("ctrl.t"));
+    timeBtn = new Button(KissPhoto.language.getString("ctrl.t"));
     timeBtn.setFocusTraversable(false);
     timeBtn.setOnAction(actionEvent -> {
       if (sceneProperty().get().getFocusOwner().equals(prefixTextField)
@@ -228,7 +227,7 @@ public class RenameDialog extends KissDialog {
       }
     });
     buttonsGridPane.add(timeBtn, 0, 6);
-    Label timeDesc = new Label(MessageFormat.format(language.getString("0.inserts.the.current.modified.time.of.the.file"), MediaFile.PLACEHOLDER_TIME));
+    Label timeDesc = new Label(MessageFormat.format(KissPhoto.language.getString("0.inserts.the.current.modified.time.of.the.file"), MediaFile.PLACEHOLDER_TIME));
     buttonsGridPane.add(timeDesc, 1, 6);
 
     HBox buttonBox = new HBox();
@@ -236,7 +235,7 @@ public class RenameDialog extends KissDialog {
     buttonBox.setPadding(mainPadding);
     buttonBox.setAlignment(Pos.CENTER);
 
-    Button renameBtn = new Button(language.getString("rename"));
+    Button renameBtn = new Button(KissPhoto.language.getString("rename"));
     renameBtn.setDefaultButton(true);
     renameBtn.setOnAction(actionEvent -> {
       modalResult = RENAME_BTN;

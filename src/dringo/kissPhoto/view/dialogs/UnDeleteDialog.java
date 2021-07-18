@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.dialogs;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.view.MediaContentView;
 import javafx.beans.value.ChangeListener;
@@ -20,8 +21,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -51,7 +50,7 @@ public class UnDeleteDialog extends KissDialog {
   public UnDeleteDialog(Stage owner) {
     super(owner);
 
-    setTitle(language.getString("kissphoto.un.delete.select.deleted.files.for.recovery"));
+    setTitle(KissPhoto.language.getString("kissphoto.un.delete.select.deleted.files.for.recovery"));
     setHeight(600);
     setWidth(1000);
     setMinHeight(getHeight());
@@ -93,7 +92,7 @@ public class UnDeleteDialog extends KissDialog {
     buttonBox.setAlignment(Pos.CENTER);
     buttonBox.setPadding(new Insets(7, 7, 7, 7));
 
-    unDeleteSelectionBtn = new Button(language.getString("un.delete.selection"));
+    unDeleteSelectionBtn = new Button(KissPhoto.language.getString("un.delete.selection"));
     unDeleteSelectionBtn.setDefaultButton(true);
     unDeleteSelectionBtn.setFocusTraversable(true);
     unDeleteSelectionBtn.setOnAction(actionEvent -> {

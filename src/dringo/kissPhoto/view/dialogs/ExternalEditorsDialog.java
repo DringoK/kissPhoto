@@ -1,11 +1,12 @@
 package dringo.kissPhoto.view.dialogs;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.helper.PathHelpers;
-import dringo.kissPhoto.model.ImageFile;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.OtherFile;
 import dringo.kissPhoto.model.PlayableFile;
 import dringo.kissPhoto.view.inputFields.PathNameTextField;
+import dringo.kissPhoto.model.ImageFile;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -24,8 +25,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -71,7 +70,7 @@ public class ExternalEditorsDialog extends KissDialog {
 
   public ExternalEditorsDialog(Stage owner) {
     super(owner);
-    setTitle(language.getString(KISSPHOTO_SPECIFY_EXTERNAL_EDITORS));
+    setTitle(KissPhoto.language.getString(KISSPHOTO_SPECIFY_EXTERNAL_EDITORS));
 
     setHeight(300);
     setWidth(800);
@@ -99,8 +98,8 @@ public class ExternalEditorsDialog extends KissDialog {
     final double LABEL_COL_WIDTH = 160;
     final double ELLIPSES_BTN_COL_WIDTH = 30;
 
-    gridPane.add(new Label(language.getString("image.editor.1")), 0, 0);      //column, row
-    gridPane.add(new Label(language.getString("image.editor.2")), 0, 1);
+    gridPane.add(new Label(KissPhoto.language.getString("image.editor.1")), 0, 0);      //column, row
+    gridPane.add(new Label(KissPhoto.language.getString("image.editor.2")), 0, 1);
     gridPane.add(imageFileEditorTextField1, 1, 0);
     gridPane.add(imageFileEditorTextField2, 1, 1);
     gridPane.add(imageFileEditorBtn1, 2, 0);
@@ -108,8 +107,8 @@ public class ExternalEditorsDialog extends KissDialog {
     imageFileEditorTextField1.prefWidthProperty().bind(gridPane.widthProperty().subtract(LABEL_COL_WIDTH + ELLIPSES_BTN_COL_WIDTH));
     imageFileEditorTextField2.prefWidthProperty().bind(gridPane.widthProperty().subtract(LABEL_COL_WIDTH + ELLIPSES_BTN_COL_WIDTH));
 
-    gridPane.add(new Label(language.getString("movie.editor.1")), 0, 2);      //column, row
-    gridPane.add(new Label(language.getString("movie.editor.2")), 0, 3);
+    gridPane.add(new Label(KissPhoto.language.getString("movie.editor.1")), 0, 2);      //column, row
+    gridPane.add(new Label(KissPhoto.language.getString("movie.editor.2")), 0, 3);
     gridPane.add(movieFileEditorTextField1, 1, 2);
     gridPane.add(movieFileEditorTextField2, 1, 3);
     gridPane.add(movieFileEditorBtn1, 2, 2);
@@ -117,8 +116,8 @@ public class ExternalEditorsDialog extends KissDialog {
     movieFileEditorTextField1.prefWidthProperty().bind(gridPane.widthProperty().subtract(LABEL_COL_WIDTH + ELLIPSES_BTN_COL_WIDTH));
     movieFileEditorTextField2.prefWidthProperty().bind(gridPane.widthProperty().subtract(LABEL_COL_WIDTH + ELLIPSES_BTN_COL_WIDTH));
 
-    gridPane.add(new Label(language.getString("standard.editor.1")), 0, 4);      //column, row
-    gridPane.add(new Label(language.getString("standard.editor.2")), 0, 5);
+    gridPane.add(new Label(KissPhoto.language.getString("standard.editor.1")), 0, 4);      //column, row
+    gridPane.add(new Label(KissPhoto.language.getString("standard.editor.2")), 0, 5);
     gridPane.add(otherFileEditorTextField1, 1, 4);
     gridPane.add(otherFileEditorTextField2, 1, 5);
     gridPane.add(otherFileEditorBtn1, 2, 4);
@@ -198,7 +197,7 @@ public class ExternalEditorsDialog extends KissDialog {
   private void showFileChooserForTextField(TextField textField) {
     if (fileChooserDialog == null) fileChooserDialog = new FileChooser();
 
-    fileChooserDialog.setTitle(language.getString(KISSPHOTO_SPECIFY_EXTERNAL_EDITORS));
+    fileChooserDialog.setTitle(KissPhoto.language.getString(KISSPHOTO_SPECIFY_EXTERNAL_EDITORS));
 
     String currentPath = PathHelpers.extractPathname(textField.getText());
     if (!currentPath.isEmpty())

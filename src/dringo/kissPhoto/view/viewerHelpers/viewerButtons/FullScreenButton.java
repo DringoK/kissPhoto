@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.viewerHelpers.viewerButtons;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Group;
@@ -8,8 +9,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -99,9 +98,9 @@ public class FullScreenButton extends Group {
 
   private void setTooltipText(){
     if (fullScreenMode.get()) {
-      tooltip.setText(language.getString("end.fullscreen.mode"));
+      tooltip.setText(KissPhoto.language.getString("end.fullscreen.mode"));
     }else{
-      tooltip.setText(language.getString("start.fullscreen.mode"));
+      tooltip.setText(KissPhoto.language.getString("start.fullscreen.mode"));
     }
   }
 

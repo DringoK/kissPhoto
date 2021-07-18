@@ -40,9 +40,6 @@ import java.nio.file.Paths;
 import java.nio.file.WatchEvent;
 import java.text.MessageFormat;
 
-import static dringo.kissPhoto.KissPhoto.globalSettings;
-import static dringo.kissPhoto.KissPhoto.language;
-
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
@@ -156,7 +153,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
     //create Table
     //status: readonly Column to show status flags
-    statusColumn = new TableColumn<>(language.getString("status"));
+    statusColumn = new TableColumn<>(KissPhoto.language.getString("status"));
     statusColumn.setPrefWidth(STATUS_COL_DEFAULT_WIDTH);
     statusColumn.setEditable(false);
     //statusColumn.setCellValueFactory(new PropertyValueFactory<MediaFile, String>("status"));
@@ -164,7 +161,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     getColumns().add(statusColumn);
 
     //prefix
-    prefixColumn = new TableColumn<>(language.getString(PREFIX));
+    prefixColumn = new TableColumn<>(KissPhoto.language.getString(PREFIX));
     prefixColumn.setPrefWidth(PREFIX_COL_DEFAULT_WIDTH);
     prefixColumn.setEditable(true);
     prefixColumn.setOnEditCommit(cellEditCommitEventHandler);
@@ -175,7 +172,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
 
     //counter
-    counterColumn = new TableColumn<>(language.getString(COUNTER));
+    counterColumn = new TableColumn<>(KissPhoto.language.getString(COUNTER));
     counterColumn.setPrefWidth(COUNTER_COL_DEFAULT_WIDTH);
     counterColumn.setEditable(true); //as a default counter is editable until renumbering is set to auto-mode
     counterColumn.setCellFactory(fileTableTextFieldCellFactory);
@@ -194,7 +191,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     getColumns().add(counterColumn);
 
     //separator
-    separatorColumn = new TableColumn<>(language.getString(SEPARATOR));
+    separatorColumn = new TableColumn<>(KissPhoto.language.getString(SEPARATOR));
     separatorColumn.setEditable(true);
     separatorColumn.setPrefWidth(SEPARATOR_COL_DEFAULT_WIDTH);
     separatorColumn.setCellFactory(fileTableTextFieldCellFactory);
@@ -204,7 +201,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     getColumns().add(separatorColumn);
 
     //description
-    descriptionColumn = new TableColumn<>(language.getString(DESCRIPTION));
+    descriptionColumn = new TableColumn<>(KissPhoto.language.getString(DESCRIPTION));
     descriptionColumn.setEditable(true);
     descriptionColumn.setPrefWidth(DESCRIPTION_COL_DEFAULT_WIDTH);
     descriptionColumn.setCellFactory(fileTableTextFieldCellFactory);
@@ -214,7 +211,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     getColumns().add(descriptionColumn);
 
     //file type (extension)
-    extensionColumn = new TableColumn<>(language.getString(EXTENSION));
+    extensionColumn = new TableColumn<>(KissPhoto.language.getString(EXTENSION));
     extensionColumn.setPrefWidth(EXTENSION_COL_DEFAULT_WIDTH);
     extensionColumn.setEditable(true);
     extensionColumn.setCellFactory(fileTableTextFieldCellFactory);
@@ -224,7 +221,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     getColumns().add(extensionColumn);
 
     //file date
-    fileDateColumn = new TableColumn<>(language.getString(MODIFIED));
+    fileDateColumn = new TableColumn<>(KissPhoto.language.getString(MODIFIED));
     fileDateColumn.setPrefWidth(FILEDATE_COL_DEFAULT_WIDTH);
     fileDateColumn.setEditable(true);
     fileDateColumn.setCellFactory(fileTableTextFieldCellFactory);
@@ -402,7 +399,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       if (fileHistory.getRecentlyOpenedList().size() > 0) {
         openFolder(fileHistory.getRecentlyOpenedList().get(0), false); //no unsaved changes possible, because initial opening
       } else {
-        statusBar.showMessage(language.getString("use.ctrl.o.to.open.a.folder"));
+        statusBar.showMessage(KissPhoto.language.getString("use.ctrl.o.to.open.a.folder"));
       }
     }
   }
@@ -425,13 +422,13 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * - stage not null
    */
   public void storeLastSettings() {
-    globalSettings.setProperty(STATUS_COL_WIDTH, Double.toString(statusColumn.getWidth()));
-    globalSettings.setProperty(PREFIX_COL_WIDTH, Double.toString(prefixColumn.getWidth()));
-    globalSettings.setProperty(COUNTER_COL_WIDTH, Double.toString(counterColumn.getWidth()));
-    globalSettings.setProperty(SEPARATOR_COL_WIDTH, Double.toString(separatorColumn.getWidth()));
-    globalSettings.setProperty(DESCRIPTION_COL_WIDTH, Double.toString(descriptionColumn.getWidth()));
-    globalSettings.setProperty(EXTENSION_COL_WIDTH, Double.toString(extensionColumn.getWidth()));
-    globalSettings.setProperty(FILEDATE_COL_WIDTH, Double.toString(fileDateColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(STATUS_COL_WIDTH, Double.toString(statusColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(PREFIX_COL_WIDTH, Double.toString(prefixColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(COUNTER_COL_WIDTH, Double.toString(counterColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(SEPARATOR_COL_WIDTH, Double.toString(separatorColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(DESCRIPTION_COL_WIDTH, Double.toString(descriptionColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(EXTENSION_COL_WIDTH, Double.toString(extensionColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(FILEDATE_COL_WIDTH, Double.toString(fileDateColumn.getWidth()));
 
 
     try {
@@ -451,37 +448,37 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    */
   public void restoreLastSettings() {
     try {
-      statusColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(STATUS_COL_WIDTH)));
+      statusColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(STATUS_COL_WIDTH)));
     } catch (Exception e) {
       statusColumn.setPrefWidth(STATUS_COL_DEFAULT_WIDTH);
     }
     try {
-      prefixColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(PREFIX_COL_WIDTH)));
+      prefixColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(PREFIX_COL_WIDTH)));
     } catch (Exception e) {
       prefixColumn.setPrefWidth(PREFIX_COL_DEFAULT_WIDTH);
     }
     try {
-      counterColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(COUNTER_COL_WIDTH)));
+      counterColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(COUNTER_COL_WIDTH)));
     } catch (Exception e) {
       counterColumn.setPrefWidth(COUNTER_COL_DEFAULT_WIDTH);
     }
     try {
-      separatorColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(SEPARATOR_COL_WIDTH)));
+      separatorColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(SEPARATOR_COL_WIDTH)));
     } catch (Exception e) {
       separatorColumn.setPrefWidth(SEPARATOR_COL_DEFAULT_WIDTH);
     }
     try {
-      descriptionColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(DESCRIPTION_COL_WIDTH)));
+      descriptionColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(DESCRIPTION_COL_WIDTH)));
     } catch (Exception e) {
       descriptionColumn.setPrefWidth(DESCRIPTION_COL_DEFAULT_WIDTH);
     }
     try {
-      extensionColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(EXTENSION_COL_WIDTH)));
+      extensionColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(EXTENSION_COL_WIDTH)));
     } catch (Exception e) {
       extensionColumn.setPrefWidth(EXTENSION_COL_DEFAULT_WIDTH);
     }
     try {
-      fileDateColumn.setPrefWidth(Double.parseDouble(globalSettings.getProperty(FILEDATE_COL_WIDTH)));
+      fileDateColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(FILEDATE_COL_WIDTH)));
     } catch (Exception e) {
       fileDateColumn.setPrefWidth(FILEDATE_COL_DEFAULT_WIDTH);
     }
@@ -575,14 +572,14 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     if (unsavedChanges > 0) {
       String MessageLabel;
       if (unsavedChanges == 1) {
-        MessageLabel = language.getString("there.is.an.unsaved.change");
+        MessageLabel = KissPhoto.language.getString("there.is.an.unsaved.change");
       } else {
-        MessageLabel = MessageFormat.format(language.getString("there.are.0.unsaved.changes"), Integer.toString(unsavedChanges));
+        MessageLabel = MessageFormat.format(KissPhoto.language.getString("there.are.0.unsaved.changes"), Integer.toString(unsavedChanges));
       }
 
       int result = new MessageBox(primaryStage, MessageLabel,
         MessageBox.USER_BTN + MessageBox.NO_BTN + MessageBox.CANCEL_BTN,
-        language.getString("save")).showModal();
+        KissPhoto.language.getString("save")).showModal();
       if ((result == MessageBox.CANCEL_BTN) || (result == MessageBox.NONE_BTN)) {
         return false;
       } else if (result == MessageBox.USER_BTN) {
@@ -599,7 +596,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     if (askIfContinueUnsavedChanges()) {
       //DirectoryChooser dirChooserDialog = new DirectoryChooser();
       FileChooser dirChooserDialog = new FileChooser();  //DirectoryChooser doesn't provide preview into directories (no files are displayed under Windows)
-      dirChooserDialog.setTitle(language.getString("kissphoto.select.a.folder"));
+      dirChooserDialog.setTitle(KissPhoto.language.getString("kissphoto.select.a.folder"));
       if (mediaFileList.getCurrentFolder() != null && Files.exists(mediaFileList.getCurrentFolder()))  //only if something has been loaded before
         dirChooserDialog.setInitialDirectory(mediaFileList.getCurrentFolder().toFile());
       //File dir = dirChooserDialog.showDialog(primaryStage);
@@ -634,7 +631,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       showMedia((MediaFile) getFocusModel().getFocusedItem());
     }
     */
-    statusBar.showError(language.getString("underlying.directory.has.changed.new.file.s.have.been.added.to.the.end.of.the.list"));
+    statusBar.showError(KissPhoto.language.getString("underlying.directory.has.changed.new.file.s.have.been.added.to.the.end.of.the.list"));
   }
 
   public void stopWatcherThread() {
@@ -691,7 +688,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       if (primaryScene != null)
         primaryScene.setCursor(Cursor.WAIT); //can be null during openInitialFolder() called from main()
 
-      statusBar.showMessage(MessageFormat.format(language.getString("trying.to.open.0"), fileOrFolder.toString()));
+      statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("trying.to.open.0"), fileOrFolder.toString()));
 
 
       String errMsg = "";
@@ -702,9 +699,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         if (errMsg.length() == 0) {
           primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
           if (reopened)
-            statusBar.showMessage(MessageFormat.format(language.getString("0.reopend"), mediaFileList.getCurrentFolderName()));
+            statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.reopend"), mediaFileList.getCurrentFolderName()));
           else
-            statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
+            statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
 
           statusBar.showFilesNumber(mediaFileList.getFileList().size());
           numberingOffset = 1;  //determines with which number renumbering of the list starts.
@@ -739,7 +736,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         }
         if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
         if (errMsg.length() > 0) {
-          statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), fileOrFolder.toString()));
+          statusBar.showError(MessageFormat.format(KissPhoto.language.getString("could.not.open.0"), fileOrFolder.toString()));
         }
       }
     }
@@ -801,7 +798,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     MediaFileListSavingTask savingTask = mediaFileList.getNewSavingTask();
     statusBar.getProgressProperty().bind(savingTask.progressProperty());
     statusBar.showProgressBar();
-    statusBar.showMessage(MessageFormat.format(language.getString("saving.0.changes"), getUnsavedChanges()));
+    statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("saving.0.changes"), getUnsavedChanges()));
 
     //define what happens when task has finished
     savingTask.addEventHandler(WorkerStateEvent.WORKER_STATE_SUCCEEDED, t -> {
@@ -817,9 +814,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       int errorCount = savingTask.getValue();
 
       if (errorCount > 0) {
-        statusBar.showError(MessageFormat.format(language.getString("errors.occurred.during.saving.check.status.column.for.details"), getUnsavedChanges(), MediaFile.STATUSFLAGS_HELPTEXT));
+        statusBar.showError(MessageFormat.format(KissPhoto.language.getString("errors.occurred.during.saving.check.status.column.for.details"), getUnsavedChanges(), MediaFile.STATUSFLAGS_HELPTEXT));
       } else {
-        statusBar.showMessage(language.getString("changes.successfully.written.to.disk"));
+        statusBar.showMessage(KissPhoto.language.getString("changes.successfully.written.to.disk"));
       }
 
     });
@@ -848,22 +845,22 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    */
   public void chooseFilenameAndExportToCSV() {
     FileChooser fileChooserDialog = new FileChooser();
-    fileChooserDialog.setTitle(language.getString("kissphoto.export.current.file.list.into.a.csv.file"));
+    fileChooserDialog.setTitle(KissPhoto.language.getString("kissphoto.export.current.file.list.into.a.csv.file"));
     if (mediaFileList.getCurrentFolder() != null)  //only if something has been loaded before
       fileChooserDialog.setInitialDirectory(new File(mediaFileList.getCurrentFolder().toAbsolutePath().toString()));
     fileChooserDialog.setInitialFileName("kissPhotoFileList.csv");
     fileChooserDialog.getExtensionFilters().addAll(
-      new FileChooser.ExtensionFilter(language.getString(WriteFolderStructureCSVDialog.COMMA_SEPARATED_VALUES_FILE_SPREADSHEET), "*.CSV"),
-      new FileChooser.ExtensionFilter(language.getString(WriteFolderStructureCSVDialog.ALL_FILES), "*.*")
+      new FileChooser.ExtensionFilter(KissPhoto.language.getString(WriteFolderStructureCSVDialog.COMMA_SEPARATED_VALUES_FILE_SPREADSHEET), "*.CSV"),
+      new FileChooser.ExtensionFilter(KissPhoto.language.getString(WriteFolderStructureCSVDialog.ALL_FILES), "*.*")
     );
 
     File file = fileChooserDialog.showSaveDialog(primaryStage);   //already asks if existing file should be replaced ;-)
     if (file != null) {
       try {
         mediaFileList.exportToCSV(file);
-        statusBar.showMessage(language.getString("csv.file.successfully.written.to.disk"));
+        statusBar.showMessage(KissPhoto.language.getString("csv.file.successfully.written.to.disk"));
       } catch (Exception e) {
-        statusBar.showError(language.getString("csv.file.could.not.be.written.to.disk"));
+        statusBar.showError(KissPhoto.language.getString("csv.file.could.not.be.written.to.disk"));
       }
     }
   }
@@ -875,7 +872,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   public void cutToClipboard() {
     deleteSelectedFiles(true);
     pasteMenuItem.setDisable(false); //pasting is now possible
-    statusBar.showMessage(language.getString("use.edit.paste.ctrl.v.to.paste.into.a.new.location.of.the.list"));
+    statusBar.showMessage(KissPhoto.language.getString("use.edit.paste.ctrl.v.to.paste.into.a.new.location.of.the.list"));
   }
 
   /**
@@ -893,7 +890,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       }
     }
     pasteMenuItem.setDisable(true); //pasting has finished and is no longer possible
-    statusBar.showMessage(language.getString("use.edit.renumber.to.fix.the.new.location.or.view.reset.sorting.for.restoring.old.locations"));
+    statusBar.showMessage(KissPhoto.language.getString("use.edit.renumber.to.fix.the.new.location.or.view.reset.sorting.for.restoring.old.locations"));
   }
 
   /**
@@ -1277,7 +1274,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       if (mediaFileList.getFileList().size() > 0) getFocusModel().focus(newSelectionIndex);
       scrollViewportToIndex(newSelectionIndex, Alignment.CENTER);
     }
-    statusBar.showMessage(MessageFormat.format(language.getString("0.file.s.marked.for.deletion.files.can.be.recovered.using.edit.undelete.until.next.save"), deletionList.size()));
+    statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.file.s.marked.for.deletion.files.can.be.recovered.using.edit.undelete.until.next.save"), deletionList.size()));
     if (unDeleteMenuItem != null)
       unDeleteMenuItem.setDisable(mediaFileList.getDeletedFileList().size() < 1); //enable Menu for undeletion if applicable
   }
@@ -1293,10 +1290,10 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     int notRotatable = mediaFileList.rotateSelectedFiles(getSelectionModel().getSelectedItems(), rotateOperation);
     mediaContentView.showRotationAndFlippingPreview();
     if (notRotatable == 0)
-      statusBar.showMessage(MessageFormat.format(language.getString("0.images.rotated"), filesCount));
+      statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.images.rotated"), filesCount));
     else
-      statusBar.showMessage(MessageFormat.format(language.getString("0.files.cannot.save.the.rotation"), notRotatable)
-        + " " + MessageFormat.format(language.getString("0.images.rotated"), filesCount));
+      statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.files.cannot.save.the.rotation"), notRotatable)
+        + " " + MessageFormat.format(KissPhoto.language.getString("0.images.rotated"), filesCount));
 
     setTooltipText(getFocusModel().getFocusedItem());
   }
@@ -1312,10 +1309,10 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     int notRotatable = mediaFileList.flipSelectedFiles(getSelectionModel().getSelectedItems(), horizontally);
     mediaContentView.showRotationAndFlippingPreview();
     if (notRotatable == 0)
-      statusBar.showMessage(MessageFormat.format(language.getString("0.images.flipped"), filesCount));
+      statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.images.flipped"), filesCount));
     else
-      statusBar.showMessage(MessageFormat.format(language.getString("0.files.cannot.save.the.flipping"), notRotatable)
-        + " " + MessageFormat.format(language.getString("0.images.flipped"), filesCount));
+      statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.files.cannot.save.the.flipping"), notRotatable)
+        + " " + MessageFormat.format(KissPhoto.language.getString("0.images.flipped"), filesCount));
     setTooltipText(getFocusModel().getFocusedItem());
   }
 
@@ -1324,10 +1321,10 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     int notRotatable = mediaFileList.setOrientationAccordingExif(getSelectionModel().getSelectedItems());
     mediaContentView.showRotationAndFlippingPreview();
     if (notRotatable == 0)
-      statusBar.showMessage(MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), filesCount));
+      statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.images.oriented.according.exif.information"), filesCount));
     else
-      statusBar.showMessage(MessageFormat.format(language.getString("0.could.not.be.orientated.according.to.exif"), notRotatable)
-        + " " + MessageFormat.format(language.getString("0.images.oriented.according.exif.information"), filesCount - notRotatable));
+      statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.could.not.be.orientated.according.to.exif"), notRotatable)
+        + " " + MessageFormat.format(KissPhoto.language.getString("0.images.oriented.according.exif.information"), filesCount - notRotatable));
 
     setTooltipText(getFocusModel().getFocusedItem());
   }
@@ -1377,14 +1374,14 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         //make copy of the list selection of the dialog to prevent events in the (closed) dialog while unDeletion
         ObservableList<MediaFile> unDeletionList = FXCollections.observableArrayList(unDeleteDialog.getFilesToUndelete());
         mediaFileList.unDeleteFiles(getFocusModel().getFocusedIndex(), unDeletionList);
-        statusBar.showMessage(MessageFormat.format(language.getString("0.file.s.recovered.before.the.previously.selected.row.you.may.want.to.use.view.reset.sorting.columns.from.main.menu"), unDeletionList.size()));
+        statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.file.s.recovered.before.the.previously.selected.row.you.may.want.to.use.view.reset.sorting.columns.from.main.menu"), unDeletionList.size()));
       } else {
         statusBar.clearMessage();
       }
 
       unDeleteDialog.cleanUp(); //clearMessage internal list of the dialog to enable garbage collection and prevent interference with linked media files
     } else {
-      statusBar.showError(language.getString("no.files.marked.for.deletion.therefore.nothing.to.un.delete"));
+      statusBar.showError(KissPhoto.language.getString("no.files.marked.for.deletion.therefore.nothing.to.un.delete"));
     }
     if (unDeleteMenuItem != null) unDeleteMenuItem.setDisable(mediaFileList.getDeletedFileList().size() < 1);
     requestLayout();
@@ -1615,11 +1612,11 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       counter++; //if this is a continued search on occurance was replace before mediaFileList.replaceAll
 
     if (counter == 0)
-      statusBar.showError(language.getString(NOTHING_FOUND));
+      statusBar.showError(KissPhoto.language.getString(NOTHING_FOUND));
     else if (counter == 1)
-      statusBar.showMessage(language.getString("one.occurrence.has.been.replaced"));
+      statusBar.showMessage(KissPhoto.language.getString("one.occurrence.has.been.replaced"));
     else
-      statusBar.showMessage(MessageFormat.format(language.getString("0.occurrences.have.been.replaced"), Integer.toString(counter)));
+      statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.occurrences.have.been.replaced"), Integer.toString(counter)));
 
     return counter;
   }

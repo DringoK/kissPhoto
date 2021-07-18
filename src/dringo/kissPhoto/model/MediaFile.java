@@ -1,10 +1,11 @@
 package dringo.kissPhoto.model;
 
+import dringo.kissPhoto.KissPhoto;
+import dringo.kissPhoto.view.inputFields.SeparatorInputField;
+import dringo.kissPhoto.view.mediaViewers.PhotoViewer;
 import dringo.kissPhoto.helper.AppStarter;
 import dringo.kissPhoto.helper.StringHelper;
-import dringo.kissPhoto.view.inputFields.SeparatorInputField;
 import dringo.kissPhoto.view.mediaViewers.MediaViewer;
-import dringo.kissPhoto.view.mediaViewers.PhotoViewer;
 import dringo.kissPhoto.view.mediaViewers.PlayerViewerVLCJ;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -19,8 +20,6 @@ import java.nio.file.attribute.FileTime;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
@@ -79,7 +78,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * e.g. "C" =conflicting name
    * "" = no error
    */
-  public static final String STATUSFLAGS_HELPTEXT = language.getString("statusFlags.Helptext");
+  public static final String STATUSFLAGS_HELPTEXT = KissPhoto.language.getString("statusFlags.Helptext");
   protected Path fileOnDisk;   //including physical filename on Disk...to be renamed
   protected MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
   protected Object content = null;            //cached content
@@ -153,7 +152,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static String getCSVHeadline() {
     final char sep = StringHelper.getLocaleCSVSeparator();  //just a shortcut
 
-    return MessageFormat.format(language.getString("csv_Headline"), sep, sep, sep, sep, sep, sep, sep);
+    return MessageFormat.format(KissPhoto.language.getString("csv_Headline"), sep, sep, sep, sep, sep, sep, sep);
   }
 
   /**
@@ -502,7 +501,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * @return true if successful
    */
   public boolean performDeleteFile() {
-    Path deletePath = fileOnDisk.resolveSibling(language.getString("deletedSubDir")); //delete subfolder is sibling to file
+    Path deletePath = fileOnDisk.resolveSibling(KissPhoto.language.getString("deletedSubDir")); //delete subfolder is sibling to file
     Path deletedFile = deletePath.resolve(fileOnDisk.getFileName()); //append Filename to get target filename for deleted file
 
     try {
@@ -728,24 +727,24 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    */
   public String getChangesText(){
     String s = "";
-    if (filenameChanged) s += MessageFormat.format(language.getString("rename.0.1"), getFileOnDiskName(),getResultingFilename());
+    if (filenameChanged) s += MessageFormat.format(KissPhoto.language.getString("rename.0.1"), getFileOnDiskName(),getResultingFilename());
 
 
     if (timeStampChanged){
       if (s.length()>0) s+= "\n";
-      s += language.getString("time.stamp.changed");
+      s += KissPhoto.language.getString("time.stamp.changed");
     }
 
     if (isTransformed()){
       if (s.length()>0) s+= "\n";
       if (isRotated()) {
         if (isFlippedHorizontally() || isFlippedVertically())
-          s+= language.getString("image.rotated.and.flipped");
+          s+= KissPhoto.language.getString("image.rotated.and.flipped");
         else
-          s+= language.getString("image.rotated");
+          s+= KissPhoto.language.getString("image.rotated");
       }else{
         if (isFlippedHorizontally() || isFlippedVertically())
-          s+= language.getString("image.flipped");
+          s+= KissPhoto.language.getString("image.flipped");
       }
     }
     return s;

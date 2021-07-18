@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view.dialogs;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.view.FileTableView;
 import dringo.kissPhoto.view.inputFields.FileNameTextField;
 import javafx.geometry.Insets;
@@ -21,8 +22,6 @@ import javafx.stage.Stage;
 
 import java.text.MessageFormat;
 
-import static dringo.kissPhoto.KissPhoto.language;
-
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
@@ -38,9 +37,9 @@ import static dringo.kissPhoto.KissPhoto.language;
  * @version 2014-06-16 multi screen support: center on main window instead of main screen
  */
 public class FindReplaceDialog extends KissDialog {
-  final static String findCaption = language.getString("find");
-  final static String replaceCaption = language.getString("replace");
-  final static String findNextCaption = language.getString("find.next");
+  final static String findCaption = KissPhoto.language.getString("find");
+  final static String replaceCaption = KissPhoto.language.getString("replace");
+  final static String findNextCaption = KissPhoto.language.getString("find.next");
 
 
   //graphical elements that are read or changed during searching
@@ -48,7 +47,7 @@ public class FindReplaceDialog extends KissDialog {
   final FileNameTextField replaceTextField = new FileNameTextField(this); //limit characters to valid characters for fileNames (todo counter and date not yet covered)
   final Button findBtn = new Button(findCaption);
   final Button replaceBtn = new Button(replaceCaption);
-  final Button replaceAllBtn = new Button(language.getString("replace.all"));
+  final Button replaceAllBtn = new Button(KissPhoto.language.getString("replace.all"));
   Label searchSelectedLabel = new Label();
   Text statusMessage = new Text(); //local statusBar in the Dialog to show search-Results
 
@@ -67,7 +66,7 @@ public class FindReplaceDialog extends KissDialog {
 
     this.fileTableView = fileTableView;
 
-    setTitle(language.getString("kissphoto.findreplace"));
+    setTitle(KissPhoto.language.getString("kissphoto.findreplace"));
 
     setHeight(200);
     setWidth(450);
@@ -126,7 +125,7 @@ public class FindReplaceDialog extends KissDialog {
     replaceAllBtn.setOnAction(actionEvent -> handleReplaceAll());
 
     //--- close
-    Button closeBtn = new Button(language.getString("close"));
+    Button closeBtn = new Button(KissPhoto.language.getString("close"));
     closeBtn.setCancelButton(true);
     closeBtn.setOnAction(actionEvent -> close());
     buttonBox.getChildren().addAll(findBtn, replaceBtn, replaceAllBtn, closeBtn);
@@ -221,11 +220,11 @@ public class FindReplaceDialog extends KissDialog {
 
     counter = counter + firstCounter;  //if an old result exists then add it
     if (counter == 0)
-      showWarningStatus(language.getString(FileTableView.NOTHING_FOUND));
+      showWarningStatus(KissPhoto.language.getString(FileTableView.NOTHING_FOUND));
     else if (counter == 1)
-      showStatus(language.getString("one.occurrence.has.been.replaced"));
+      showStatus(KissPhoto.language.getString("one.occurrence.has.been.replaced"));
     else
-      showStatus(MessageFormat.format(language.getString("0.occurrences.have.been.replaced"), Integer.toString(counter)));
+      showStatus(MessageFormat.format(KissPhoto.language.getString("0.occurrences.have.been.replaced"), Integer.toString(counter)));
 
     if (ifAtTheEndAskIfContinueFromFirstLine()) {
       firstCounter = counter;  //save old result so it can be added to the new result
@@ -247,9 +246,9 @@ public class FindReplaceDialog extends KissDialog {
    */
   private boolean ifAtTheEndAskIfContinueFromFirstLine() {
     if (!searchSelectionMode && !startedSearchFromFirstLine) {
-      int result = new MessageBox((Stage) getOwner(), language.getString("continue.search.from.beginning.of.table"),
+      int result = new MessageBox((Stage) getOwner(), KissPhoto.language.getString("continue.search.from.beginning.of.table"),
           MessageBox.YES_BTN + MessageBox.NO_BTN,
-          language.getString("continue.search")).showModal();
+          KissPhoto.language.getString("continue.search")).showModal();
       if (result == MessageBox.YES_BTN) {
         fileTableView.selectFirstLine();
         return true;
@@ -262,9 +261,9 @@ public class FindReplaceDialog extends KissDialog {
   private void showSearchResultInStatusBar() {
     //show result in statusBar
     if (found)
-      showStatus(language.getString("found"));
+      showStatus(KissPhoto.language.getString("found"));
     else
-      showWarningStatus(language.getString(FileTableView.NOTHING_FOUND));
+      showWarningStatus(KissPhoto.language.getString(FileTableView.NOTHING_FOUND));
   }
 
   /**
@@ -276,10 +275,10 @@ public class FindReplaceDialog extends KissDialog {
     int selectedLines = fileTableView.getSelectionModel().getSelectedItems().size();
     searchSelectionMode = (selectedLines > 1);
     if (searchSelectionMode) {
-      searchSelectedLabel.setText(MessageFormat.format(language.getString("searching.in.0.selected.lines"), selectedLines));
+      searchSelectedLabel.setText(MessageFormat.format(KissPhoto.language.getString("searching.in.0.selected.lines"), selectedLines));
       searchSelectedLabel.setTextFill(Color.BLUE);
     } else {
-      searchSelectedLabel.setText(language.getString("searching.from.current.line"));
+      searchSelectedLabel.setText(KissPhoto.language.getString("searching.from.current.line"));
       searchSelectedLabel.setTextFill(Color.GREEN);
     }
   }
