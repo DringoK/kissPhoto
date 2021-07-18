@@ -16,8 +16,7 @@ keep it simple:
 
       
 ## Install kissPhoto
-
-[Download the installer for the latest version here](https://1drv.ms/f/s!Atee54Fx0NEeqBWXfQEVVw9_hnae)
+https://github.com/DringoK/kissPhoto/releases
 
 Start the installer
 - kissPhoto.msi for Windows
@@ -32,17 +31,25 @@ Open the menu Extra/language and select your preferred language.
 - open a file with menu file/open...
 - or drag a file to the left section of the application (the file table)
 
-kissPhoto will open the directory of the file and selects the file    
+kissPhoto will open the complete directory of the file and selects the file
 
 Use the main menu or context menu to start a function of kissPhoto.
 
-Hereby you will also learn the shortcuts which make editing very effective!
-Many of them are based on windows products (e.g. F5 starts presentation mode, F2 edit mode, ...)
+### Showing Media
+If the currently selected file is a media file (sound, picture or video) it is shown immediately
+- use +/- or ctrl-Mouse Wheel to zoom in/out
+- use F5 for full screen, use tab to push the full screen to the next screen
+- use context menu for further options
 
 ### Editing
 Double Click an entry in the file table or press F2 to start inplace editing.
 
-If multiple files are selected and you start editing you enter the mass renaming dialog.
+If multiple files are selected and you start editing you will get to the mass renaming dialog.
+
+####Numbering
+- use Ctrl-N for numbering all files
+- find more numbering options in the edit menu  (just selected files, step size, starting with, ...)
+- because kissPhoto parses the filenames renumbering does not change the other parts of the filenames :-)
                                              
 ###Save your changes
 Your files will not be changed unless you save your changes.

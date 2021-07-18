@@ -4,22 +4,26 @@
 MIT License, Copyright (c)2021 kissPhoto
 
 file renaming, renumbering, photo and video-clip sorting - but keep it simple stupid
-* Rename files like in a wordprocesser's table: move around with the cursor, search and replace + mass rename, renumbering and sorting
+* Rename files like in a word processer's table: move around with the cursor, search and replace + mass rename, renumbering and sorting
 * photo management and photo show without any additional files or database
+* File content is never* changed
+  * the files will just be renamed (description changed)
+  * or moved to a "deleted" sub folder (if deleted)
+  * *just jpg rotation will really change the file: but it is lossless!
 * self containing: all information is in the picture files, filenames or directory names. So your editing will be effective in all platforms and programs also without kissPhoto
 * auto numbering: file order can be changed while file numbering is maintained
 * file date maintaining
 * mass renaming for filenames, EXIF-Info and time-stamps
-* rotate jpges lossless
+* rotate jpegs lossless
 * The viewer treats movie clips like moving photos (like in Harry Potter's newspapers ;-)
 * zoom in/out pictures and videoclips
   
-
 * runnable on all PC platforms which support JavaFX
 * optional seamless vlc support: play virtually all playable files if vlc is installed on the system additionally
 
 
 # User Manual
+Follow this link to go to the user manual:
 
 [click here to open User Manual](docs/manual.md)
 
