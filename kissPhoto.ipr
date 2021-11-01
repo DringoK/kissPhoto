@@ -271,6 +271,22 @@
       </method>
     </configuration>
   </component>
+  <component name="ResourceBundleManager">
+    <file url="file://$PROJECT_DIR$/src/dringo/kissPhoto/languages/kissphoto_de.properties" />
+    <file url="file://$PROJECT_DIR$/src/dringo/kissPhoto/languages/kissphoto_en.properties" />
+    <custom-resource-bundle>
+      <file value="file://$PROJECT_DIR$/src/dringo/kissPhoto/languages/kissphoto_de.properties" />
+      <file value="file://$PROJECT_DIR$/src/dringo/kissPhoto/languages/kissphoto_en.properties" />
+      <base-name>kissphoto</base-name>
+    </custom-resource-bundle>
+  </component>
+  <component name="RunConfigurationProducerService">
+    <option name="ignoredProducers">
+      <set>
+        <option value="com.android.tools.idea.compose.preview.runconfiguration.ComposePreviewRunConfigurationProducer" />
+      </set>
+    </option>
+  </component>
   <component name="SvnBranchConfigurationManager">
     <option name="myConfigurationMap">
       <map>

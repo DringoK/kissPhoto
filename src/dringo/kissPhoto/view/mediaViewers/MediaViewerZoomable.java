@@ -332,11 +332,10 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
   public void installContextMenu() {
 
     mediaContentView.addContextMenuItems(contextMenu);  //every viewer of kissPhoto lies in a MediaContentView
+    contextMenu.setAutoHide(true);
 
     //----------------- install event handlers
-
     setOnContextMenuRequested(contextMenuEvent -> {
-      contextMenu.setAutoHide(true);
       contextMenu.show(mediaContentView, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
     });
   }
@@ -451,6 +450,11 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
     setOnMouseClicked(event -> {
       boolean handled = handleMouseClicked(event);
       if (handled) event.consume();
+    });
+
+    setOnZoom(event -> {
+       System.out.println("ZoomFactor="+event.getZoomFactor() +" = total ZoomFactor" +event.getTotalZoomFactor());
+       zoom(zoomFactor* event.getZoomFactor());
     });
 
   }

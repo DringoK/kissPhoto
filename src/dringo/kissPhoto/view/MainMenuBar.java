@@ -26,6 +26,7 @@ import javafx.stage.WindowEvent;
  *
  * @author Ingo
  * @since 2012-09-09
+ * @version 2021-11-01 clean prefixes, numbering added
  * @version 2021-01-09 findNext in editMenu
  * @version 2020-11-19 globalSettings is now global (static in Kissphoto)  and therefore no longer necessary in this class (formerly just passed through)
  * @version 2018-11-17 Image menu only active if an image is selected
@@ -39,6 +40,10 @@ import javafx.stage.WindowEvent;
  * @version 2014-04-29 added about menu and no longer used the MenuItemBuilder (which is deprecated now)
  */
 public class MainMenuBar extends MenuBar {
+  public static final String RENAME_MENU = "renameMenu";
+  public static final String RENUMBER_STANDARD_MENU = "renumber.standardMenu";
+  public static final String CLEAN_PREFIXES = "clean.prefixes";
+  public static final String CLEAN_COUNTERS = "clean.counters";
   private final Stage primaryStage; //link to embedding window
   private final FileTableView fileTableView; //link to fileTableView to call methods via menu
   private final MediaContentView mediaContentView; //link to mediaContentView for full screen etc
@@ -170,7 +175,7 @@ public class MainMenuBar extends MenuBar {
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
-    final MenuItem renameItem = new MenuItem(KissPhoto.language.getString("renameMenu"));
+    final MenuItem renameItem = new MenuItem(KissPhoto.language.getString(RENAME_MENU));
     renameItem.setAccelerator(new KeyCodeCombination(KeyCode.F2));
     renameItem.setOnAction(event -> {
       event.consume();
@@ -201,6 +206,14 @@ public class MainMenuBar extends MenuBar {
       fileTableView.executeExternalEditorForSelection(false);
     });
     editMenu.getItems().add(external2ndEditorItem);
+
+    final MenuItem cleanPrefixItem = new MenuItem(KissPhoto.language.getString(CLEAN_PREFIXES));
+    cleanPrefixItem.setAccelerator(new KeyCodeCombination(KeyCode.F2, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
+    cleanPrefixItem.setOnAction(event -> {
+      event.consume();
+      fileTableView.cleanPrefix();
+    });
+    editMenu.getItems().add(cleanPrefixItem);
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
@@ -254,29 +267,29 @@ public class MainMenuBar extends MenuBar {
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
-    final MenuItem autoNumberItem = new MenuItem(KissPhoto.language.getString("renumber.standardMenu"));
+    final MenuItem autoNumberItem = new MenuItem(KissPhoto.language.getString(RENUMBER_STANDARD_MENU));
     autoNumberItem.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN));
     autoNumberItem.setOnAction(event -> {
       event.consume();
-      fileTableView.renumberSelectionRelativeToIndices();
+      fileTableView.renumberSelectionStandard();
     });
     editMenu.getItems().add(autoNumberItem);
-
-    final MenuItem reNumberGlobalItem = new MenuItem(KissPhoto.language.getString("renumber.globalMenu"));
-    reNumberGlobalItem.setAccelerator((new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN)));
-    reNumberGlobalItem.setOnAction(event -> {
-      event.consume();
-      fileTableView.renumberWithDialog(true);
-    });
-    editMenu.getItems().add(reNumberGlobalItem);
 
     final MenuItem reNumberLocalItem = new MenuItem(KissPhoto.language.getString("renumber.localMenu"));
     reNumberLocalItem.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN, KeyCombination.ALT_DOWN));
     reNumberLocalItem.setOnAction(event -> {
       event.consume();
-      fileTableView.renumberWithDialog(false);
+      fileTableView.renumberWithDialog();
     });
     editMenu.getItems().add(reNumberLocalItem);
+
+    final MenuItem cleanCountersItem = new MenuItem(KissPhoto.language.getString(CLEAN_COUNTERS));
+    cleanCountersItem.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
+    cleanCountersItem.setOnAction(event -> {
+      event.consume();
+      fileTableView.cleanCounter();
+    });
+    editMenu.getItems().add(cleanCountersItem);
 
     editMenu.getItems().add(new SeparatorMenuItem());
 

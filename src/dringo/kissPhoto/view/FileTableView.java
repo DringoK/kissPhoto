@@ -12,6 +12,7 @@ import dringo.kissPhoto.model.MediaFileList;
 import dringo.kissPhoto.model.MediaFileListSavingTask;
 import dringo.kissPhoto.view.dialogs.*;
 import dringo.kissPhoto.view.fileTableHelpers.FileHistory;
+import dringo.kissPhoto.view.fileTableHelpers.FileTableContextMenu;
 import dringo.kissPhoto.view.fileTableHelpers.FileTableTextFieldCellFactory;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.application.Platform;
@@ -50,6 +51,7 @@ import java.text.MessageFormat;
  * <p/>
  *
  * @author Ingo
+ * @version 2021-11-01 context menu added, renumbering simplified
  * @version 2021-01-16 eliminating the slow and error-prone reflection: column.setCellValueFactory(new PropertyValueFactory<>("propertyname") replaced with call back. ToolTipText added
  * @version 2021-01-09 improve scrolling, save also currently edited value, improve findNext (F3-support)
  * @version 2014-05-02 I18Support, Cursor in Edit-Mode over lines, reopen added etc
@@ -245,6 +247,15 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     //-----install bubble help ------------
     tooltip.setShowDelay(ViewerControlPanel.TOOLTIP_DELAY); //same delay like in viewer control panel
     setTooltip(tooltip); //the text will be set whenever selection is changed (focus change listener)
+
+    //------------ install Context menu
+    FileTableContextMenu contextMenu = new FileTableContextMenu(this);
+    contextMenu.setAutoHide(true);
+
+    setOnContextMenuRequested(contextMenuEvent -> {
+      contextMenu.show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+    });
+
   }
 
   private void installSelectionHandler(MediaContentView mediaContentView) {
@@ -998,6 +1009,20 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   }
 
   /**
+   * renumbers selected files of the fileList by writing column "counter" in the standard way:
+   * numbering is the position (index) of the file in the list, step size 1 is used<br><br>
+   * Leading zeros are used to get at least the number of digits determined by param digits
+   * <p/>
+   */
+  public synchronized void renumberSelectionStandard() {
+    if (mediaFileList.getFileList().isEmpty()) return; //if nothing is opened
+
+    mediaFileList.renumberRelativeToIndices(1, 1, 0, getSelectionModel().getSelectedIndices());
+  }
+
+
+
+  /**
    * renumber selection or all
    * according the user settings in RenumberDialog
    * note: if globalNumbering is used (param is initialization for dialog) then the start- step- and digit-values
@@ -1006,15 +1031,11 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * if renumbering is initialized with globalNumbering the dialog is initialized with global numberingOffset (start) values and the new value is stored
    * if renumbering is initialized with local Numbering (global=false) the dialog start offset is initialized with smallest number found in selection
    * if renum_all was chosen in the dialog the start value will also be stored as numberingOffset
-   *
-   * @param globalNumbering true:ie. numbering is calculated relative to the index of each file to be renumbered, false: local numbering scheme
    */
-  public synchronized void renumberWithDialog(boolean globalNumbering) {
+  public synchronized void renumberWithDialog() {
     //initialize start index
-    int start = numberingOffset; //initialize with global numbering
+    int start = numberingOffset; //initialize
 
-    if (!globalNumbering) { //then lookup the minimum value in the selection
-      start = Integer.MAX_VALUE;
       ObservableList<MediaFile> selection = getSelectionModel().getSelectedItems();
       if (selection == null) {
         start = 1;
@@ -1022,29 +1043,20 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         for (MediaFile mediaFile : selection) {
           if (mediaFile.getCounterValue() < start) start = mediaFile.getCounterValue();
         }
-      }
     }
 
     //show dialog
     if (renumberDialog == null) renumberDialog = new RenumberDialog(primaryStage);
-    int result = renumberDialog.showModal(start, numberingStepSize, numberingDigits, globalNumbering);
+    int result = renumberDialog.showModal(start, numberingStepSize, numberingDigits);
 
     //execute numbering and store dialog values for next renumbering
     if (result != RenumberDialog.CANCEL_BTN && result != RenumberDialog.NONE_BTN) {
       start = renumberDialog.getStart();
       numberingStepSize = renumberDialog.getStep();
       numberingDigits = renumberDialog.getDigits();
-      boolean global = renumberDialog.getGlobal();
+      numberingOffset = start; //remember start as global numbering offset for this list
 
-      if (result == RenumberDialog.RENUM_ALL_BTN) getSelectionModel().selectAll();
-      if (global || (result == RenumberDialog.RENUM_ALL_BTN))
-        numberingOffset = start; //remember start as global numbering offset for this list
-
-      if (global) {
-        mediaFileList.renumberRelativeToIndices(start, numberingStepSize, numberingDigits, getSelectionModel().getSelectedIndices());
-      } else {
-        mediaFileList.renumber(start, numberingStepSize, numberingDigits, getSelectionModel().getSelectedIndices());
-      }
+      mediaFileList.renumber(start, numberingStepSize, numberingDigits, getSelectionModel().getSelectedIndices());
     }
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
     primaryStage.requestFocus();
@@ -1141,6 +1153,26 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   }
 
   /**
+   * set prefixes to "" (empty string) in all marked files
+   */
+  public synchronized void cleanPrefix(){
+    ObservableList<MediaFile> selectedFiles = getSelectionModel().getSelectedItems();
+    for (MediaFile m : selectedFiles) {
+      m.setPrefix("");
+    }
+  }
+
+  /**
+   * set counter (numbers) to "" (empty string) in all marked files
+   */
+  public synchronized void cleanCounter(){
+    ObservableList<MediaFile> selectedFiles = getSelectionModel().getSelectedItems();
+    for (MediaFile m : selectedFiles) {
+      m.setCounter("");
+    }
+  }
+
+  /**
    * @return the focusedMediaFile which is one line above the selected focusedMediaFile or null if current media file is the first
    */
   public MediaFile getAboveMediaFile() {
@@ -1216,24 +1248,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     copyToFile.setPrefix(sourceFile.getPrefix());
     copyToFile.setSeparator(sourceFile.getSeparator());
     copyToFile.setDescription(sourceFile.getDescription());
-  }
-
-  /**
-   * renumbers all files of the fileList by writing column "counter"  (independent of the current selection)
-   * (all files are selected in a first step)
-   * Leading zeros are used to get at least the number of digits determined by param digits
-   * the numbering begins with start and uses step as step size<br><br>
-   * This variation will calculate the numbering for every file from its position (index) in fileList
-   * i.e. a file at index idx gets the number: counter = idx*step + start
-   * <p/>
-   * starting number, step and digits are used as set for the currently loaded list
-   * (see members numberingOffset, numberingStepSize, numberingDigits)
-   */
-  public synchronized void renumberSelectionRelativeToIndices() {
-    if (mediaFileList.getFileList().isEmpty()) return; //if nothing is opened
-
-    getSelectionModel().selectAll();
-    mediaFileList.renumberRelativeToIndices(numberingOffset, numberingStepSize, numberingDigits, getSelectionModel().getSelectedIndices());
   }
 
   /**
@@ -1316,15 +1330,18 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     setTooltipText(getFocusModel().getFocusedItem());
   }
 
-  public synchronized void setOrientationAccordingExif() {
+  public synchronized void setOrientationAccordingExif() { //todo: in Worker-Thread auslagern und Fortschrittsbalken anzeigen!
     int filesCount = getSelectionModel().getSelectedItems().size();
     int notRotatable = mediaFileList.setOrientationAccordingExif(getSelectionModel().getSelectedItems());
     mediaContentView.showRotationAndFlippingPreview();
     if (notRotatable == 0)
       statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.images.oriented.according.exif.information"), filesCount));
     else
-      statusBar.showMessage(MessageFormat.format(KissPhoto.language.getString("0.could.not.be.orientated.according.to.exif"), notRotatable)
-        + " " + MessageFormat.format(KissPhoto.language.getString("0.images.oriented.according.exif.information"), filesCount - notRotatable));
+      statusBar.showMessage(
+          MessageFormat.format(KissPhoto.language.getString("0.images.oriented.according.exif.information"), filesCount - notRotatable)
+          + " "
+          + MessageFormat.format(KissPhoto.language.getString("0.could.not.be.orientated.according.to.exif"), notRotatable)
+      );
 
     setTooltipText(getFocusModel().getFocusedItem());
   }

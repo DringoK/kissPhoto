@@ -315,6 +315,14 @@ public class PlayerControlPanel extends ViewerControlPanel {
   }
 
   /**
+   * show end position of progress bar
+   * this is necessary if media ends (halted) and no more time events will follow which would call showProgress
+   */
+  public void showProgressEndPosition(){
+    progressSlider.setValue(progressSlider.getMax());
+  }
+
+  /**
    * (idea originally found on http://www.java2s.com/Code/Java/JavaFX/MediaPlayerforflvfile.htm)
    * convert
    *

@@ -53,6 +53,7 @@ import java.util.ResourceBundle;
  *     - Zeit-Korrektur-Dialog. Mit Differenz-Berechnungsfunktion von 2 gewählten Dateien
  *   - in Massen-Umbenennungs-Dialog aufnehmen. Inkl. Default-Wert für Copyright
  * Bugs:
+ * todo Name-Parsing-Heuristik tut nicht falls 1, 2, ... und ein Datum 2021_01_02 drin ist. Idee: angeklickte Datei und nicht erste Datei untersuchen
  * ======================
  * planned features:
  * ======================
@@ -74,7 +75,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.718"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.1101"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 

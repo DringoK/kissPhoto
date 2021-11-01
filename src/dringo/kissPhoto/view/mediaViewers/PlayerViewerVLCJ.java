@@ -42,6 +42,7 @@ import static uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactor
  * </ul>
  *
  * @author Dringo
+ * @version 2021-09-05 finished event updates progress to reflect end of media
  * @version 2021-01-16 workaround for changing media if "paused" (vlc will crash)
  * @version 2021-01-08 resetPlayer() reworked to avoid blocking during saveFolder()
  * @version 2020-11-08 bugfixing
@@ -162,10 +163,6 @@ public class PlayerViewerVLCJ extends PlayerViewer {
       }
 
       @Override
-      public void positionChanged(MediaPlayer mediaPlayer, float newPosition) {
-      }
-
-      @Override
       public void playing(MediaPlayer mediaPlayer) {
         Platform.runLater(() -> {
           playerStatus = Status.PLAYING;
@@ -203,6 +200,7 @@ public class PlayerViewerVLCJ extends PlayerViewer {
       public void finished(MediaPlayer mediaPlayer) {
         Platform.runLater(() -> {
           finished = true;
+          playerControlPanel.showProgressEndPosition(); //indicate "completely played" because no more timeChaned-Events will follow
           if (!wasReset) mediaContentView.showNextOrRepeatMedia();
         });
       }
