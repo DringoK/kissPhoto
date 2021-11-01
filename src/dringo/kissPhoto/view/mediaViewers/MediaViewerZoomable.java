@@ -12,20 +12,19 @@ import javafx.scene.input.*;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
+ * <p>
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This class implements the interface ZoomableViewer (e.g. PhotoViewer and MovieViewer)
  * All routines for Zooming an moving with the viewport are same for these classes and therefore implemented here uniquely
  *
  * @author Dringo
- * @since 2016-11-06 all zooming/moving routines moved from PhotoViewer to this class
- * @version 2020-12-13 zooming Interface now in inheritance hierarchy
- * @version 2017-10-21 Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
+ * @version 2021-11-01 simple touch support added
  * @version 2017-10-08 fixed: while zooming not the complete space of the surrounding Pane has been used
+ * @since 2016-11-06 all zooming/moving routines moved from PhotoViewer to this class
  */
 
-public abstract class MediaViewerZoomable extends MediaViewer implements ZoomableViewer{
+public abstract class MediaViewerZoomable extends MediaViewer implements ZoomableViewer {
   //a number between 0 and 1 (i.e. 0..100%) means Image is displayed smaller than original size(zoomed out)
   //a number >1 (i.e. 100%) is displayed larger than original size means the Image is zoomed in
   private static final double ZOOM_STEP_FACTOR = 1.1;   //e.g. 1.1= 110%:zoomIn=zoomFactor*ZOOM_STEP_FACTOR, zoomOut=zoomFactor/ZOOM_STEP_FACTOR
@@ -45,7 +44,9 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
     installResizeHandler();
     installMouseHandlers();
     installKeyboardHandlers();
+    installTouchHandlers();
   }
+
   public void installResizeHandler() {
     prefWidthProperty().addListener((observable, oldValue, newValue) -> handleResize());
     prefHeightProperty().addListener((observable, oldValue, newValue) -> handleResize());
@@ -233,7 +234,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
    * note: image will visibly move to the other side but cursor will move viewport not picture!!!
    * stop/ignore if right border of the image is already visible
    * if the complete width of the image is visible in the viewport is horizontally centered on the picture=picture is centered
-
+   * <p>
    * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
   public void moveRight() {
@@ -257,7 +258,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
    * note: image will visibly move to the other side but cursor will move viewport not picture!!!
    * stop/ignore if left border of the image is already visible
    * if the complete width of the image is visible in the viewport is horizontally centered on the picture=picture is centered
-   *
+   * <p>
    * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
   public void moveLeft() {
@@ -281,7 +282,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
    * note: image will visibly move to the other side but cursor will move viewport not picture!!!
    * stop/ignore if lower border of the image is already visible
    * if the complete height of the image is visible in the viewport is vertically centered on the picture=picture is centered
-
+   * <p>
    * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
   public void moveDown() {
@@ -305,7 +306,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
    * note: image will visibly move to the other side but cursor will move viewport not picture!!!
    * stop/ignore if upper border of the image is already visible
    * if the complete height of the image is visible in the viewport is vertically centered on the picture=picture is centered
-   *
+   * <p>
    * if no viewport is defined yet (zoomToFit is active) nothing will happen
    */
   public void moveUp() {
@@ -343,7 +344,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
   /**
    * Build all ContextMenu items for Zooming and Panning/Moving supported by this class
    * either by adding to an existing Context Menu or (if null is passed into) to an new one
-   *
+   * <p>
    * if contextMenu is already existing (not null) then zooming/panning items are just added, if null, then a new context menu is generated
    */
   public void addContextMenuItems() {
@@ -452,13 +453,21 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
       if (handled) event.consume();
     });
 
-    setOnZoom(event -> {
-       System.out.println("ZoomFactor="+event.getZoomFactor() +" = total ZoomFactor" +event.getTotalZoomFactor());
-       zoom(zoomFactor* event.getZoomFactor());
-    });
-
   }
 
+  /**
+   * install handlers for finger gestures on Touch screens
+   */
+  public void installTouchHandlers() {
+    setOnZoom(event -> {
+      if (getViewport() == null) initializeZooming();
+
+      zoom(zoomFactor * event.getZoomFactor());
+      event.consume();
+    });
+
+
+  }
   //zooming
 
   /**
@@ -469,7 +478,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
     boolean handled = false;
 
 
-    if (scrollEvent.getDeltaY()==0)
+    if (scrollEvent.getDeltaY() == 0)
       return false; //ignore "zero" scrolls which occur in Kubuntu-Linux
     else if (scrollEvent.isControlDown()) {
       if (scrollEvent.getDeltaY() > 0)
@@ -484,7 +493,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
   //dragging = moving viewport
 
   /**
-   * @param mouseEvent  from setOn...Event
+   * @param mouseEvent from setOn...Event
    * @return if event has been handled
    */
   public boolean handleMousePressed(MouseEvent mouseEvent) {
@@ -652,6 +661,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
 
   //---------------- abstract interface for zooming ------------------------
   abstract void setViewport(Rectangle2D value);
+
   abstract Rectangle2D getViewport();
 
   //proportions of Image/Media

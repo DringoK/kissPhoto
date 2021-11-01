@@ -949,13 +949,11 @@ public class MediaContentView extends Pane {
 
       //enable the menu item only if gps data is available
       showGPSLocationItem.setDisable(!metaInfoView.isValidGPSavailable());
-      System.out.println("showing: " + showGPSLocationItem.isDisable());
     });
 
     contextMenu.setOnHiding(event -> {
       //while hidden enable the menu item to enable the accelerator-key
       showGPSLocationItem.setDisable(false);
-      System.out.println("hiding: " + showGPSLocationItem.isDisable());
     });
 
 

@@ -442,7 +442,6 @@ public class MainMenuBar extends MenuBar {
     playPauseItem.setAccelerator(MainMenuBar.PLAY_PAUSE_KEYCODE);
     playPauseItem.setOnAction(actionEvent -> {
       playerControls.togglePlayPause();
-      System.out.println("MainMenuBar.TogglePlayPause()");
     });
     playerControls.bindPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
 
