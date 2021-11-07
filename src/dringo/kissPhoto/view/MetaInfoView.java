@@ -4,17 +4,19 @@ import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
 import com.drew.metadata.exif.GpsDirectory;
 import dringo.kissPhoto.KissPhoto;
+import dringo.kissPhoto.helper.AppStarter;
 import dringo.kissPhoto.helper.ObservableStringList;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileTagged;
 import dringo.kissPhoto.model.Metadata.MetaInfoItem;
 import dringo.kissPhoto.model.Metadata.MetaInfoTreeItem;
 import dringo.kissPhoto.model.Metadata.MetadataItem;
-import dringo.kissPhoto.helper.AppStarter;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeTableColumn;
-import javafx.scene.control.TreeTableView;
+import dringo.kissPhoto.view.viewerHelpers.MetaInfoViewContextMenu;
+import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
+import javafx.scene.control.*;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 
 /**
@@ -25,18 +27,13 @@ import javafx.scene.layout.StackPane;
  * <p>
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
- * View for showing all metadata info of media files. Eg. Exif or IPTC
- * It is the viewer for MetaInfoTreeItems i.e. MetaData, Directory or Tag
+ * this is the context menu for MetaInfoView
  * <p/>
- * <p>
- * This is a Pane with an integrated TreeTableView.
- * The divider position of the surrounding SplitPane is managed in this class: it is seen as the height of this metaInfoView ;-)
- * </p>
+ *
  *
  * @author Dringo
- * @version 2021-06-06 call to Google maps added for Exif GPS data. e.g. https://www.google.com/maps/place/47°05'29.0"N+8°27'52.0"E
- * @version 2021-03-20 First implementation
- * @since 2021-03-14
+ * @version 2021-11-07 support for showing a tag in FileTableView added
+ * @since 2021-11-07
  */
 
 
@@ -44,6 +41,7 @@ public class MetaInfoView extends StackPane {
   //default values if value not in global settings
   private static final boolean DEFAULT_VISIBILITY = true;
   private static final double DETAILS_AREA_DEFAULT_DIVIDER_POS = 0.9;
+  private static final double DEFAULT_TYPECOLUMN_WIDTH = 80;
   private static final double DEFAULT_KEYCOLUMN_WIDTH = 250;
   //IDs for globalSettings
   private static final String METAINFO_VIEW_VISIBLE = "metaInfoView_Visible";
@@ -55,10 +53,12 @@ public class MetaInfoView extends StackPane {
   private final SplitPane surroundingPane;    //surroundingPane the splitPane where the metaView lies in. When showing/hiding the dividerPos will be restored
   private final TreeTableView<MetaInfoItem> treeTableView = new TreeTableView<>();
   //connect columns to data
-// param.getValue() returns the TreeItem<MetaInfoItem> instance for a particular TreeTableView row,
-// param.getValue().getValue() returns the MetaInfoItem instance inside the TreeItem<MetaInfoItem>
+  // param.getValue() returns the TreeItem<MetaInfoItem> instance for a particular TreeTableView row,
+  // param.getValue().getValue() returns the MetaInfoItem instance inside the TreeItem<MetaInfoItem>
   private final TreeTableColumn<MetaInfoItem, String> keyColumn = new TreeTableColumn<>(KissPhoto.language.getString("key"));
+  private final TreeTableColumn<MetaInfoItem, String> typeColumn =  new TreeTableColumn<>("type"); //for testing purposes only
   private final TreeTableColumn<MetaInfoItem, String> valueColumn = new TreeTableColumn<>(KissPhoto.language.getString("value"));
+  private final MetaInfoViewContextMenu contextMenu;
   private FileTableView fileTableView;        //some key presses are led to fileTableView
   private MediaContentView mediaContentView;  //some key presses are led to mediaContentView
   private StatusBar statusBar;
@@ -67,7 +67,7 @@ public class MetaInfoView extends StackPane {
   private MediaFile currentMediaFile = null; //if invisible then setMedia only stores here what has to be loaded if MetaInfoView becomes visible (=active), null while visible
 
   //try to keep selection when changing media
-  private TreeItem<MetaInfoItem> userSelection = null;  //always try to keep the current selection if the next mediaFile is selected. It is valid from the moment a user has selected something or the last value has been read out of globalSettings
+  private TreeItem<MetaInfoItem> userSelection = null;  //always try to keep the current selection if the next mediaFile is selected. (SelectionListener in use). It is valid from the moment a user has selected something or the last value has been read out of globalSettings
   private ObservableStringList userSelectionPath = null; //same as above as a String-Path. This is used as a cached value for userSelection which is valid from last getSelectionPath until user changes selection
   private boolean freezeUserSelection; //do not change currentSelection while loading new media, so that the selection can be restored after loading
 
@@ -85,6 +85,11 @@ public class MetaInfoView extends StackPane {
     keyColumn.setPrefWidth(DEFAULT_KEYCOLUMN_WIDTH);
     treeTableView.getColumns().add(keyColumn);
 
+    //for testing purpose only
+    typeColumn.setCellValueFactory(param -> param.getValue().getValue().getTypeString());
+    typeColumn.setPrefWidth(DEFAULT_TYPECOLUMN_WIDTH);
+    //treeTableView.getColumns().add(typeColumn);
+
     valueColumn.setCellValueFactory(param -> param.getValue().getValue().getValueString());
     valueColumn.prefWidthProperty().bind(widthProperty().subtract(keyColumn.widthProperty())); //the rest of the available space
 //    valueColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
@@ -100,6 +105,42 @@ public class MetaInfoView extends StackPane {
 
     installSelectionListener();
     installKeyHandlers();
+
+    //drag drop support to draw a tag to the fileTableColumn
+    treeTableView.setOnDragDetected(event -> {
+      trySelectTagIfDirectoryIsSelected();
+      if (getUserSelectionPath().getSize() == 3){ //only if valid selection
+        ClipboardContent clipboardContent = new ClipboardContent();
+        clipboardContent.putString(getUserSelectionPath().toCSVString());
+        Dragboard dragboard =startDragAndDrop(TransferMode.ANY);
+        dragboard.setContent(clipboardContent);
+      }
+      event.consume();
+    });
+
+    //-----install bubble help ------------
+    Tooltip tooltip = new Tooltip("Note: you can drag a meta tag to the file table to use it there");
+    tooltip.setShowDelay(ViewerControlPanel.TOOLTIP_DELAY); //same delay like in viewer control panel
+    treeTableView.setTooltip(tooltip); //the text will be set whenever selection is changed (focus change listener)
+
+
+    //------------ install Context menu
+    contextMenu = new MetaInfoViewContextMenu(this);
+    contextMenu.setAutoHide(true);
+
+    //hide context menu if clicked "somewhere else" or request focus on mouse click
+    treeTableView.setOnMouseClicked(mouseEvent -> {
+      if (contextMenu.isShowing()) {
+        contextMenu.hide(); //this closes the context Menu
+        mouseEvent.consume();
+      } else {
+        requestFocus();
+      }
+    });
+
+    treeTableView.setOnContextMenuRequested(contextMenuEvent -> {
+      contextMenu.show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+    });
 
     getChildren().add(treeTableView);
   }
@@ -143,12 +184,46 @@ public class MetaInfoView extends StackPane {
   }
 
 
+  public void addCurrentTagToFileTable(){
+    trySelectTagIfDirectoryIsSelected(); //ignore the invalid call
+    fileTableView.defineMetaInfoColumn(getUserSelectionPath()); //will be ignored with directories, has only an effect for tags
+  }
+
+  private void trySelectTagIfDirectoryIsSelected() {
+    if (userSelection==null) return;  //can only happen in the very beginning, when user has not clicked anywhere
+
+    if (!userSelection.isLeaf()){ //if a directory is currently selected than select the first tag out of it
+      userSelection.setExpanded(true);
+      if (userSelection.getChildren().size()>0)
+        treeTableView.getSelectionModel().select(userSelection.getChildren().get(0));
+      //if not then the directory remains selected
+    }
+  }
+
+  /**
+   * the path to the root will be converted to a String
+   * - where the root is not included
+   * - the order is from root to leaf (tag)
+   * @return  the Path (StringList) as a single String where dot (".") separates the list elements
+   */
+  public String ConvertVisiblePathToDotString(ObservableStringList path){
+    String s = "";
+    for (int i = path.size()-2; i>=0; i--) {
+      s += path.get(i) + ".";
+    }
+    if (s.length()>1)
+      s = s.substring(0, s.length()-1); //remove last sep (-1)
+    return s;
+
+  }
+
+
   /**
    * update the userSelectionPath variable if necessary
    *
    * @return the cached or updated userSelectionPath variable
    */
-  private ObservableStringList getUserSelectionPath() {
+  public ObservableStringList getUserSelectionPath() {
     if (userSelectionPath == null)  //update only if selection has been changed since last time
       userSelectionPath = getPath(userSelection);
 
@@ -244,9 +319,9 @@ public class MetaInfoView extends StackPane {
   }
 
   /**
-   * Cache support: lazy load the meta infos from media
+   * Cache support: lazy load the meta info from media
    *
-   * @param mediaFileTagged link back to the mediaFile which tries to fill it's cache for this view
+   * @param mediaFileTagged link back to the mediaFile which tries to fill its cache for this view
    * @return the MetadataTreeItem that should be cached
    */
   public MetaInfoTreeItem getViewerSpecificMediaInfo(MediaFileTagged mediaFileTagged) {
@@ -378,13 +453,13 @@ public class MetaInfoView extends StackPane {
       //only return a string if all components of the GPS coordinate are available
       if (latitudeRef != null && latitude != null && longitudeRef != null && longitude != null){
         gpsCoordinates = latitude + latitudeRef + "+" + longitude + longitudeRef;
-        gpsCoordinates = gpsCoordinates.replaceAll(",","."); //on some computers decimal is represented as comma which is not accepted by google maps
+        gpsCoordinates = gpsCoordinates.replaceAll(",","."); //on some computers decimal is represented as comma which is not accepted by Google Maps
 
       }
     }
     return gpsCoordinates;
   }
-  public boolean isValidGPSavailable(){
+  public boolean isValidGpsAvailable(){
     return getGpsCoordinates() != null;
   }
   /**
