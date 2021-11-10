@@ -5,6 +5,8 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
+import dringo.kissPhoto.helper.ObservableStringList;
+import dringo.kissPhoto.model.Metadata.MetaInfoProperty;
 import dringo.kissPhoto.model.Metadata.MetaInfoTreeItem;
 import dringo.kissPhoto.model.Metadata.WritableEntry;
 import dringo.kissPhoto.view.MetaInfoView;
@@ -23,15 +25,16 @@ import java.nio.file.Path;
  *
  *
  * @author Dringo
- * @since 2014-06-10
+ * @version 2021-11-07 metainfo column support (="" if not MediaFileTagged), reflection for FileTableView eliminated
  * @version 2021-04-07 metaInfoView supported. Cache support completed
- * @version 2017-10-28 updated to latest meatadata-extractor version. Now I use source instead of jar because drew noaks does not deliver jar for latest version
+ * @version 2017-10-28 updated to latest metadata-extractor version. Now I use source instead of jar because drew noaks does not deliver jar for latest version
+ * @since 2014-06-10
  */
 public abstract class MediaFileTagged extends MediaFile {
   ObservableList<WritableEntry> exifChanges = FXCollections.observableArrayList();     //for future extensions when exif field editing is supported
   Metadata metadata;                 //see http://code.google.com/p/metadata-extractor/wiki/GettingStarted
   protected MetaInfoTreeItem metaInfoTreeItem = null; //cached metaInfo root?
-
+  MetaInfoProperty metaInfoProperty = new MetaInfoProperty();
 
   protected MediaFileTagged(Path file, MediaFileList parent) {
     super(file, parent);
@@ -66,6 +69,20 @@ public abstract class MediaFileTagged extends MediaFile {
       metaInfoTreeItem = metaInfoView.getViewerSpecificMediaInfo(this);
     }
     return metaInfoTreeItem;
+  }
+
+  private ObservableStringList lastMetaInfoColumnPath = null;
+  /**
+   * metaInfoColumn.setCellValueFactory calls this method everytime it tries to update cell-content in this column
+   * @param metaInfoColumnPath
+   * @return null
+   */
+  @Override
+  public MetaInfoProperty getMetaInfo(ObservableStringList metaInfoColumnPath){
+    if (lastMetaInfoColumnPath != metaInfoColumnPath) {
+      metaInfoProperty.setMetaDataPath(this, metaInfoColumnPath);
+    }
+    return metaInfoProperty;
   }
 
 

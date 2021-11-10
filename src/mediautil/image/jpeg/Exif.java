@@ -53,7 +53,7 @@ import java.util.Map;
 
 /**
  * This class represent the Exif header providing additional information about
- * image. It is organized in a similiar IFD directory structure as specified by
+ * image. It is organized in a similiar IFD (Image File Directory) structure as specified by
  * the Exif spec.<p>
  *
  * The below shows the most common usage of creating and changing an Exif
@@ -84,6 +84,10 @@ import java.util.Map;
  *    Part 2: Image data format - TIFF/EP (http://www.pima.net/it10a.htm)
  * <li><a href="http://www.pima.net/standards/it10/PIMA15740/exif.htm"> some enhancements were based on </a>
  * </ul>
+ *
+ * <p>
+ *   ik: Exif is an AbstractImageInfo which refelects IFDs (Image File Directories) in APP1 (application marker segement1=Exif)
+ * </p>
  *
  * @see #setTagValue(int, int, Entry, boolean)
  * @see Entry#setValue(int, Object)
@@ -597,8 +601,17 @@ public class Exif extends AbstractImageInfo<LLJTran> {
    * related tags are in the Sub IFD.
    */
   public void setTagValue(int tag, int subTag, Entry value, boolean main) {
-    if (ifds[main ? 0 : 1] != null)
-      ifds[main ? 0 : 1].setEntry(new Integer(tag), subTag, value);
+    if (main) {
+      if (ifds[0] != null) {
+        if (main) ifds[0].setEntry(tag, subTag, value);
+        else ifds[1].setEntry(new Integer(tag), subTag, value);
+      }
+    } else {
+      if (ifds[1] != null) {
+        if (main) ifds[0].setEntry(new Integer(tag), subTag, value);
+        else ifds[1].setEntry(new Integer(tag), subTag, value);
+      }
+    }
   }
 
   /**
@@ -1866,5 +1879,5 @@ public class Exif extends AbstractImageInfo<LLJTran> {
 
   protected int version;
 
-  protected IFD[] ifds;
+  protected IFD[] ifds;   //IFD = Image File Directory (see IFD.java)
 }

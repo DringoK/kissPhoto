@@ -20,6 +20,7 @@ import javafx.scene.control.TreeItem;
  * <p/>
  *
  * @author Dringo
+ * @version 2021-11-07 type column supported
  * @version 2021-03-20 First implementation
  * @since 2021-03-14
  */
@@ -91,5 +92,14 @@ public class DirectoryItem extends MetaInfoItem {
         valueString = new SimpleStringProperty("");
     }
     return valueString;
+  }
+
+  /**
+   * @return the text that will be displayed in the type column
+   */
+  @Override
+  public StringProperty getTypeString() {
+    return null;
+    //return new SimpleStringProperty("");
   }
 }

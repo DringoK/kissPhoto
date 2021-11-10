@@ -27,6 +27,18 @@ package mediautil.gen;
 
 import java.io.Serializable;
 
+/**
+ * Mediautil reworked for KissPhoto bei Dringo
+ *
+ * ik: this class represents a fraction (rational) consisting of
+ * num = numerator   (Zaehler)
+ * den = denominator (Nenner)
+ *
+ *
+ * @since 2021-11-09 some simplifications because of later Java version made for better readability
+ * @author Dringo. Originally Dmitriy Rogatkin and Suresh Mahalingam (msuresh@cheerful.com)
+ */
+
 public class Rational implements Serializable {
   int num, den;
 
@@ -37,7 +49,7 @@ public class Rational implements Serializable {
 
   public Rational(float value) {
     den = 1000;
-    num = (int) (value * (new Integer(den).floatValue()));
+    num = (int) (value * (float) den);
   }
 
   public String toString() {
@@ -49,7 +61,7 @@ public class Rational implements Serializable {
   }
 
   public int intValue() {
-    return (int) num / den;
+    return num / den;
   }
 
   public String toExposureString() {

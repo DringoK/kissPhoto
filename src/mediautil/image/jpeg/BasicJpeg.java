@@ -218,7 +218,7 @@ public class BasicJpeg extends LLJTran implements MediaFormat {
   }
 
   protected void transformAppHeader(int op, boolean transformThumbnail) throws IOException {
-    if ((imageinfo instanceof Exif) == false)
+    if (!(imageinfo instanceof Exif))
       return;
     ByteArrayOutputStream buf = new ByteArrayOutputStream(2 * 1024);
     Exif exif = ((Exif) imageinfo);

@@ -75,7 +75,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.1101"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.21.1110"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 

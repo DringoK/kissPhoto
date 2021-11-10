@@ -27,6 +27,21 @@ package mediautil.image.jpeg;
 
 import java.io.Serializable;
 
+/**
+ * Mediautil reworked for KissPhoto bei Dringo
+ *
+ * ik: Entry covers an entry in an IFD (Image File Directory)
+ * e.g. in the Exif-IFD (Exif.java)
+ * the Entry for image width has type Exif.IMAGEWIDTH and a Long holding its value
+ *
+ * it is also the base class for IFD that is an entry with intries (and sub-IFDs)
+ *
+ * string-Values are stored in the attribute String str, all other values in the attribute Object[] value
+ *
+ * @since 2021-11-09
+ * @author Dringo. Originally Dmitriy Rogatkin and Suresh Mahalingam (msuresh@cheerful.com)
+ */
+
 public class Entry implements Serializable {
 
   public Entry(int type) {

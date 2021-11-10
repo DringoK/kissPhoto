@@ -386,7 +386,7 @@ public class MainMenuBar extends MenuBar {
 
     viewMenu.setOnShowing(event -> {
       //enable the menu item only if gps data is available
-      showGPSLocationItem.setDisable(!metaInfoView.isValidGPSavailable());
+      showGPSLocationItem.setDisable(!metaInfoView.isValidGpsAvailable());
     });
 
     viewMenu.setOnHiding(event -> {

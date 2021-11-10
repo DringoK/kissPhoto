@@ -948,7 +948,7 @@ public class MediaContentView extends Pane {
       showFileDateItem.setDisable(!attrViewer.isVisible());
 
       //enable the menu item only if gps data is available
-      showGPSLocationItem.setDisable(!metaInfoView.isValidGPSavailable());
+      showGPSLocationItem.setDisable(!metaInfoView.isValidGpsAvailable());
     });
 
     contextMenu.setOnHiding(event -> {

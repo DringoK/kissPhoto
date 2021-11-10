@@ -28,13 +28,31 @@ package mediautil.image.jpeg;
 import java.util.HashMap;
 import java.util.Map;
 
+
+/**
+ * Mediautil reworked for KissPhoto bei Dringo
+ *
+ * ik: Image File Directory
+ * they reside in APPX e.g APP1=Exif
+ * e.g. IPTC is an IFD
+ *
+ * An IFD is implemented to extend Entry and consists of
+ * <ul>
+ *   <li>a tag that indicates the type of the entry e.g. </li>
+ *   <li>an HashMap entries containing the Entry objects</li>
+ *   <li>an array of IFD (maybe subdirectories)</li>
+ * </ul>
+ *
+ * @since 2021-11-09
+ * @author Dringo. Originally Dmitriy Rogatkin and Suresh Mahalingam (msuresh@cheerful.com)
+ */
 public class IFD extends Entry {
   public IFD(int tag) {
     this(tag, Exif.UNDEFINED);
   }
 
   public IFD(int tag, int type) {
-    super(type);
+    super(type);   //set Exif attribute type
     this.tag = tag;
     entries = new HashMap();
   }

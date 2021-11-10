@@ -29,13 +29,30 @@ import mediautil.gen.BasicIo;
 
 import java.io.UnsupportedEncodingException;
 
+/**
+ * Mediautil reworked for KissPhoto bei Dringo
+ *
+ * Tos class defines constants for the JPEG parts
+ * and the serialization-methods for the different data types to serial and back
+ *
+ * booleans intel and motorola identify the architecture (which will influence the byte order MSB LSB)
+ *
+ * byte[] data is the serialization buffer
+ *
+ * It is the base class for LLJTran and for AbstractImageInfo
+ *
+ * @version 2021-11-09 I extracted it into an own file for better Java compatibility and changed all c-like definitions into Java definitions
+ * @since 2021-11-09
+ * @author Dringo. Originally Dmitriy Rogatkin and Suresh Mahalingam (msuresh@cheerful.com)
+ */
+
 // TODO: rewrite using NIO
 public class BasicJpegIo extends BasicIo {
   static final byte M_SOF0 = (byte) 0xC0; // Start Of Frame N
   static final byte M_SOF1 = (byte) 0xC1; // N indicates which compression process
   static final byte M_SOF2 = (byte) 0xC2; // Only SOF0-SOF2 are now in common use
   static final byte M_SOF3 = (byte) 0xC3;
-  public final byte M_DHT = (byte) 0xC4;
+  public final byte M_DHT = (byte) 0xC4;  //Huffman Table
   static final byte M_SOF5 = (byte) 0xC5; // NB: codes C4 and CC are NOT SOF markers
   static final byte M_SOF6 = (byte) 0xC6;
   static final byte M_SOF7 = (byte) 0xC7;
@@ -57,7 +74,7 @@ public class BasicJpegIo extends BasicIo {
   static final byte M_SOI = (byte) 0xD8; // Start Of Image (beginning of datastream)
   static final byte M_EOI = (byte) 0xD9; // End Of Image (end of datastream)
   static final byte M_SOS = (byte) 0xDA; // Start Of Scan (begins compressed data)
-  public final byte M_DQT = (byte) 0xDB;
+  public final byte M_DQT = (byte) 0xDB; //Quantization Table
   public final byte M_DNL = (byte) 0xDC;
   public final byte M_DRI = (byte) 0xDD;
   public final byte M_DHP = (byte) 0xDE;

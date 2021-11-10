@@ -2,6 +2,8 @@
 
 # Kissphoto Manual
 
+[see also: README.md in the base directory of this project](../README.md)
+
 ## Basic Idea
 
 keep it simple:

@@ -1,6 +1,8 @@
 package dringo.kissPhoto.model;
 
 import dringo.kissPhoto.KissPhoto;
+import dringo.kissPhoto.helper.ObservableStringList;
+import dringo.kissPhoto.model.Metadata.MetaInfoProperty;
 import dringo.kissPhoto.view.inputFields.SeparatorInputField;
 import dringo.kissPhoto.view.mediaViewers.PhotoViewer;
 import dringo.kissPhoto.helper.AppStarter;
@@ -36,6 +38,7 @@ import java.util.Date;
  *
  * @author ikreuz
  * @since 2012-08-28
+ * @version 2021-11-07 metainfo column support (="" if not MediaFileTagged), reflection for FileTableView eliminated
  * @version 2021-04-07 metadata stuff (cache!) now completely in subclass MediaFileTagged
  * @version 2020-12-20 cache now directly in this class. What to put into cache is asked from according viewer.
  * @version 2019-06-22 cache issue fixed: isMediaContentValid() and getMediaContentException() added
@@ -88,14 +91,14 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   protected boolean flipVertically = false;
   //prevent from infinite loop if (background) loading fails permanently (currently supported by ImageFile Background loading
   protected int loadRetryCounter = 0;
-  private final StringProperty status = new SimpleStringProperty();
+  public final StringProperty status = new SimpleStringProperty();
   //parsed Filename, editable by user
-  private final StringProperty prefix = new SimpleStringProperty("");
-  private final StringProperty counter = new SimpleStringProperty("");
-  private final StringProperty separator = new SimpleStringProperty("");
-  private final StringProperty description = new SimpleStringProperty("");
-  private final StringProperty extension = new SimpleStringProperty("");
-  private final StringProperty modifiedDate = new SimpleStringProperty("");
+  public final StringProperty prefix = new SimpleStringProperty();
+  public final StringProperty counter = new SimpleStringProperty();
+  public final StringProperty separator = new SimpleStringProperty();
+  public final StringProperty description = new SimpleStringProperty();
+  public final StringProperty extension = new SimpleStringProperty();
+  public final StringProperty modifiedDate = new SimpleStringProperty();
   //errors regarding the filename (to be shown on GUI)
   private boolean renameError = false;   //indicate that the last rename was not successful
   private boolean timeStampWriteError = false; //indicates that the last try to write the timestamp was not successful
@@ -239,6 +242,17 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     } else {
       separator.set("");
     }
+  }
+
+  /**
+   * metaInfoColumn.setCellValueFactory calls this method everytime it tries to update cell-content in this column
+   * default implementation for MediaFiles which are not implementations of MediaFileTagged i.e. nothing to be shown in that column
+   * MediaFileTagged will override this method
+   * @param metaInfoColumnPath the path to the exif-tag as a string-list that should be shown (no effect when MediaFile is not tagged)
+   * @return null
+   */
+  public MetaInfoProperty getMetaInfo(ObservableStringList metaInfoColumnPath){
+    return null;
   }
 
   /**
@@ -796,11 +810,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  //used by reflection: TableView binds the property over it's name during runtime with that method
-  public StringProperty prefixProperty() {
-    return prefix;
-  }
-
   public String getCounter() {
     return counter.get();
   }
@@ -825,11 +834,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  //used by reflection: TableView binds the property over it's name during runtime with that method
-  public StringProperty counterProperty() {
-    return counter;
-  }
-
   public String getSeparator() {
     return separator.get();
   }
@@ -845,11 +849,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       setFilenameChanged(true);
     }
   }
-  //used by reflection: TableView binds the property over it's name during runtime with that method
-  public StringProperty separatorProperty() {
-    return separator;
-  }
-
   public String getDescription() {
     return description.get();
   }
@@ -864,11 +863,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       this.description.set(description);
       setFilenameChanged(true);
     }
-  }
-
-  //used by reflection: TableView binds the property over it's name during runtime with that method
-  public StringProperty descriptionProperty() {
-    return description;
   }
 
   public String getExtension() {
@@ -887,15 +881,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  //used by reflection: TableView binds the property over it's name during runtime with that method
-  public StringProperty extensionProperty() {
-    return extension;
-  }
-
-  //used by reflection: TableView binds the property over it's name during runtime with that method
-  public StringProperty fileDateProperty() {
-    return modifiedDate;
-  }
   public String getModifiedDate() {
     return modifiedDate.get();
   }

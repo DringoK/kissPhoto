@@ -53,7 +53,7 @@ import java.util.Date;
  *
  * @author dmitriy
  */
-public abstract class AbstractImageInfo<F extends LLJTran> extends BasicJpegIo implements MediaInfo {
+public abstract class AbstractImageInfo<Format extends LLJTran> extends BasicJpegIo implements MediaInfo {
   /**
    * Default Thumbnail Size
    */
@@ -67,7 +67,7 @@ public abstract class AbstractImageInfo<F extends LLJTran> extends BasicJpegIo i
   protected static final Class[] EMPTY_PARAMS = {};
 
   protected AdvancedImage advancedImage;
-  protected F format;
+  protected Format format;
 
   // conversions
   public final static double[] AV_TO_FSTOP =
@@ -95,7 +95,7 @@ public abstract class AbstractImageInfo<F extends LLJTran> extends BasicJpegIo i
    * @param comments Image comments
    * @param format   Image Object of type LLJTran
    */
-  public AbstractImageInfo(InputStream is, byte[] data, int offset, String name, String comments, F format) throws FileFormatException {
+  public AbstractImageInfo(InputStream is, byte[] data, int offset, String name, String comments, Format format) throws FileFormatException {
     this.is = is;
     this.data = data;
     this.offset = offset;
@@ -434,6 +434,7 @@ public abstract class AbstractImageInfo<F extends LLJTran> extends BasicJpegIo i
 
   transient protected InputStream is;
   protected int offset;
-  protected String name, comments;
+  protected String name;
+  protected String comments;
   protected Object[] fiveObjects = new Object[5];
 }

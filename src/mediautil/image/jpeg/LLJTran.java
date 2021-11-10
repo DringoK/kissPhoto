@@ -36,92 +36,6 @@ import mediautil.gen.directio.IterativeWriter;
 import java.awt.*;
 import java.io.*;
 
-class IterativeReadVars {
-  public static final int READING_STAGE = 1;
-  public static final int READING_DCT_STAGE = 2;
-  public static final int READING_APPX_STAGE = 3;
-  public static final int IMAGE_READ_STAGE = 4;
-  public static final int DONE_STAGE = 5;
-
-  // For info
-  public int minReadRequest;
-  public int maxReadRequest;
-
-  public InputStream is;
-  public int readUpto;
-  public int stage;
-  public int sections;
-  public boolean keep_appxs, appxsCleared;
-  public int appxPos, appxLen;
-  public boolean throwException;
-
-  //Vars for readDCT
-  public double currentProgress, callbackProgress, progressPerMcu;
-  public int[] last_dc;
-  public int[][] DCT;
-  public int next_restart_num;
-  public int ix, iy;
-}
-
-class IterativeWriteVars {
-  public static final int WRITE_BEGIN = 0;
-  public static final int WRITE_COMMENTS = 1;
-  public static final int WRITE_APPXS = 2;
-  public static final int WRITE_DQT = 3;
-  public static final int WRITE_DHT = 4;
-  public static final int WRITE_START = 5;
-  public static final int WRITE_DCT = 6;
-  public static final int WRITE_COMPLETE = 7;
-
-  // For info
-  public int minWriteRequest;
-  public int maxWriteRequest;
-
-  public OutputStream os;
-  public int op;
-  public int options;
-  public int restart_interval;
-  public String comment;
-  public Class custom_appx;
-  public int state = WRITE_COMPLETE;
-  public byte huffTables[];
-  public int currentAppxPos, currentAppx;
-
-  public byte saveAppxs[];
-  public int svX;
-  public int svY;
-  public int svWidthMCU;
-  public int svHeightMCU;
-
-  // initWriteDCT vars
-  public boolean transformDct;
-  public int[][][][][] new_dct_coefs;
-
-  public double currentProgress, callbackProgress, progressPerMcu;
-  public int[] last_dc;
-  public int restarts_to_go;
-  public int xCropOffsetMCU;
-  public int yCropOffsetMCU;
-
-  public boolean handleXEdge;
-  public boolean handleYEdge;
-  public int new_ix, new_iy;
-  public boolean pullDownMode;
-
-  // For unused method writeJpeg
-  public boolean restoreVars;
-
-  // if transformDct true it indicates if full Dct array needs to be allocated
-  // or if the rows of old dct array can be reused.
-  public boolean reuseDctRows = true;
-
-  public void freeMemory() {
-    huffTables = null;
-    new_dct_coefs = null;
-    last_dc = null;
-  }
-}
-
 /**
  * LLJTran is a class for Lossless Jpeg Transformation.<p>
  * <p>
@@ -150,6 +64,32 @@ class IterativeWriteVars {
  * </ul>
  *
  * @author Dmitriy Rogatkin &amp; Suresh Mahalingam (msuresh@cheerful.com)
+ *
+ * <p></p>
+ * Mediautil reworked for KissPhoto bei Dringo
+ *
+ * ik: main class for JPEG Transformations and header modifications
+ * The following File Structure is assumed (see Figure 8 in Exif2-3.pdf)
+ * <ul>
+ * <li>SOI=start of Image</li>
+ * <li>APP1=Application Marker Segement 1 = Exif Attribute Information</li>
+ * <li>(APP2=Application Marker Segement 2 = Flashpix Extension) --> currently just copied as is</li>
+ * <li>(APPx=Application Marker Segement x = application specific) --> currently just copied as is</li>
+ * <li>(APPy=Application Marker Segement y = application specific) --> currently just copied as is</li>
+ * <li>(APPz=Application Marker Segement z = application specific) --> currently just copied as is</li>
+ * <li>DQT=Quantization Table</li>
+ * <li>DHT=Huffman Table</li>
+ * <li>(DRI=RestartInterval)</li>
+ * <li>SOF=Frame Header</li>
+ * <li>SOS=Scan Header</li>
+ * <li>Compressed Data</li>
+ * <li>EOI=End of Image</li>
+ * </ul>
+ *
+ * @version 2021-11-09
+ * @since 2021-11-09
+ * @author Dringo. Originally Dmitriy Rogatkin and Suresh Mahalingam (msuresh@cheerful.com)
+ *
  */
 public class LLJTran extends BasicJpegIo
   implements IterativeReader, IterativeWriter {
@@ -273,7 +213,7 @@ public class LLJTran extends BasicJpegIo
    * adjusted to the nearest MCU boundary.
    */
   public final static int OPT_XFORM_TRIM = 0x4;
-  ;
+
   /**
    * Flag to specifiy that Non Transformable edge blocks should be adjusted
    * accordingly when transforming the image. Depending on the transformation
@@ -1727,6 +1667,10 @@ public class LLJTran extends BasicJpegIo
    * written may exceed numBytes. The application appx markers are split while
    * writing to take care of the numBytes passed but not the comments. So
    * long jpeg comments may cause a large number of bytes to be written.
+   * <p>
+   * ik: APPX = APP1, APP2, or application specific APPx,y,.. which again consist of IFDs (=Image File Directories) and Image Data
+   * APP1=Exif, APP2=Flashpix
+   * (see The Metadata in Exif Files...pdf)
    *
    * @return IterativeReader.CONTINUE in case the writing is not complete.
    * Returns IterativeReader.STOP on completion of write.
@@ -5183,7 +5127,7 @@ public class LLJTran extends BasicJpegIo
   /**
    * Internal variable containing appx Marker Data
    */
-  protected byte[] appxs[];
+  protected byte[][] appxs;
   // protected byte[] comment_data;
 
   private int appHdrIndex = -1;
@@ -5210,13 +5154,13 @@ public class LLJTran extends BasicJpegIo
   private Exception lljtError;
   private String errorMsg;
 
-  private static final String uptoName[] = {"None", "Info", "Header", "Body"};
+  private static final String[] uptoName = {"None", "Info", "Header", "Body"};
 
   /**
    * This array contains the data for a Dummy Exif Header. This can be used to
    * create an Exif header for a jpeg image without one.
    */
-  public static final byte dummyExifHeader[] = {
+  public static final byte[] dummyExifHeader = {
     (byte) 0xff, (byte) 0xe1, 0x3, 0x37, 0x45, 0x78, 0x69, 0x66, 0x0, 0x0,
     0x49, 0x49, 0x2a, 0x0, 0x8, 0x0, 0x0, 0x0, 0x9, 0x0, 0x28, 0x1, 0x3,
     0x0, 0x1, 0x0, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x12, 0x1, 0x3, 0x0, 0x1,

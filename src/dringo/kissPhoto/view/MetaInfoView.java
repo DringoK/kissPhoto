@@ -27,7 +27,15 @@ import javafx.scene.layout.StackPane;
  * <p>
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
- * this is the context menu for MetaInfoView
+ * MetaInfoView is the Window in the lower right corner which shows the Meta Tags (e.g. Exif) of a {@link MediaFileTagged}
+ * setMedia() loads the meta info in the memory
+ * caching is supported
+ *
+ * the tags are shown in tree tables
+ * <ul>
+ *   <li>every branch is a directory (IFD=Image File Directory)</li>
+ *   <li>every leaf is an exif entry </li>
+ * </ul>
  * <p/>
  *
  *
@@ -88,10 +96,12 @@ public class MetaInfoView extends StackPane {
     //for testing purpose only
     typeColumn.setCellValueFactory(param -> param.getValue().getValue().getTypeString());
     typeColumn.setPrefWidth(DEFAULT_TYPECOLUMN_WIDTH);
-    //treeTableView.getColumns().add(typeColumn);
+    treeTableView.getColumns().add(typeColumn);     ///////////////////uncomment this line for test purpose to show the column with tag type ("Exif ID of TAG")
+    //note: if this column should be displayed in a release: don't forget to adjust the Column-With binding to be adapted  for valueColumn two lines below
 
     valueColumn.setCellValueFactory(param -> param.getValue().getValue().getValueString());
     valueColumn.prefWidthProperty().bind(widthProperty().subtract(keyColumn.widthProperty())); //the rest of the available space
+    //uncomment in later versions if in-place-editing of tag values is supported. Currently, Editing only possible in FileTable
 //    valueColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
 //    valueColumn.setEditable(true);
 //    treeTableView.setEditable(true);
@@ -126,7 +136,6 @@ public class MetaInfoView extends StackPane {
 
     //------------ install Context menu
     contextMenu = new MetaInfoViewContextMenu(this);
-    contextMenu.setAutoHide(true);
 
     //hide context menu if clicked "somewhere else" or request focus on mouse click
     treeTableView.setOnMouseClicked(mouseEvent -> {

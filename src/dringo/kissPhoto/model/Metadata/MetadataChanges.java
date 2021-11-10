@@ -1,6 +1,7 @@
 package dringo.kissPhoto.model.Metadata;
 
-import com.drew.metadata.Metadata;
+import com.drew.metadata.Tag;
+import dringo.kissPhoto.helper.ObservableStringList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -8,18 +9,28 @@ import javafx.collections.ObservableList;
  * MIT License
  * Copyright (c)2021 kissPhoto
  *
- * wrapper for a com.drew.metada.Metadata
  * This wrapper collects all changes as WritableDirectory's in alist in memory that shall be applied to it in the file later
  * --> i.e. the setter methods add changes to the list (no duplicates, last change wins)
  * --> the writeTo() method start the conversion of the WritableDirectory's performs the linking an writes the changes in one run
  * <p>
  * Note: first it is tried to update the existing entries to avoid copying of the complete imageFile
+ * todo: implement saving
+ * todo: MetaInfoProperty and FileTableView should use IDs instead of names
  */
-public class WritableMetadata {
-  Metadata metadata; //link to read metadata of Drew Noaks
+public class MetadataChanges {
   //list of changes
   ObservableList<WritableDirectory> changedDirectories = FXCollections.observableArrayList();
 
+  /**
+   *
+   * @param tagPath the path to the tag to be investigated
+   * @return true, if writing is supported for the tag defined in tagPath else false
+   */
+  public static boolean isWritingSupported(ObservableStringList tagPath){
+    return (tagPath.getSize() == 3) &&
+      tagPath.get(1).equalsIgnoreCase("Exif IFD0");
+      //&& tagPath.get(0).equalsIgnoreCase("Date/Time");
+  }
 
   /**
    * add a new tag to a directory that has not been in that directory before
@@ -28,7 +39,7 @@ public class WritableMetadata {
    * @param tag               the tag-id of the entry
    * @param type              the type of the entry. If the entry is already present then just the type is updated
    */
-  public void changeEntryType(WritableDirectory writableDirectory, int tag, int type) {
+  public void changeEntryType(WritableDirectory writableDirectory, Tag tag, int type) {
     addNewEntry(writableDirectory, tag, type); //the side-effect of addNewEntry is used: an existing entry is just updated with addNewEntry
   }
 
@@ -40,7 +51,7 @@ public class WritableMetadata {
    * @param tag               the tag-id of the new entry
    * @param type              the type of the new entry. If the entry is already present then just the type is updated
    */
-  public void addNewEntry(WritableDirectory writableDirectory, int tag, int type) {
+  public void addNewEntry(WritableDirectory writableDirectory, Tag tag, int type) {
     //todo: not yet implemented
     //look-up writableDirectory. Add to changedDirectories if not already in the list
     //ask writableDirectory to take of the change into its list (or update an existing entry)

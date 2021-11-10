@@ -229,7 +229,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_15" project-jdk-name="15" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" project-jdk-name="17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -272,11 +272,11 @@
     </configuration>
   </component>
   <component name="ResourceBundleManager">
-    <file url="file://$PROJECT_DIR$/src/dringo/kissPhoto/languages/kissphoto_de.properties" />
-    <file url="file://$PROJECT_DIR$/src/dringo/kissPhoto/languages/kissphoto_en.properties" />
+    <file url="file://$PROJECT_DIR$/resources/languages/kissphoto_de.properties" />
+    <file url="file://$PROJECT_DIR$/resources/languages/kissphoto_en.properties" />
     <custom-resource-bundle>
-      <file value="file://$PROJECT_DIR$/src/dringo/kissPhoto/languages/kissphoto_de.properties" />
-      <file value="file://$PROJECT_DIR$/src/dringo/kissPhoto/languages/kissphoto_en.properties" />
+      <file value="file://$PROJECT_DIR$/resources/languages/kissphoto_de.properties" />
+      <file value="file://$PROJECT_DIR$/resources/languages/kissphoto_en.properties" />
       <base-name>kissphoto</base-name>
     </custom-resource-bundle>
   </component>

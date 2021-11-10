@@ -17,9 +17,11 @@ import javafx.scene.control.TreeItem;
  * <p>
  * This class wraps com.drew.metadata.Metadata to enable showing it in a TreeTableView
  * A MetadataItem will be the root node for the MetaDataViewer
+ * It consists of Directories (DirectoryItem) which again consist of Tags (TagItem)
  * <p/>
  *
  * @author Dringo
+ * @version 2021-11-07 type column supported
  * @version 2021-03-20 First implementation
  * @since 2021-03-14
  */
@@ -84,5 +86,13 @@ public class MetadataItem extends MetaInfoItem{
         valueString = new SimpleStringProperty("");
     }
   return valueString;
+  }
+
+  /**
+   * @return the text that will be displayed in the type column
+   */
+  @Override
+  public StringProperty getTypeString() {
+    return null;
   }
 }

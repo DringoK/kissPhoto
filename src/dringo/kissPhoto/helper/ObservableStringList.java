@@ -3,6 +3,13 @@ package dringo.kissPhoto.helper;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 
+/**
+ * MIT License
+ * Copyright (c)2021 kissPhoto
+ *
+ * add CSV support to SimpleListProperty<String> and simplify use
+ */
+
 public class ObservableStringList extends SimpleListProperty<String> {
 
   final static char sep = StringHelper.getLocaleCSVSeparator();  //just a shortcut

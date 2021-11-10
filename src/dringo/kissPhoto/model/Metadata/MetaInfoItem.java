@@ -19,12 +19,14 @@ import javafx.scene.control.TreeItem;
  * <p/>
  *
  * @author Dringo
+ * @version 2021-11-07 type column supported
  * @version 2021-03-20 First implementation
  * @since 2021-03-14
  */
 
 public abstract class MetaInfoItem {
   protected SimpleStringProperty keyString = null;
+  protected SimpleStringProperty typeString = null;
   protected SimpleStringProperty valueString = null;
 
   /**
@@ -49,4 +51,9 @@ public abstract class MetaInfoItem {
    * @return the text that will be displayed in the value column
    */
   public abstract StringProperty getValueString();
+
+  /**
+   * @return the text that will be displayed in the type column
+   */
+  public abstract StringProperty getTypeString();
 }
