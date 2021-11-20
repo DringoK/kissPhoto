@@ -28,7 +28,7 @@ import java.util.Objects;
  * @version 2017-10-28 support of rotation for jpg files
  * @version 2014-06-05 java.io operations changed into java.nio
  */
-public class ImageFile extends MediaFileTagged {
+public class ImageFile extends MediaFileTaggedEditable {
   // Orientation as described in Exif-Standard V.2.31
   private final static int TOP_LEFT = 1;      //         0°:The 0th row is at the visual top of the image, and the 0th column is the visual left-hand side.  --> nothing to do
   private final static int TOP_RIGHT = 2;     //     H-Flip:The 0th row is at the visual top of the image, and the 0th column is the visual right-hand side. --> flip horizontally

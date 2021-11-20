@@ -32,7 +32,7 @@ public final class Naming {
   static final Object[][] ExifTagNames = {
     {new Integer(mediautil.image.jpeg.Exif.NEWSUBFILETYPE), "NewSubFileType"},
     {new Integer(mediautil.image.jpeg.Exif.IMAGEWIDTH), "ImageWidth"},
-    {new Integer(mediautil.image.jpeg.Exif.IMAGELENGTH), "ImageLength"},
+    {new Integer(mediautil.image.jpeg.Exif.IMAGEHEIGHT), "ImageLength"},
     {new Integer(mediautil.image.jpeg.Exif.BITSPERSAMPLE), "BitsPerSample"},
     {new Integer(mediautil.image.jpeg.Exif.COMPRESSION), "Compression"},
     {new Integer(mediautil.image.jpeg.Exif.PHOTOMETRICINTERPRETATION), "PhotometricInterpretation"},

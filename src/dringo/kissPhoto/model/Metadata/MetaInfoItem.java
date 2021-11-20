@@ -19,14 +19,14 @@ import javafx.scene.control.TreeItem;
  * <p/>
  *
  * @author Dringo
- * @version 2021-11-07 type column supported
+ * @version 2021-11-07 id column supported
  * @version 2021-03-20 First implementation
  * @since 2021-03-14
  */
 
 public abstract class MetaInfoItem {
   protected SimpleStringProperty keyString = null;
-  protected SimpleStringProperty typeString = null;
+  protected SimpleStringProperty exifIDString = null;
   protected SimpleStringProperty valueString = null;
 
   /**
@@ -38,7 +38,7 @@ public abstract class MetaInfoItem {
 
   /**
    * read the children into the oberservable list to show them in the TreeTableView
-   * @param children
+   * @param children list of sub items
    */
   public abstract void cacheChildren(ObservableList<TreeItem<MetaInfoItem>> children);
 
@@ -55,5 +55,5 @@ public abstract class MetaInfoItem {
   /**
    * @return the text that will be displayed in the type column
    */
-  public abstract StringProperty getTypeString();
+  public abstract StringProperty getExifIDString();
 }

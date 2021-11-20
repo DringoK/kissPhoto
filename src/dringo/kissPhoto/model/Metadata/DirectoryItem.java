@@ -26,7 +26,7 @@ import javafx.scene.control.TreeItem;
  */
 
 public class DirectoryItem extends MetaInfoItem {
-  Directory directory = null; //link the wrapped Directory
+  Directory directory; //link the wrapped Directory
 
   /**
    * Constructor to wrap a Directory object
@@ -53,7 +53,7 @@ public class DirectoryItem extends MetaInfoItem {
   /**
    * children of a DirectoryItem are TagItems
    * read list of children to cache them
-   * @param children
+   * @param children list of tags contained in the directory
    */
   @Override
   public void cacheChildren(ObservableList<TreeItem<MetaInfoItem>> children) {
@@ -98,8 +98,7 @@ public class DirectoryItem extends MetaInfoItem {
    * @return the text that will be displayed in the type column
    */
   @Override
-  public StringProperty getTypeString() {
+  public StringProperty getExifIDString() {
     return null;
-    //return new SimpleStringProperty("");
   }
 }

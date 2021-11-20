@@ -25,7 +25,7 @@
  */
 package mediautil.image.jpeg;
 
-/**
+/*
  * For building this class were used the following sources
  * 1. Thierry Bousch <bousch@topo.math.u-psud.fr>
  * 2. ISO/DIS 12234-2
@@ -112,7 +112,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
   public final static int IMAGEWIDTH = 0x100;
 
   /** Identifies the IMAGELENGTH tag */
-  public final static int IMAGELENGTH = 0x101;
+  public final static int IMAGEHEIGHT = 0x101;
 
   /** Identifies the BITSPERSAMPLE tag */
   public final static int BITSPERSAMPLE = 0x102;
@@ -687,7 +687,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
             e = getTagValue(IMAGEWIDTH, false);
             if (e != null)
               imgwidth = ((Integer) e.getValue(0)).intValue();
-            e = getTagValue(IMAGELENGTH, false);
+            e = getTagValue(IMAGEHEIGHT, false);
             if (e != null)
               imglength = ((Integer) e.getValue(0)).intValue();
             int bitspix = 8;
@@ -803,7 +803,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
               e = getTagValue(IMAGEWIDTH, false);
               if (e != null)
                 imgwidth = ((Integer) e.getValue(0)).intValue();
-              e = getTagValue(IMAGELENGTH, false);
+              e = getTagValue(IMAGEHEIGHT, false);
               if (e != null)
                 imglength = ((Integer) e.getValue(0))
                   .intValue();

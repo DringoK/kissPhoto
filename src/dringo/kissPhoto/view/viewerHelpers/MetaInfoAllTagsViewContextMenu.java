@@ -1,6 +1,6 @@
 package dringo.kissPhoto.view.viewerHelpers;
 
-import dringo.kissPhoto.view.MetaInfoView;
+import dringo.kissPhoto.view.MetaInfoAllTagsView;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 
@@ -12,22 +12,22 @@ import static dringo.kissPhoto.KissPhoto.language;
  *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p>
- * This is the Context Menu for MetaInfoContextMenu
+ * This is the Context Menu for MetaInfoContextMenu for the tab with all already contained tag entries
  * </p>
  *
  *
  * @author Ingo
  * @since 2021-11-06
- * @version 2021-01-06 initial version
+ * @version 2021-11-06 initial version
  */
-public class MetaInfoViewContextMenu extends ContextMenu {
-  MetaInfoView metaInfoView; //link to corresponding view
+public class MetaInfoAllTagsViewContextMenu extends ContextMenu {
+  MetaInfoAllTagsView metaInfoAllTagsView; //link to corresponding view
 
   /**
    * Create a new ContextMenu
    */
-  public MetaInfoViewContextMenu(MetaInfoView metaInfoView) {
-    this.metaInfoView = metaInfoView;
+  public MetaInfoAllTagsViewContextMenu(MetaInfoAllTagsView metaInfoAllTagsView) {
+    this.metaInfoAllTagsView = metaInfoAllTagsView;
     addContextMenuItems();
     setAutoHide(true);
   }
@@ -41,7 +41,7 @@ public class MetaInfoViewContextMenu extends ContextMenu {
     //addTagtoFileTableItem.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN));
     addTagtoFileTableItem.setOnAction(event -> {
       event.consume();
-      metaInfoView.addCurrentTagToFileTable();
+      metaInfoAllTagsView.addCurrentTagToFileTable();
     });
     getItems().add(addTagtoFileTableItem);
 

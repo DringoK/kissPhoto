@@ -27,7 +27,7 @@ import javafx.scene.control.TreeItem;
  */
 
 public class MetadataItem extends MetaInfoItem{
-  Metadata metadata = null; //link to the object to be wrapped
+  Metadata metadata; //link to the object to be wrapped
   /**
    * Constructor to wrap a Metadata object
    * @param metadata The object to be wrapped
@@ -55,7 +55,7 @@ public class MetadataItem extends MetaInfoItem{
   /**
    * children of a MetadataItem are DirectoryItems
    * read list of children to cache them
-   * @param children
+   * @param children list of directories contained in the root of the tree
    */
   @Override
   public void cacheChildren(ObservableList<TreeItem<MetaInfoItem>> children) {
@@ -92,7 +92,7 @@ public class MetadataItem extends MetaInfoItem{
    * @return the text that will be displayed in the type column
    */
   @Override
-  public StringProperty getTypeString() {
+  public StringProperty getExifIDString() {
     return null;
   }
 }

@@ -4,6 +4,7 @@ import dringo.kissPhoto.helper.GlobalSettings;
 import dringo.kissPhoto.helper.I18Support;
 import dringo.kissPhoto.view.*;
 import dringo.kissPhoto.view.dialogs.ExternalEditorsDialog;
+import dringo.kissPhoto.view.MetaInfoView;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Orientation;

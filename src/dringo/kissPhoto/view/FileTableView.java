@@ -11,7 +11,6 @@ import dringo.kissPhoto.model.ImageFileRotater;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileList;
 import dringo.kissPhoto.model.MediaFileListSavingTask;
-import dringo.kissPhoto.model.Metadata.MetadataChanges;
 import dringo.kissPhoto.view.dialogs.*;
 import dringo.kissPhoto.view.fileTableHelpers.FileHistory;
 import dringo.kissPhoto.view.fileTableHelpers.FileTableContextMenu;
@@ -278,9 +277,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     });
 
 
-    setOnContextMenuRequested(contextMenuEvent -> {
-      contextMenu.show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
-    });
+    setOnContextMenuRequested(contextMenuEvent -> contextMenu.show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY()));
 
   }
 
@@ -333,7 +330,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
     //--------------FileTable accepts dragging of tags from metaInfoView
     setOnDragOver(dragEvent -> {
-      if (dragEvent.getGestureSource() == metaInfoView) {
+      if (dragEvent.getGestureSource() == metaInfoView.getMetaInfoAllTagsView()) {
         dragEvent.acceptTransferModes(TransferMode.COPY);
         dragEvent.consume();
       }
@@ -341,8 +338,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
     setOnDragDropped(dragEvent ->{
       boolean success= false;
-      if (dragEvent.getGestureSource() == metaInfoView) {
-        defineMetaInfoColumn(metaInfoView.getUserSelectionPath());
+      if (dragEvent.getGestureSource() == metaInfoView.getMetaInfoAllTagsView()) {
+        defineMetaInfoColumn(metaInfoView.getMetaInfoAllTagsView().getUserSelectionPath());
         //stop dragging also if it could not be handled
         dragEvent.setDropCompleted(success);
         dragEvent.consume();
@@ -439,10 +436,10 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   }
 
   public void defineMetaInfoColumn(ObservableStringList tagPath){
-    metaInfoColumn.setText(metaInfoView.ConvertVisiblePathToDotString(tagPath));
+    metaInfoColumn.setText(metaInfoView.getMetaInfoAllTagsView().ConvertVisiblePathToDotString(tagPath));
     metaInfoColumnPath = tagPath;
 
-    metaInfoColumn.setEditable(MetadataChanges.isWritingSupported(tagPath));
+    metaInfoColumn.setEditable(false); //isWritingSupported(tagPath)) = if it is a tag from MetaInfoEditableTagsView
 
     KissPhoto.globalSettings.setProperty(METAINFO_COL_PATH, tagPath.toCSVString());
 
@@ -1830,6 +1827,10 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * this handler is registered when the columns are built in the constructor
    * same handler for all columns
    * it is fired in TextFieldCell.commitEdit
+   *
+   * note: this class is implemented as a private subclass
+   * - because only used here
+   * - access to fileTableView.saveEditedValue would be unnecessarily complicated otherwise
    */
   private class CellEditCommitEventHandler implements EventHandler<TableColumn.CellEditEvent<MediaFile, String>> {
     @Override

@@ -1,4 +1,4 @@
-package dringo.kissPhoto.model.Metadata;
+package dringo.kissPhoto.model.Metadata.EditableItem;
 
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
@@ -11,7 +11,7 @@ import javafx.scene.control.TreeItem;
  *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
- * This class wraps a MetaInfoItem (i.e. a DirectoryItem ord MetaDataItem
+ * This class wraps an EditableMetaInfoItem (i.e. an EditableTagItem (leaf), DirectoryItem or the MetaDataItem (root))
  * <p/>
  *
  * @author Dringo
@@ -19,10 +19,10 @@ import javafx.scene.control.TreeItem;
  * @version 2021-03-20 First implementation
  * @since 2021-03-14
  */
-public class MetaInfoTreeItem extends TreeItem<MetaInfoItem> {
+public class EditableMetaInfoTreeItem extends TreeItem<EditableMetaInfoItem> {
   boolean childrenCached = false;
 
-  public MetaInfoTreeItem(MetaInfoItem metaInfoItem)
+  public EditableMetaInfoTreeItem(EditableMetaInfoItem metaInfoItem)
   {
     super(metaInfoItem);
   }
@@ -48,12 +48,13 @@ public class MetaInfoTreeItem extends TreeItem<MetaInfoItem> {
    * @return the (cached) list of children
    */
   @Override
-  public ObservableList<TreeItem<MetaInfoItem>> getChildren() {
-    ObservableList<TreeItem<MetaInfoItem>> children = super.getChildren();
+  public ObservableList<TreeItem<EditableMetaInfoItem>> getChildren() {
+    ObservableList<TreeItem<EditableMetaInfoItem>> children = super.getChildren();
+
     if (!childrenCached){
       //System.out.println("MetaInfoTreeItem.cacheChildren: " + getValue().getKeyString().getValue());
       childrenCached = true;   //fix: if this line is put after the next line a stack overflow occurs if branch expanded after focus lost...
-      getValue().cacheChildren(children);
+      getValue().cacheEditableChildren(children);
     }
 
     return children;

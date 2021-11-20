@@ -2,16 +2,11 @@ package dringo.kissPhoto.model;
 
 
 import com.drew.imaging.ImageMetadataReader;
-import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
-import com.drew.metadata.Tag;
 import dringo.kissPhoto.helper.ObservableStringList;
 import dringo.kissPhoto.model.Metadata.MetaInfoProperty;
 import dringo.kissPhoto.model.Metadata.MetaInfoTreeItem;
-import dringo.kissPhoto.model.Metadata.WritableEntry;
-import dringo.kissPhoto.view.MetaInfoView;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import dringo.kissPhoto.view.MetaInfoAllTagsView;
 
 import java.nio.file.Path;
 
@@ -31,14 +26,14 @@ import java.nio.file.Path;
  * @since 2014-06-10
  */
 public abstract class MediaFileTagged extends MediaFile {
-  ObservableList<WritableEntry> exifChanges = FXCollections.observableArrayList();     //for future extensions when exif field editing is supported
-  Metadata metadata;                 //see http://code.google.com/p/metadata-extractor/wiki/GettingStarted
+  Metadata metadata;                 //see http://code.google.com/p/metadata-extractor/wiki/GettingStarted for displaying "all current tags"
+
   protected MetaInfoTreeItem metaInfoTreeItem = null; //cached metaInfo root?
   MetaInfoProperty metaInfoProperty = new MetaInfoProperty();
 
   protected MediaFileTagged(Path file, MediaFileList parent) {
     super(file, parent);
-    metadata = null; //lazy load: load it when getMetaData is called
+    //metadata = null; //lazy load: load it when getMetaData is called
   }
 
   /**
@@ -59,14 +54,14 @@ public abstract class MediaFileTagged extends MediaFile {
   }
   /**
    * cache strategy for metadata TreeTableView: Cache the root of the Tree on first access
-   * @param metaInfoView link to the viewer that knows how to fill the cache
+   * @param metaInfoAllTagsView link to the viewer that knows how to fill the cache
    * @return the cached element or null if *this* is not a MediaFileTagged
    */
-  public MetaInfoTreeItem getMetaInfoCached(MetaInfoView metaInfoView){
+  public MetaInfoTreeItem getMetaInfoCached(MetaInfoAllTagsView metaInfoAllTagsView){
     if (metaInfoTreeItem ==null){ //if invalid and only available for Subclass MediaFileTagged which can have MetaInfos
       //if not in cache then ask the viewer to load it
       mediaCache.maintainCacheSizeByFlushingOldest(); //
-      metaInfoTreeItem = metaInfoView.getViewerSpecificMediaInfo(this);
+      metaInfoTreeItem = metaInfoAllTagsView.getViewerSpecificMediaInfo(this);
     }
     return metaInfoTreeItem;
   }
@@ -74,7 +69,7 @@ public abstract class MediaFileTagged extends MediaFile {
   private ObservableStringList lastMetaInfoColumnPath = null;
   /**
    * metaInfoColumn.setCellValueFactory calls this method everytime it tries to update cell-content in this column
-   * @param metaInfoColumnPath
+   * @param metaInfoColumnPath path in the tree view
    * @return null
    */
   @Override
@@ -95,48 +90,6 @@ public abstract class MediaFileTagged extends MediaFile {
     super.flushMediaContent();
     metadata=null;
     metaInfoTreeItem=null;
-
-  }
-
-  /**
-   * Iterator for getting the Directories found in Metadata
-   * uses lazy load: if Metadata not yet loaded, then getMetadata is called internally
-   *
-   * @return iterable for the directories found in Metadata
-   */
-  public Iterable<Directory> getMetadataDirectories() {
-    if (metadata == null) getMetadata();
-    if (metadata != null) //no error while loading?
-      return metadata.getDirectories();
-    else
-      return null;
-  }
-
-  /**
-   * Iterator for getting the tags found in a directory
-   *
-   * @param directory is the directory the tags are in
-   * @return iterable for the tags of the directory
-   */
-  public Iterable<Tag> getMetadataTags(Directory directory) {
-    if (directory != null)
-      return directory.getTags();
-    else
-      return null;
-  }
-
-  /**
-   * sets the orientation in EXIF base directory (without affecting the image data)
-   * This method just puts the update to the list of changes
-   * All changes can be written to the file using safeExifChanges()
-   *
-   * @param orientation new orientation
-   */
-  public void setExifOrientation(int orientation) {
-
-  }
-
-  public void saveExifChanges() {
 
   }
 

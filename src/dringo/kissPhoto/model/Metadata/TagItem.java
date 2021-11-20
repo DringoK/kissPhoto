@@ -24,7 +24,7 @@ import javafx.scene.control.TreeItem;
  */
 
 public class TagItem extends MetaInfoItem {
-  Tag tag = null; //link to the object to be wrapped
+  Tag tag; //link to the object to be wrapped
   /**
    * Constructor to wrap a Tag object
    * @param tag The object to be wrapped
@@ -45,8 +45,8 @@ public class TagItem extends MetaInfoItem {
   }
 
   /**
-   * a tag has no children
-   * @param children
+   * a tag has no children. Implemented for not being abstract class
+   * @param children will always be an empty list
    */
   @Override
   public void cacheChildren(ObservableList<TreeItem<MetaInfoItem>> children) {
@@ -87,13 +87,13 @@ public class TagItem extends MetaInfoItem {
    * @return the text that will be displayed in the type column
    */
   @Override
-  public StringProperty getTypeString() {
-    if (typeString == null){
+  public StringProperty getExifIDString() {
+    if (exifIDString == null){
       if (tag != null)
-        typeString = new SimpleStringProperty(""+tag.getTagTypeHex());
+        exifIDString = new SimpleStringProperty(""+tag.getTagTypeHex());
       else
         valueString = new SimpleStringProperty("");
     }
-    return typeString;
+    return exifIDString;
   }
 }
