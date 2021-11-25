@@ -1,4 +1,4 @@
-package dringo.kissPhoto.model.Metadata.EditableTagItem;
+package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoItem;
 import dringo.kissPhoto.model.Metadata.Exif.EditableExifTag;

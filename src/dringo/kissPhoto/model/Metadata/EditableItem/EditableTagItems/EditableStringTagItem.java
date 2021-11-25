@@ -1,4 +1,4 @@
-package dringo.kissPhoto.model.Metadata.EditableTagItem;
+package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;

@@ -1,9 +1,10 @@
 package dringo.kissPhoto.view.MetaInfoEditableTagsViewHelper;
 
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoItem;
-import dringo.kissPhoto.model.Metadata.EditableTagItem.EditableDateTimeTagItem;
-import dringo.kissPhoto.model.Metadata.EditableTagItem.EditableIntTagItem;
-import dringo.kissPhoto.model.Metadata.EditableTagItem.EditableStringTagItem;
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableDateTimeTagItem;
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableIntTagItem;
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableStringTagItem;
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItem;
 import dringo.kissPhoto.view.MetaInfoEditableTagsView;
 import dringo.kissPhoto.view.inputFields.DateTimeTextField;
 import dringo.kissPhoto.view.inputFields.NumberTextField;
@@ -52,6 +53,12 @@ public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem
 
   @Override
   public void startEdit() {
+    //only start editing for Tags (not for directories)
+    if (!(getTableRow().getItem() instanceof EditableTagItem)){
+      System.out.println("not a Tag");
+      return;
+    }
+
     super.startEdit();
     escPressed = false;
 

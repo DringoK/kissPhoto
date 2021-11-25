@@ -1,6 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem;
 
-import dringo.kissPhoto.model.Metadata.EditableTagItem.EditableTagItemFactory;
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItemFactory;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -46,11 +46,15 @@ public class EditableMetadataItem extends EditableMetaInfoItem {
     directoryItem = new EditableDirectoryItem("Image Description");
     directoryItem.addTag(EditableTagItemFactory.getTag(Exif.DOCUMENTNAME, imageInfo));
     directoryItem.addTag(EditableTagItemFactory.getTag(Exif.IMAGEDESCRIPTION, imageInfo));
+    directoryItem.addTag(EditableTagItemFactory.getTag(Exif.MAKE, imageInfo));
     directories.add(directoryItem);
+
     directoryItem = new EditableDirectoryItem("Copyright");
     directories.add(directoryItem);
+
     directoryItem = new EditableDirectoryItem("Date Time");
     directories.add(directoryItem);
+
     directoryItem = new EditableDirectoryItem("Misc");
     directories.add(directoryItem);
   }

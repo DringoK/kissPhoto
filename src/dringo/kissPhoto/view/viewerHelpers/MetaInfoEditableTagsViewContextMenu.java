@@ -3,6 +3,8 @@ package dringo.kissPhoto.view.viewerHelpers;
 import dringo.kissPhoto.view.MetaInfoEditableTagsView;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
 
 import static dringo.kissPhoto.KissPhoto.language;
 
@@ -37,6 +39,14 @@ public class MetaInfoEditableTagsViewContextMenu extends ContextMenu {
    * Build all ContextMenu items for FileTable
    */
   public void addContextMenuItems() {
+    final MenuItem editItem = new MenuItem(language.getString("edit.tag"));
+    editItem.setAccelerator(new KeyCodeCombination(KeyCode.F2));
+    editItem.setOnAction(event -> {
+      event.consume();
+      metaInfoEditableTagsView.editCurrentTag();
+    });
+    getItems().add(editItem);
+
     final MenuItem addTagtoFileTableItem = new MenuItem(language.getString("show.current.tag.in.file.table.s.column"));
     //addTagtoFileTableItem.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN));
     addTagtoFileTableItem.setOnAction(event -> {
@@ -44,6 +54,7 @@ public class MetaInfoEditableTagsViewContextMenu extends ContextMenu {
       metaInfoEditableTagsView.addCurrentTagToFileTable();
     });
     getItems().add(addTagtoFileTableItem);
+
 
   }
 

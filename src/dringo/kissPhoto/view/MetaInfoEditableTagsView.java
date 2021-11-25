@@ -95,14 +95,17 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
 
     valueColumn.setCellValueFactory(param -> param.getValue().getValue().getValueString());
     valueColumn.prefWidthProperty().bind(widthProperty().subtract(keyColumn.widthProperty())); //the rest of the available space
-    valueColumn.setEditable(true);
     valueColumn.setCellFactory(tableTextFieldCellFactory);
     valueColumn.setOnEditCommit(cellEditCommitEventHandler);
+    valueColumn.setEditable(true);
     getColumns().add(valueColumn);
 
     setShowRoot(false);
+    setEditable(true);
 
     installSelectionListener();
+    installKeyHandlers();
+
 
     //-----install bubble help ------------
     Tooltip tooltip = new Tooltip(language.getString("edit.the.meta.info.entries.here"));
@@ -138,6 +141,42 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
         userSelectionPath = null; //invalidate the cached path for the selection (getUserSelectionPath() will update it)
       }
     });
+  }
+
+  private void installKeyHandlers() {
+    setOnKeyPressed(keyEvent -> {
+      switch (keyEvent.getCode()) {
+        //Edit
+        case F2: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
+            editCurrentTag();
+            keyEvent.consume();
+          }
+          break;
+      }
+    });
+
+
+    //also consume the mouse up events to prevent the main menu react on the same event handled already by key down
+    setOnKeyReleased(keyEvent -> {
+      switch (keyEvent.getCode()) {
+        //Edit
+        case F2: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
+            keyEvent.consume();
+          }
+          break;
+      }
+    });
+  }
+
+  /**
+   * start edit in the value column
+   */
+  public void editCurrentTag(){
+    edit(getFocusModel().getFocusedIndex(), valueColumn);
+    //note: startEdit in EditableTagTextFieldCell only accepts this for tags not for directories
+    //so this check does not need to be made here
   }
 
   public void addCurrentTagToFileTable() {

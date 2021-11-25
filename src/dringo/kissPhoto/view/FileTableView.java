@@ -161,7 +161,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     this.setMinSize(100.0, 100.0);
 
     //set properties of the table
-    setEditable(false); //Edit Event shall not be handled by TableView's default, but by the main menu bar
     getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
     //create Table
@@ -246,7 +245,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     metaInfoColumn.setCellValueFactory(mediaFile -> mediaFile.getValue().getMetaInfo(metaInfoColumnPath));
     getColumns().add(metaInfoColumn);
 
-
+    setEditable(true);
     setTableMenuButtonVisible(true); //enable user to show/hide columns
 
     //install SortOrder-ChangeListener to keep Selection
@@ -1174,11 +1173,10 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     } else {
       TablePosition focusedCell = getFocusModel().getFocusedCell();
       if (focusedCell != null) {
-        setEditable(true);
+        setEditable(true);       //editable will be reset in TextFieldCell on CommitEdit to avoid startEdit if multiple lines are selected
         edit(getFocusModel().getFocusedIndex(), getFocusModel().getFocusedCell().getTableColumn());
       }
 
-      //editable will be reset in TextFieldCell on CommitEdit to avoid startEdit if multiple lines are selected
     }
 
   }

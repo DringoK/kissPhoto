@@ -1,6 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem;
 
-import dringo.kissPhoto.model.Metadata.EditableTagItem.EditableTagItem;
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItem;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
