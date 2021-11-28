@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
+import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import mediautil.image.jpeg.Exif;
@@ -25,10 +26,10 @@ public class EditableIntTagItem extends EditableTagItem {
 
   /**
    * Constructor to wrap an Entry object
-   * @param entryID The object to be wrapped
+   * @param exifTag The object to be wrapped
    */
-  public EditableIntTagItem(int entryID, Exif imageInfo) {
-    super(entryID, imageInfo);
+  public EditableIntTagItem(ExifTag exifTag, Exif imageInfo) {
+    super(exifTag, imageInfo);
   }
 
   /**

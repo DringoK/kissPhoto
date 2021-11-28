@@ -290,6 +290,8 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
    */
   public void setMediaFile(MediaFile mediaFile) {
     currentMediaFile = mediaFile;
+    System.out.println("MetaInfoEditableTagsView.setMedia");
+
 
     if (isVisible()) {
       if (mediaFile instanceof MediaFileTaggedEditable) {

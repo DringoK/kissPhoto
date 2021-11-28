@@ -39,9 +39,9 @@ public enum ExifTagDataType {
   private final int value;
   private final String name;
 
-  ExifTagDataType(int i, String title) {
+  ExifTagDataType(int i, String name) {
     value = i;
-    this.name = title;
+    this.name = name;
   }
 
   public int getValue() {

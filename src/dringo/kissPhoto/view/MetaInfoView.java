@@ -7,7 +7,6 @@ import dringo.kissPhoto.model.MediaFileTagged;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.layout.StackPane;
 
 /**
  * MIT License
@@ -30,7 +29,7 @@ import javafx.scene.layout.StackPane;
  */
 
 
-public class MetaInfoView extends StackPane {
+public class MetaInfoView extends TabPane {
   //default values if value not in global settings
   private static final boolean DEFAULT_VISIBILITY = true;
   private static final double DETAILS_AREA_DEFAULT_DIVIDER_POS = 0.9;
@@ -67,14 +66,11 @@ public class MetaInfoView extends StackPane {
 
     metaInfoAllTagsViewTab = new Tab("Contained Tags", metaInfoAllTagsView);
     metaInfoAllTagsViewTab.setClosable(false);
-    TabPane tabPane = new TabPane();
-    tabPane.getTabs().add(metaInfoAllTagsViewTab);
+    getTabs().add(metaInfoAllTagsViewTab);
 
     metaInfoEditableTagsViewTab = new Tab("Edit Tags", metaInfoEditableTagsView);
     metaInfoEditableTagsViewTab.setClosable(false);
-    tabPane.getTabs().add(metaInfoEditableTagsViewTab);
-
-    getChildren().add(tabPane);
+    getTabs().add(metaInfoEditableTagsViewTab);
 
     installKeyHandlers();
   }
@@ -124,8 +120,10 @@ public class MetaInfoView extends StackPane {
 
       if (mediaFile instanceof MediaFileTagged) {
         //status here: mediaFile is tagged and not null
-        metaInfoAllTagsView.setMediaFile(mediaFile);
-        metaInfoEditableTagsView.setMediaFile(mediaFile);
+        if (metaInfoAllTagsViewTab.isSelected())
+          metaInfoAllTagsView.setMediaFile(mediaFile);
+        if (metaInfoEditableTagsViewTab.isSelected())
+          metaInfoEditableTagsView.setMediaFile(mediaFile);
       }
     }
   }

@@ -1,7 +1,7 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoItem;
-import dringo.kissPhoto.model.Metadata.Exif.EditableExifTag;
+import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
@@ -28,8 +28,8 @@ import mediautil.image.jpeg.Exif;
 
 public abstract class EditableTagItem extends EditableMetaInfoItem {
   protected Entry entry;
-  private Exif imageInfo;
-  protected EditableExifTag tagInfo; //link to the entry in the list of editable exif tags, to find out, how it can be edited etc.
+  private Exif imageInfo;        //link to the Exif-Header read by media util
+  protected ExifTag exifTag; //link to the entry in the list of editable exif tags, to find out, how it can be edited etc.
   protected StringProperty valueString;
   protected boolean newEntry = false;   //false if it was already contained in Exif ImageInfo, true if this is a new entry
   protected boolean hasChanged = false; //an entry will only be written/added if its value has changed
@@ -39,24 +39,23 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
    * Constructor to wrap an Entry object
    * if the entry exists in imageInfo then the value is loaded
    * if it is new then an empty entry is generated and newEntry=true
-   * @param entryID The object to be wrapped
+   * @param exifTag The object to be wrapped
    */
-  public EditableTagItem(int entryID, Exif imageInfo) {
+  public EditableTagItem(ExifTag exifTag, Exif imageInfo) {
     this.imageInfo = imageInfo;
 
     //try to load the tag entry if it already exists
-    entry = imageInfo.getTagValue(entryID, true);
+    entry = imageInfo.getTagValue(exifTag.getId(), true);
 
     //generate a new entry
     if (entry == null){
       newEntry = true;
-      entry = new Entry((entryID));
-      imageInfo.setTagValue(entryID, 0, entry, true);
+      entry = new Entry((exifTag.getId()));
+      imageInfo.setTagValue(exifTag.getId(), 0, entry, true);
     }else{
       //remember the original value to find out, if the value has been changed and needs to be written to the file
       originalStringValue = getValueString().getValue();
     }
-    tagInfo = EditableExifTag.fromID(entryID);
   }
 
   /**
@@ -77,7 +76,7 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
   @Override
   public StringProperty getKeyString() {
     if (keyString==null){
-      keyString = new SimpleStringProperty(tagInfo.getName());
+      keyString = new SimpleStringProperty(exifTag.getName());
     }
     return keyString;
   }
@@ -116,8 +115,8 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
   /**
    * @return the tagInfo object describing data type etc of the tag
    */
-  public EditableExifTag getTagInfo() {
-    return tagInfo;
+  public ExifTag getExifTag() {
+    return exifTag;
   }
 
   /**

@@ -46,13 +46,20 @@ import java.util.ResourceBundle;
  * @since 2014-04-29
  * @version see below in constant KISS_PHOTO_VERSION
  * <p>
- * >>>>>>>>>>>>>>>>>Next:
- * - Einzelnen Wert in Tabelle rüberziehen (readonly)
- * - Werte editierbar machen, die mediautil unterstützt
- *   - Bemerkung
- *   - Datum
- *     - Zeit-Korrektur-Dialog. Mit Differenz-Berechnungsfunktion von 2 gewählten Dateien
- *   - in Massen-Umbenennungs-Dialog aufnehmen. Inkl. Default-Wert für Copyright
+ *
+ * Next:
+ * todo settingsdatei: aktiven TagsView-Tab speichern/wiederherstellen
+ * todo settingsdatei: Pfad in EditableTagsView speichern/wiederherstellen
+ * todo Exif schreiben in Datei
+ * todo Komplette Exif-Spec übernehmen in Exif-Klasse
+ * todo Test:String-Tag
+ * todo Test:lookup-Tag
+ * todo Test:Datum-Tag
+ * todo Test:number-Tag
+ * todo Multi-Edit-Dialog: Copyright und Event-Beschreibung
+ * todo Multi-Edit-Dialog: Datum-Dialog mit Berechnungen.
+ * todo Helper, der Differenz zwischen zwei Files ausgibt
+ * todo System.out in MetaInfoEditableTagsView und MetaInfoAllTagsView und MediaFileTaggedEditable.getEditableImageInfo entfernen
  * Bugs:
  * todo Name-Parsing-Heuristik tut nicht falls 1, 2, ... und ein Datum 2021_01_02 drin ist. Idee: angeklickte Datei und nicht erste Datei untersuchen
  * ======================

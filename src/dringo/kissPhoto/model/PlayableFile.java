@@ -19,7 +19,7 @@ import java.nio.file.Path;
  * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
  * @version 2014-06-05 java.io operations changed into java.nio
  */
-public class PlayableFile extends MediaFileTaggedEditable {
+public class PlayableFile extends MediaFileTagged {
 
   public PlayableFile(Path movieFile, MediaFileList parent) {
     super(movieFile, parent);

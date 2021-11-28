@@ -34,9 +34,9 @@ public enum ExifTagGroup {
   private final int value;
   private final String name;
 
-  ExifTagGroup(int i, String title) {
+  ExifTagGroup(int i, String name) {
     value = i;
-    this.name =title;
+    this.name =name;
   }
 
   public int getValue() {

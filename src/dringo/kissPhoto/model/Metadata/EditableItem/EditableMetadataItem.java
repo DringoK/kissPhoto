@@ -1,10 +1,13 @@
 package dringo.kissPhoto.model.Metadata.EditableItem;
 
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItemFactory;
+import dringo.kissPhoto.model.Metadata.Exif.ExifDir;
+import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
 import mediautil.image.jpeg.Exif;
 
@@ -31,19 +34,30 @@ import mediautil.image.jpeg.Exif;
 
 public class EditableMetadataItem extends EditableMetaInfoItem {
   Exif imageInfo; //link to the media util object to be wrapped
-  ObservableList<EditableDirectoryItem> directories = FXCollections.observableArrayList(); //use Factory to generate empty list
+  ObservableMap<Integer, EditableDirectoryItem> directories = FXCollections.observableHashMap(); //use Factory to generate empty list
   /**
    * Constructor to wrap an imageInfo object
    * @param imageInfo The object to be wrapped
    */
   public EditableMetadataItem(Exif imageInfo) {
-    keyString = new SimpleStringProperty("EditableMetadata");
+    keyString = new SimpleStringProperty("EditableMetadata");  //root will not be shown in GUI
     this.imageInfo = imageInfo;
 
-    //build Directory Structure
+    //add directories
+    for( ExifDir directory: ExifDir.values() ){
+      if (directory!= ExifDir.NONE) //do not display "NONE"
+        directories.put(directory.getValue(), new EditableDirectoryItem(directory.getName()));
+    }
+
     EditableDirectoryItem directoryItem;
 
-    directoryItem = new EditableDirectoryItem("Image Description");
+    //add tags to directories
+    for (ExifTag tag: ExifTag.values()){
+      if (tag.getExifDir() != ExifDir.NONE){
+        directories.get(tag.getExifDir().getValue()).addTag(EditableTagItemFactory.getTag(tag, imageInfo));
+      }
+    }
+/*  directoryItem = new EditableDirectoryItem("Image Description");
     directoryItem.addTag(EditableTagItemFactory.getTag(Exif.DOCUMENTNAME, imageInfo));
     directoryItem.addTag(EditableTagItemFactory.getTag(Exif.IMAGEDESCRIPTION, imageInfo));
     directoryItem.addTag(EditableTagItemFactory.getTag(Exif.MAKE, imageInfo));
@@ -57,6 +71,7 @@ public class EditableMetadataItem extends EditableMetaInfoItem {
 
     directoryItem = new EditableDirectoryItem("Misc");
     directories.add(directoryItem);
+ */
   }
 
   /**
@@ -97,7 +112,7 @@ public class EditableMetadataItem extends EditableMetaInfoItem {
   @Override
   public void cacheEditableChildren(ObservableList<TreeItem<EditableMetaInfoItem>> children) {
     if (directories!=null) {
-      directories.forEach((dir)-> children.add(new EditableMetaInfoTreeItem(dir)));
+      directories.forEach((dir, exifDir)-> children.add(new EditableMetaInfoTreeItem(exifDir)));
     }
   }
 

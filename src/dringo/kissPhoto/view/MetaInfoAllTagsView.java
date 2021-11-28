@@ -261,6 +261,7 @@ public class MetaInfoAllTagsView extends StackPane {
    */
   public void setMediaFile(MediaFile mediaFile) {
     currentMediaFile = mediaFile;
+    System.out.println("MetaInfoAllTagsView.setMedia");
 
     if (isVisible()) {
       if (mediaFile instanceof MediaFileTagged) {
