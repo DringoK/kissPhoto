@@ -350,6 +350,7 @@ public class MetaInfoAllTagsView extends StackPane {
     String longitudeRef = null;
     String longitude = null;
 
+    //assumption: currentMediaFile is not null. Therefore the caller (MetaInfoView) has to set currentMediaFile first if it was null
     if (currentMediaFile instanceof MediaFileTagged) {
       Metadata metadata = ((MediaFileTagged) currentMediaFile).getMetadata();
       GpsDirectory gpsDirectory = metadata.getFirstDirectoryOfType(GpsDirectory.class);

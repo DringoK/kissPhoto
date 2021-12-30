@@ -1,7 +1,10 @@
 package dringo.kissPhoto.model;
 
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoItem;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoTreeItem;
 import dringo.kissPhoto.view.MetaInfoEditableTagsView;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import mediautil.image.jpeg.AbstractImageInfo;
 import mediautil.image.jpeg.Exif;
 import mediautil.image.jpeg.LLJTran;
@@ -24,7 +27,8 @@ import java.nio.file.Path;
 public abstract class MediaFileTaggedEditable extends MediaFileTagged{
   LLJTran lljTran; //the file
   Exif imageInfo;  //the exif header of the file
-  boolean isSupportedFile; //currently, only JPG-Files are supported for writing tags. Set in constructor and corrected when read via mediautil in getEditableImageInfo
+  boolean isSupportedFile; //currently, only JPG-Files are supported for writing tags. Set in constructor and corrected when read via mediaUtil in getEditableImageInfo
+  ObservableList<EditableMetaInfoItem> changedItemsList = FXCollections.observableArrayList(); //find all changed meta items in one list for saving and showing that the file has been changed
 
   protected EditableMetaInfoTreeItem editableMetaInfoTreeItem; //cached editableMetaInfo root
 

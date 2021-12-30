@@ -24,6 +24,7 @@ import javafx.scene.control.TabPane;
  *
  *
  * @author Dringo
+ * @version 2021-12-30 Fixed: "Show GPS in Google Maps" works now also if metaInfoView is not visible
  * @version 2021-11-10 tags introduced, MetaInfoAllTagsView is the old implementation which is now in one of the tabs
  * @since 2021-11-10
  */
@@ -214,6 +215,7 @@ public class MetaInfoView extends TabPane {
   }
 
   public boolean isValidGpsAvailable(){
+    metaInfoAllTagsView.setMediaFile(currentMediaFile); //just for the case that metadata not yet loaded e.g. because allTagsView is not visible
     return metaInfoAllTagsView.getGpsCoordinates() != null;
   }
   /**
@@ -223,6 +225,7 @@ public class MetaInfoView extends TabPane {
    * https://www.google.com/maps/place/47°05'29.0"N+8°27'52.0"E
    */
   public void showGPSPositionInGoogleMaps() {
+    metaInfoAllTagsView.setMediaFile(currentMediaFile); //just for the case that metadata not yet loaded e.g. because allTagsView is not visible
 
     boolean successful = false;
     String gpsCoordinates = metaInfoAllTagsView.getGpsCoordinates();
@@ -234,7 +237,6 @@ public class MetaInfoView extends TabPane {
       statusBar.showMessage(gpsCoordinates + " " + KissPhoto.language.getString("opened.in.google.maps"));
     else
       statusBar.showError(KissPhoto.language.getString("no.valid.gps.data.available.for.the.current.media.file"));
-
   }
 
 }
