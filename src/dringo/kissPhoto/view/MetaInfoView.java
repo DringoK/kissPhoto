@@ -38,6 +38,7 @@ public class MetaInfoView extends TabPane {
   //IDs for globalSettings
   private static final String META_INFO_VIEW_VISIBLE = "metaInfoView_Visible";
   private static final String DETAILS_AREA_DIVIDER_POSITION = "detailsArea_DividerPosition";
+  private static final String META_INFO_ACTIVE_TAB = "metaInfoView_ActiveTabe";
 
   private final MetaInfoAllTagsView metaInfoAllTagsView = new MetaInfoAllTagsView();
   private final MetaInfoEditableTagsView metaInfoEditableTagsView = new MetaInfoEditableTagsView();
@@ -74,6 +75,17 @@ public class MetaInfoView extends TabPane {
     getTabs().add(metaInfoEditableTagsViewTab);
 
     installKeyHandlers();
+
+    //whenever the activ Tab is changed, setMedia has probably not  (lazy) loaded the file for the new tab, so set it on change:
+    getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+      if (currentMediaFile instanceof MediaFileTagged) {
+        //status here: mediaFile is tagged and not null
+        if (newValue == metaInfoAllTagsViewTab)
+          metaInfoAllTagsView.setMediaFile(currentMediaFile);
+        if (newValue == metaInfoEditableTagsViewTab)
+          metaInfoEditableTagsView.setMediaFile(currentMediaFile);
+      }
+    });
   }
 
   public void setOtherViews(FileTableView fileTableView, MediaContentView mediaContentView, StatusBar statusBar) {
@@ -117,10 +129,9 @@ public class MetaInfoView extends TabPane {
   public void setMediaFile(MediaFile mediaFile) {
     currentMediaFile = mediaFile;
 
-    System.out.println("MetaInfoView.setMedia");
+    System.out.println("MetaInfoView.setMedia: (visible="+isVisible() + ") " + mediaFile.getFileOnDiskName());
 
     if (isVisible()) {
-
       if (mediaFile instanceof MediaFileTagged) {
         //status here: mediaFile is tagged and not null
         if (metaInfoAllTagsViewTab.isSelected())
@@ -191,8 +202,13 @@ public class MetaInfoView extends TabPane {
       KissPhoto.globalSettings.setProperty(DETAILS_AREA_DIVIDER_POSITION, Double.toString(rememberDividerPos));
     }
 
-    //finally, store the visibility settings of the tabs
+    //store the visibility settings of the tabs
     metaInfoAllTagsView.storeVisibilityInGlobalSettings();
+    metaInfoEditableTagsView.storeVisibilityInGlobalSettings();
+
+    //and finally, store which tab was active
+
+    KissPhoto.globalSettings.setProperty(META_INFO_ACTIVE_TAB, Integer.toString(getSelectionModel().getSelectedIndex()));
   }
 
   /**
@@ -212,8 +228,16 @@ public class MetaInfoView extends TabPane {
     }
     if (isVisible()) surroundingPane.setDividerPosition(0, rememberDividerPos);
 
-    //finally, restore the visibility settings of the tabs
+    //restore the visibility settings of the tabs
     metaInfoAllTagsView.restoreVisibilityFromGlobalSettings();
+    metaInfoEditableTagsView.restoreVisibilityFromGlobalSettings();
+
+    //and finally, restore which tab was active
+    try {
+      getSelectionModel().select(Integer.parseInt(KissPhoto.globalSettings.getProperty(META_INFO_ACTIVE_TAB)));
+    } catch (Exception e) {
+      //getSelectionModel().select(0); //default tab (0 is the default therefore nothing to do)
+    }
   }
 
   public boolean isValidGpsAvailable(){

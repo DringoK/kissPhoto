@@ -103,11 +103,11 @@ public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem
     if (!escPressed) { //if just focus lost (e.g. by clicking on different line) then behave like commitEdit (saveEditedValue is called)
       //calling commitEdit in cancelEdit would lead to NullPointerException! Therefore, just call saveEditedValue
       EditableMetaInfoItem editableMetaInfoItem = getTableRow().getItem();
-      editableMetaInfoItem.saveEditedValue(inputField.getText());
+      editableMetaInfoItem.saveEditedValue(inputField.getText()); //update model
+      updateItem(inputField.getText(), false);   // update view: update the item within this cell, so that it represents the new value
     }
-    super.cancelEdit(); //sets editing to false
-
-    setText(getItem());          //reset the displayed text to the original item's (cell's) value
+    super.cancelEdit();     //sets editing to false
+    setText(getItem());     //reset the displayed text to the original (or just changed if !escPressed) item's (cell's) value
     hideInputField();
   }
   /**

@@ -38,8 +38,6 @@ public class ImageFile extends MediaFileTaggedEditable {
   private final static int RIGHT_TOP = 6;     //       270°:The 0th row is the visual right-hand side of the image, and the 0th column is the visual top.    --> rotate90
   private final static int RIGHT_BOTTOM = 7;  // 90°+V-Flip:The 0th row is the visual right-hand side of the image, and the 0th column is the visual bottom. --> rotate270 then flip horizontally
   private final static int LEFT_BOTTOM = 8;   //        90°:The 0th row is the visual left-hand side of the image, and the 0th column is the visual bottom.  --> rotate270
-  //other = reserved
-  protected static ImageFileRotater imageFileRotater = new ImageFileRotater();
 
 
   public ImageFile(Path imageFile, MediaFileList parent) {
@@ -84,12 +82,6 @@ public class ImageFile extends MediaFileTaggedEditable {
         return null; //valid image --> no exception
     } else
       return null; //no image --> no exception
-  }
-
-
-  @Override
-  public MediaFileRotater getMediaFileRotater() {
-    return imageFileRotater;
   }
 
   @Override
@@ -237,36 +229,36 @@ public class ImageFile extends MediaFileTaggedEditable {
       case TOP_LEFT:
         break;
       case TOP_RIGHT:
-        rotateOperation = ImageFileRotater.RotateOperation.ROTATE0;
+        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE0;
         flipHorizontally = true;
         flipVertically = false;
         break;
       case BOTTOM_RIGHT:
-        rotateOperation = ImageFileRotater.RotateOperation.ROTATE180;
+        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE180;
         flipHorizontally = false;
         break;
       case BOTTOM_LEFT:
-        rotateOperation = ImageFileRotater.RotateOperation.ROTATE0;
+        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE0;
         flipHorizontally = false;
         flipVertically = true;
         break;
       case LEFT_TOP:
-        rotateOperation = ImageFileRotater.RotateOperation.ROTATE90;
+        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE90;
         flipHorizontally = true;
         flipVertically = false;
         break;
       case RIGHT_TOP:
-        rotateOperation = ImageFileRotater.RotateOperation.ROTATE90;
+        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE90;
         flipHorizontally = false;
         flipVertically = false;
         break;
       case RIGHT_BOTTOM:
-        rotateOperation = ImageFileRotater.RotateOperation.ROTATE270;
+        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE270;
         flipHorizontally = true;
         flipVertically = false;
         break;
       case LEFT_BOTTOM:
-        rotateOperation = ImageFileRotater.RotateOperation.ROTATE270;
+        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE270;
         flipHorizontally = false;
         flipVertically = false;
         break;

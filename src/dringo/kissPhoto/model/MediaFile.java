@@ -90,7 +90,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
   //every file is rotatable but currently only ImageFiles provide an implementation for saving the rotation
   //planned operation when saved next time: first rotate then flip vertical then horizontal!!!
-  protected MediaFileRotater.RotateOperation rotateOperation = MediaFileRotater.RotateOperation.ROTATE0;
+  protected MediaFileRotator.RotateOperation rotateOperation = MediaFileRotator.RotateOperation.ROTATE0;
   protected boolean flipHorizontally = false;
   protected boolean flipVertically = false;
 
@@ -566,14 +566,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     boolean secondTryNecessary = false;
     boolean successful = true;
 
-    //transform
-    if (isTransformed()) {
-      successful = performTransformation();
-
-      //above transformation has changed timestamp in filesystem
-      setTimeStampChanged(true); //to reset to the previous timestamp if it was not already timeStampChanged
-    }
-
+    //note transformations and meta tags are saved in MediaFileTaggedEditable.saveChanges()
 
     //rename
     if (isFilenameChanged()) {
@@ -594,7 +587,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     if (secondTryNecessary) //second trial has priority to keep consistence
       return SaveResult.NEEDS_2ND_TRY;
     else if (!successful)
-      return SaveResult.ERROR;    //error has priority
+      return SaveResult.ERROR;
     else
       return SaveResult.SUCCESSFUL;
   }
@@ -961,20 +954,19 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    *
    * @return a mediaFileRotater suitable for a given MediaFile-Type (standard: none)
    */
-  public MediaFileRotater getMediaFileRotater() {
+  public MediaFileRotator getMediaFileRotator() {
     return null;
   }
 
   /**
-   * orientation is changed if the resulting rotation since last save() is
-   * 90 or 270 degree
+   * orientation is changed if the resulting rotation since last save() is not 0°
    *
    * @return if orientation has change since last save()
    */
   public boolean isOrientationChanged() {
-    return rotateOperation == ImageFileRotater.RotateOperation.ROTATE90
-      || rotateOperation == ImageFileRotater.RotateOperation.ROTATE270;
+    return rotateOperation != MediaUtilRotator.RotateOperation.ROTATE0;
   }
+
 
   /**
    * plan a rotation
@@ -983,11 +975,11 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    *
    * @param operation 90 degree-wise clockwise
    */
-  public void rotate(MediaFileRotater.RotateOperation operation) {
+  public void rotate(MediaFileRotator.RotateOperation operation) {
     boolean wasOrientationChanged = isOrientationChanged(); //remember state before transformation
 
     int rotation = (rotateOperation.ordinal() + operation.ordinal()) % 4; //modulo 4 because 360=90*4
-    rotateOperation = MediaFileRotater.RotateOperation.values()[rotation];
+    rotateOperation = MediaFileRotator.RotateOperation.values()[rotation];
 
     //as rotation is performed first in saveChanges() when rotation changes orientation flipping V/H must be exchanged
     if (wasOrientationChanged != isOrientationChanged()) {
@@ -1021,38 +1013,12 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     }
   }
 
-  /**
-   * the default operation is empty
-   * so this method needs to be overwritten when a specific MediaFileRotater is provided
-   * if canRotate==false then the transformation will not be saved later and a warning should be shown on GUI
-   *
-   * @return successful
-   */
-  private boolean performTransformation() {
-    //reset planned operations
-    boolean successful = true;
-
-    if (canRotate()) {
-      successful = getMediaFileRotater().transform(this, rotateOperation, flipHorizontally, flipVertically);
-
-      //reset planned operations
-      rotateOperation = ImageFileRotater.RotateOperation.ROTATE0;
-      flipHorizontally = false;
-      flipVertically = false;
-
-      updateStatusProperty();
-      flushFromCache(); //the file needs to be read again
-    }
-
-    return successful;
-  }
-
-  public ImageFileRotater.RotateOperation getRotateOperation() {
+  public MediaUtilRotator.RotateOperation getRotateOperation() {
     return rotateOperation;
   }
 
   public boolean isRotated() {
-    return rotateOperation != ImageFileRotater.RotateOperation.ROTATE0;
+    return rotateOperation != MediaUtilRotator.RotateOperation.ROTATE0;
   }
 
   public boolean isFlippedHorizontally() {

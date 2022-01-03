@@ -1,5 +1,6 @@
 package dringo.kissPhoto.view;
 
+import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.helper.ObservableStringList;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileTagged;
@@ -161,7 +162,7 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     setOnKeyReleased(keyEvent -> {
       switch (keyEvent.getCode()) {
         //Edit
-        case F2: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
+        case F2: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed additionally
           if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
             keyEvent.consume();
           }
@@ -169,6 +170,33 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
       }
     });
   }
+
+  /**
+   * Store selected Path and Column Width in Global Settings
+   */
+  public void storeVisibilityInGlobalSettings() {
+    KissPhoto.globalSettings.setProperty(SELECTED_KEY_PATH, getUserSelectionPath().toCSVString());
+    KissPhoto.globalSettings.setProperty(KEY_COLUMN_WIDTH, Double.toString(keyColumn.getWidth()));
+  }
+
+  /**
+   * read settings from settings file and restore the view accordingly
+   */
+  public void restoreVisibilityFromGlobalSettings() {
+    try {
+      userSelectionPath = new ObservableStringList();
+      userSelectionPath.appendFromCSVString(KissPhoto.globalSettings.getProperty(SELECTED_KEY_PATH));
+    } catch (Exception e) {
+      userSelectionPath = null; //nothing selected
+    }
+
+    try {
+      keyColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(KEY_COLUMN_WIDTH)));
+    } catch (Exception e) {
+      keyColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
+    }
+  }
+
 
   /**
    * start edit in the value column
@@ -281,7 +309,6 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     }
   }
 
-
   /**
    * try to set the root of the tree to display the editable meta info
    * for speeding up reasons this is only performed if MetaInfoView is visible (=active)
@@ -350,7 +377,5 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     }
 
   }
-
-
 
 }

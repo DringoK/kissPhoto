@@ -7,7 +7,7 @@ import dringo.kissPhoto.ctrl.FileChangeWatcher;
 import dringo.kissPhoto.ctrl.FileChangeWatcherEventListener;
 import dringo.kissPhoto.helper.ObservableStringList;
 import dringo.kissPhoto.helper.PathHelpers;
-import dringo.kissPhoto.model.ImageFileRotater;
+import dringo.kissPhoto.model.MediaUtilRotator;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileList;
 import dringo.kissPhoto.model.MediaFileListSavingTask;
@@ -1374,7 +1374,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    *
    * @param rotateOperation operation to be performed
    */
-  public synchronized void rotateSelectedFiles(ImageFileRotater.RotateOperation rotateOperation) {
+  public synchronized void rotateSelectedFiles(MediaUtilRotator.RotateOperation rotateOperation) {
     int filesCount = getSelectionModel().getSelectedItems().size();
     int notRotatable = mediaFileList.rotateSelectedFiles(getSelectionModel().getSelectedItems(), rotateOperation);
     mediaContentView.showRotationAndFlippingPreview();

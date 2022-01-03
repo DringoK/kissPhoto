@@ -61,8 +61,8 @@ public class EditableIntTagItem extends EditableTagItem {
    * or add the tag if it didn't exist before
    */
   @Override
-  public void saveToExifHeader() {
-    super.saveToExifHeader();
+  public void saveToExifHeader(Exif exifHeader) {
+    super.saveToExifHeader(exifHeader);
     //index is always 0 for simple integers
     try {
       entry.setValue(0, Integer.parseInt(valueString.get()));

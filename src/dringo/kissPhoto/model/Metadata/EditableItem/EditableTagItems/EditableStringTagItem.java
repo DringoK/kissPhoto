@@ -52,8 +52,8 @@ public class EditableStringTagItem extends EditableTagItem {
    * or add the tag if it didn't exist before
    */
   @Override
-  public void saveToExifHeader() {
-    super.saveToExifHeader();
+  public void saveToExifHeader(Exif exifHeader) {
+    super.saveToExifHeader(exifHeader);
     entry.setValue(0, stringValue.get()); //index is ignored in context with strings in media util
   }
 }

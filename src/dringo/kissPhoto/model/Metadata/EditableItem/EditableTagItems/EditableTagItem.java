@@ -172,10 +172,11 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
    * save changes of the tag to the exif header
    * or add the tag if it didn't exist before
    */
-  public void saveToExifHeader() {
+  public void saveToExifHeader(Exif exifHeader) {
     if (isChanged() && isNewEntry()) {
       entry = new Entry(exifTag.getDataType().getValue()); //no value until now. will be set it subclasses
       exifHeader.setTagValue(exifTag.getId(), 0, entry, true);   //put it into exifHeader
     }
+    //concrete subclasses will set the value afterwards when redefining this method
   }
 }

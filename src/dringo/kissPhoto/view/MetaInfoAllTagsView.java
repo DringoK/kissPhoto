@@ -310,9 +310,7 @@ public class MetaInfoAllTagsView extends StackPane {
 
 
   /**
-   * Store visibility (true/false) and dividerPos (in %) (i.e. "Pane size")
-   * the current dividerPos is stored (if visible)
-   * or rememberDividerPos (if currently invisible)
+   * Store selected Path and Column Width in Global Settings
    */
   public void storeVisibilityInGlobalSettings() {
     KissPhoto.globalSettings.setProperty(SELECTED_KEY_PATH, getUserSelectionPath().toCSVString());
@@ -320,7 +318,7 @@ public class MetaInfoAllTagsView extends StackPane {
   }
 
   /**
-   * read visibility and dividerPos from settings file and restore the view accordingly
+   * read settings from settings file and restore the view accordingly
    */
   public void restoreVisibilityFromGlobalSettings() {
     try {

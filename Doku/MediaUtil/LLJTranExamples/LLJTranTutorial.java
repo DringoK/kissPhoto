@@ -355,7 +355,7 @@ public class LLJTranTutorial {
 
             int imageWidth = llj.getWidth();
             int imageHeight = llj.getHeight();
-            if(imageWidth > 0 && imageHeight > 0)
+            if (imageWidth > 0 && imageHeight > 0)
             {
                 entry = exif.getTagValue(Exif.EXIFIMAGEWIDTH, true);
                 if(entry != null)

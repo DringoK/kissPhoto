@@ -230,7 +230,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
    * @param rotateOperation to perform
    * @return the number of mediaFiles that cannot save the rotation (only jpgs are supported so far)
    */
-  public synchronized int rotateSelectedFiles(ObservableList<MediaFile> selectedFiles, ImageFileRotater.RotateOperation rotateOperation) {
+  public synchronized int rotateSelectedFiles(ObservableList<MediaFile> selectedFiles, MediaUtilRotator.RotateOperation rotateOperation) {
     int countNotRotatable = 0;
     for (MediaFile mediaFile : selectedFiles) {
       if (!(mediaFile instanceof OtherFile)) mediaFile.rotate(rotateOperation);
