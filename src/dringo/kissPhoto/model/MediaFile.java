@@ -60,22 +60,24 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static final String PLACEHOLDER_DATE = "%m"; //modified date
   public static final String PLACEHOLDER_TIME = "%t";
   //order of the column-wise search in searchNext() and for interpreting searchRec.tableColumn;
-  public static final int COL_NO_PREFIX = 0;
-  public static final int COL_NO_COUNTER = 1;
-  public static final int COL_NO_SEPARATOR = 2;
-  //public static final int COL_NO_DESCRIPTION = 3; //never used, because always treated as the default
-  public static final int COL_NO_EXTENSION = 4;
-  public static final int COL_NO_FILEDATE = 5;
-  public final static int MAX_LOAD_RETRIES = 3;
+  public static final int COL_PREFIX = 0;
+  public static final int COL_COUNTER = 1;
+  public static final int COL_SEPARATOR = 2;
+  //public static final int COL_DESCRIPTION = 3; //never used, because always treated as the default
+  public static final int COL_EXTENSION = 4;
+  public static final int COL_FILEDATE = 5;
 
+  public final static int MAX_LOAD_RETRIES = 3;
   public static final int SUCCESSFUL = 0;
   public static final int SECOND_RUN = 1;
   public static final int RENAME_ERROR = 2;
+
   //this constants are used by sibling classes for ids in globalSettings (together with their class.getSimpleName())
   protected final static String MAIN_EDITOR = "_mainEditor";
   protected final static String SECOND_EDITOR = "_2ndEditor";
   //helpers
   private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
   /**
    * status is a single character representing the most important boolean error flag of this File
    * e.g. "C" =conflicting name
@@ -85,13 +87,17 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   protected Path fileOnDisk;   //including physical filename on Disk...to be renamed
   protected MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
   protected Object content = null;            //cached content
+
+  //every file is rotatable but currently only ImageFiles provide an implementation for saving the rotation
   //planned operation when saved next time: first rotate then flip vertical then horizontal!!!
   protected MediaFileRotater.RotateOperation rotateOperation = MediaFileRotater.RotateOperation.ROTATE0;
   protected boolean flipHorizontally = false;
   protected boolean flipVertically = false;
+
   //prevent from infinite loop if (background) loading fails permanently (currently supported by ImageFile Background loading
   protected int loadRetryCounter = 0;
   public final StringProperty status = new SimpleStringProperty();
+
   //parsed Filename, editable by user
   public final StringProperty prefix = new SimpleStringProperty();
   public final StringProperty counter = new SimpleStringProperty();
@@ -99,6 +105,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public final StringProperty description = new SimpleStringProperty();
   public final StringProperty extension = new SimpleStringProperty();
   public final StringProperty modifiedDate = new SimpleStringProperty();
+
   //errors regarding the filename (to be shown on GUI)
   private boolean renameError = false;   //indicate that the last rename was not successful
   private boolean timeStampWriteError = false; //indicates that the last try to write the timestamp was not successful
@@ -334,7 +341,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     boolean found = false;
     int foundPos = 0;
 
-    while (!found && searchRec.tableColumn <= COL_NO_FILEDATE) {
+    while (!found && searchRec.tableColumn <= COL_FILEDATE) {
 
       textToSearchIn = getStringPropertyForColNumber(searchRec.tableColumn).get();
 
@@ -366,12 +373,12 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    */
   public StringProperty getStringPropertyForColNumber(int colNumber) {
     return switch (colNumber) {
-      case COL_NO_PREFIX -> prefix;
-      case COL_NO_COUNTER -> counter;
-      case COL_NO_SEPARATOR -> separator;
+      case COL_PREFIX -> prefix;
+      case COL_COUNTER -> counter;
+      case COL_SEPARATOR -> separator;
       //case COL_NO_DESCRIPTION -> description; //same as default
-      case COL_NO_EXTENSION -> extension;
-      case COL_NO_FILEDATE -> modifiedDate;
+      case COL_EXTENSION -> extension;
+      case COL_FILEDATE -> modifiedDate;
       default -> description;
     };
   }
@@ -394,7 +401,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
       searchRec.endPos = searchRec.startPos + replaceText.length();  //correct the new endPos for further searching
 
-      if (searchRec.tableColumn == COL_NO_FILEDATE)
+      if (searchRec.tableColumn == COL_FILEDATE)
         setTimeStampChanged(true);
       else
         setFilenameChanged(true);
@@ -610,7 +617,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * keep property synchronous with the boolean flags
    * to display it in the table
    */
-  protected void updateStatusProperty() {
+  public void updateStatusProperty() {
     statusProperty().set(statusFlagsToString());
   }
 

@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
+import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -26,21 +27,10 @@ public class EditableStringTagItem extends EditableTagItem {
 
   /**
    * Constructor to wrap an Entry object
-   * @param entryTag The object to be wrapped
+   * @param exifTag The object to be wrapped
    */
-  public EditableStringTagItem(ExifTag entryTag, Exif imageInfo) {
-    super(entryTag, imageInfo);
-  }
-
-  /**
-   * @param value that has be edited as a StringProperty or Integer(0), if conversion was not possible (=ignore conversion exceptions)
-   */
-  @Override
-  public void setValueFromString(StringProperty value) {
-    super.setValueFromString(value);
-
-    entry.setValue(0, value.getValue());
-    valueString = value;
+  public EditableStringTagItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTag exifTag) {
+    super(mediaFile, imageInfo, exifTag);
   }
 
   /**
@@ -48,10 +38,22 @@ public class EditableStringTagItem extends EditableTagItem {
    */
   @Override
   public StringProperty getValueString() {
-    if (valueString == null){
-      if (entry.getValue(0) instanceof String)
-        valueString = new SimpleStringProperty((String)entry.getValue(0)); //index is ignored for string-Entries in Entry.java
+    if (stringValue == null){   //lazy generation not before it is displayed for the first time
+      if (entry!=null && entry.getValue(0) instanceof String)  //only if the entry already existed in metaInfo
+        stringValue = new SimpleStringProperty((String)entry.getValue(0)); //index is ignored for string-Entries in mediautil.image.jpeg.Entry
+      else
+        stringValue = new SimpleStringProperty("");
     }
-    return valueString;
+    return stringValue;
+  }
+
+  /**
+   * save changes of the tag to the exif header
+   * or add the tag if it didn't exist before
+   */
+  @Override
+  public void saveToExifHeader() {
+    super.saveToExifHeader();
+    entry.setValue(0, stringValue.get()); //index is ignored in context with strings in media util
   }
 }

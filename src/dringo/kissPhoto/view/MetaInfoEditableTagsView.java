@@ -320,8 +320,8 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     //lazy Load MetaData by calling getMetadata()
     //lazy load the MetaDataTreeItem if possible from cache (see MediaFile.getCachedMetaInfo())
     Exif imageInfo = mediaFileTaggedEditable.getEditableImageInfo(); //get the cached value from the model
-    if (imageInfo != null) { //if Metadata could be loaded or had been loaded before
-      return new EditableMetaInfoTreeItem(new EditableMetadataItem(imageInfo));  //EditableMetadataItem defines the tree structure
+    if (imageInfo != null) { //if Metadata could be loaded or has been loaded before
+      return new EditableMetaInfoTreeItem(new EditableMetadataItem(mediaFileTaggedEditable, imageInfo));  //EditableMetadataItem defines the tree structure
     } else {
       return null;
     }

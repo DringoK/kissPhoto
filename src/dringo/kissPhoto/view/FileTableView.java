@@ -312,9 +312,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   /**
    * reflect all changes of the given media file in the tooltip of the filetable
-   * @param focusedMediaFile the mediafile which changes are reported in the tooltip
+   * @param focusedMediaFile the mediaFile which changes are reported in the tooltip
    */
-  private void setTooltipText(MediaFile focusedMediaFile){
+  public void setTooltipText(MediaFile focusedMediaFile){
     String s= focusedMediaFile.getChangesText();
     if (s.length()>0) {
       setTooltip(tooltip);
@@ -1638,12 +1638,12 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
       //set the focus to it
       foundCol = switch (searchRec.tableColumn) {
-        case MediaFile.COL_NO_PREFIX -> prefixColumn;
-        case MediaFile.COL_NO_COUNTER -> counterColumn;
-        case MediaFile.COL_NO_SEPARATOR -> separatorColumn;
+        case MediaFile.COL_PREFIX -> prefixColumn;
+        case MediaFile.COL_COUNTER -> counterColumn;
+        case MediaFile.COL_SEPARATOR -> separatorColumn;
         //case MediaFile.COL_NO_DESCRIPTION -> descriptionColumn;  //default
-        case MediaFile.COL_NO_EXTENSION -> extensionColumn;
-        case MediaFile.COL_NO_FILEDATE -> fileDateColumn;
+        case MediaFile.COL_EXTENSION -> extensionColumn;
+        case MediaFile.COL_FILEDATE -> fileDateColumn;
         default -> descriptionColumn;
       };
 

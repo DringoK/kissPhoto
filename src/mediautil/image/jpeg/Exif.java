@@ -586,30 +586,41 @@ public class Exif extends AbstractImageInfo<LLJTran> {
    */
   public Entry getTagValue(Integer tag, int subTag, boolean main) {
 
-    return ifds[main ? 0 : 1] != null ? ifds[main ? 0 : 1].getEntry(tag,
-      subTag) : null;
+    if (main) {
+      if (ifds[0] != null) {
+        return ifds[0].getEntry(tag, subTag);
+      }else {
+        return null;
+      }
+    }else {
+      if (ifds[1] != null) {
+        return ifds[1].getEntry(tag, subTag);
+      } else{
+        return null;
+      }
+    }
   }
 
   /**
    * Sets the Entry corresponding to an Exif tag.
    *
-   * @param tag Exif tag
+   * @param tag Exif tag id
    * @param subTag Sub Tag if any or pass -1
-   * @param value Entry to set
+   * @param entry Entry to set (i.e. the (data) type and value)
    * @param main true if it is in the main IFD, false if it is in the Sub IFD.
    * Most of the commonly used Exif tags are in the main IFD. The Thumbnail
    * related tags are in the Sub IFD.
+   *
+   * Also call this for adding a new Entry: if it doesn't exist it will be added to ifds[0/1].
    */
-  public void setTagValue(int tag, int subTag, Entry value, boolean main) {
+  public void setTagValue(int tag, int subTag, Entry entry, boolean main) {
     if (main) {
       if (ifds[0] != null) {
-        if (main) ifds[0].setEntry(tag, subTag, value);
-        else ifds[1].setEntry(new Integer(tag), subTag, value);
+        ifds[0].setEntry(tag, subTag, entry);
       }
     } else {
       if (ifds[1] != null) {
-        if (main) ifds[0].setEntry(new Integer(tag), subTag, value);
-        else ifds[1].setEntry(new Integer(tag), subTag, value);
+        ifds[1].setEntry(tag, subTag, entry);
       }
     }
   }
@@ -1879,5 +1890,5 @@ public class Exif extends AbstractImageInfo<LLJTran> {
 
   protected int version;
 
-  protected IFD[] ifds;   //IFD = Image File Directory (see IFD.java)
+  protected IFD[] ifds;   //IFD = Image File Directory (see IFD.java). IFD extends Entry.
 }

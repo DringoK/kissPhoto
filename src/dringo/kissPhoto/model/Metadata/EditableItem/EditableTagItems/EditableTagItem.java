@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
+import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoItem;
 import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
 import javafx.beans.property.SimpleStringProperty;
@@ -28,36 +29,42 @@ import mediautil.image.jpeg.Exif;
 
 public abstract class EditableTagItem extends EditableMetaInfoItem {
   protected Entry entry;
-  private Exif imageInfo;        //link to the Exif-Header read by media util
-  protected ExifTag exifTag; //link to the entry in the list of editable exif tags, to find out, how it can be edited etc.
-  protected StringProperty valueString;
-  protected boolean newEntry = false;   //false if it was already contained in Exif ImageInfo, true if this is a new entry
-  protected boolean hasChanged = false; //an entry will only be written/added if its value has changed
-  private String originalStringValue;   //the value, of the item as it is currently saved, to find out, if the value has changed, null, if the exif/value didn't exist until now
+  private final ExifTag exifTag;              //link to the entry in the list of editable exif tags, to find out, how it can be edited etc.
+  protected StringProperty stringValue; //current value
+  private final String originalStringValue;   //the value, of the item as it is currently saved, to find out, if the value has changed. Null, if the exif tag/value didn't exist until now
 
   /**
    * Constructor to wrap an Entry object
-   * if the entry exists in imageInfo then the value is loaded
+   * if the entry exists in exifHeader then the value is loaded
    * if it is new then an empty entry is generated and newEntry=true
    * @param exifTag The object to be wrapped
    */
-  public EditableTagItem(ExifTag exifTag, Exif imageInfo) {
-    this.imageInfo = imageInfo;
+  public EditableTagItem(MediaFileTaggedEditable mediaFile, Exif exifHeader, ExifTag exifTag) {
+    super(mediaFile, exifHeader);
+    this.exifTag = exifTag;
 
     //try to load the tag entry if it already exists
-    entry = imageInfo.getTagValue(exifTag.getId(), true);
+    entry = exifHeader.getTagValue(exifTag.getId(), true);
 
     //generate a new entry
     if (entry == null){
-      newEntry = true;
-      entry = new Entry((exifTag.getId()));
-      imageInfo.setTagValue(exifTag.getId(), 0, entry, true);
+      originalStringValue = null;   //indicates a new value
+      //entry and exifHeader remain being null and will be generated on save only
     }else{
       //remember the original value to find out, if the value has been changed and needs to be written to the file
-      originalStringValue = getValueString().getValue();
+      originalStringValue = getValueString().get();
     }
   }
 
+  public boolean isNewEntry(){
+    return originalStringValue ==null;
+  }
+
+  public boolean isChanged(){
+    if (stringValue==null) return false; //not yet edited
+    else if (stringValue.get().isEmpty() && originalStringValue==null) return false; //empty==null
+    else return !stringValue.get().equals(originalStringValue); //note: if originalStringValue==null 'equals' will return false
+  }
   /**
    * Metadata has Directories, Directories have Tags possibly as their children.
    * Tags have no children and are always leafs
@@ -82,10 +89,19 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
   }
 
   /**
+   * maintains the originalStringValue and the hasChanged property
    *  @param value that has be edited as a StringProperty
    */
   public void setValueFromString(StringProperty value){
-    hasChanged = value.getValue().equals(originalStringValue);
+    boolean wasChanged = isChanged();
+    stringValue = value; //save the edited value
+    boolean changed = isChanged();
+
+    //sync mediaFile.changedMetaTags list if changedStatus changed ;-)
+    if (changed && !wasChanged) mediaFile.addToChangedTags(this);
+    else if (!changed && wasChanged) mediaFile.removeFromChangedTags(this);
+
+    mediaFile.updateStatusProperty();
   }
 
   /**
@@ -100,7 +116,7 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
   @Override
   public StringProperty getExifIDString() {
     if (exifIDString == null){
-        exifIDString = new SimpleStringProperty(""+ entry.getType());
+        exifIDString = new SimpleStringProperty(""+ exifTag.getName());
     }
     return exifIDString;
   }
@@ -125,8 +141,8 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
    * note: this method has no effect on entries that already existed. Their value changes are always considered
    */
   public void addToExifIfNewAndChanged(){
-    if (newEntry && hasChanged){
-      imageInfo.setTagValue(entry.getType(), 0, entry, true); //add a new tag
+    if (isNewEntry() && isChanged()){
+      exifHeader.setTagValue(entry.getType(), 0, entry, true); //add a new tag
     }
   }
 
@@ -150,5 +166,16 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
   @Override
   public void saveEditedValue(String newValue) {
     setValueFromString(new SimpleStringProperty(newValue));
+  }
+
+  /**
+   * save changes of the tag to the exif header
+   * or add the tag if it didn't exist before
+   */
+  public void saveToExifHeader() {
+    if (isChanged() && isNewEntry()) {
+      entry = new Entry(exifTag.getDataType().getValue()); //no value until now. will be set it subclasses
+      exifHeader.setTagValue(exifTag.getId(), 0, entry, true);   //put it into exifHeader
+    }
   }
 }

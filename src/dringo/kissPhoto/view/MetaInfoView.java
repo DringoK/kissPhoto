@@ -117,6 +117,8 @@ public class MetaInfoView extends TabPane {
   public void setMediaFile(MediaFile mediaFile) {
     currentMediaFile = mediaFile;
 
+    System.out.println("MetaInfoView.setMedia");
+
     if (isVisible()) {
 
       if (mediaFile instanceof MediaFileTagged) {

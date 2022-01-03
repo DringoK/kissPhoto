@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
+import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -26,10 +27,10 @@ public class EditableDateTimeTagItem extends EditableTagItem {
 
   /**
    * Constructor to wrap an Entry object
-   * @param entryTag The object to be wrapped
+   * @param exifTag The object to be wrapped
    */
-  public EditableDateTimeTagItem(ExifTag entryTag, Exif imageInfo) {
-    super(entryTag, imageInfo );
+  public EditableDateTimeTagItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTag exifTag) {
+    super(mediaFile, imageInfo, exifTag );
   }
 
   /**
@@ -38,8 +39,7 @@ public class EditableDateTimeTagItem extends EditableTagItem {
   @Override
   public void setValueFromString(StringProperty value) {
     super.setValueFromString(value);
-    entry.setValue(0, getStoringFormat(value));
-    valueString = getDisplayFormat(value);
+    this.stringValue = getDisplayFormat(value);
   }
 
   /**
@@ -47,11 +47,11 @@ public class EditableDateTimeTagItem extends EditableTagItem {
    */
   @Override
   public StringProperty getValueString() {
-    if (valueString == null){
-      if (entry.getValue(0) instanceof String)
-        valueString = getDisplayFormat(new SimpleStringProperty((String)(entry.getValue(0)))); //index is ignored for string-Entries in Entry.java
+    if (stringValue == null){ //lazy generation not before it is displayed for the first time
+      if (entry != null && entry.getValue(0) instanceof String) //only if the entry already existed in metaInfo
+        stringValue = getDisplayFormat(new SimpleStringProperty((String)(entry.getValue(0)))); //index is ignored for string-Entries in Entry.java
     }
-    return valueString;
+    return stringValue;
   }
 
   /**
@@ -70,7 +70,7 @@ public class EditableDateTimeTagItem extends EditableTagItem {
    */
   private String getStoringFormat(StringProperty value){
     if (isValidDateTime(value.get())) {
-      StringBuilder str = new StringBuilder(value.getValue());
+      StringBuilder str = new StringBuilder(value.get());
       str.setCharAt(4, ':'); //after YYYY
       str.setCharAt(7, ':'); //after YYYY:MM
       return str.toString();
@@ -86,12 +86,22 @@ public class EditableDateTimeTagItem extends EditableTagItem {
    */
   private StringProperty getDisplayFormat(StringProperty value){
     if (isValidDateTime(value.get())) {
-      StringBuilder str = new StringBuilder(value.getValue());
+      StringBuilder str = new StringBuilder(value.get());
       str.setCharAt(4, '-'); //after YYYY
       str.setCharAt(7, '-'); //after YYYY:MM
       return new SimpleStringProperty(str.toString());
     }else{
       return null;
     }
+  }
+
+  /**
+   * save changes of the tag to the exif header
+   * or add the tag if it didn't exist before
+   */
+  @Override
+  public void saveToExifHeader() {
+    super.saveToExifHeader();
+    entry.setValue(0, getStoringFormat(valueString));
   }
 }

@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
+import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
 import mediautil.image.jpeg.Exif;
 
@@ -23,11 +24,11 @@ public class EditableTagItemFactory{
   private  EditableTagItemFactory() {
   }
 
-  public static EditableTagItem getTag(ExifTag exifTag, Exif imageInfo){
+  public static EditableTagItem getTag(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTag exifTag){
     return switch (exifTag.getDataType()) {
-      case BYTE, SHORT, LONG, SLONG -> new EditableIntTagItem(exifTag, imageInfo);
-      case DATE_TIME -> new EditableDateTimeTagItem(exifTag, imageInfo);
-      case ASCII -> new EditableStringTagItem(exifTag, imageInfo);
+      case BYTE, SHORT, LONG, SLONG -> new EditableIntTagItem(mediaFile, imageInfo, exifTag);
+      case DATE_TIME -> new EditableDateTimeTagItem(mediaFile, imageInfo, exifTag);
+      case ASCII -> new EditableStringTagItem(mediaFile, imageInfo, exifTag);
       default -> null;
     };
   }

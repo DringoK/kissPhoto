@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem;
 
+import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItemFactory;
 import dringo.kissPhoto.model.Metadata.Exif.ExifDir;
 import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
@@ -33,45 +34,27 @@ import mediautil.image.jpeg.Exif;
  */
 
 public class EditableMetadataItem extends EditableMetaInfoItem {
-  Exif imageInfo; //link to the media util object to be wrapped
   ObservableMap<Integer, EditableDirectoryItem> directories = FXCollections.observableHashMap(); //use Factory to generate empty list
   /**
    * Constructor to wrap an imageInfo object
    * @param imageInfo The object to be wrapped
    */
-  public EditableMetadataItem(Exif imageInfo) {
+  public EditableMetadataItem(MediaFileTaggedEditable mediaFile, Exif imageInfo) {
+    super(mediaFile, imageInfo);
     keyString = new SimpleStringProperty("EditableMetadata");  //root will not be shown in GUI
-    this.imageInfo = imageInfo;
 
     //add directories
     for( ExifDir directory: ExifDir.values() ){
       if (directory!= ExifDir.NONE) //do not display "NONE"
-        directories.put(directory.getValue(), new EditableDirectoryItem(directory.getName()));
+        directories.put(directory.getValue(), new EditableDirectoryItem(mediaFile, imageInfo, directory.getName()));
     }
-
-    EditableDirectoryItem directoryItem;
 
     //add tags to directories
     for (ExifTag tag: ExifTag.values()){
       if (tag.getExifDir() != ExifDir.NONE){
-        directories.get(tag.getExifDir().getValue()).addTag(EditableTagItemFactory.getTag(tag, imageInfo));
+        directories.get(tag.getExifDir().getValue()).addTag(EditableTagItemFactory.getTag(mediaFile, imageInfo, tag));
       }
     }
-/*  directoryItem = new EditableDirectoryItem("Image Description");
-    directoryItem.addTag(EditableTagItemFactory.getTag(Exif.DOCUMENTNAME, imageInfo));
-    directoryItem.addTag(EditableTagItemFactory.getTag(Exif.IMAGEDESCRIPTION, imageInfo));
-    directoryItem.addTag(EditableTagItemFactory.getTag(Exif.MAKE, imageInfo));
-    directories.add(directoryItem);
-
-    directoryItem = new EditableDirectoryItem("Copyright");
-    directories.add(directoryItem);
-
-    directoryItem = new EditableDirectoryItem("Date Time");
-    directories.add(directoryItem);
-
-    directoryItem = new EditableDirectoryItem("Misc");
-    directories.add(directoryItem);
- */
   }
 
   /**

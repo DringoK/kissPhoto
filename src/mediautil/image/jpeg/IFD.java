@@ -38,9 +38,9 @@ import java.util.Map;
  *
  * An IFD is implemented to extend Entry and consists of
  * <ul>
- *   <li>a tag that indicates the type of the entry e.g. </li>
- *   <li>an HashMap entries containing the Entry objects</li>
- *   <li>an array of IFD (maybe subdirectories)</li>
+ *   <li>an int 'tag' that indicates the type of the entry</li>
+ *   <li>a HashMap 'entries' containing (sub) Entry objects</li>
+ *   <li>an array of IFD (subdirectories)</li>
  * </ul>
  *
  * @since 2021-11-09
@@ -102,19 +102,19 @@ public class IFD extends Entry {
     return tag;
   }
 
-  public Entry setEntry(Integer tag, int subTag, Entry value) {
+  public Entry setEntry(Integer tag, int subTag, Entry entry) {
     Entry result = null;
     if (subTag > 0) {
       for (int i = 0; i < ifds.length; i++)
         if (ifds[i].getTag() == subTag)
-          return ifds[i].setEntry(tag, -1, value);
+          return ifds[i].setEntry(tag, -1, entry);
     } else if (subTag == 0) {
-      result = (Entry) entries.put(tag, value);
-    } else {
+      result = (Entry) entries.put(tag, entry);
+    } else {  //subTag == -1 if not sub tag
       for (int i = 0; i < ifds.length; i++) {
         result = ifds[i].getEntry(tag, -1);
         if (result != null) {
-          ifds[i].setEntry(tag, 0, value);
+          ifds[i].setEntry(tag, 0, entry);
           break;
         }
       }

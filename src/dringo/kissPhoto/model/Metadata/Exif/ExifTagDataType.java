@@ -21,7 +21,7 @@ public enum ExifTagDataType {
   BYTE(1, "byte"),            //8-bit unsigned integer
   ASCII(2, "ascii"),          //8-bit byte containing on 7-bit ASCII code. Terminated with NULL
   SHORT(3, "short"),          //16-bit (2-byte) unsigned integer
-  LONG(4, "long"),            //32-bit (4-byte) unsigned inteer
+  LONG(4, "long"),            //32-bit (4-byte) unsigned integer
   RATIONAL(5, "rational"),    //tow LONGs. The first LONG is the numerator, the second LONG expresses the denominator
   UNDEFINED(7, "undefined"),  //8-bit byte that may take any value depending on the field definition
   SLONG(9, "slong"),          //32-bit (4-byte) signed integer (2's complement notation)

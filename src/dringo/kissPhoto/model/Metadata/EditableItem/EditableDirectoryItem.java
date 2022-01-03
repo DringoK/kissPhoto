@@ -1,11 +1,13 @@
 package dringo.kissPhoto.model.Metadata.EditableItem;
 
+import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItem;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
+import mediautil.image.jpeg.Exif;
 
 /**
  * MIT License
@@ -31,7 +33,8 @@ public class EditableDirectoryItem extends EditableMetaInfoItem {
    * Constructor to wrap a Directory object
    * @param directoryName The Name that will be displayed in the treeTable's branch
    */
-  public EditableDirectoryItem(String directoryName){
+  public EditableDirectoryItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, String directoryName){
+    super(mediaFile,imageInfo);
     keyString = new SimpleStringProperty(directoryName);
     tags = FXCollections.observableArrayList();
   }

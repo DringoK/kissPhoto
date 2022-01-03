@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
+import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -28,23 +29,8 @@ public class EditableIntTagItem extends EditableTagItem {
    * Constructor to wrap an Entry object
    * @param exifTag The object to be wrapped
    */
-  public EditableIntTagItem(ExifTag exifTag, Exif imageInfo) {
-    super(exifTag, imageInfo);
-  }
-
-  /**
-   * @param value that has be edited as a StringProperty or Integer(0), if conversion was not possible (=ignore conversion exceptions)
-   */
-  @Override
-  public void setValueFromString(StringProperty value) {
-    super.setValueFromString(value);
-    try {
-      entry.setValue(0, Integer.parseInt(value.get()));
-      valueString = value;
-    }catch (NumberFormatException e){
-      entry.setValue(0, 0);
-      valueString = new SimpleStringProperty("-");  //i.e. invalid
-    }
+  public EditableIntTagItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTag exifTag) {
+    super(mediaFile, imageInfo, exifTag);
   }
 
   /**
@@ -52,10 +38,12 @@ public class EditableIntTagItem extends EditableTagItem {
    */
   @Override
   public StringProperty getValueString() {
-    if (valueString==null)                      //lazy load
-      if (entry.getValue(0) instanceof Integer)
-        valueString = new SimpleStringProperty("" + entry.getValue(0));
-    return valueString;
+    if (stringValue ==null)  //lazy generation not before it is displayed for the first time
+      if (entry != null && entry.getValue(0) instanceof Integer) //only if the entry already existed in metaInfo
+        stringValue = new SimpleStringProperty("" + entry.getValue(0));
+      else
+        stringValue = new SimpleStringProperty("");
+    return stringValue;
   }
 
   /**
@@ -66,5 +54,20 @@ public class EditableIntTagItem extends EditableTagItem {
       return (Integer) (entry.getValue(0));
     else
       return 0;
+  }
+
+  /**
+   * save changes of the tag to the exif header
+   * or add the tag if it didn't exist before
+   */
+  @Override
+  public void saveToExifHeader() {
+    super.saveToExifHeader();
+    //index is always 0 for simple integers
+    try {
+      entry.setValue(0, Integer.parseInt(valueString.get()));
+    }catch (NumberFormatException e){
+      entry.setValue(0, 0); //in error case set 0 as a default value
+    }
   }
 }

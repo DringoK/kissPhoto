@@ -1,8 +1,10 @@
 package dringo.kissPhoto.model.Metadata.EditableItem;
 
+import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.MetaInfoItem;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
+import mediautil.image.jpeg.Exif;
 
 /**
  * MIT License
@@ -23,6 +25,14 @@ import javafx.scene.control.TreeItem;
  */
 
 public abstract class EditableMetaInfoItem extends MetaInfoItem {
+
+  protected Exif exifHeader; //link to the Exif-Header read by media util
+  protected MediaFileTaggedEditable mediaFile; //link to media file is used for synchronizing the changedMetaInfoItems list and for saving the changes
+
+  public EditableMetaInfoItem(MediaFileTaggedEditable mediaFile, Exif exifHeader) {
+    this.exifHeader = exifHeader;
+    this.mediaFile = mediaFile;
+  }
 
   /**
    * read the children into the oberservable list to show them in the TreeTableView
@@ -49,5 +59,7 @@ public abstract class EditableMetaInfoItem extends MetaInfoItem {
    */
   public void saveEditedValue(String newValue){
     //as a default: nothing to do. Overwritten in writable items, i.e. EditableTagItem
+    //don't forget to call mediaFile.updateStatusProperty(); after saving the changes
   }
+
 }

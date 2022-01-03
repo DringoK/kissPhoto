@@ -397,7 +397,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
     while (!searchRec.found && searchRec.tableRow < listToSearchIn.size()) {
       if (!listToSearchIn.get(searchRec.tableRow).searchNext(searchText, searchRec)) {
         searchRec.tableRow++;                            //try next line
-        searchRec.tableColumn = MediaFile.COL_NO_PREFIX; //start in every line with the first column
+        searchRec.tableColumn = MediaFile.COL_PREFIX; //start in every line with the first column
         searchRec.startPos = 0;                          //and with the beginning of the text
         searchRec.endPos = 0;
       }
