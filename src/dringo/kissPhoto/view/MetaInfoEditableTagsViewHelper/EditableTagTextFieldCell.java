@@ -10,6 +10,7 @@ import dringo.kissPhoto.view.inputFields.DateTimeTextField;
 import dringo.kissPhoto.view.inputFields.NumberTextField;
 import dringo.kissPhoto.view.inputFields.RestrictedInputField;
 import dringo.kissPhoto.view.inputFields.UnrestrictedTextField;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.ContentDisplay;
@@ -38,10 +39,8 @@ import javafx.stage.Stage;
  * <p/>
  *
  * @author Ingo
- * @since 2016-11-04
- * @version 2021-01-17 support saving the currently editing line, simplify commitEdit and cancelEdit
- * @version 2020-12-20 lambda expressions for event handlers
- * @version 2018-11-17 Ctrl-U now copies information from the line above in edit mode, (Shift) TAB moves to next (prev) column, fixed: keeping caret position fixed
+ * @since 2021-11-15
+ * @version 2022-01-07 first working version
  */
 public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem, String> {
   static int lastCaretPosition = 0; //this is to save the caretPosition when moving up/down lines in editMode
@@ -55,7 +54,6 @@ public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem
   public void startEdit() {
     //only start editing for Tags (not for directories)
     if (!(getTableRow().getItem() instanceof EditableTagItem)){
-      System.out.println("not a Tag");
       return;
     }
 
@@ -71,7 +69,7 @@ public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem
     setGraphic((Node) inputField);
     this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
-    inputField.requestFocus();
+    Platform.runLater(()->inputField.requestFocus());
     restoreCaretPositionIfValid();
 
     lastCaretPositionValid = false; //also consume last caret position

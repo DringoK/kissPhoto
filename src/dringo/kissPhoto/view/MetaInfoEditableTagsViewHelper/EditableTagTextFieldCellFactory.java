@@ -18,8 +18,8 @@ import javafx.util.Callback;
  * <p/>
  *
  * @author Ingo
- * @version initial version
  * @since 2021-11-15
+ * @version 2022-01-07 first working version
  */
 public class EditableTagTextFieldCellFactory implements Callback<TreeTableColumn<EditableMetaInfoItem, String>, TreeTableCell<EditableMetaInfoItem, String>> {
 

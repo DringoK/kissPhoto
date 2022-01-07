@@ -19,9 +19,9 @@ import javafx.scene.control.TreeItem;
  * <p/>
  *
  * @author Dringo
+ * @since 2021-03-14
  * @version 2021-11-07 id column supported
  * @version 2021-03-20 First implementation
- * @since 2021-03-14
  */
 
 public abstract class MetaInfoItem {

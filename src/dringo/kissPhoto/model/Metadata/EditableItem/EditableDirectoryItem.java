@@ -22,8 +22,8 @@ import mediautil.image.jpeg.Exif;
  * <p/>
  *
  * @author Dringo
- * @version 2021-11-10
  * @since 2021-11-10
+ * @version 2022-01-07 first working version
  */
 
 public class EditableDirectoryItem extends EditableMetaInfoItem {

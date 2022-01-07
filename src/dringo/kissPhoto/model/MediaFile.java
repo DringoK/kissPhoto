@@ -38,6 +38,7 @@ import java.util.Date;
  *
  * @author ikreuz
  * @since 2012-08-28
+ * @version 2022-01-07 meta info writing supported. performDelete() and moveFileToDeleted() separated, so that backup files before transformations become possible
  * @version 2021-11-07 metainfo column support (="" if not MediaFileTagged), reflection for FileTableView eliminated
  * @version 2021-04-07 metadata stuff (cache!) now completely in subclass MediaFileTagged
  * @version 2020-12-20 cache now directly in this class. What to put into cache is asked from according viewer.

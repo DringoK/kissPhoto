@@ -58,11 +58,13 @@ public abstract class MediaFileTagged extends MediaFile {
    * @return the cached element or null if *this* is not a MediaFileTagged
    */
   public MetaInfoTreeItem getMetaInfoCached(MetaInfoAllTagsView metaInfoAllTagsView){
+
     if (metaInfoTreeItem ==null){ //if invalid and only available for Subclass MediaFileTagged which can have MetaInfos
       //if not in cache then ask the viewer to load it
       mediaCache.maintainCacheSizeByFlushingOldest(); //
       metaInfoTreeItem = metaInfoAllTagsView.getViewerSpecificMediaInfo(this);
     }
+
     return metaInfoTreeItem;
   }
 
@@ -83,14 +85,12 @@ public abstract class MediaFileTagged extends MediaFile {
 
   /**
    * Flush the media content to free memory
-   * don't forget to clear it in the cache also (or use flushFromCache instead)
    */
   @Override
   public void flushMediaContent() {
-    super.flushMediaContent();
     metadata=null;
     metaInfoTreeItem=null;
-
+    super.flushMediaContent();
   }
 
 }

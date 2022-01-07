@@ -24,12 +24,13 @@ import static dringo.kissPhoto.KissPhoto.language;
  * MIT License
  * Copyright (c)2021 kissPhoto
  * <p>
- * This is a MediaFile that can have tags that can be edited or added
- * I use mediautil to read the tags
+ * This is a MediaFile that can have tags that can be edited or added.
+ * Also transformations (rotate, flip) can be saved to disk.
+ * I use mediautil to read or write the tags
  *
  * @author Dringo
- * @version 2020-11-13 initial version
- * @since 2020-11-13
+ * @since 2021-11-13
+ * @version 2022-01-01 first working version
  */
 
 public abstract class MediaFileTaggedEditable extends MediaFileTagged {
@@ -175,7 +176,6 @@ public abstract class MediaFileTaggedEditable extends MediaFileTagged {
    */
   public EditableRootItem readExifHeader() {
     if (!supportedFile) return null;
-    System.out.println("MetaInfoEditableTagsView.getViewerSpecificMediaInfo--> Read Header");
 
     LLJTran llj = new LLJTran(getFileOnDisk().toFile());
     try {
@@ -220,7 +220,6 @@ public abstract class MediaFileTaggedEditable extends MediaFileTagged {
     if (supportedFile && (isTransformed() || isMetaDataChanged())) {
       llj = new LLJTran(fileOnDisk.toFile());
       try {
-        System.out.println("MediaFileTaggedEditable.saveChanges()--> Read All");
         llj.read(LLJTran.READ_ALL, true);
       } catch (LLJTranException e) {
         successful = false;
@@ -280,8 +279,9 @@ public abstract class MediaFileTaggedEditable extends MediaFileTagged {
         //--successful: reset transformations
         if (wasTransformed) {
           resetTransformations();
-          flushFromCache(); //the file needs to be read again
         }
+
+        flushFromCache(); //the file needs to be read again
 
         //--successful: reset all changes in the EditableTagItem
         if (changedMetaTags != null) {
@@ -306,50 +306,13 @@ public abstract class MediaFileTaggedEditable extends MediaFileTagged {
 
     return result;
   }
+
+  /**
+   * Flush the media content to free memory
+   */
+  @Override
+  public void flushMediaContent() {
+    rootTreeItem = null;
+    super.flushMediaContent();
+  }
 }
-
-// Old test code remove before release
-
-        /*
-        //System.out.println(llj.getComment());
-        //llj.setComment("kissPhoto rotation");
-
-        //Modify Exif-Entries
-        AbstractImageInfo<?> imageInfo = llj.getImageInfo();
-
-        //if exif directory is existing
-        if (imageInfo instanceof Exif exifInfo) { //includes test on !=null.  note: this inlines Exif exifInfo = (Exif) imageInfo;
-
-          // Change Date/Time entries in Exif
-          Entry entry;
-
-          entry= exifInfo.getTagValue(Exif.DATETIME, true);//true= use mainIFD (false would be subIFD of thumbnail)
-          if(entry != null) {
-            System.out.println("changeValue DateTime");
-            entry.setValue(0, "1990:05:11 00:01:02");   //index is ignored in connection with String values
-          }else {
-            System.out.println("setTagValue DateTime");
-            exifInfo.setTagValue(Exif.DATETIME, 0, new Entry("1990:05:11 11:22:33"), true);
-          }
-
-          entry= exifInfo.getTagValue(Exif.ARTIST, true);//true= use mainIFD (false would be subIFD of thumbnail)
-          if(entry != null) {
-            System.out.println("changeValue Artist");
-            entry.setValue(0, "Künstler=Ingo");   //index is ignored in connection with String values
-          }else {
-            System.out.println("setTagValue Artist");
-            exifInfo.setTagValue(Exif.ARTIST, 0, new Entry("Künstler neu=Ingo"), true);
-          }
-
-          entry = exifInfo.getTagValue(Exif.DATETIMEORIGINAL, true);
-          if(entry != null)
-            entry.setValue(0, "1991:06:12 01:02:03");
-          entry = exifInfo.getTagValue(Exif.DATETIMEDIGITIZED, true);
-          if(entry != null)
-            entry.setValue(0, "1992:07:13 02:03:04");
-
-
-          //write all changes back to the APPx-buffers
-          llj.refreshAppx();
-        }
-  */

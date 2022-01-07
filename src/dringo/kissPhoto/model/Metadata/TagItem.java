@@ -96,4 +96,8 @@ public class TagItem extends MetaInfoItem {
     }
     return exifIDString;
   }
+
+  public int getTagID(){
+    return tag.getTagType();
+  }
 }

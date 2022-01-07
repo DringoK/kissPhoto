@@ -19,12 +19,12 @@ import mediautil.image.jpeg.Exif;
  * <p/>
  * This class represents an editable Tag Entry in MetaInfoEditableTagsView
  * An EditableTag resides in an EditableDirectory and has no children
- * It wraps an Entry-object of mediautil (which would be called "Tag" in meta-data-extractor, which is used in the read-only version of TagItem)
+ * It holds the information from and for an Entry-object of mediaUtil (which would be called "Tag" in meta-data-extractor, which is used in the read-only version of TagItem)
  * <p/>
  *
  * @author Dringo
- * @version 2021-11-10 First implementation
  * @since 2021-11-10
+ * @version 2022-01-07 first working version
  */
 
 public abstract class EditableTagItem extends EditableMetaInfoItem {
@@ -134,13 +134,6 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
   }
 
   /**
-   * @return the tagInfo object describing data type etc of the tag
-   */
-  public ExifTagInfo getExifTag() {
-    return exifTagInfo;
-  }
-
-  /**
    * read the children into the oberservable list to show them in the TreeTableView
    * not used with editable directory/tag structure, because this structure is constant
    *
@@ -202,4 +195,12 @@ public abstract class EditableTagItem extends EditableMetaInfoItem {
   public StringProperty getValueString() {
     return valueString; //no lazy load, so valueString can be returned directly
   }
+
+  public ExifTagInfo getExifTagInfo() {
+    return exifTagInfo;
+  }
+  public int getTagID(){
+    return exifTagInfo.getId();
+  }
+
 }

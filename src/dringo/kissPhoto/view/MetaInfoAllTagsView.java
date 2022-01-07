@@ -10,8 +10,10 @@ import dringo.kissPhoto.model.MediaFileTagged;
 import dringo.kissPhoto.model.Metadata.MetaInfoItem;
 import dringo.kissPhoto.model.Metadata.MetaInfoTreeItem;
 import dringo.kissPhoto.model.Metadata.RootItem;
+import dringo.kissPhoto.model.Metadata.TagItem;
 import dringo.kissPhoto.view.viewerHelpers.MetaInfoAllTagsViewContextMenu;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
+import javafx.application.Platform;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
@@ -19,7 +21,6 @@ import javafx.scene.control.TreeTableView;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.StackPane;
 
 import static dringo.kissPhoto.KissPhoto.language;
 
@@ -45,13 +46,14 @@ import static dringo.kissPhoto.KissPhoto.language;
  *
  *
  * @author Dringo
+ * @version 2022-01-07 the view is now a TreeView instead of containing one. Added cooperation with Editable TagsView
  * @version 2021-11-10 allTagsView now in a tab, so window handling functionality moved to the surrounding MetaInfoView
  * @version 2021-11-07 support for showing a tag in FileTableView added
  * @since 2021-11-07
  */
 
 
-public class MetaInfoAllTagsView extends StackPane {
+public class MetaInfoAllTagsView extends TreeTableView<MetaInfoItem> {
   //default values if value not in global settings
   private static final double DEFAULT_TYPE_COLUMN_WIDTH = 80;
   private static final double DEFAULT_KEY_COLUMN_WIDTH = 250;
@@ -60,7 +62,6 @@ public class MetaInfoAllTagsView extends StackPane {
   private static final String KEY_COLUMN_WIDTH = "metaInfoView_KeyColumnWidth";
   private static final String SELECTED_KEY_PATH = "metaInfoView_SelectedKeyPath";
 
-  private final TreeTableView<MetaInfoItem> treeTableView = new TreeTableView<>();
   //connect columns to data
   // param.getValue() returns the TreeItem<MetaInfoItem> instance for a particular TreeTableView row,
   // param.getValue().getValue() returns the MetaInfoItem instance inside the TreeItem<MetaInfoItem>
@@ -75,34 +76,37 @@ public class MetaInfoAllTagsView extends StackPane {
   private ObservableStringList userSelectionPath = null; //same as above as a String-Path. This is used as a cached value for userSelection which is valid from last getSelectionPath until user changes selection
   private boolean freezeUserSelection; //do not change currentSelection while loading new media, so that the selection can be restored after loading
 
+  MetaInfoView metaInfoView; //link to the view we are contained in
   private MediaFile currentMediaFile = null; //if invisible then setMedia only stores here what has to be loaded if MetaInfoView becomes visible (=active), null while visible
 
   /**
    * Create an empty TreeTableView.
    * setMediaFile(mediaFile) will connect it later to the current mediaFile
    */
-  public MetaInfoAllTagsView() {
+  public MetaInfoAllTagsView(MetaInfoView metaInfoView) {
 
+    this.metaInfoView = metaInfoView;
     keyColumn.setCellValueFactory(param -> param.getValue().getValue().getKeyString());
     keyColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
-    treeTableView.getColumns().add(keyColumn);
+    getColumns().add(keyColumn);
 
     //for testing purpose only
     typeColumn.setCellValueFactory(param -> param.getValue().getValue().getExifIDString());
     typeColumn.setPrefWidth(DEFAULT_TYPE_COLUMN_WIDTH);
-    treeTableView.getColumns().add(typeColumn);     ///////////////////uncomment this line for test purpose to show the column with tag type ("Exif ID of TAG")
+    getColumns().add(typeColumn);     ///////////////////uncomment this line for test purpose to show the column with tag type ("Exif ID of TAG")
     //note: if this column should be displayed in a release: don't forget to adjust the Column-With binding to be adapted  for valueColumn two lines below
     valueColumn.setCellValueFactory(param -> param.getValue().getValue().getValueString());
     valueColumn.prefWidthProperty().bind(widthProperty().subtract(keyColumn.widthProperty())); //the rest of the available space
 
-    treeTableView.getColumns().add(valueColumn);
+    getColumns().add(valueColumn);
 
-    treeTableView.setShowRoot(false);
+    setShowRoot(false);
 
     installSelectionListener();
+    installKeyHandlers();
 
     //drag drop support to draw a tag to the fileTableColumn
-    treeTableView.setOnDragDetected(event -> {
+    setOnDragDetected(event -> {
       trySelectTagIfDirectoryIsSelected();
       if (getUserSelectionPath().getSize() == 3){ //only if valid selection
         ClipboardContent clipboardContent = new ClipboardContent();
@@ -116,25 +120,43 @@ public class MetaInfoAllTagsView extends StackPane {
     //-----install bubble help ------------
     Tooltip tooltip = new Tooltip(language.getString("note.you.can.drag.a.meta.tag.to.the.file.table.to.use.it.there"));
     tooltip.setShowDelay(ViewerControlPanel.TOOLTIP_DELAY); //same delay like in viewer control panel
-    treeTableView.setTooltip(tooltip); //the text will be set whenever selection is changed (focus change listener)
+    setTooltip(tooltip); //the text will be set whenever selection is changed (focus change listener)
 
 
     //------------ install Context menu
     contextMenu = new MetaInfoAllTagsViewContextMenu(this);
 
     //hide context menu if clicked "somewhere else" or request focus on mouse click
-    treeTableView.setOnMouseClicked(mouseEvent -> {
+    setOnMouseClicked(mouseEvent -> {
       if (contextMenu.isShowing()) {
         contextMenu.hide(); //this closes the context Menu
         mouseEvent.consume();
       } else {
-        treeTableView.requestFocus();
+        requestFocus();
+      }
+
+      //double-click tries to edit the current tag in MetaInfoEditableTagsView
+      if (mouseEvent.getClickCount()>1){
+        startEditInEditableTab();
+        mouseEvent.consume();
       }
     });
 
-    treeTableView.setOnContextMenuRequested(contextMenuEvent -> contextMenu.show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY()));
+    setOnContextMenuRequested(contextMenuEvent -> contextMenu.show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY()));
+  }
 
-    getChildren().add(treeTableView);
+  /**
+   * try to edit the current tag in MetaInfoEditableTagsView
+   * if the current item is not a tag or the tag cannot be found in MetaInfoEditableTagsView then nothing happens
+   */
+  public void startEditInEditableTab(){
+    if (userSelection != null ){
+      MetaInfoItem item = userSelection.getValue();
+      if (item instanceof TagItem){
+        metaInfoView.editTag(((TagItem) item).getTagID());
+      }
+
+    }
   }
 
   public void setOtherViews(FileTableView fileTableView) {
@@ -142,11 +164,37 @@ public class MetaInfoAllTagsView extends StackPane {
   }
 
   private void installSelectionListener() {
-    treeTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+    getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
       //do not change currentSelection while loading new media, so that the selection can be restored after loading
       if (!freezeUserSelection) {
         userSelection = newValue;
         userSelectionPath = null; //invalidate the cached path for the selection (getUserSelectionPath() will update it)
+      }
+    });
+  }
+  private void installKeyHandlers() {
+    setOnKeyPressed(keyEvent -> {
+      switch (keyEvent.getCode()) {
+        //Edit
+        case F2,F3: //F2 (from context menu) does not work so here a key listener ist installed for F2
+          //accept also F3, because this was the way back to MetaInfoAllTagsView from MetaInfoEditableTagsView
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
+            startEditInEditableTab();
+            keyEvent.consume();
+          }
+          break;
+      }
+    });
+
+    //also consume the mouse up events to prevent the main menu react on the same event handled already by key down
+    setOnKeyReleased(keyEvent -> {
+      switch (keyEvent.getCode()) {
+        //Edit
+        case F2, F3: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed additionally
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
+            keyEvent.consume();
+          }
+          break;
       }
     });
   }
@@ -156,13 +204,35 @@ public class MetaInfoAllTagsView extends StackPane {
     fileTableView.defineMetaInfoColumn(getUserSelectionPath()); //will be ignored with directories, has only an effect for tags
   }
 
+  public boolean selectTag(int tagID){
+    MetaInfoTreeItem item = (MetaInfoTreeItem) getRoot();
+    if (item==null){
+      //maybe only because of lazy laod --> force load and retry
+      setMediaFile(currentMediaFile, true);
+      item = (MetaInfoTreeItem) getRoot();
+    }
+    //search in all directories
+    if (item !=null){  //only if valid root
+      item = item.searchForTag(tagID);
+    }
+    //item is now null (not found) or the tag to be selected (found)
+
+    if (item != null) { //if found
+      getSelectionModel().select(item);
+      scrollTo(getRow(item));
+    }
+
+    Platform.runLater(()->requestFocus() );
+    return item != null;
+  }
+
   private void trySelectTagIfDirectoryIsSelected() {
     if (userSelection==null) return;  //can only happen in the very beginning, when user has not clicked anywhere
 
     if (!userSelection.isLeaf()){ //if a directory is currently selected than select the first tag out of it
       userSelection.setExpanded(true);
       if (userSelection.getChildren().size()>0)
-        treeTableView.getSelectionModel().select(userSelection.getChildren().get(0));
+        getSelectionModel().select(userSelection.getChildren().get(0));
       //if not then the directory remains selected
     }
   }
@@ -193,7 +263,6 @@ public class MetaInfoAllTagsView extends StackPane {
   public ObservableStringList getUserSelectionPath() {
     if (userSelectionPath == null)  //update only if selection has been changed since last time
       userSelectionPath = getPath(userSelection);
-
     return userSelectionPath;
   }
 
@@ -225,9 +294,10 @@ public class MetaInfoAllTagsView extends StackPane {
    * if not even the root is found then the selection is cleared
    *
    * @param path the tree path to be expanded and selected
+   * @return the item, that has been selected or null if nothing could be selected
    */
-  private void selectPath(ObservableStringList path) {
-    TreeItem<MetaInfoItem> item = treeTableView.getRoot();
+  private TreeItem<MetaInfoItem> selectPath(ObservableStringList path) {
+    TreeItem<MetaInfoItem> item = getRoot();
     int pathIndex = path.size() - 2; //start at the end of the list (-1 because indices are 0-based), ignore the invisible root (-1)
     boolean found = true; //if element has been found
     while (pathIndex >= 0) {
@@ -244,38 +314,41 @@ public class MetaInfoAllTagsView extends StackPane {
         break;    //while
       pathIndex--;
     }
-    if (item != null && item != treeTableView.getRoot()) {     //something valid (at least a part of the path) has been found and will be selected now
-      treeTableView.getSelectionModel().select(item);
-      treeTableView.scrollTo(treeTableView.getRow(item));
+    if (item != null && item != getRoot()) {     //something valid (at least a part of the path) has been found and will be selected now
+      getSelectionModel().select(item);
+      scrollTo(getRow(item));
     } else {                                                 //not even the first part was valid so clear selection
-      treeTableView.getSelectionModel().clearSelection();
+      getSelectionModel().clearSelection();
     }
+    return item;
   }
 
 
   /**
    * try to set the root of metadata for the mediaFile to display its meta info
-   * for speeding up reasons this is only performed if MetaInfoView is visible (=active)
+   * for speeding up reasons this is only performed if MetaInfoView is visible/selected Tab or necessary for searching etc (load now=true)
+   * if loadNow = false internal currentMedia is set, but nothing is loaded. Therefore the first access (e.g. seachring) will be able to load the structure (tree) later
    *
    * @param mediaFile for which meta info shall be displayed
+   * @param loadNow false=lazy load=load later=only if shown for the first time, true: load now e.g. because now became visible or for searching a tag
    */
-  public void setMediaFile(MediaFile mediaFile) {
+  public void setMediaFile(MediaFile mediaFile, boolean loadNow) {
     currentMediaFile = mediaFile;
-    System.out.println("MetaInfoAllTagsView.setMedia");
 
-    if (isVisible()) {
+    if (loadNow) {
       if (mediaFile instanceof MediaFileTagged) {
         //status here: mediaFile is tagged and not null
         MetaInfoTreeItem metaInfoTreeItem = ((MediaFileTagged) mediaFile).getMetaInfoCached(this);
 
         freezeUserSelection = true;
         getUserSelectionPath();  //update the variable if necessary
-        treeTableView.setRoot(metaInfoTreeItem); //metaInfoTreeItem might be null = empty if there is no metadata available
-        selectPath(userSelectionPath); //try to the select the same element as before in the new tree
+        setRoot(metaInfoTreeItem); //metaInfoTreeItem might be null = empty if there is no metadata available
+        TreeItem<MetaInfoItem> selection = selectPath(userSelectionPath); //try to the select the same element as before in the new tree
+        if (selection != null) userSelection = selection; //if successfully selected then init userSelection with it
         freezeUserSelection = false;
       } else {
         freezeUserSelection = true; //do not change user selection until a tagged file is loaded again
-        treeTableView.setRoot(null); //do not show anything
+        setRoot(null); //do not show anything
       }
     }
   }

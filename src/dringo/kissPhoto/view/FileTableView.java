@@ -139,6 +139,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private final Tooltip tooltip = new Tooltip();
 
   private boolean isMovingFiles = false; //ignore selection refresh events while movingUp/Dn because selection has to be rebuilt with every step there, but effectively it does not change
+  private boolean enableSelectionListener = true; //will be disabled while loading to prevent from many unecessary change events each would cause setMedia...
   /**
    * constructor will try to open the passed file or foldername
    * if there is no such file or folder an empty list is shown
@@ -279,29 +280,29 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   private void installSelectionHandler(MediaContentView mediaContentView) {
     getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
-      if (isMovingFiles) return; //ignore refresh events while movingUp/Dn because selection has to be rebuilt with every step there, but effectively it does not change
+      if (enableSelectionListener && !isMovingFiles) {
+        //set selected media in mediaContentView (or null if not valid)
+        if (newValue.intValue() >= 0) { //only if selection is valid
+          lastSelection = mediaFileList.getFileList().get(newValue.intValue());
+          showMedia(lastSelection, null);
+          setTooltipText(lastSelection);
+          mediaFileList.preLoadMedia(newValue.intValue(), mediaContentView);
+        } else {
+          if (mediaFileList.getFileList().size() <= 0) {
+            //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
+            //keep lastSelection, so the sortOrderChange-Listener can restore selection
 
-      //set selected media in mediaContentView (or null if not valid)
-      if (newValue.intValue() >= 0) { //only if selection is valid
-        lastSelection = mediaFileList.getFileList().get(newValue.intValue());
-        showMedia(lastSelection, null);
-        setTooltipText(lastSelection);
-        mediaFileList.preLoadMedia(newValue.intValue(), mediaContentView);
-      } else {
-        if (mediaFileList.getFileList().size() <= 0) {
-          //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
-          //keep lastSelection, so the sortOrderChange-Listener can restore selection
-
-          //invalidate selection
-          showMedia(null, null);
-          lastSelection = null;
+            //invalidate selection
+            showMedia(null, null);
+            lastSelection = null;
+          }
         }
       }
     });
 
-    //bugfix of Java-FX Table-Edit: guarantee that always a valid column is selected to avoid NPE during startEdit
+    //guarantee that always a valid column is selected to avoid NPE during startEdit
     getFocusModel().focusedCellProperty().addListener((observable, oldValue, newValue) -> {
-      if (newValue.getTableColumn() == null){
+      if (enableSelectionListener && newValue.getTableColumn() == null){
         getSelectionModel().select(newValue.getRow(), descriptionColumn);
       }
     });
@@ -778,6 +779,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       String errMsg = "";
       try {
         getSelectionModel().clearSelection();  //prevent the selection listener from doing nonsense while loading
+        enableSelectionListener = false;
+
         errMsg = mediaFileList.openFolder(newFileOrFolder);
 
         if (errMsg.length() == 0) {
@@ -827,7 +830,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     refresh();
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
     primaryStage.requestFocus();
-
+    enableSelectionListener = true;
 
   }
 
@@ -868,7 +871,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * (rename, time stamp, rotate, flip, ...)
    */
   public synchronized void saveFolder() {
-
     fileChangeWatcher.pauseWatching();  //ignore own changes in filesystem
     MediaFile currentFile = getFocusModel().getFocusedItem();
     int currentIndex = getFocusModel().getFocusedIndex();

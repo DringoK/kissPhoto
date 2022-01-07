@@ -20,8 +20,8 @@ import mediautil.image.jpeg.Exif;
  * <p/>
  *
  * @author Dringo
- * @version 2021-11-13 First implementation: on an abstract level same as non editable
  * @since 2021-11-13
+ * @version 2022-01-07 first working version
  */
 
 public abstract class EditableMetaInfoItem extends MetaInfoItem {

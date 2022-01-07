@@ -8,6 +8,7 @@ import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoItem;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoTreeItem;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableRootItem;
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItem;
 import dringo.kissPhoto.view.MetaInfoEditableTagsViewHelper.EditableTagTextFieldCellFactory;
 import dringo.kissPhoto.view.viewerHelpers.MetaInfoEditableTagsViewContextMenu;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
@@ -41,7 +42,7 @@ import static dringo.kissPhoto.KissPhoto.language;
  * <p/>
  *
  * @author Dringo
- * @version 2021-11-13
+ * @version 2022-01-07 meta info writing supported
  * @since 2021-11-13
  */
 
@@ -75,13 +76,15 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
   private ObservableStringList userSelectionPath = null; //same as above as a String-Path. This is used as a cached value for userSelection which is valid from last getSelectionPath until user changes selection
   private boolean freezeUserSelection; //do not change currentSelection while loading new media, so that the selection can be restored after loading
 
+  private MetaInfoView metaInfoView; //link to the view we are contained in
   private MediaFile currentMediaFile = null; //if invisible then setMedia only stores here what has to be loaded if MetaInfoView becomes visible (=active), null while visible
 
   /**
    * Create an empty TreeTableView.
    * setMediaFile(mediaFile) will connect it later to the current mediaFile
    */
-  public MetaInfoEditableTagsView() {
+  public MetaInfoEditableTagsView(MetaInfoView metaInfoView) {
+    this.metaInfoView = metaInfoView;
 
     keyColumn.setCellValueFactory(param -> param.getValue().getValue().getKeyString());
     keyColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
@@ -106,12 +109,10 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     installSelectionListener();
     installKeyHandlers();
 
-
     //-----install bubble help ------------
     Tooltip tooltip = new Tooltip(language.getString("edit.the.meta.info.entries.here"));
     tooltip.setShowDelay(ViewerControlPanel.TOOLTIP_DELAY); //same delay like in viewer control panel
     setTooltip(tooltip); //the text will be set whenever selection is changed (focus change listener)
-
 
     //------------ install Context menu
     contextMenu = new MetaInfoEditableTagsViewContextMenu(this);
@@ -123,6 +124,11 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
         mouseEvent.consume();
       } else {
         requestFocus();
+      }
+
+      //double-click will start edit even for empty cells
+      if (mouseEvent.getClickCount()>1){
+        editCurrentTag();
       }
     });
 
@@ -147,27 +153,33 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     setOnKeyPressed(keyEvent -> {
       switch (keyEvent.getCode()) {
         //Edit
-        case F2: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
+        case F2: //F2 (from context menu) does not work, so a key listener ist installed
           if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
             editCurrentTag();
             keyEvent.consume();
           }
           break;
+        case F3: //F3 (from context menu) does not work, so a key listener ist installed
+          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
+            showTagInAllTagsView();
+            keyEvent.consume();
+          }
+          break;
       }
     });
 
-
-    //also consume the mouse up events to prevent the main menu react on the same event handled already by key down
+    //also consume the key up events to prevent the main menu react on the same event handled already by key down
     setOnKeyReleased(keyEvent -> {
       switch (keyEvent.getCode()) {
         //Edit
-        case F2: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed additionally
+        case F2, F3:
           if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
             keyEvent.consume();
           }
           break;
       }
     });
+
   }
 
   /**
@@ -209,6 +221,27 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
   public void addCurrentTagToFileTable() {
     trySelectTagIfDirectoryIsSelected(); //ignore the invalid call
     fileTableView.defineMetaInfoColumn(getUserSelectionPath()); //will be ignored with directories, has only an effect for tags
+  }
+
+  public boolean selectTag(int tagID){
+    EditableMetaInfoTreeItem item = (EditableMetaInfoTreeItem) getRoot();
+    if (item==null){
+      //maybe only because of lazy laod --> force load and retry
+      setMediaFile(currentMediaFile, true);
+      item = (EditableMetaInfoTreeItem) getRoot();
+    }
+    //search in all directories
+    if (item !=null){  //only if valid root
+      item = item.searchForTag(tagID);
+    }
+    //item is now null (not found) or the tag to be selected (found)
+
+    if (item != null) { //if found
+      getSelectionModel().select(item);
+      scrollTo(getRow(item));
+    }
+
+    return item != null;
   }
 
   private void trySelectTagIfDirectoryIsSelected() {
@@ -282,7 +315,7 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
    *
    * @param path the tree path to be expanded and selected
    */
-  private void selectPath(ObservableStringList path) {
+  private TreeItem<EditableMetaInfoItem> selectPath(ObservableStringList path) {
     TreeItem<EditableMetaInfoItem> item = getRoot();
     if (item != null) {
       int pathIndex = path.size() - 2; //start at the end of the list (-1 because indices are 0-based), ignore the invisible root (-1)
@@ -305,23 +338,25 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     if (item != null && item != getRoot()) {     //something valid (at least a part of the path) has been found and will be selected now
       getSelectionModel().select(item);
       scrollTo(getRow(item));
+      return item;
     } else {                                                 //not even the first part was valid so clear selection
       getSelectionModel().clearSelection();
+      return null;
     }
   }
 
   /**
    * try to set the root of the tree to display the editable meta info
-   * for speeding up reasons this is only performed if MetaInfoView is visible (=active)
+   * for speeding up reasons this is only performed if MetaInfoView is visible/selected Tab or necessary for searching etc (load now=true)
+   * if loadNow = false internal currentMedia is set, but nothing is loaded. Therefore the first access (e.g. seachring) will be able to load the structure (tree) later
    *
    * @param mediaFile for which meta info shall be displayed
+   * @param loadNow false=lazy load=load later=only if shown for the first time, true: load now e.g. because now became visible or for searching a tag
    */
-  public void setMediaFile(MediaFile mediaFile) {
+  public void setMediaFile(MediaFile mediaFile, boolean loadNow) {
     currentMediaFile = mediaFile;
-    System.out.println("MetaInfoEditableTagsView.setMedia");
 
-
-    if (isVisible()) {
+    if (loadNow) {
       if (mediaFile instanceof MediaFileTaggedEditable) {
         //status here: mediaFile is tagged, editable and not null
         EditableMetaInfoTreeItem metaInfoTreeItem = ((MediaFileTaggedEditable) mediaFile).getMetaInfoCached(this);
@@ -329,7 +364,8 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
         freezeUserSelection = true;
         getUserSelectionPath();  //update the variable if necessary
         setRoot(metaInfoTreeItem); //metaInfoTreeItem might be null = empty if there is no metadata available
-        selectPath(userSelectionPath); //try to the select the same element as before in the new tree
+        TreeItem<EditableMetaInfoItem> selection = selectPath(userSelectionPath); //try to the select the same element as before in the new tree
+        if (selection != null) userSelection = selection; //if successfully selected then init userSelection with it
         freezeUserSelection = false;
       } else {
         freezeUserSelection = true; //do not change user selection until a tagged file is loaded again
@@ -354,6 +390,19 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     else
       return null;
   }
+
+  /**
+   * try to select the current tag in MetaInfoAllTagsView
+   * if the current item is not a tag or the tag cannot be found in MetaInfoAllTagsView then nothing happens
+   */
+  public void showTagInAllTagsView(){
+    if (userSelection != null){
+      EditableMetaInfoItem item = userSelection.getValue();
+      if (item instanceof EditableTagItem){
+        metaInfoView.selectTagInAllTagsView(((EditableTagItem) item).getTagID());
+      }
+    }
+  };
 
   public FileTableView getFileTableView() {
     return fileTableView;

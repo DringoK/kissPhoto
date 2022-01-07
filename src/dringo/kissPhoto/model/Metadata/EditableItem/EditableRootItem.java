@@ -20,7 +20,6 @@ import mediautil.image.jpeg.Exif;
  *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p>
- * This class wraps mediautils Exif (AbstractImageInfo<?>) to enable showing and edit it in a TreeTableView
  * A RootItem will be the root node for the MetaInfoEditableTagsView
  * It consists of Directories (EditableDirectoryItem) which again consist of Tags (EditableTagItem)
  *
@@ -29,8 +28,8 @@ import mediautil.image.jpeg.Exif;
  * <p/>
  *
  * @author Dringo
- * @version 2021-11-13 First implementation
  * @since 2021-11-13
+ * @version 2022-01-07 first working version
  */
 
 public class EditableRootItem extends EditableMetaInfoItem {

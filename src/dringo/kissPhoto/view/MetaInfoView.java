@@ -8,6 +8,8 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 
+import static dringo.kissPhoto.KissPhoto.language;
+
 /**
  * MIT License
  * <p>
@@ -40,8 +42,8 @@ public class MetaInfoView extends TabPane {
   private static final String DETAILS_AREA_DIVIDER_POSITION = "detailsArea_DividerPosition";
   private static final String META_INFO_ACTIVE_TAB = "metaInfoView_ActiveTabe";
 
-  private final MetaInfoAllTagsView metaInfoAllTagsView = new MetaInfoAllTagsView();
-  private final MetaInfoEditableTagsView metaInfoEditableTagsView = new MetaInfoEditableTagsView();
+  private final MetaInfoAllTagsView metaInfoAllTagsView = new MetaInfoAllTagsView(this);
+  private final MetaInfoEditableTagsView metaInfoEditableTagsView = new MetaInfoEditableTagsView(this);
 
   private final SplitPane surroundingPane;    //surroundingPane the splitPane where the metaView lies in. When showing/hiding the dividerPos will be restored
   private final Tab metaInfoAllTagsViewTab;
@@ -66,24 +68,24 @@ public class MetaInfoView extends TabPane {
     heightProperty().addListener((observable, oldValue, newValue) -> onHeightChanged(newValue.doubleValue()));
     visibleProperty().addListener((observable, oldValue, newValue) -> onShowHide());
 
-    metaInfoAllTagsViewTab = new Tab("Contained Tags", metaInfoAllTagsView);
+    metaInfoAllTagsViewTab = new Tab(language.getString("contained.tags.Tab"), metaInfoAllTagsView);
     metaInfoAllTagsViewTab.setClosable(false);
     getTabs().add(metaInfoAllTagsViewTab);
 
-    metaInfoEditableTagsViewTab = new Tab("Edit Tags", metaInfoEditableTagsView);
+    metaInfoEditableTagsViewTab = new Tab(language.getString("edit.tags.tab"), metaInfoEditableTagsView);
     metaInfoEditableTagsViewTab.setClosable(false);
     getTabs().add(metaInfoEditableTagsViewTab);
 
     installKeyHandlers();
 
-    //whenever the activ Tab is changed, setMedia has probably not  (lazy) loaded the file for the new tab, so set it on change:
+    //whenever the active Tab is changed, setMedia has probably not  (lazy) loaded the file for the new tab, so set it on change:
     getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
       if (currentMediaFile instanceof MediaFileTagged) {
         //status here: mediaFile is tagged and not null
         if (newValue == metaInfoAllTagsViewTab)
-          metaInfoAllTagsView.setMediaFile(currentMediaFile);
+          metaInfoAllTagsView.setMediaFile(currentMediaFile, isVisible());
         if (newValue == metaInfoEditableTagsViewTab)
-          metaInfoEditableTagsView.setMediaFile(currentMediaFile);
+          metaInfoEditableTagsView.setMediaFile(currentMediaFile, isVisible());
       }
     });
   }
@@ -98,17 +100,9 @@ public class MetaInfoView extends TabPane {
     metaInfoEditableTagsView.setOtherViews(fileTableView);
   }
 
-  private void installKeyHandlers() {
+    private void installKeyHandlers() {
     setOnKeyReleased(keyEvent -> {   //KeyPressed and KeyTyped are not fired for F2
       switch (keyEvent.getCode()) {
-        //Edit
-        case F2: //F2 (from menu) does not work if multiple lines are selected so here a key listener ist installed for F2
-          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !keyEvent.isMetaDown()) {
-            keyEvent.consume();
-            fileTableView.rename();
-          }
-          break;
-
         //Player
         case SPACE:
           if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && mediaContentView.getPlayerViewer().isVisible()) {
@@ -128,18 +122,9 @@ public class MetaInfoView extends TabPane {
    */
   public void setMediaFile(MediaFile mediaFile) {
     currentMediaFile = mediaFile;
-
-    System.out.println("MetaInfoView.setMedia: (visible="+isVisible() + ") " + mediaFile.getFileOnDiskName());
-
-    if (isVisible()) {
-      if (mediaFile instanceof MediaFileTagged) {
-        //status here: mediaFile is tagged and not null
-        if (metaInfoAllTagsViewTab.isSelected())
-          metaInfoAllTagsView.setMediaFile(mediaFile);
-        if (metaInfoEditableTagsViewTab.isSelected())
-          metaInfoEditableTagsView.setMediaFile(mediaFile);
-      }
-    }
+    //lazy load: if not visible just currentMedia is taken over but nothing is loaded
+    metaInfoAllTagsView.setMediaFile(mediaFile, isVisible() && metaInfoAllTagsViewTab.isSelected());
+    metaInfoEditableTagsView.setMediaFile(mediaFile, isVisible() && metaInfoEditableTagsViewTab.isSelected());
   }
 
   /**
@@ -241,7 +226,7 @@ public class MetaInfoView extends TabPane {
   }
 
   public boolean isValidGpsAvailable(){
-    metaInfoAllTagsView.setMediaFile(currentMediaFile); //just for the case that metadata not yet loaded e.g. because allTagsView is not visible
+    metaInfoAllTagsView.setMediaFile(currentMediaFile, true); //just for the case that metadata not yet loaded e.g. because allTagsView is not visible
     return metaInfoAllTagsView.getGpsCoordinates() != null;
   }
   /**
@@ -251,7 +236,7 @@ public class MetaInfoView extends TabPane {
    * https://www.google.com/maps/place/47°05'29.0"N+8°27'52.0"E
    */
   public void showGPSPositionInGoogleMaps() {
-    metaInfoAllTagsView.setMediaFile(currentMediaFile); //just for the case that metadata not yet loaded e.g. because allTagsView is not visible
+    metaInfoAllTagsView.setMediaFile(currentMediaFile, true); //just for the case that metadata not yet loaded e.g. because allTagsView is not visible
 
     boolean successful = false;
     String gpsCoordinates = metaInfoAllTagsView.getGpsCoordinates();
@@ -260,9 +245,35 @@ public class MetaInfoView extends TabPane {
       successful = AppStarter.tryToBrowse(url);
     }
     if (successful)
-      statusBar.showMessage(gpsCoordinates + " " + KissPhoto.language.getString("opened.in.google.maps"));
+      statusBar.showMessage(gpsCoordinates + " " + language.getString("opened.in.google.maps"));
     else
-      statusBar.showError(KissPhoto.language.getString("no.valid.gps.data.available.for.the.current.media.file"));
+      statusBar.showError(language.getString("no.valid.gps.data.available.for.the.current.media.file"));
+  }
+
+  /**
+   * try to find the tagId in
+   * @param tagId
+   * @return
+   */
+  public boolean editTag(int tagId){
+    boolean successful = metaInfoEditableTagsView.selectTag(tagId);
+    if (successful){
+      getSelectionModel().select(metaInfoEditableTagsViewTab);
+      metaInfoEditableTagsView.editCurrentTag();
+    }else {
+      statusBar.showError(language.getString("current.tag.not.editable.only.exif.tags.can.be.edited"));
+    }
+    return successful;
+  }
+
+  public boolean selectTagInAllTagsView(int tagId){
+    boolean successful = metaInfoAllTagsView.selectTag(tagId);
+    if (successful){
+      getSelectionModel().select(metaInfoAllTagsViewTab);
+    }else {
+      statusBar.showError(language.getString("current.tag.cannot.be.selected.in.alltagsview.it.is.not.yet.contained.in.the.file.change.tag.and.save.file.to.add.it"));
+    }
+    return successful;
   }
 
 }

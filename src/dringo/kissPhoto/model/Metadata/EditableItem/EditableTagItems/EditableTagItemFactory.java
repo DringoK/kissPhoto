@@ -16,8 +16,8 @@ import mediautil.image.jpeg.Exif;
  * <p/>
  *
  * @author Dringo
- * @version 2021-11-13 First implementation
  * @since 2021-11-13
+ * @version 2021-11-13 First implementation
  */
 
 public class EditableTagItemFactory{

@@ -47,14 +47,13 @@ public class MetaInfoEditableTagsViewContextMenu extends ContextMenu {
     });
     getItems().add(editItem);
 
-    final MenuItem addTagtoFileTableItem = new MenuItem(language.getString("show.current.tag.in.file.table.s.column"));
-    //addTagtoFileTableItem.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.CONTROL_DOWN));
-    addTagtoFileTableItem.setOnAction(event -> {
+    final MenuItem editItemInEditableView = new MenuItem(language.getString("show.tag.in.the.contained.tags.tab"));
+    editItemInEditableView.setAccelerator(new KeyCodeCombination(KeyCode.F3));
+    editItemInEditableView.setOnAction(event -> {
       event.consume();
-      metaInfoEditableTagsView.addCurrentTagToFileTable();
+      metaInfoEditableTagsView.showTagInAllTagsView();
     });
-    getItems().add(addTagtoFileTableItem);
-
+    getItems().add(editItemInEditableView);
 
   }
 

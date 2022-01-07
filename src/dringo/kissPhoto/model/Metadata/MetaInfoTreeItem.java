@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model.Metadata;
 
+
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
 
@@ -58,5 +59,33 @@ public class MetaInfoTreeItem extends TreeItem<MetaInfoItem> {
 
     return children;
   }
+
+  /**
+   * recursive search for tagID
+   * @param tagID the wanted tagID
+   * @return the found treeItem or null if not found
+   */
+  public MetaInfoTreeItem searchForTag(int tagID){
+    MetaInfoItem item = getValue();
+    //found: I am the wanted TreeItem
+    if (item instanceof TagItem && ((TagItem)item).getTagID() == tagID)
+      return this;
+
+    //not found: search in subcomponents
+    ObservableList<TreeItem<MetaInfoItem>> children = getChildren();
+
+    //no children-->stop searching here
+    if (children == null) return null;
+
+    //has children: continue search in children
+    MetaInfoTreeItem result = null;
+    for (TreeItem<MetaInfoItem>child:children){
+      result=((MetaInfoTreeItem) child).searchForTag(tagID);
+      if (result!=null)
+        break;
+    }
+    return result;
+  }
+
 
 }

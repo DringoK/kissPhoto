@@ -1,5 +1,6 @@
 package dringo.kissPhoto.model.Metadata.EditableItem;
 
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItem;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
 
@@ -11,13 +12,12 @@ import javafx.scene.control.TreeItem;
  *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
- * This class wraps an EditableMetaInfoItem (i.e. an EditableTagItem (leaf), DirectoryItem or the MetaDataItem (root))
+ * This class wraps an EditableMetaInfoItem (i.e. an EditableTagItem (leaf), DirectoryItem or the RootItem)
  * <p/>
  *
  * @author Dringo
- * @version 2021-11-07 type column supported
- * @version 2021-03-20 First implementation
- * @since 2021-03-14
+ * @since 2021-11-15
+ * @version 2022-01-07 first working version
  */
 public class EditableMetaInfoTreeItem extends TreeItem<EditableMetaInfoItem> {
   boolean childrenCached = false;
@@ -58,6 +58,33 @@ public class EditableMetaInfoTreeItem extends TreeItem<EditableMetaInfoItem> {
     }
 
     return children;
+  }
+
+  /**
+   * recursive search for tagID
+   * @param tagID the wanted tagID
+   * @return the found treeItem or null if not found
+   */
+  public EditableMetaInfoTreeItem searchForTag(int tagID){
+    EditableMetaInfoItem item = getValue();
+    //found: I am the wanted TreeItem
+    if (item instanceof EditableTagItem && ((EditableTagItem)item).getTagID() == tagID)
+      return this;
+
+    //not found: search in subcomponents
+    ObservableList<TreeItem<EditableMetaInfoItem>> children = getChildren();
+
+    //no children-->stop searching here
+    if (children == null) return null;
+
+    //has children: continue search in children
+    EditableMetaInfoTreeItem result = null;
+    for (TreeItem<EditableMetaInfoItem>child:children){
+      result=((EditableMetaInfoTreeItem) child).searchForTag(tagID);
+      if (result!=null)
+        break;
+    }
+    return result;
   }
 
 }
