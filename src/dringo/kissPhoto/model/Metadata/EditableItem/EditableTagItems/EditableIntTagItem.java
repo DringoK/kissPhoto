@@ -1,9 +1,9 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
 import dringo.kissPhoto.model.MediaFileTaggedEditable;
-import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
+import dringo.kissPhoto.model.Metadata.Exif.ExifTagInfo;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import mediautil.image.jpeg.Entry;
 import mediautil.image.jpeg.Exif;
 
 /**
@@ -24,50 +24,43 @@ import mediautil.image.jpeg.Exif;
  */
 
 public class EditableIntTagItem extends EditableTagItem {
-
   /**
    * Constructor to wrap an Entry object
-   * @param exifTag The object to be wrapped
+   * The int-Value is stored in stringValue only and converted to int or Integer if needed only
+   *
+   * @param exifTagInfo The object to be wrapped
    */
-  public EditableIntTagItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTag exifTag) {
-    super(mediaFile, imageInfo, exifTag);
+  public EditableIntTagItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTagInfo exifTagInfo) {
+    super(mediaFile, imageInfo, exifTagInfo);
   }
 
   /**
-   * @return the text that will be displayed in the value column or null, if not a valid integer is stored for the entry
+   * take over the Entry into the attributes of this EditableTagItem
+   *
+   * @param entry loaded via lljTran
    */
   @Override
-  public StringProperty getValueString() {
-    if (stringValue ==null)  //lazy generation not before it is displayed for the first time
-      if (entry != null && entry.getValue(0) instanceof Integer) //only if the entry already existed in metaInfo
-        stringValue = new SimpleStringProperty("" + entry.getValue(0));
-      else
-        stringValue = new SimpleStringProperty("");
-    return stringValue;
-  }
-
-  /**
-   * @return the int value stored in the entry or 0 if not a valid value is stored
-   */
-  public int getValue(){
-    if (entry.getValue(0) instanceof Integer)
-      return (Integer) (entry.getValue(0));
+  public void initValueFromEntry(Entry entry) {
+    if (entry != null && entry.getValue(0) instanceof Integer) //only if the entry already existed in metaInfo
+      valueString = new SimpleStringProperty("" + entry.getValue(0));
     else
-      return 0;
+      valueString = new SimpleStringProperty("");
   }
 
   /**
-   * save changes of the tag to the exif header
-   * or add the tag if it didn't exist before
+   * put the attributes of this EditableTag Item to the mediaUtil's Exif object, so that it can be written to disk
+   *
+   * @param entry that is ready to be written via lljTran
    */
   @Override
-  public void saveToExifHeader(Exif exifHeader) {
-    super.saveToExifHeader(exifHeader);
+  public void setEntryValueForSaving(Entry entry) {
     //index is always 0 for simple integers
-    try {
-      entry.setValue(0, Integer.parseInt(valueString.get()));
-    }catch (NumberFormatException e){
-      entry.setValue(0, 0); //in error case set 0 as a default value
+    if (entry != null) {
+      try {
+        entry.setValue(0, Integer.parseInt(valueString.get()));
+      } catch (NumberFormatException e) {
+        entry.setValue(0, 0); //in error case set 0 as a default value
+      }
     }
   }
 }

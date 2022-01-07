@@ -13,7 +13,7 @@ import javafx.scene.control.TreeItem;
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p>
  * This class is the base for all wrapped metada classes to be shown in a TreeTableView
- * <li>Metadata object (subclass MetadataItem)</li>
+ * <li>Metadata object (subclass RootItem)</li>
  * <li>Directory (subclass DirectoryItem)</li>
  * <li>Tag (subclass TagItem)</li>
  * <p/>
@@ -37,7 +37,7 @@ public abstract class MetaInfoItem {
   public abstract boolean isLeaf();
 
   /**
-   * read the children into the oberservable list to show them in the TreeTableView
+   * read the children into the observable list to show them in the TreeTableView
    * @param children list of sub items
    */
   public abstract void cacheChildren(ObservableList<TreeItem<MetaInfoItem>> children);

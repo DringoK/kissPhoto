@@ -1,9 +1,9 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
 import dringo.kissPhoto.model.MediaFileTaggedEditable;
-import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
+import dringo.kissPhoto.model.Metadata.Exif.ExifTagInfo;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import mediautil.image.jpeg.Entry;
 import mediautil.image.jpeg.Exif;
 
 /**
@@ -27,33 +27,33 @@ public class EditableStringTagItem extends EditableTagItem {
 
   /**
    * Constructor to wrap an Entry object
-   * @param exifTag The object to be wrapped
+   * @param exifTagInfo The object to be wrapped
    */
-  public EditableStringTagItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTag exifTag) {
-    super(mediaFile, imageInfo, exifTag);
+  public EditableStringTagItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTagInfo exifTagInfo) {
+    super(mediaFile, imageInfo, exifTagInfo);
   }
 
   /**
-   * @return the text that will be displayed in the value column or null if no String is stored in the Entry
+   * take over the Entry into the attributes of this EditableTagItem
+   *
+   * @param entry loaded via lljTran
    */
   @Override
-  public StringProperty getValueString() {
-    if (stringValue == null){   //lazy generation not before it is displayed for the first time
-      if (entry!=null && entry.getValue(0) instanceof String)  //only if the entry already existed in metaInfo
-        stringValue = new SimpleStringProperty((String)entry.getValue(0)); //index is ignored for string-Entries in mediautil.image.jpeg.Entry
-      else
-        stringValue = new SimpleStringProperty("");
-    }
-    return stringValue;
+  public void initValueFromEntry(Entry entry) {
+    if (entry!=null && entry.getValue(0) instanceof String)  //only if the entry already existed in metaInfo
+      valueString = new SimpleStringProperty((String)entry.getValue(0)); //index is ignored for string-Entries in mediautil.image.jpeg.Entry
+    else
+      valueString = new SimpleStringProperty("");
   }
 
   /**
-   * save changes of the tag to the exif header
-   * or add the tag if it didn't exist before
+   * put the attributes of this EditableTag Item to the mediaUtil's Exif object, so that it can be written to disk
+   *
+   * @param entry  that is ready to be written via lljTran
    */
   @Override
-  public void saveToExifHeader(Exif exifHeader) {
-    super.saveToExifHeader(exifHeader);
-    entry.setValue(0, stringValue.get()); //index is ignored in context with strings in media util
+  public void setEntryValueForSaving(Entry entry) {
+    if (entry != null) entry.setValue(0, valueString.get()); //index is ignored in context with strings in media util
   }
+
 }

@@ -9,7 +9,7 @@ import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileTagged;
 import dringo.kissPhoto.model.Metadata.MetaInfoItem;
 import dringo.kissPhoto.model.Metadata.MetaInfoTreeItem;
-import dringo.kissPhoto.model.Metadata.MetadataItem;
+import dringo.kissPhoto.model.Metadata.RootItem;
 import dringo.kissPhoto.view.viewerHelpers.MetaInfoAllTagsViewContextMenu;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.scene.control.Tooltip;
@@ -291,7 +291,7 @@ public class MetaInfoAllTagsView extends StackPane {
     //lazy load the MetaDataTreeItem if possible from cache (see MediaFile.getCachedMetaInfo())
     Metadata metadata = mediaFileTagged.getMetadata(); //get the cached value from the model
     if (metadata != null) { //if Metadata could be loaded or had been loaded before
-      return new MetaInfoTreeItem(new MetadataItem(metadata));
+      return new MetaInfoTreeItem(new RootItem(metadata));
     } else {
       return null;
     }

@@ -3,7 +3,7 @@ package dringo.kissPhoto.model.Metadata.EditableItem;
 import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItemFactory;
 import dringo.kissPhoto.model.Metadata.Exif.ExifDir;
-import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
+import dringo.kissPhoto.model.Metadata.Exif.ExifTagInfo;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -21,7 +21,7 @@ import mediautil.image.jpeg.Exif;
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p>
  * This class wraps mediautils Exif (AbstractImageInfo<?>) to enable showing and edit it in a TreeTableView
- * A MetadataItem will be the root node for the MetaInfoEditableTagsView
+ * A RootItem will be the root node for the MetaInfoEditableTagsView
  * It consists of Directories (EditableDirectoryItem) which again consist of Tags (EditableTagItem)
  *
  * Because AbstractImageInfo does not define Directories a Directory/Tag Tree is built here grouping editable tags
@@ -33,13 +33,13 @@ import mediautil.image.jpeg.Exif;
  * @since 2021-11-13
  */
 
-public class EditableMetadataItem extends EditableMetaInfoItem {
+public class EditableRootItem extends EditableMetaInfoItem {
   ObservableMap<Integer, EditableDirectoryItem> directories = FXCollections.observableHashMap(); //use Factory to generate empty list
   /**
    * Constructor to wrap an imageInfo object
    * @param imageInfo The object to be wrapped
    */
-  public EditableMetadataItem(MediaFileTaggedEditable mediaFile, Exif imageInfo) {
+  public EditableRootItem(MediaFileTaggedEditable mediaFile, Exif imageInfo) {
     super(mediaFile, imageInfo);
     keyString = new SimpleStringProperty("EditableMetadata");  //root will not be shown in GUI
 
@@ -50,7 +50,7 @@ public class EditableMetadataItem extends EditableMetaInfoItem {
     }
 
     //add tags to directories
-    for (ExifTag tag: ExifTag.values()){
+    for (ExifTagInfo tag: ExifTagInfo.values()){
       if (tag.getExifDir() != ExifDir.NONE){
         directories.get(tag.getExifDir().getValue()).addTag(EditableTagItemFactory.getTag(mediaFile, imageInfo, tag));
       }
@@ -59,7 +59,7 @@ public class EditableMetadataItem extends EditableMetaInfoItem {
 
   /**
    * ImageInfo has Directories as its children.
-   * @return true if this MetadataItem has no children
+   * @return true if this RootItem has no children
    */
   @Override
   public boolean isLeaf() {

@@ -16,7 +16,7 @@ import javafx.scene.control.TreeItem;
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p>
  * This class wraps com.drew.metadata.Metadata to enable showing it in a TreeTableView
- * A MetadataItem will be the root node for the MetaDataViewer
+ * A RootItem will be the root node for the MetaDataViewer
  * It consists of Directories (DirectoryItem) which again consist of Tags (TagItem)
  * <p/>
  *
@@ -26,13 +26,13 @@ import javafx.scene.control.TreeItem;
  * @since 2021-03-14
  */
 
-public class MetadataItem extends MetaInfoItem{
+public class RootItem extends MetaInfoItem{
   Metadata metadata; //link to the object to be wrapped
   /**
    * Constructor to wrap a Metadata object
    * @param metadata The object to be wrapped
    */
-  public MetadataItem(Metadata metadata) {
+  public RootItem(Metadata metadata) {
     keyString = new SimpleStringProperty("Metadata");
     this.metadata = metadata;
   }
@@ -40,7 +40,7 @@ public class MetadataItem extends MetaInfoItem{
   /**
    * Metadata has Directories as its children.
    *
-   * @return true if this MetadataItem has no children
+   * @return true if this RootItem has no children
    */
   @Override
   public boolean isLeaf() {
@@ -53,7 +53,7 @@ public class MetadataItem extends MetaInfoItem{
   }
 
   /**
-   * children of a MetadataItem are DirectoryItems
+   * children of a RootItem are DirectoryItems
    * read list of children to cache them
    * @param children list of directories contained in the root of the tree
    */

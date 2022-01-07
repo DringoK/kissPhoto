@@ -85,7 +85,7 @@ public class ImageFile extends MediaFileTaggedEditable {
   }
 
   @Override
-  public boolean canRotate(){
+  public boolean canTransformInFile(){
     String filename = fileOnDisk.getFileName().toString().toLowerCase();
     return filename.endsWith(".jpg") ||
            filename.endsWith(".jpeg") ||
@@ -229,36 +229,36 @@ public class ImageFile extends MediaFileTaggedEditable {
       case TOP_LEFT:
         break;
       case TOP_RIGHT:
-        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE0;
+        rotateOperation = RotateOperation.ROTATE0;
         flipHorizontally = true;
         flipVertically = false;
         break;
       case BOTTOM_RIGHT:
-        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE180;
+        rotateOperation = RotateOperation.ROTATE180;
         flipHorizontally = false;
         break;
       case BOTTOM_LEFT:
-        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE0;
+        rotateOperation = RotateOperation.ROTATE0;
         flipHorizontally = false;
         flipVertically = true;
         break;
       case LEFT_TOP:
-        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE90;
+        rotateOperation = RotateOperation.ROTATE90;
         flipHorizontally = true;
         flipVertically = false;
         break;
       case RIGHT_TOP:
-        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE90;
+        rotateOperation = RotateOperation.ROTATE90;
         flipHorizontally = false;
         flipVertically = false;
         break;
       case RIGHT_BOTTOM:
-        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE270;
+        rotateOperation = RotateOperation.ROTATE270;
         flipHorizontally = true;
         flipVertically = false;
         break;
       case LEFT_BOTTOM:
-        rotateOperation = MediaUtilRotator.RotateOperation.ROTATE270;
+        rotateOperation = RotateOperation.ROTATE270;
         flipHorizontally = false;
         flipVertically = false;
         break;

@@ -571,7 +571,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
    * @return Entry corresponding to the tag
    */
   public Entry getTagValue(int tag, boolean main) {
-    return getTagValue(new Integer(tag), -1, main);
+    return getTagValue(tag, -1, main);
   }
 
   /**
@@ -602,7 +602,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
   }
 
   /**
-   * Sets the Entry corresponding to an Exif tag.
+   * Sets the Entry corresponding to an Exif tag id.
    *
    * @param tag Exif tag id
    * @param subTag Sub Tag if any or pass -1
@@ -626,6 +626,26 @@ public class Exif extends AbstractImageInfo<LLJTran> {
   }
 
   /**
+   * remove the Entry corresponding to an Exif tag id.
+   * //added by dringo
+   *
+   * @param tag Exif tag id
+   * @param main true if it is in the main IFD, false if it is in the Sub IFD.
+   * Most of the commonly used Exif tags are in the main IFD. The Thumbnail
+   * related tags are in the Sub IFD.
+   */
+  public void removeTag(int tag, boolean main){
+    if (main) {
+      if (ifds[0] != null) {
+        ifds[0].removeEntry(tag);
+      }
+    } else {
+      if (ifds[1] != null) {
+        ifds[1].removeEntry(tag);
+      }
+    }
+  }
+  /**
    * Method to get the length of the Thumbnail.
    *
    * @return Length of the Thumbnail
@@ -637,7 +657,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     if (e == null)
       e = getTagValue(STRIPBYTECOUNTS, false);
     if (e != null)
-      retVal = ((Integer) e.getValue(0)).intValue();
+      retVal = (Integer) e.getValue(0);
     return retVal;
   }
 
@@ -653,7 +673,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     if (e == null)
       e = getTagValue(STRIPOFFSETS, false);
     if (e != null)
-      retVal = ((Integer) e.getValue(0)).intValue() + FIRST_IFD_OFF;
+      retVal = (Integer) e.getValue(0) + FIRST_IFD_OFF;
     return retVal;
   }
 
@@ -693,22 +713,22 @@ public class Exif extends AbstractImageInfo<LLJTran> {
           skip(is, super.offset + offset);
           Entry e = getTagValue(STRIPBYTECOUNTS, false);
           if (e != null) {
-            length = ((Integer) e.getValue(0)).intValue();
+            length = (Integer) e.getValue(0);
             int imgwidth = 0, imglength = 0;
             e = getTagValue(IMAGEWIDTH, false);
             if (e != null)
-              imgwidth = ((Integer) e.getValue(0)).intValue();
+              imgwidth = (Integer) e.getValue(0);
             e = getTagValue(IMAGEHEIGHT, false);
             if (e != null)
-              imglength = ((Integer) e.getValue(0)).intValue();
+              imglength = (Integer) e.getValue(0);
             int bitspix = 8;
             e = getTagValue(BITSPERSAMPLE, false);
             if (e != null)
-              bitspix = ((Integer) e.getValue(0)).intValue();
+              bitspix = (Integer) e.getValue(0);
             int simpleperpix = 3;
             e = getTagValue(SAMPLESPERPIXEL, false);
             if (e != null)
-              simpleperpix = ((Integer) e.getValue(0)).intValue();
+              simpleperpix = (Integer) e.getValue(0);
             data = new byte[BMP24_HDR_SIZE];
             System.arraycopy(BMP_SIG, 0, data, 0, BMP_SIG.length);
             offset = 2;
@@ -755,7 +775,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
           is.close();
       }
     }
-    if (success == false)
+    if (!success)
       return super.saveThumbnailImage(os);
     return true;
   }
@@ -806,27 +826,25 @@ public class Exif extends AbstractImageInfo<LLJTran> {
             skip(is, super.offset + offset);
             Entry e = getTagValue(STRIPBYTECOUNTS, false);
             if (e != null) {
-              length = ((Integer) e.getValue(0)).intValue();
+              length = (Integer) e.getValue(0);
               data = new byte[length];
               read(is, data);
               int imgwidth = 0, imglength = 0;
 
               e = getTagValue(IMAGEWIDTH, false);
               if (e != null)
-                imgwidth = ((Integer) e.getValue(0)).intValue();
+                imgwidth = (Integer) e.getValue(0);
               e = getTagValue(IMAGEHEIGHT, false);
               if (e != null)
-                imglength = ((Integer) e.getValue(0))
-                  .intValue();
+                imglength = (Integer) e.getValue(0);
               int bitspix = 8;
               e = getTagValue(BITSPERSAMPLE, false);
               if (e != null)
-                bitspix = ((Integer) e.getValue(0)).intValue();
+                bitspix = (Integer) e.getValue(0);
               int simpleperpix = 3;
               e = getTagValue(SAMPLESPERPIXEL, false);
               if (e != null)
-                simpleperpix = ((Integer) e.getValue(0))
-                  .intValue();
+                simpleperpix = (Integer) e.getValue(0);
               // 1. transfer image to int array
               int[] image = new int[imgwidth * imglength];
               for (int i = 0; i < image.length; i++) {
@@ -874,7 +892,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
   public int getResolutionX() {
     Entry e = getTagValue(EXIFIMAGEWIDTH, true);
     if (e != null)
-      return ((Integer) e.getValue(0)).intValue();
+      return (Integer) e.getValue(0);
     return -1;
   }
 
@@ -888,7 +906,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
       e = new Entry(LONG);
       setTagValue(EXIFIMAGEWIDTH, 0, e, true);
     }
-    e.setValue(0, new Integer(xRes));
+    e.setValue(0, xRes);
   }
 
   /**
@@ -897,7 +915,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
   public int getResolutionY() {
     Entry e = getTagValue(EXIFIMAGELENGTH, true);
     if (e != null)
-      return ((Integer) e.getValue(0)).intValue();
+      return (Integer) e.getValue(0);
     return -1;
   }
 
@@ -911,13 +929,13 @@ public class Exif extends AbstractImageInfo<LLJTran> {
       e = new Entry(LONG);
       setTagValue(EXIFIMAGELENGTH, 0, e, true);
     }
-    e.setValue(0, new Integer(yRes));
+    e.setValue(0, yRes);
   }
 
   public int getMetering() {
     Entry e = getTagValue(METERINGMODE, true);
     if (e != null)
-      return ((Integer) e.getValue(0)).intValue();
+      return (Integer) e.getValue(0);
     return 0;
   }
 
@@ -931,7 +949,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
   public int getExpoProgram() {
     Entry e = getTagValue(EXPOSUREPROGRAM, true);
     if (e != null)
-      return ((Integer) e.getValue(0)).intValue();
+      return (Integer) e.getValue(0);
     return 0;
   }
 
@@ -960,7 +978,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     Entry e = getTagValue(DATETIMEORIGINAL, true);
     if (e != null) {
       String result = e.toString();
-      if (result.indexOf("0000:00:00") < 0)
+      if (!result.contains("0000:00:00"))
         return result;
     }
     return dateformat.format(new Date());
@@ -992,7 +1010,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
   public boolean isFlash() {
     Entry e = getTagValue(FLASH, true);
     if (e != null)
-      return (((Integer) e.getValue(0)).intValue() & 1) == 1;
+      return ((Integer) e.getValue(0) & 1) == 1;
     return false;
   }
 
@@ -1010,20 +1028,17 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     Entry e = getTagValue(COMPRESSEDBITSPERPIXEL, true);
     if (e == null)
       return "Unknown";
-    switch (((Rational) e.getValue(0)).intValue()) {
-      case 1:
-        return "BASIC";
-      case 2:
-        return "NORMAL";
-      case 4:
-        return "FINE";
-    }
-    return getTagValue(COMPRESSEDBITSPERPIXEL, true).toString();
+    return switch (((Rational) e.getValue(0)).intValue()) {
+      case 1 -> "BASIC";
+      case 2 -> "NORMAL";
+      case 4 -> "FINE";
+      default -> getTagValue(COMPRESSEDBITSPERPIXEL, true).toString();
+    };
   }
 
   public String getOrientation() {
     Entry e = getTagValue(ORIENTATION, true);
-    int orientation = ((Integer) e.getValue(0)).intValue();
+    int orientation = (Integer) e.getValue(0);
     if (orientation > 0 && orientation <= Naming.OrientationNames.length)
       return Naming.OrientationNames[orientation - 1];
 
@@ -1059,7 +1074,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     e = getTagValue(FLASH, true);
     if (e != null)
       report
-        .append((((Integer) e.getValue(0)).intValue() == 1) ? ImageResources.YES
+        .append(((Integer) e.getValue(0) == 1) ? ImageResources.YES
           : ImageResources.NO);
     else
       report.append(NA);
@@ -1106,45 +1121,37 @@ public class Exif extends AbstractImageInfo<LLJTran> {
       newPositions = positions;
       // Find out new positions after transformation
       switch (op) {
-        case LLJTran.TRANSPOSE:
-          // n0,n1,n2,n3 => n0,n3,n2,n1
-          newPositions = positions & ((3 << 6) | (3 << 2))
-            | ((positions & 3) << 4) | (positions >> 4) & 3;
-          break;
-        case LLJTran.TRANSVERSE:
-          // n0,n1,n2,n3 => n2,n1,n0,n3
-          newPositions = positions & ((3 << 4) | 3)
-            | ((positions & (3 << 2)) << 4)
-            | ((positions & (3 << 6)) >> 4);
-          break;
-        case LLJTran.ROT_90:
-          // n0,n1,n2,n3 => n3,n0,n1,n2
-          newPositions = (positions >> 2) | ((positions & 3) << 6);
-          break;
-        case LLJTran.ROT_270:
-          // n0,n1,n2,n3 => n1,n2,n3,n0
-          newPositions = ((positions << 2) | (positions >> 6)) & 255;
-          break;
-        case LLJTran.ROT_180:
-          // n0,n1,n2,n3 => n2,n3,n0,n1
-          newPositions = ((positions & 15) << 4) | (positions >> 4);
-          break;
-        case LLJTran.FLIP_H:
-          // n0,n1,n2,n3 => n1,n0,n3,n2
-          newPositions = ((positions & (3 << 4)) << 2)
-            | ((positions & (3 << 6)) >> 2)
-            | ((positions & 3) << 2)
-            | ((positions & (3 << 2)) >> 2);
-          break;
-        case LLJTran.FLIP_V:
-          // n0,n1,n2,n3 => n3,n2,n1,n0
-          newPositions = ((positions & 3) << 6)
-            | ((positions & (3 << 2)) << 2)
-            | ((positions & (3 << 4)) >> 2) | (positions >> 6);
-          break;
-        case LLJTran.NONE:
-        default:
-          break;
+        case LLJTran.TRANSPOSE ->
+            // n0,n1,n2,n3 => n0,n3,n2,n1
+            newPositions = positions & ((3 << 6) | (3 << 2))
+                | ((positions & 3) << 4) | (positions >> 4) & 3;
+        case LLJTran.TRANSVERSE ->
+            // n0,n1,n2,n3 => n2,n1,n0,n3
+            newPositions = positions & ((3 << 4) | 3)
+                | ((positions & (3 << 2)) << 4)
+                | ((positions & (3 << 6)) >> 4);
+        case LLJTran.ROT_90 ->
+            // n0,n1,n2,n3 => n3,n0,n1,n2
+            newPositions = (positions >> 2) | ((positions & 3) << 6);
+        case LLJTran.ROT_270 ->
+            // n0,n1,n2,n3 => n1,n2,n3,n0
+            newPositions = ((positions << 2) | (positions >> 6)) & 255;
+        case LLJTran.ROT_180 ->
+            // n0,n1,n2,n3 => n2,n3,n0,n1
+            newPositions = ((positions & 15) << 4) | (positions >> 4);
+        case LLJTran.FLIP_H ->
+            // n0,n1,n2,n3 => n1,n0,n3,n2
+            newPositions = ((positions & (3 << 4)) << 2)
+                | ((positions & (3 << 6)) >> 2)
+                | ((positions & 3) << 2)
+                | ((positions & (3 << 2)) >> 2);
+        case LLJTran.FLIP_V ->
+            // n0,n1,n2,n3 => n3,n2,n1,n0
+            newPositions = ((positions & 3) << 6)
+                | ((positions & (3 << 2)) << 2)
+                | ((positions & (3 << 4)) >> 2) | (positions >> 6);
+        default -> {    //including LLJTran.NONE
+        }
       }
 
       newTag = 0;
@@ -1162,13 +1169,13 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     if (ifd != null) {
       op.println("print Lvl = " + level);
       Map m = ifd.getEntries();
-      for (Iterator e = m.keySet().iterator(); e.hasNext(); ) {
-        Integer key = ((Integer) e.next());
-        int keyVal = key.intValue();
+      for (Object o : m.keySet()) {
+        Integer key = ((Integer) o);
+        int keyVal = key;
         Entry ent = (Entry) m.get(key);
         op.print("Key = 0x" + Integer.toHexString(keyVal)
-          + " Type = " + ent.getType());
-        Object vals[] = ent.getValues();
+            + " Type = " + ent.getType());
+        Object[] vals = ent.getValues();
         if (vals != null)
           for (int i = 0; i < vals.length; ++i)
             op.print(" Val" + i + " = " + vals[i]);
@@ -1176,10 +1183,9 @@ public class Exif extends AbstractImageInfo<LLJTran> {
           op.print("'" + ent.toString() + "'");
         op.println();
       }
-      IFD subIfds[] = ifd.getIFDs();
+      IFD[] subIfds = ifd.getIFDs();
       if (subIfds != null)
-        for (int i = 0; i < subIfds.length; ++i)
-          printIfds(subIfds[i], level + 1, op);
+        for (IFD subIfd : subIfds) printIfds(subIfd, level + 1, op);
     }
   }
 
@@ -1211,7 +1217,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
    * @param encoding Encoding to be used when for writing out Character
    * information like comments.
    */
-  public void writeInfo(byte markerData[], OutputStream out, int op,
+  public void writeInfo(byte[] markerData, OutputStream out, int op,
                         int options, boolean modifyImageInfo, int imageWidth,
                         int imageHeight, String encoding) throws IOException {
     // TODO: this implementation takes twice memory than needed
@@ -1220,8 +1226,8 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     if (ifds == null)
       throw new IllegalStateException("EXIF data not filled.");
 
-    Entry orgEntries[] = null;
-    Object orgVals[] = null;
+    Entry[] orgEntries = null;
+    Object[] orgVals = null;
     int numOrgEntries = 0;
     Entry orientationEntry = null;
     Object orientationVal = null;
@@ -1229,11 +1235,11 @@ public class Exif extends AbstractImageInfo<LLJTran> {
       && (orientationEntry = getTagValue(ORIENTATION, true)) != null) {
       Object val = orientationEntry.getValue(0);
       // Now Transform Orientation tag
-      int orientation = ((Integer) val).intValue();
+      int orientation = (Integer) val;
       int newOrientation = transformOrientationTag(orientation, op);
       if (orientation != newOrientation) {
         orientationVal = val;
-        orientationEntry.setValue(0, new Integer(newOrientation));
+        orientationEntry.setValue(0, newOrientation);
       }
     }
 
@@ -1247,8 +1253,8 @@ public class Exif extends AbstractImageInfo<LLJTran> {
       if (resX != null) {
         xVal = resX.getValue(0);
         if (imageWidth > 0 && imageHeight > 0) {
-          Integer xVal1 = new Integer(imageWidth);
-          Integer yVal1 = new Integer(imageHeight);
+          Integer xVal1 = imageWidth;
+          Integer yVal1 = imageHeight;
           dimensionModified = true;
           resY.setValue(0, yVal1);
           resX.setValue(0, xVal1);
@@ -1266,22 +1272,19 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     }
 
     switch (op) {
-      case LLJTran.TRANSPOSE:
-      case LLJTran.TRANSVERSE:
-      case LLJTran.ROT_90:
-      case LLJTran.ROT_270:
+      case LLJTran.TRANSPOSE, LLJTran.TRANSVERSE, LLJTran.ROT_90, LLJTran.ROT_270 -> {
         if (!dimensionModified && resX != null && resY != null) {
           dimensionModified = true;
           resY.setValue(0, xVal);
           resX.setValue(0, yVal);
         }
         Entry eResX,
-          eResY;
+            eResY;
         Object eResXVal,
-          eResYVal;
+            eResYVal;
         for (int i = 0; i < 2; i++) {
-          eResX = getTagValue(XRESOLUTION, i == 0 ? true : false);
-          eResY = getTagValue(YRESOLUTION, i == 0 ? true : false);
+          eResX = getTagValue(XRESOLUTION, i == 0);
+          eResY = getTagValue(YRESOLUTION, i == 0);
           if (eResX != null && eResY != null) {
             eResXVal = eResX.getValue(0);
             eResYVal = eResY.getValue(0);
@@ -1297,12 +1300,9 @@ public class Exif extends AbstractImageInfo<LLJTran> {
             eResX.setValue(0, eResYVal);
           }
         }
-        break;
-      case LLJTran.ROT_180:
-      case LLJTran.FLIP_H:
-      case LLJTran.FLIP_V:
-      case LLJTran.NONE:
-      default:
+      }
+      default -> {   //case LLJTran.ROT_180, LLJTran.FLIP_H, LLJTran.FLIP_V, LLJTran.NONE, default //dringo
+      }
     }
 
     if (!modifyImageInfo) {
@@ -1389,7 +1389,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
    * @param newExifOp Output to write out the new Appx data
    * @return True if successful, false otherwise
    */
-  public boolean setThumbnail(byte newThumbnailData[], int startIndex, int len,
+  public boolean setThumbnail(byte[] newThumbnailData, int startIndex, int len,
                               String thumbnailExt, OutputStream newExifOp) throws IOException {
     Entry ent;
     boolean retVal = true;
@@ -1397,7 +1397,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     if (ifds[1] == null) {
       ifds[1] = new IFD(1);
       ent = new Entry(SHORT);
-      ent.setValue(0, new Integer(2));
+      ent.setValue(0, 2);
       ifds[1].addEntry(RESOLUTIONUNIT, ent);
       ent = new Entry(RATIONAL);
       ent.setValue(0, new Rational(180, 1));
@@ -1420,7 +1420,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     if (ImageResources.EXT_JPEG.equals(ext)
       || ImageResources.EXT_JPG.equals(ext)) {
       isJpegThumbnail = true;
-      ent.setValue(0, new Integer(6));
+      ent.setValue(0, 6);
       ifds[1].removeEntry(STRIPOFFSETS);
       ifds[1].removeEntry(STRIPBYTECOUNTS);
       ifds[1].removeEntry(PHOTOMETRICINTERPRETATION);
@@ -1434,16 +1434,16 @@ public class Exif extends AbstractImageInfo<LLJTran> {
         ent = new Entry(LONG);
         setTagValue(JPEGINTERCHANGEFORMAT, 0, ent, false);
       }
-      ent.setValue(0, new Integer(startIndex - 4 - FIRST_IFD_OFF));
+      ent.setValue(0, startIndex - 4 - FIRST_IFD_OFF);
 
       ent = getTagValue(JPEGINTERCHANGEFORMATLENGTH, false);
       if (ent == null) {
         ent = new Entry(LONG);
         setTagValue(JPEGINTERCHANGEFORMATLENGTH, 0, ent, false);
       }
-      ent.setValue(0, new Integer(len));
+      ent.setValue(0, len);
     } else {
-      ent.setValue(0, new Integer(1));
+      ent.setValue(0, 1);
       ifds[1].removeEntry(JPEGINTERCHANGEFORMAT);
       ifds[1].removeEntry(JPEGINTERCHANGEFORMATLENGTH);
 
@@ -1456,14 +1456,14 @@ public class Exif extends AbstractImageInfo<LLJTran> {
         ent = new Entry(LONG);
         setTagValue(STRIPOFFSETS, 0, ent, false);
       }
-      ent.setValue(0, new Integer(startIndex - 4 - FIRST_IFD_OFF));
+      ent.setValue(0, startIndex - 4 - FIRST_IFD_OFF);
 
       ent = getTagValue(STRIPBYTECOUNTS, false);
       if (ent == null) {
         ent = new Entry(LONG);
         setTagValue(STRIPBYTECOUNTS, 0, ent, false);
       }
-      ent.setValue(0, new Integer(len));
+      ent.setValue(0, len);
     }
 
     writeInfo(newThumbnailData, newExifOp, LLJTran.NONE, 0, true);
@@ -1501,7 +1501,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
   // Removes Thumbnail tags if offset/length are not okay. Truncates
   // length if it goes outside marker. Returns null if okay or warning
   // message otherwise.
-  private String correctThumbnailTags(byte markerData[], int leading) {
+  private String correctThumbnailTags(byte[] markerData, int leading) {
     String retVal = null;
     boolean thumbnailTagsPresent = false;
     boolean isJpegThumbnail = false;
@@ -1514,7 +1514,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
       isJpegThumbnail = true;
     if (offsetEnt != null) {
       thumbnailTagsPresent = true;
-      offsetTagVal = ((Integer) offsetEnt.getValue(0)).intValue();
+      offsetTagVal = (Integer) offsetEnt.getValue(0);
       offset = offsetTagVal + FIRST_IFD_OFF + leading;
     }
 
@@ -1525,7 +1525,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     else
       isJpegThumbnail = true;
     if (lengthEnt != null) {
-      length = ((Integer) lengthEnt.getValue(0)).intValue();
+      length = (Integer) lengthEnt.getValue(0);
       thumbnailTagsPresent = true;
     }
     int orgLen = length;
@@ -1572,8 +1572,8 @@ public class Exif extends AbstractImageInfo<LLJTran> {
         removeThumbnailTags();
       else if (lengthOvershoot > 0 || skipCount > 0) {
         retVal = warnBuf.substring(2);
-        lengthEnt.setValue(0, new Integer(length));
-        offsetEnt.setValue(0, new Integer(offsetTagVal));
+        lengthEnt.setValue(0, length);
+        offsetEnt.setValue(0, offsetTagVal);
       }
       warnBuf = null;
     }
@@ -1583,7 +1583,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
 
   /** writes IFD from map and returns length
    */
-  protected int writeIfd(byte markerData[], OutputStream out, int emptySlot,
+  protected int writeIfd(byte[] markerData, OutputStream out, int emptySlot,
                          IFD ifd, int op, int options, boolean isLast, String encoding)
     throws IOException {
     if (ifd == null) {
@@ -1591,7 +1591,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
         System.err.println("Warning: Requested to write NULL IFD, nothing written.");
       return emptySlot;
     }
-    ByteArrayOutputStream buf = new ByteArrayOutputStream(1 * 1024);
+    ByteArrayOutputStream buf = new ByteArrayOutputStream(1024);
     int ne = (ifd.getEntries() == null ? 0 : ifd.getEntries().size())
       + (ifd.getIFDs() == null ? 0 : ifd.getIFDs().length);
     //System.err.println("ifd= "+Integer.toHexString(ifd.getTag())+" entries "+ne+" offset 0x"+Integer.toHexString(emptySlot));
@@ -1602,7 +1602,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     boolean foundBmpThumbnailTag = false;
     while (it.hasNext()) {
       Map.Entry me = (Map.Entry) it.next();
-      int tag = ((Integer) me.getKey()).intValue();
+      int tag = (Integer) me.getKey();
 
       // Skip Thumbnail Tags to process at end. Processing at end
       // keeps Thumbnail tags next to Thumbnail data which programs
@@ -1654,19 +1654,18 @@ public class Exif extends AbstractImageInfo<LLJTran> {
           out.write(n2s(emptySlot, 4));
           boolean signed = (SBYTE == 6 || type >= SSHORT);
           boolean rational = type % RATIONAL == 0;
-          for (int i = 0; i < vs.length; i++) {
+          for (Object v : vs) {
             if (rational) {
-              buf.write(n2s(((Rational) vs[i]).getNum(), 4));
-              buf.write(n2s(((Rational) vs[i]).getDen(), 4));
+              buf.write(n2s(((Rational) v).getNum(), 4));
+              buf.write(n2s(((Rational) v).getDen(), 4));
               emptySlot += 8;
             } else {
-              buf.write(n2s(((Integer) vs[i]).intValue(), tlen));
+              buf.write(n2s((Integer) v, tlen));
               emptySlot += tlen;
             }
           }
         } else {
-          for (int i = 0; i < vs.length; i++)
-            out.write(n2s(((Integer) vs[i]).intValue(), tlen));
+          for (Object v : vs) out.write(n2s((Integer) v, tlen));
           if (vs.length * tlen < 4)
             for (int i = 0; i < 4 - vs.length * tlen; i++)
               // shouldn't be a stopper
@@ -1713,13 +1712,13 @@ public class Exif extends AbstractImageInfo<LLJTran> {
         Entry ent = getTagValue(JPEGINTERCHANGEFORMATLENGTH,
           false);
         if (ent != null)
-          ent.setValue(0, new Integer(l));
+          ent.setValue(0, l);
         out.write(n2s(JPEGINTERCHANGEFORMATLENGTH, 2));
         out.write(n2s(LONG, 2));
         out.write(n2s(1, 4));
         out.write(n2s(l, 4));
         ent = getTagValue(JPEGINTERCHANGEFORMAT, false);
-        ent.setValue(0, new Integer(emptySlot));
+        ent.setValue(0, emptySlot);
         out.write(n2s(JPEGINTERCHANGEFORMAT, 2));
         out.write(n2s(ent.getType(), 2));
         out.write(n2s(1, 4));
@@ -1741,13 +1740,13 @@ public class Exif extends AbstractImageInfo<LLJTran> {
 
         Entry ent = getTagValue(STRIPBYTECOUNTS, false);
         if (ent != null)
-          ent.setValue(0, new Integer(l));
+          ent.setValue(0, l);
         out.write(n2s(STRIPBYTECOUNTS, 2));
         out.write(n2s(LONG, 2));
         out.write(n2s(1, 4));
         out.write(n2s(l, 4));
         ent = getTagValue(STRIPOFFSETS, false);
-        ent.setValue(0, new Integer(emptySlot));
+        ent.setValue(0, emptySlot);
         out.write(n2s(STRIPOFFSETS, 2));
         out.write(n2s(ent.getType(), 2));
         out.write(n2s(1, 4));
@@ -1763,7 +1762,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
     IFD[] ifds = ifd.getIFDs();
     for (int k = 0; ifds != null && k < ifds.length; ) {
       IFD ifd1 = ifds[k];
-      out.write(n2s(ifd1.getTag(), 2));
+      out.write(n2s(ifd1.getTagID(), 2));
       out.write(n2s(ifd1.getType(), 2));
       out.write(n2s(1, 4));
       out.write(n2s(emptySlot, 4));
@@ -1830,7 +1829,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
         for (int j = 0; j < count; j++) {
           if (type % RATIONAL != 0)
             // Not a fraction
-            values[j] = new Integer(s2n(offset, typelen, signed));
+            values[j] = s2n(offset, typelen, signed);
           else
             // The type is either 5 or 10
             values[j] = new Rational(s2n(offset, 4, signed), s2n(
@@ -1840,9 +1839,9 @@ public class Exif extends AbstractImageInfo<LLJTran> {
           // here, pointed to by tag 0xA005. Apparently, it's the
           // "Interoperability IFD", defined in Exif 2.1.
           if ((tag == EXIFOFFSET || tag == INTEROPERABILITYOFFSET || tag == GPSINFO /*|| tag == MAKERNOTE*/)
-            && j == 0 && ((Integer) values[0]).intValue() > 0) {
+            && j == 0 && (Integer) values[0] > 0) {
             IFD iifd;
-            storeIFD(((Integer) values[0]).intValue()
+            storeIFD((Integer) values[0]
               + FIRST_IFD_OFF, iifd = new IFD(tag, type));
             ifd.addIFD(iifd);
           } else
@@ -1866,7 +1865,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
   // The below lookup array gives the numbers on each corner of the oriented
   // image corresponding to each orientation tag represented as a 8-bit
   // number, 2-bits per number on each corner of the oriented image
-  private static final int posForOrientationTags[] = {-1,
+  private static final int[] posForOrientationTags = {-1,
     (1 << 4) + (2 << 2) + 3, // tag 1 => NONE: 0,1,2,3
     (1 << 6) + (3 << 2) + 2, // tag 2 => FLIP_H: 1,0,3,2
     (2 << 6) + (3 << 4) + 1, // tag 3 => ROT_180: 2,3,0,1
@@ -1882,7 +1881,7 @@ public class Exif extends AbstractImageInfo<LLJTran> {
    * operation required to correct the orientation for a given Exif
    * Orientation Tag
    */
-  public static final int opToCorrectOrientation[] = {-1, LLJTran.NONE,
+  public static final int[] opToCorrectOrientation = {-1, LLJTran.NONE,
     LLJTran.FLIP_H, LLJTran.ROT_180, LLJTran.FLIP_V, LLJTran.TRANSPOSE,
     LLJTran.ROT_90, LLJTran.TRANSVERSE, LLJTran.ROT_270};
 

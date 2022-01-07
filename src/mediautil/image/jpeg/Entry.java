@@ -44,6 +44,9 @@ import java.io.Serializable;
  */
 
 public class Entry implements Serializable {
+  private int type;    //e.g. Exif.ASCII
+  private String str;
+  private Object[] value;
 
   public Entry(int type) {
     this.type = type;
@@ -102,8 +105,4 @@ public class Entry implements Serializable {
       value = tempHolder;
     }
   }
-
-  private int type;    //e.g. Exif.ASCII
-  private String str;
-  private Object[] value;
 }

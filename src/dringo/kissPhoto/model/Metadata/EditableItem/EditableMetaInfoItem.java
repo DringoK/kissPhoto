@@ -14,7 +14,7 @@ import mediautil.image.jpeg.Exif;
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p>
  * This class is the base for all wrapped metada classes to be shown in a TreeTableView that are editable
- * <li>Metadata object (subclass MetadataItem)</li>
+ * <li>Metadata object (subclass RootItem)</li>
  * <li>Directory (subclass EditableDirectoryItem)</li>
  * <li>Tag (subclass EditableTagItem)</li>
  * <p/>

@@ -1,9 +1,10 @@
 package dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems;
 
 import dringo.kissPhoto.model.MediaFileTaggedEditable;
-import dringo.kissPhoto.model.Metadata.Exif.ExifTag;
+import dringo.kissPhoto.model.Metadata.Exif.ExifTagInfo;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import mediautil.image.jpeg.Entry;
 import mediautil.image.jpeg.Exif;
 
 /**
@@ -27,31 +28,43 @@ public class EditableDateTimeTagItem extends EditableTagItem {
 
   /**
    * Constructor to wrap an Entry object
-   * @param exifTag The object to be wrapped
+   * DateTime is stored in Displayformat in valueString and converted on demand for saving only
+   * @param exifTagInfo The object to be wrapped
    */
-  public EditableDateTimeTagItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTag exifTag) {
-    super(mediaFile, imageInfo, exifTag );
+  public EditableDateTimeTagItem(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTagInfo exifTagInfo) {
+    super(mediaFile, imageInfo, exifTagInfo);
+  }
+
+  /**
+   * take over the Entry into the attributes of this EditableTagItem
+   *
+   * @param entry loaded via lljTran
+   */
+  @Override
+  public void initValueFromEntry(Entry entry) {
+    if (entry != null && entry.getValue(0) instanceof String) //only if the entry already existed in metaInfo
+      valueString = getDisplayFormat(new SimpleStringProperty((String)(entry.getValue(0)))); //index is ignored for string-Entries in Entry.java
+    else
+      valueString = new SimpleStringProperty("");
+  }
+
+  /**
+   * put the attributes of this EditableTag Item to the mediaUtil's Exif object, so that it can be written to disk
+   *
+   * @param entry that is ready to be written via lljTran
+   */
+  @Override
+  public void setEntryValueForSaving(Entry entry) {
+    if (entry != null) entry.setValue(0, getStoringFormat(valueString));
   }
 
   /**
    * @param value that has be edited as a StringProperty or Integer(0), if conversion was not possible (=ignore conversion exceptions)
    */
   @Override
-  public void setValueFromString(StringProperty value) {
+  public void setValueFromString(SimpleStringProperty value) {
     super.setValueFromString(value);
-    this.stringValue = getDisplayFormat(value);
-  }
-
-  /**
-   * @return the text that will be displayed in the value column or null if no String is stored in the Entry
-   */
-  @Override
-  public StringProperty getValueString() {
-    if (stringValue == null){ //lazy generation not before it is displayed for the first time
-      if (entry != null && entry.getValue(0) instanceof String) //only if the entry already existed in metaInfo
-        stringValue = getDisplayFormat(new SimpleStringProperty((String)(entry.getValue(0)))); //index is ignored for string-Entries in Entry.java
-    }
-    return stringValue;
+    valueString = getDisplayFormat(value);
   }
 
   /**
@@ -84,7 +97,7 @@ public class EditableDateTimeTagItem extends EditableTagItem {
    * @param value to be converted e.g. YYYY:MM:DD HH:MM:SS
    * @return the string with "-" at position 4 and 7
    */
-  private StringProperty getDisplayFormat(StringProperty value){
+  private SimpleStringProperty getDisplayFormat(StringProperty value){
     if (isValidDateTime(value.get())) {
       StringBuilder str = new StringBuilder(value.get());
       str.setCharAt(4, '-'); //after YYYY
@@ -93,15 +106,5 @@ public class EditableDateTimeTagItem extends EditableTagItem {
     }else{
       return null;
     }
-  }
-
-  /**
-   * save changes of the tag to the exif header
-   * or add the tag if it didn't exist before
-   */
-  @Override
-  public void saveToExifHeader(Exif exifHeader) {
-    super.saveToExifHeader(exifHeader);
-    entry.setValue(0, getStoringFormat(valueString));
   }
 }

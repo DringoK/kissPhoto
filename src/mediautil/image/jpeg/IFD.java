@@ -47,22 +47,22 @@ import java.util.Map;
  * @author Dringo. Originally Dmitriy Rogatkin and Suresh Mahalingam (msuresh@cheerful.com)
  */
 public class IFD extends Entry {
-  public IFD(int tag) {
-    this(tag, Exif.UNDEFINED);
+  public IFD(int tagID) {
+    this(tagID, Exif.UNDEFINED);
   }
 
-  public IFD(int tag, int type) {
+  public IFD(int tagID, int type) {
     super(type);   //set Exif attribute type
-    this.tag = tag;
+    this.tagID = tagID;
     entries = new HashMap();
   }
 
   public void addEntry(int tag, Entry entry) {
-    entries.put(new Integer(tag), entry);
+    entries.put(tag, entry);
   }
 
-  public void removeEntry(int tag) {
-    entries.remove(new Integer(tag));
+  public void removeEntry(int tagID) {
+    entries.remove(tagID);
   }
 
   public void addIFD(IFD ifd) {
@@ -73,17 +73,17 @@ public class IFD extends Entry {
     ifds = temp;
   }
 
-  public Entry getEntry(Integer tag, int subTag) {
-    Entry result = (Entry) entries.get(tag);
+  public Entry getEntry(Integer tagID, int subTag) {
+    Entry result = entries.get(tagID);
     if (result != null)
       return result;
     if (subTag > 0) {
       for (int i = 0; i < ifds.length; i++)
-        if (ifds[i].getTag() == subTag)
-          return ifds[i].getEntry(tag, -1);
+        if (ifds[i].getTagID() == subTag)
+          return ifds[i].getEntry(tagID, -1);
     } else {
       for (int i = 0; ifds != null && i < ifds.length; i++) {
-        result = ifds[i].getEntry(tag, -1);
+        result = ifds[i].getEntry(tagID, -1);
         if (result != null)
           break;
       }
@@ -91,30 +91,30 @@ public class IFD extends Entry {
     return result;
   }
 
-  public IFD getIFD(int tag) {
+  public IFD getIFD(int tagID) {
     for (int i = 0; i < ifds.length; i++)
-      if (ifds[i].getTag() == tag)
+      if (ifds[i].getTagID() == tagID)
         return ifds[i];
     return null;
   }
 
-  public int getTag() {
-    return tag;
+  public int getTagID() {
+    return tagID;
   }
 
-  public Entry setEntry(Integer tag, int subTag, Entry entry) {
+  public Entry setEntry(Integer tagID, int subTag, Entry entry) {
     Entry result = null;
     if (subTag > 0) {
       for (int i = 0; i < ifds.length; i++)
-        if (ifds[i].getTag() == subTag)
-          return ifds[i].setEntry(tag, -1, entry);
+        if (ifds[i].getTagID() == subTag)
+          return ifds[i].setEntry(tagID, -1, entry);
     } else if (subTag == 0) {
-      result = (Entry) entries.put(tag, entry);
-    } else {  //subTag == -1 if not sub tag
+      result = entries.put(tagID, entry);
+    } else {  //subTag == -1 if not sub tag id
       for (int i = 0; i < ifds.length; i++) {
-        result = ifds[i].getEntry(tag, -1);
+        result = ifds[i].getEntry(tagID, -1);
         if (result != null) {
-          ifds[i].setEntry(tag, 0, entry);
+          ifds[i].setEntry(tagID, 0, entry);
           break;
         }
       }
@@ -131,7 +131,7 @@ public class IFD extends Entry {
     return ifds;
   }
 
-  protected Map entries;
+  protected Map<Integer, Entry> entries;
   protected IFD[] ifds;
-  protected int tag;
+  protected int tagID;
 }

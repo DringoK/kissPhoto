@@ -230,11 +230,11 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
    * @param rotateOperation to perform
    * @return the number of mediaFiles that cannot save the rotation (only jpgs are supported so far)
    */
-  public synchronized int rotateSelectedFiles(ObservableList<MediaFile> selectedFiles, MediaUtilRotator.RotateOperation rotateOperation) {
+  public synchronized int rotateSelectedFiles(ObservableList<MediaFile> selectedFiles, MediaFile.RotateOperation rotateOperation) {
     int countNotRotatable = 0;
     for (MediaFile mediaFile : selectedFiles) {
       if (!(mediaFile instanceof OtherFile)) mediaFile.rotate(rotateOperation);
-      if (!mediaFile.canRotate()) countNotRotatable++;
+      if (!mediaFile.canTransformInFile()) countNotRotatable++;
     }
     return countNotRotatable;
   }
@@ -257,7 +257,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
       else
         mediaFile.flipVertically();
 
-      if (!mediaFile.canRotate()) countNotRotatable++;
+      if (!mediaFile.canTransformInFile()) countNotRotatable++;
     }
     return countNotRotatable;
   }
@@ -272,7 +272,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   public synchronized int setOrientationAccordingExif(ObservableList<MediaFile> selectedFiles) {
     int countNotRotatable = 0;
     for (MediaFile mediaFile : selectedFiles) {
-      if (mediaFile.canRotate()) //rotate only jpgs, because only here the Exif orientation can be determined
+      if (mediaFile.canTransformInFile()) //rotate only jpgs, because only here the Exif orientation can be determined
         ((ImageFile)mediaFile).setOrientationAccordingExif();
       else
         countNotRotatable++;

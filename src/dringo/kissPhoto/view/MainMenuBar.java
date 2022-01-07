@@ -2,7 +2,7 @@ package dringo.kissPhoto.view;
 
 
 import dringo.kissPhoto.KissPhoto;
-import dringo.kissPhoto.model.MediaUtilRotator;
+import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.view.dialogs.AboutDialog;
 import dringo.kissPhoto.view.dialogs.ExternalEditorsDialog;
 import dringo.kissPhoto.view.dialogs.LanguageDialog;
@@ -405,17 +405,17 @@ public class MainMenuBar extends MenuBar {
 
     MenuItem rotateRightItem = new MenuItem(KissPhoto.language.getString("rotate.jpeg.90.right.lossless"));
     rotateRightItem.setAccelerator(new KeyCodeCombination(KeyCode.R));
-    rotateRightItem.setOnAction(event -> fileTableView.rotateSelectedFiles(MediaUtilRotator.RotateOperation.ROTATE90));
+    rotateRightItem.setOnAction(event -> fileTableView.rotateSelectedFiles(MediaFile.RotateOperation.ROTATE90));
     imageMenu.getItems().add(rotateRightItem);
 
     MenuItem rotateLeftItem = new MenuItem(KissPhoto.language.getString("rotate.jpeg.90.left.lossless"));
     rotateLeftItem.setAccelerator(new KeyCodeCombination(KeyCode.L));
-    rotateLeftItem.setOnAction(event -> fileTableView.rotateSelectedFiles(MediaUtilRotator.RotateOperation.ROTATE270));
+    rotateLeftItem.setOnAction(event -> fileTableView.rotateSelectedFiles(MediaFile.RotateOperation.ROTATE270));
     imageMenu.getItems().add(rotateLeftItem);
 
     MenuItem rotate180Item = new MenuItem(KissPhoto.language.getString("rotate.jpeg.180.lossless"));
     rotate180Item.setAccelerator(new KeyCodeCombination(KeyCode.T));
-    rotate180Item.setOnAction(event -> fileTableView.rotateSelectedFiles(MediaUtilRotator.RotateOperation.ROTATE180));
+    rotate180Item.setOnAction(event -> fileTableView.rotateSelectedFiles(MediaFile.RotateOperation.ROTATE180));
     imageMenu.getItems().addAll(rotate180Item, new SeparatorMenuItem());
 
     MenuItem flipHItem = new MenuItem(KissPhoto.language.getString("flip.jpeg.horizontally.lossless"));

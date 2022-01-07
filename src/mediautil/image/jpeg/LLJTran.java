@@ -68,7 +68,7 @@ import java.io.*;
  * <p></p>
  * Mediautil reworked for KissPhoto bei Dringo
  *
- * ik: main class for JPEG Transformations and header modifications
+ * ik: main class for JPEG Transformations and header modification (File Operations)
  * The following File Structure is assumed (see Figure 8 in Exif2-3.pdf)
  * <ul>
  * <li>SOI=start of Image</li>
@@ -605,9 +605,7 @@ public class LLJTran extends BasicJpegIo
    * @return True if equal, false otherwise
    */
   public boolean equals(Object o) {
-    if (o instanceof LLJTran && ((LLJTran) o).getFile().equals(file))
-      return true;
-    return false;
+    return o instanceof LLJTran && ((LLJTran) o).getFile().equals(file);
   }
 
   /**

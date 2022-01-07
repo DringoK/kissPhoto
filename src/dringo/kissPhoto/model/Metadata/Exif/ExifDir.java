@@ -21,7 +21,7 @@ import static dringo.kissPhoto.KissPhoto.language;
 public enum ExifDir {
   NONE(0, "not.supported"), //If tags are marked with NONE, they will not be shown and are therefore not editable
 
-  //from here on visible branches will be generated in EditableMetadataItem
+  //from here on visible branches will be generated in EditableRootItem
   IMAGE_DESCRIPTION(1, language.getString("image.description")),
   COPYRIGHT(2, language.getString("copyright")),
   DATE_TIME(3, language.getString("date.time")),

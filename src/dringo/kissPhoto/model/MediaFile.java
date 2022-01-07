@@ -88,9 +88,19 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   protected MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
   protected Object content = null;            //cached content
 
+  /**
+   * Constants for rotating (lossless if possible) media.
+   * At least the rotation can be performed on screen.
+   * A subtype of MediaFile can save the rotation.
+   * E.g. MediaFileTaggedEditable saves the rotation lossless using MediaUtil library
+   */
+  public enum RotateOperation{
+    ROTATE0, ROTATE90, ROTATE180, ROTATE270
+  } //clockwise
+
   //every file is rotatable but currently only ImageFiles provide an implementation for saving the rotation
   //planned operation when saved next time: first rotate then flip vertical then horizontal!!!
-  protected MediaFileRotator.RotateOperation rotateOperation = MediaFileRotator.RotateOperation.ROTATE0;
+  protected RotateOperation rotateOperation = RotateOperation.ROTATE0;
   protected boolean flipHorizontally = false;
   protected boolean flipVertically = false;
 
@@ -522,6 +532,18 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * @return true if successful
    */
   public boolean performDeleteFile() {
+    boolean successful = moveFileToDeleted() != null;
+    if (!successful) setRenameError(true);
+    return successful;
+  }
+
+  /**
+   * move the file to the deleted folder (internationalized i.e. in german "aussortiert")
+   * If a file with a given name is existing already in "deleted" the name is made unique by generateUniqueFilename()
+   *
+   * @return the path to the file in the new location (and possibly with new name) or null if an error occurred
+   */
+  public Path moveFileToDeleted(){
     Path deletePath = fileOnDisk.resolveSibling(KissPhoto.language.getString("deletedSubDir")); //delete subfolder is sibling to file
     Path deletedFile = deletePath.resolve(fileOnDisk.getFileName()); //append Filename to get target filename for deleted file
 
@@ -538,11 +560,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
 
       //successful
-      return true;
+      return uniqueDeletedFile;
 
     } catch (IOException e) {
-      setRenameError(true);
-      return false;
+      return null;
     }
   }
 
@@ -941,21 +962,12 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   }
 
   /**
-   * if the subclass of MediaFile provides a specific MediaFileRotater then
+   * if the subclass of MediaFile can save the rotation or flipping changes to disk during specialized saveChanges() then
    *
    * @return true else false
    */
-  public boolean canRotate() {
+  public boolean canTransformInFile() {
     return false;  //standard is false. Can be overwritten in subclass is rotating is supported
-  }
-
-  /**
-   * should be overwritten in the subclass if a specific mediaFileRotater ist available
-   *
-   * @return a mediaFileRotater suitable for a given MediaFile-Type (standard: none)
-   */
-  public MediaFileRotator getMediaFileRotator() {
-    return null;
   }
 
   /**
@@ -964,7 +976,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * @return if orientation has change since last save()
    */
   public boolean isOrientationChanged() {
-    return rotateOperation != MediaUtilRotator.RotateOperation.ROTATE0;
+    return rotateOperation != RotateOperation.ROTATE0;
   }
 
 
@@ -975,11 +987,11 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    *
    * @param operation 90 degree-wise clockwise
    */
-  public void rotate(MediaFileRotator.RotateOperation operation) {
+  public void rotate(RotateOperation operation) {
     boolean wasOrientationChanged = isOrientationChanged(); //remember state before transformation
 
     int rotation = (rotateOperation.ordinal() + operation.ordinal()) % 4; //modulo 4 because 360=90*4
-    rotateOperation = MediaFileRotator.RotateOperation.values()[rotation];
+    rotateOperation = RotateOperation.values()[rotation];
 
     //as rotation is performed first in saveChanges() when rotation changes orientation flipping V/H must be exchanged
     if (wasOrientationChanged != isOrientationChanged()) {
@@ -987,7 +999,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       flipHorizontally = flipVertically;
       flipVertically = temp;
     }
-    if (canRotate()) updateStatusProperty();
+    if (canTransformInFile()) updateStatusProperty();
 
   }
 
@@ -998,7 +1010,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    */
   public void flipHorizontally() {
     flipHorizontally = !flipHorizontally;
-    if (canRotate()) updateStatusProperty();
+    if (canTransformInFile()) updateStatusProperty();
   }
 
   /**
@@ -1007,18 +1019,30 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * if canRotate==false then the flipping will not be saved later and a warning should be shown on GUI
    */
   public void flipVertically() {
-    if (canRotate()) { //only if the specific MediaFile type supports rotation
+    if (canTransformInFile()) { //only if the specific MediaFile type supports rotation
       flipVertically = !flipVertically;
       updateStatusProperty();
     }
   }
 
-  public MediaUtilRotator.RotateOperation getRotateOperation() {
+  /**
+   * reset all planned transformations in the model
+   * e.g. after they have been written to disk
+   */
+  public void resetTransformations(){
+    rotateOperation = RotateOperation.ROTATE0;
+    flipHorizontally = false;
+    flipVertically = false;
+
+    if (canTransformInFile()) updateStatusProperty();
+  }
+
+  public RotateOperation getRotateOperation() {
     return rotateOperation;
   }
 
   public boolean isRotated() {
-    return rotateOperation != MediaUtilRotator.RotateOperation.ROTATE0;
+    return rotateOperation != RotateOperation.ROTATE0;
   }
 
   public boolean isFlippedHorizontally() {
@@ -1040,5 +1064,6 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
 
   public enum SaveResult {ERROR, NEEDS_2ND_TRY, SUCCESSFUL}
+
 }
 

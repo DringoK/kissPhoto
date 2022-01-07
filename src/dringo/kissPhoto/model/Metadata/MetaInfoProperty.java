@@ -1,6 +1,7 @@
 package dringo.kissPhoto.model.Metadata;
 
 import com.drew.metadata.Directory;
+import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
 import dringo.kissPhoto.helper.ObservableStringList;
 import dringo.kissPhoto.model.MediaFileTagged;
@@ -86,17 +87,22 @@ public class MetaInfoProperty extends StringPropertyBase {
     tag = null;
 
     if (tagPath.getSize()>1) { //only if path is long enough to be valid
-      for (Directory directory : mediaFileTagged.getMetadata().getDirectories()) {
-        if (directory.getName().equalsIgnoreCase(tagPath.get(1))) { //if directory found
-          //try to find tag
-          for (Tag searchTag : directory.getTags()) {
-            if (searchTag.getTagName().equalsIgnoreCase(tagPath.get(0))) {
-              this.tag = searchTag;
-              break;
+      Metadata metadata = mediaFileTagged.getMetadata();
+      if (metadata!=null) { //if read successfully
+        for (Directory directory : mediaFileTagged.getMetadata().getDirectories()) {
+          if (directory.getName().equalsIgnoreCase(tagPath.get(1))) { //if directory found
+            //try to find tag
+            for (Tag searchTag : directory.getTags()) {
+              if (searchTag.getTagName().equalsIgnoreCase(tagPath.get(0))) {
+                this.tag = searchTag;
+                break;
+              }
             }
+            if (tag != null) break;
           }
-          if (tag != null) break;
         }
+      } else {
+        //tag remains null
       }
     }
     if (tag != null) {

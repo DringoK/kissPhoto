@@ -12,8 +12,10 @@ import java.util.Map;
  * </p>
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
- * This class defines all editable Exif tags (=entries of an IFD) currently supported by kissPhoto
- * As mediautil is used for writing exif directories all entries are taken over from there
+ * This enum defines all editable Exif tags (=entries of an IFD) currently supported by kissPhoto
+ * together with all information about the tag from the exif standard (see EXIF tags.pdf or https://sno.phy.queensu.ca/~phil/exiftool/TagNames/EXIF.html)
+ * Additionally the exifDir is defined in which it shall be displayed on GUI
+ *
  * Note: currently only "simple" data types string, numbers are supported
  * <p/>
  *
@@ -21,7 +23,7 @@ import java.util.Map;
  * @version 2021-11-10 First implementation
  * @since 2021-11-10
  */
-public enum ExifTag {
+public enum ExifTagInfo {
   DOCUMENTNAME(Exif.DOCUMENTNAME, ExifDir.IMAGE_DESCRIPTION, "Document Name", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
   IMAGEDESCRIPTION(Exif.IMAGEDESCRIPTION, ExifDir.IMAGE_DESCRIPTION, "Image Description", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
   MAKE(Exif.MAKE, ExifDir.OTHER, "Make", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
@@ -41,14 +43,15 @@ public enum ExifTag {
   FILLORDER(Exif.FILLORDER, ExifDir.NONE, "FillOrder", ExifTagDataType.ARRAY_SHORT, ExifTagGroup.IFD0, null),
   STRIPOFFSETS(Exif.STRIPOFFSETS, ExifDir.NONE, "PreviewImageStart", ExifTagDataType.LONG, ExifTagGroup.IFD0, null);
 
-  private final int id;                    //Tag ID = Exif Entry Key
-  private final ExifDir exifDir; //id of the ExifDirectory in which the tag shall be displayed
-  private final String name;               //description to be displayed instead of the tagID
-  private final ExifTagDataType dataType;  //the type of the parameter
-  private final ExifTagGroup group;        //grouping of ExifTags. If the standard does not define a group then use MISC
-  private final Map<Integer, ?> lookupValues;          //possible values allowed for that exif entry or null if all values allowed (if not look-up values)
+  private final ExifDir exifDir;              //id of the ExifDirectory in which the tag shall be displayed
 
-  ExifTag(int entryID, ExifDir exifDir, String entryName, ExifTagDataType dataType, ExifTagGroup group, Map<Integer, ?> lookupValues) {
+  private final int id;                       //Tag ID = Exif Entry Key
+  private final String name;                  //description to be displayed instead of the tagID
+  private final ExifTagDataType dataType;     //the type of the parameter
+  private final ExifTagGroup group;           //grouping of ExifTags. If the standard does not define a group then use MISC
+  private final Map<Integer, ?> lookupValues; //possible values allowed for that exif entry or null if all values allowed (if not look-up values)
+
+  ExifTagInfo(int entryID, ExifDir exifDir, String entryName, ExifTagDataType dataType, ExifTagGroup group, Map<Integer, ?> lookupValues) {
     this.id = entryID;
     this.exifDir = exifDir;
     this.name = entryName;

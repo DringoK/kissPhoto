@@ -7,7 +7,7 @@ import dringo.kissPhoto.model.MediaFileTagged;
 import dringo.kissPhoto.model.MediaFileTaggedEditable;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoItem;
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoTreeItem;
-import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetadataItem;
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableRootItem;
 import dringo.kissPhoto.view.MetaInfoEditableTagsViewHelper.EditableTagTextFieldCellFactory;
 import dringo.kissPhoto.view.viewerHelpers.MetaInfoEditableTagsViewContextMenu;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
@@ -16,7 +16,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
-import mediautil.image.jpeg.Exif;
 
 import static dringo.kissPhoto.KissPhoto.language;
 
@@ -285,21 +284,23 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
    */
   private void selectPath(ObservableStringList path) {
     TreeItem<EditableMetaInfoItem> item = getRoot();
-    int pathIndex = path.size() - 2; //start at the end of the list (-1 because indices are 0-based), ignore the invisible root (-1)
-    boolean found = true; //if element has been found
-    while (pathIndex >= 0) {
-      //search for element in children
-      for (TreeItem<EditableMetaInfoItem> child : item.getChildren()) {
-        found = (child.getValue().getKeyString().getValue().equalsIgnoreCase(path.get(pathIndex)));
-        if (found) {
-          item = child; //take over as current item
-          item.setExpanded(true);
-          break;   //for
+    if (item != null) {
+      int pathIndex = path.size() - 2; //start at the end of the list (-1 because indices are 0-based), ignore the invisible root (-1)
+      boolean found = true; //if element has been found
+      while (pathIndex >= 0) {
+        //search for element in children
+        for (TreeItem<EditableMetaInfoItem> child : item.getChildren()) {
+          found = (child.getValue().getKeyString().getValue().equalsIgnoreCase(path.get(pathIndex)));
+          if (found) {
+            item = child; //take over as current item
+            item.setExpanded(true);
+            break;   //for
+          }
         }
+        if (!found)
+          break;    //while
+        pathIndex--;
       }
-      if (!found)
-        break;    //while
-      pathIndex--;
     }
     if (item != null && item != getRoot()) {     //something valid (at least a part of the path) has been found and will be selected now
       getSelectionModel().select(item);
@@ -339,19 +340,19 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
 
   /**
    * Cache support: lazy load the meta info from media
+   * {MediaFileTaggedEditable.getMetaInfoCached uses this method to get the rootItem}
    *
-   * @param mediaFileTaggedEditable link back to the mediaFile which tries to fill its cache for this view
-   * @return the MetadataTreeItem that should be cached
+   * @param mediaFile link back to the mediaFile which tries to fill its cache for this view
+   * @return the MetaInfoTreeItem that should be cached
    */
-  public EditableMetaInfoTreeItem getViewerSpecificMediaInfo(MediaFileTaggedEditable mediaFileTaggedEditable) {
-    //lazy Load MetaData by calling getMetadata()
+  public EditableMetaInfoTreeItem getViewerSpecificMediaInfo(MediaFileTaggedEditable mediaFile) {
     //lazy load the MetaDataTreeItem if possible from cache (see MediaFile.getCachedMetaInfo())
-    Exif imageInfo = mediaFileTaggedEditable.getEditableImageInfo(); //get the cached value from the model
-    if (imageInfo != null) { //if Metadata could be loaded or has been loaded before
-      return new EditableMetaInfoTreeItem(new EditableMetadataItem(mediaFileTaggedEditable, imageInfo));  //EditableMetadataItem defines the tree structure
-    } else {
+    //or build it
+    EditableRootItem rootItem = mediaFile.readExifHeader();
+    if (rootItem != null)
+      return new EditableMetaInfoTreeItem(rootItem);  //EditableRootItem defines the tree structure
+    else
       return null;
-    }
   }
 
   public FileTableView getFileTableView() {
@@ -364,7 +365,7 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
    * same handler for all columns
    * it is fired in TextFieldCell.commitEdit
    */
-  private class CellEditCommitEventHandler implements EventHandler<TreeTableColumn.CellEditEvent<EditableMetaInfoItem, String>> {
+  private static class CellEditCommitEventHandler implements EventHandler<TreeTableColumn.CellEditEvent<EditableMetaInfoItem, String>> {
     /**
      * Invoked when a specific event of the type for which this handler is
      * registered happens.
