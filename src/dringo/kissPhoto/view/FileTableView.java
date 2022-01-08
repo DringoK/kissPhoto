@@ -51,6 +51,8 @@ import static dringo.kissPhoto.KissPhoto.language;
  * <p/>
  *
  * @author Ingo
+
+ * @version 2022-01-08 improvement getting focus after start edit if double-clicked on empty part of table (without text)
  * @version 2021-11-07 Meta-Info Column added. Only visible while meta-InfoView is visible
  * @version 2021-11-01 context menu added, renumbering simplified
  * @version 2021-01-16 eliminating the slow and error-prone reflection: column.setCellValueFactory(new PropertyValueFactory<>("propertyname") replaced with call back. ToolTipText added
@@ -384,9 +386,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   }
 
   private void installMouseHandlers() {
-    setOnMouseClicked(event -> {
+    setOnMousePressed(event -> {
       if (event.getClickCount() > 1) { //if double clicked
-        rename();
+        Platform.runLater(()->rename());
       }
     });
   }
@@ -1175,9 +1177,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         setEditable(true);       //editable will be reset in TextFieldCell on CommitEdit to avoid startEdit if multiple lines are selected
         edit(getFocusModel().getFocusedIndex(), getFocusModel().getFocusedCell().getTableColumn());
       }
-
     }
-
   }
 
   /**

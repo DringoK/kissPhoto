@@ -62,7 +62,7 @@ public class EditableDirectoryItem extends EditableMetaInfoItem {
    * @return the text that will be displayed in the tree
    */
   @Override
-  public StringProperty getKeyString() {
+  public StringProperty getTagString() {
     return keyString;
   }
 
@@ -82,7 +82,7 @@ public class EditableDirectoryItem extends EditableMetaInfoItem {
    * @return the text that will be displayed in the Exif-ID column
    */
   @Override
-  public StringProperty getExifIDString() {
+  public StringProperty getTagIDString() {
     return null;
     //return new SimpleStringProperty("");
   }

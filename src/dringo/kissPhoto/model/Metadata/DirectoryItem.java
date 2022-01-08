@@ -69,7 +69,7 @@ public class DirectoryItem extends MetaInfoItem {
    * @return the text that will be displayed in the tree column
    */
   @Override
-  public StringProperty getKeyString() {
+  public StringProperty getTagString() {
     if (keyString == null){
       if (directory!=null)
         keyString = new SimpleStringProperty(directory.getName());
@@ -98,7 +98,7 @@ public class DirectoryItem extends MetaInfoItem {
    * @return the text that will be displayed in the type column
    */
   @Override
-  public StringProperty getExifIDString() {
+  public StringProperty getTagIDString() {
     return null;
   }
 }

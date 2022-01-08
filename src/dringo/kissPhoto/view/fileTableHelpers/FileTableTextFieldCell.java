@@ -4,6 +4,7 @@ import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileList;
 import dringo.kissPhoto.view.FileTableView;
 import dringo.kissPhoto.view.inputFields.*;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.ContentDisplay;
@@ -33,6 +34,7 @@ import javafx.scene.input.KeyEvent;
  *
  * @author Ingo
  * @since 2016-11-04
+ * @version 2022-01-08 improvement getting focus after start edit if double-clicked on empty part of table (without text)
  * @version 2021-01-17 support saving the currently editing line, simplify commitEdit and cancelEdit
  * @version 2020-12-20 lambda expressions for event handlers
  * @version 2018-11-17 Ctrl-U now copies information from the line above in edit mode, (Shift) TAB moves to next (prev) column, fixed: keeping caret position fixed
@@ -57,11 +59,13 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
     setGraphic((Node) inputField);
     this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
-    inputField.requestFocus();
-    positionCaretOrSelect(); //works only, if it has the focus ;_)
+    Platform.runLater(() -> {
+      inputField.requestFocus();
+      positionCaretOrSelect(); //works only, if it has the focus ;_)
 
-    ((FileTableView) getTableColumn().getTableView()).resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
-    lastCaretPositionValid = false; //also consume last caret position
+      ((FileTableView) getTableColumn().getTableView()).resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
+      lastCaretPositionValid = false; //also consume last caret position
+    });
   }
 
   /**

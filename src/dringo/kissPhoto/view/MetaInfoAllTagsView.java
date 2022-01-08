@@ -55,7 +55,7 @@ import static dringo.kissPhoto.KissPhoto.language;
 
 public class MetaInfoAllTagsView extends TreeTableView<MetaInfoItem> {
   //default values if value not in global settings
-  private static final double DEFAULT_TYPE_COLUMN_WIDTH = 80;
+  private static final double DEFAULT_TYPE_COLUMN_WIDTH = 50;
   private static final double DEFAULT_KEY_COLUMN_WIDTH = 250;
 
   //IDs for globalSettings
@@ -65,8 +65,8 @@ public class MetaInfoAllTagsView extends TreeTableView<MetaInfoItem> {
   //connect columns to data
   // param.getValue() returns the TreeItem<MetaInfoItem> instance for a particular TreeTableView row,
   // param.getValue().getValue() returns the MetaInfoItem instance inside the TreeItem<MetaInfoItem>
-  private final TreeTableColumn<MetaInfoItem, String> keyColumn = new TreeTableColumn<>(language.getString("key"));
-  private final TreeTableColumn<MetaInfoItem, String> typeColumn =  new TreeTableColumn<>("type"); //for testing purposes only
+  private final TreeTableColumn<MetaInfoItem, String> tagColumn = new TreeTableColumn<>(language.getString("tag"));
+  private final TreeTableColumn<MetaInfoItem, String> tagIDColumn =  new TreeTableColumn<>(language.getString("tag.id"));
   private final TreeTableColumn<MetaInfoItem, String> valueColumn = new TreeTableColumn<>(language.getString("value"));
   private final MetaInfoAllTagsViewContextMenu contextMenu;
   private FileTableView fileTableView;        //some key presses are led to fileTableView
@@ -86,18 +86,16 @@ public class MetaInfoAllTagsView extends TreeTableView<MetaInfoItem> {
   public MetaInfoAllTagsView(MetaInfoView metaInfoView) {
 
     this.metaInfoView = metaInfoView;
-    keyColumn.setCellValueFactory(param -> param.getValue().getValue().getKeyString());
-    keyColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
-    getColumns().add(keyColumn);
+    tagColumn.setCellValueFactory(param -> param.getValue().getValue().getTagString());
+    tagColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
+    getColumns().add(tagColumn);
 
-    //for testing purpose only
-    typeColumn.setCellValueFactory(param -> param.getValue().getValue().getExifIDString());
-    typeColumn.setPrefWidth(DEFAULT_TYPE_COLUMN_WIDTH);
-    getColumns().add(typeColumn);     ///////////////////uncomment this line for test purpose to show the column with tag type ("Exif ID of TAG")
-    //note: if this column should be displayed in a release: don't forget to adjust the Column-With binding to be adapted  for valueColumn two lines below
-    valueColumn.setCellValueFactory(param -> param.getValue().getValue().getValueString());
-    valueColumn.prefWidthProperty().bind(widthProperty().subtract(keyColumn.widthProperty())); //the rest of the available space
+    tagIDColumn.setCellValueFactory(param -> param.getValue().getValue().getTagIDString());
+    tagIDColumn.setPrefWidth(DEFAULT_TYPE_COLUMN_WIDTH);
+    getColumns().add(tagIDColumn);
 
+    valueColumn.setCellValueFactory(param -> param.getValue().getValue().getValueString()); //for displaying
+    valueColumn.prefWidthProperty().bind(widthProperty().subtract(tagColumn.widthProperty()).subtract(tagIDColumn.widthProperty())); //the rest of the available space
     getColumns().add(valueColumn);
 
     setShowRoot(false);
@@ -280,7 +278,7 @@ public class MetaInfoAllTagsView extends TreeTableView<MetaInfoItem> {
     //walk up to the root. item will be the first in the list (index 0)
     TreeItem<MetaInfoItem> i = item;
     while (i != null) {
-      path.add(i.getValue().getKeyString().getValue());
+      path.add(i.getValue().getTagString().getValue());
       i = i.getParent();
     }
     return path;
@@ -303,7 +301,7 @@ public class MetaInfoAllTagsView extends TreeTableView<MetaInfoItem> {
     while (pathIndex >= 0) {
       //search for element in children
       for (TreeItem<MetaInfoItem> child : item.getChildren()) {
-        found = (child.getValue().getKeyString().getValue().equalsIgnoreCase(path.get(pathIndex)));
+        found = (child.getValue().getTagString().getValue().equalsIgnoreCase(path.get(pathIndex)));
         if (found) {
           item = child; //take over as current item
           item.setExpanded(true);
@@ -387,7 +385,7 @@ public class MetaInfoAllTagsView extends TreeTableView<MetaInfoItem> {
    */
   public void storeVisibilityInGlobalSettings() {
     KissPhoto.globalSettings.setProperty(SELECTED_KEY_PATH, getUserSelectionPath().toCSVString());
-    KissPhoto.globalSettings.setProperty(KEY_COLUMN_WIDTH, Double.toString(keyColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(KEY_COLUMN_WIDTH, Double.toString(tagColumn.getWidth()));
   }
 
   /**
@@ -402,9 +400,9 @@ public class MetaInfoAllTagsView extends TreeTableView<MetaInfoItem> {
     }
 
     try {
-      keyColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(KEY_COLUMN_WIDTH)));
+      tagColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(KEY_COLUMN_WIDTH)));
     } catch (Exception e) {
-      keyColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
+      tagColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
     }
   }
 

@@ -49,7 +49,7 @@ import static dringo.kissPhoto.KissPhoto.language;
 
 public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem> {
   //default values if value not in global settings
-  private static final double DEFAULT_TYPE_COLUMN_WIDTH = 80;
+  private static final double DEFAULT_TYPE_COLUMN_WIDTH = 50;
   private static final double DEFAULT_KEY_COLUMN_WIDTH = 250;
 
   //IDs for globalSettings
@@ -59,8 +59,8 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
   //connect columns to data
   // param.getValue() returns the TreeItem<EditableMetaInfoItem> instance for a particular TreeTableView row,
   // param.getValue().getValue() returns the EditableMetaInfoItem instance inside the TreeItem<EditableMetaInfoItem>
-  private final TreeTableColumn<EditableMetaInfoItem, String> keyColumn = new TreeTableColumn<>(language.getString("key"));
-  private final TreeTableColumn<EditableMetaInfoItem, String> typeColumn = new TreeTableColumn<>("Exif ID"); //for testing purposes only
+  private final TreeTableColumn<EditableMetaInfoItem, String> tagColumn = new TreeTableColumn<>(language.getString("tag"));
+  private final TreeTableColumn<EditableMetaInfoItem, String> tagIDColumn = new TreeTableColumn<>(language.getString("tag.id"));
   private final TreeTableColumn<EditableMetaInfoItem, String> valueColumn = new TreeTableColumn<>(language.getString("value"));
 
   EditableTagTextFieldCellFactory tableTextFieldCellFactory = new EditableTagTextFieldCellFactory();
@@ -86,19 +86,17 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
   public MetaInfoEditableTagsView(MetaInfoView metaInfoView) {
     this.metaInfoView = metaInfoView;
 
-    keyColumn.setCellValueFactory(param -> param.getValue().getValue().getKeyString());
-    keyColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
-    getColumns().add(keyColumn);
+    tagColumn.setCellValueFactory(param -> param.getValue().getValue().getTagString());
+    tagColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
+    getColumns().add(tagColumn);
 
-    //for testing purpose only
-    typeColumn.setCellValueFactory(param -> param.getValue().getValue().getExifIDString());
-    typeColumn.setPrefWidth(DEFAULT_TYPE_COLUMN_WIDTH);
-    getColumns().add(typeColumn);     ///////////////////uncomment this line for test purpose to show the column with tag type ("Exif ID of TAG")
-    //note: if this column should be displayed in a release: don't forget to adjust the Column-With binding to be adapted  for valueColumn two lines below
+    tagIDColumn.setCellValueFactory(param -> param.getValue().getValue().getTagIDString());
+    tagIDColumn.setPrefWidth(DEFAULT_TYPE_COLUMN_WIDTH);
+    getColumns().add(tagIDColumn);
 
-    valueColumn.setCellValueFactory(param -> param.getValue().getValue().getValueString());
-    valueColumn.prefWidthProperty().bind(widthProperty().subtract(keyColumn.widthProperty())); //the rest of the available space
-    valueColumn.setCellFactory(tableTextFieldCellFactory);
+    valueColumn.setCellValueFactory(param -> param.getValue().getValue().getValueString()); //for displaying
+    valueColumn.prefWidthProperty().bind(widthProperty().subtract(tagColumn.widthProperty()).subtract(tagIDColumn.widthProperty())); //the rest of the available space
+    valueColumn.setCellFactory(tableTextFieldCellFactory);  //for editing
     valueColumn.setOnEditCommit(cellEditCommitEventHandler);
     valueColumn.setEditable(true);
     getColumns().add(valueColumn);
@@ -110,7 +108,7 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     installKeyHandlers();
 
     //-----install bubble help ------------
-    Tooltip tooltip = new Tooltip(language.getString("edit.the.meta.info.entries.here"));
+    Tooltip tooltip = new Tooltip(language.getString("edit.the.tags.here"));
     tooltip.setShowDelay(ViewerControlPanel.TOOLTIP_DELAY); //same delay like in viewer control panel
     setTooltip(tooltip); //the text will be set whenever selection is changed (focus change listener)
 
@@ -187,7 +185,7 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
    */
   public void storeVisibilityInGlobalSettings() {
     KissPhoto.globalSettings.setProperty(SELECTED_KEY_PATH, getUserSelectionPath().toCSVString());
-    KissPhoto.globalSettings.setProperty(KEY_COLUMN_WIDTH, Double.toString(keyColumn.getWidth()));
+    KissPhoto.globalSettings.setProperty(KEY_COLUMN_WIDTH, Double.toString(tagColumn.getWidth()));
   }
 
   /**
@@ -202,9 +200,9 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     }
 
     try {
-      keyColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(KEY_COLUMN_WIDTH)));
+      tagColumn.setPrefWidth(Double.parseDouble(KissPhoto.globalSettings.getProperty(KEY_COLUMN_WIDTH)));
     } catch (Exception e) {
-      keyColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
+      tagColumn.setPrefWidth(DEFAULT_KEY_COLUMN_WIDTH);
     }
   }
 
@@ -300,7 +298,7 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     //walk up to the root. item will be the first in the list (index 0)
     TreeItem<EditableMetaInfoItem> i = item;
     while (i != null) {
-      path.add(i.getValue().getKeyString().getValue());
+      path.add(i.getValue().getTagString().getValue());
       i = i.getParent();
     }
     return path;
@@ -323,7 +321,7 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
       while (pathIndex >= 0) {
         //search for element in children
         for (TreeItem<EditableMetaInfoItem> child : item.getChildren()) {
-          found = (child.getValue().getKeyString().getValue().equalsIgnoreCase(path.get(pathIndex)));
+          found = (child.getValue().getTagString().getValue().equalsIgnoreCase(path.get(pathIndex)));
           if (found) {
             item = child; //take over as current item
             item.setExpanded(true);

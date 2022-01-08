@@ -43,9 +43,9 @@ public abstract class MetaInfoItem {
   public abstract void cacheChildren(ObservableList<TreeItem<MetaInfoItem>> children);
 
   /**
-   * @return the text that will be displayed in the tree column
+   * @return the text that will be displayed in the tag column
    */
-  public abstract StringProperty getKeyString();
+  public abstract StringProperty getTagString();
 
   /**
    * @return the text that will be displayed in the value column
@@ -53,7 +53,7 @@ public abstract class MetaInfoItem {
   public abstract StringProperty getValueString();
 
   /**
-   * @return the text that will be displayed in the type column
+   * @return the text that will be displayed in the Tag-ID column
    */
-  public abstract StringProperty getExifIDString();
+  public abstract StringProperty getTagIDString();
 }

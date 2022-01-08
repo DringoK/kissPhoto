@@ -69,7 +69,7 @@ public class RootItem extends MetaInfoItem{
    * @return the text that will be displayed in the tree column
    */
   @Override
-  public StringProperty getKeyString() {
+  public StringProperty getTagString() {
     return keyString;
   }
 
@@ -92,7 +92,7 @@ public class RootItem extends MetaInfoItem{
    * @return the text that will be displayed in the type column
    */
   @Override
-  public StringProperty getExifIDString() {
+  public StringProperty getTagIDString() {
     return null;
   }
 }

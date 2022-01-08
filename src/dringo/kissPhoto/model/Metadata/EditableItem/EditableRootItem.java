@@ -52,7 +52,10 @@ public class EditableRootItem extends EditableMetaInfoItem {
     for (ExifTagInfo tag: ExifTagInfo.values()){
       if (tag.getExifDir() != ExifDir.NONE){
         directories.get(tag.getExifDir().getValue()).addTag(EditableTagItemFactory.getTag(mediaFile, imageInfo, tag));
+      }else{
+        break;
       }
+
     }
   }
 
@@ -69,7 +72,7 @@ public class EditableRootItem extends EditableMetaInfoItem {
    * @return the text that will be displayed in the tree column
    */
   @Override
-  public StringProperty getKeyString() {
+  public StringProperty getTagString() {
     return keyString;
   }
 
@@ -102,7 +105,7 @@ public class EditableRootItem extends EditableMetaInfoItem {
    * @return the text that will be displayed in the type column
    */
   @Override
-  public StringProperty getExifIDString() {
+  public StringProperty getTagIDString() {
     return null;
   }
 }

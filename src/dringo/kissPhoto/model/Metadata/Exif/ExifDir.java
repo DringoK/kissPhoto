@@ -25,7 +25,8 @@ public enum ExifDir {
   IMAGE_DESCRIPTION(1, language.getString("image.description")),
   COPYRIGHT(2, language.getString("copyright")),
   DATE_TIME(3, language.getString("date.time")),
-  OTHER(4, language.getString("other"));
+  IMAGE_INFO(5, language.getString("image.info")),
+  OTHER(6, language.getString("other"));
 
   private final int value;
   private final String name;

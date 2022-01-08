@@ -1,4 +1,4 @@
-package dringo.kissPhoto.model.Metadata.LookupValues;
+package dringo.kissPhoto.model.Metadata.Exif.LookupValues;
 
 import java.util.HashMap;
 import java.util.Map;
