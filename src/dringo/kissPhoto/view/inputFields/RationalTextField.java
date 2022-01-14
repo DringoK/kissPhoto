@@ -74,11 +74,9 @@ public class RationalTextField extends RestrictedTextField {
             !((event.getCharacter().charAt(0) == '.' ) && !getText().contains(".")) //and not a first decimal point (i.e point and not point until now)
             //and not [BACKSPACE] (this is no event)
         )) {
-      System.out.println("Ignore charAt(0)=" + (int) event.getCharacter().charAt(0));
       event.consume();     //ignore these keys!!
       return KissPhoto.language.getString(MESSAGE);
     } else {
-      System.out.println("no error");
       return ""; //no error :-)
     }
   }

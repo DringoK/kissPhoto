@@ -43,7 +43,7 @@ public class EditableRationalTagItem extends EditableTagItem {
   @Override
   public void initValueFromEntry(Entry entry) {
     if (entry != null && entry.getValue(0) instanceof Rational) //only if the entry already existed in metaInfo
-      valueString = new SimpleStringProperty("" + ((Rational)entry.getValue(0)).floatValue());
+      valueString = new SimpleStringProperty("" + ((Rational)entry.getValue(0)).doubleValue());
     else
       valueString = new SimpleStringProperty("");
   }
@@ -58,8 +58,8 @@ public class EditableRationalTagItem extends EditableTagItem {
     //index is always 0 for simple integers
     if (entry != null) {
       try {
-        float floatVal = Float.parseFloat(valueString.get());
-        entry.setValue(0, new Rational(floatVal));
+        double doubleVal = Double.parseDouble(valueString.get());
+        entry.setValue(0, new Rational(doubleVal));
       } catch (NumberFormatException e) {
         entry.setValue(0, 0); //in error case set 0 as a default value
       }

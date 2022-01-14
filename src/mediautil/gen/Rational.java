@@ -36,6 +36,7 @@ import java.io.Serializable;
  *
  *
  * @since 2021-11-09 some simplifications because of later Java version made for better readability
+ * @version 2022-01-14 use double instead of float
  * @author Dringo. Originally Dmitriy Rogatkin and Suresh Mahalingam (msuresh@cheerful.com)
  */
 
@@ -47,17 +48,25 @@ public class Rational implements Serializable {
     this.den = den;
   }
 
-  public Rational(float value) {
+  public Rational(float value) { //original implementation
     den = 1000;
-    num = (int) (value * (float) den);
+    num = (int) (value * den);
+  }
+
+  public Rational(double value) { //more Java like implementation with higher precision by dringo
+    den = 1000;
+    num = (int) (value * den);
   }
 
   public String toString() {
     return "" + num + "/" + den;
   }
 
-  public float floatValue() {
+  public float floatValue() { //original implementation
     return (float) num / den;
+  }
+  public double doubleValue() { //more Java like implementation with higher precision by dringo
+    return (double) num / den;
   }
 
   public int intValue() {
