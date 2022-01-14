@@ -69,11 +69,9 @@ public class NumberTextField extends RestrictedTextField {
             (event.getCharacter().charAt(0) != 127)                 //and not [DEL]
             //and not [BACKSPACE] (this is no event)
         )) {
-      System.out.println("charAt(0)=" + (int) event.getCharacter().charAt(0));
       event.consume();     //ignore these keys!!
       return KissPhoto.language.getString(SORRY_ONLY_DIGITS_ALLOWED_HERE);
     } else {
-      System.out.println("no error");
       return ""; //no error :-)
     }
   }

@@ -27,6 +27,7 @@ public class EditableTagItemFactory{
   public static EditableTagItem getTag(MediaFileTaggedEditable mediaFile, Exif imageInfo, ExifTagInfo exifTagInfo){
     return switch (exifTagInfo.getDataType()) {
       case BYTE, SHORT, LONG, SLONG -> new EditableIntTagItem(mediaFile, imageInfo, exifTagInfo);
+      case RATIONAL -> new EditableRationalTagItem(mediaFile, imageInfo, exifTagInfo);
       case DATE_TIME -> new EditableDateTimeTagItem(mediaFile, imageInfo, exifTagInfo);
       case ASCII -> new EditableStringTagItem(mediaFile, imageInfo, exifTagInfo);
       default -> null;

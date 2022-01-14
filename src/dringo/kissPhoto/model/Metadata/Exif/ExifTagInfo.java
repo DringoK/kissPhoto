@@ -29,8 +29,8 @@ public enum ExifTagInfo {
   MAKE(0x10f, ExifDir.OTHER, "Make", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
   MODEL(0x100, ExifDir.OTHER, "Model", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
   ORIENTATION(0x0112, ExifDir.IMAGE_INFO, "Orientation", ExifTagDataType.SHORT, ExifTagGroup.IFD0, OrientationLookupValue.getValueMap()),
-  //XRESOLUTION(0x011a, ExifDir.IMAGE_INFO, "X Resolution", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //rational not yet implemented
-  //YRESOLUTION(0x011b, ExifDir.IMAGE_INFO, "X Resolution", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //rational not yet implemented
+  XRESOLUTION(0x011a, ExifDir.IMAGE_INFO, "X Resolution", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //rational not yet implemented
+  YRESOLUTION(0x011b, ExifDir.IMAGE_INFO, "X Resolution", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //rational not yet implemented
 
   //--> weiter gehts bei Exif.SAMPLESPERPIXEL 0x0115
 

@@ -1,15 +1,9 @@
 package dringo.kissPhoto.view.MetaInfoEditableTagsViewHelper;
 
 import dringo.kissPhoto.model.Metadata.EditableItem.EditableMetaInfoItem;
-import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableDateTimeTagItem;
-import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableIntTagItem;
-import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableStringTagItem;
-import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.EditableTagItem;
+import dringo.kissPhoto.model.Metadata.EditableItem.EditableTagItems.*;
 import dringo.kissPhoto.view.MetaInfoEditableTagsView;
-import dringo.kissPhoto.view.inputFields.DateTimeTextField;
-import dringo.kissPhoto.view.inputFields.NumberTextField;
-import dringo.kissPhoto.view.inputFields.RestrictedInputField;
-import dringo.kissPhoto.view.inputFields.UnrestrictedTextField;
+import dringo.kissPhoto.view.inputFields.*;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
@@ -161,6 +155,8 @@ public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem
       inputField = new DateTimeTextField(getString(), stage);
     else if (item instanceof EditableIntTagItem)
       inputField = new NumberTextField(getString(), stage);
+    else if (item instanceof EditableRationalTagItem)
+      inputField = new RationalTextField(getString(), stage);
 
     inputField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
 
