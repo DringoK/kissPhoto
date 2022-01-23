@@ -33,8 +33,9 @@ public enum ExifTagDataType {
   ARRAY_LONG(4, "long[]"),
   ARRAY_RATIONAL(5, "rational[]"),
   ARRAY_SLONG(9, "slong[]"),
-  ARRAY_SRATIONAL(10, "srational[]");
+  ARRAY_SRATIONAL(10, "srational[]"),
 
+  NO(0, "no");
 
   private final int value;
   private final String name;
