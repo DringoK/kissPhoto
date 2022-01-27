@@ -28,12 +28,7 @@ public enum ExifTagDataType {
   SRATIONAL(10, "srational"), //Two SLONGs. the first SLONG is the numerator and the second SLONG is the denominator
 
   //derived types. //their ID is the same as their official type
-  DATE_TIME(2, "dateTime"),   //YYYY:MM:DD HH:MM:SS in 24-hour format (20 Bytes incl 1 blank and trainling NULL). ->officially stored as an ASCII
-  ARRAY_SHORT(3, "short[]"),
-  ARRAY_LONG(4, "long[]"),
-  ARRAY_RATIONAL(5, "rational[]"),
-  ARRAY_SLONG(9, "slong[]"),
-  ARRAY_SRATIONAL(10, "srational[]"),
+  DATE_TIME(2, "dateTime"),   //YYYY:MM:DD HH:MM:SS in 24-hour format (20 Bytes incl 1 blank and trailing NULL). ->officially stored as an ASCII
 
   NO(0, "no");
 
