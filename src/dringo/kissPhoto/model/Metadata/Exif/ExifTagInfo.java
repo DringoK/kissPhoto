@@ -25,66 +25,108 @@ import java.util.Map;
  * @since 2021-11-10
  */
 public enum ExifTagInfo {
-  DOCUMENTNAME(0x10d, ExifDir.IMAGE_DESCRIPTION, "Document Name", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
-  IMAGEDESCRIPTION(0x10e, ExifDir.IMAGE_DESCRIPTION, "Image Description", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
-  MAKE(0x10f, ExifDir.OTHER, "Make", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
-  MODEL(0x110, ExifDir.OTHER, "Model", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
-  ORIENTATION(0x0112, ExifDir.IMAGE_INFO, "Orientation", ExifTagDataType.SHORT, ExifTagGroup.IFD0, OrientationLookupValue.getValueMap()),
-  XRESOLUTION(0x011a, ExifDir.IMAGE_INFO, "X Resolution", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null),
-  YRESOLUTION(0x011b, ExifDir.IMAGE_INFO, "Y Resolution", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null),
-  PAGENAME(0x011d, ExifDir.IMAGE_INFO, "Page Name", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
-  XPOSITION(0x011e, ExifDir.IMAGE_INFO, "X Position", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null),
-  YPOSITION(0x011f, ExifDir.IMAGE_INFO, "Y Position", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null),
-  RESOLUTIONUNIT(0x0128, ExifDir.IMAGE_INFO, "Resolution Unit", ExifTagDataType.SHORT, ExifTagGroup.IFD0, ResolutionUnitLookupValue.getValueMap()),
-  PAGENUMBER(0x0129, ExifDir.IMAGE_INFO, "Page Number", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),  //array size 2
-  SOFTWARE(0x0131, ExifDir.OTHER, "Software", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
-  MODIFYDATE(0x0132, ExifDir.DATE_TIME, "Modify Date", ExifTagDataType.DATE_TIME, ExifTagGroup.IFD0, null),
-  ARTIST(0x013b, ExifDir.COPYRIGHT, "Artist", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
-  HOSTCOMPUTER(0x013c, ExifDir.OTHER, "Host Computer", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
+  DocumentName(0x10d, ExifDir.IMAGE_DESCRIPTION, "Document Name", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
+  ImageDescription(0x10e, ExifDir.IMAGE_DESCRIPTION, "Image Description", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
+  Make(0x10f, ExifDir.OTHER, "Make", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
+  Model(0x110, ExifDir.OTHER, "Model", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
+  Orientation(0x0112, ExifDir.IMAGE_INFO, "Orientation", ExifTagDataType.SHORT, ExifTagGroup.IFD0, OrientationLookupValue.getValueMap()),
+  XResolution(0x011a, ExifDir.IMAGE_INFO, "X Resolution", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null),
+  YResolution(0x011b, ExifDir.IMAGE_INFO, "Y Resolution", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null),
+  PageName(0x011d, ExifDir.IMAGE_INFO, "Page Name", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
+  XPosition(0x011e, ExifDir.IMAGE_INFO, "X Position", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null),
+  YPosition(0x011f, ExifDir.IMAGE_INFO, "Y Position", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null),
+  ResolutionUnit(0x0128, ExifDir.IMAGE_INFO, "Resolution Unit", ExifTagDataType.SHORT, ExifTagGroup.IFD0, ResolutionUnitLookupValue.getValueMap()),
+  PageNumber(0x0129, ExifDir.IMAGE_INFO, "Page Number", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),  //array size 2
+  Software(0x0131, ExifDir.OTHER, "Software", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
+  ModifyDate(0x0132, ExifDir.DATE_TIME, "Modify Date", ExifTagDataType.DATE_TIME, ExifTagGroup.IFD0, null),
+  Artist(0x013b, ExifDir.COPYRIGHT, "Artist", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
+  HostComputer(0x013c, ExifDir.OTHER, "Host Computer", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
 
 
   //-------------- from here on: tree-builder in EditableRootItem (constructor) will stop to add the entries ------------
   //(because ExifDir.NONE is found for the first time)
   /*these values make no sense to be changed unless the picture content is changed*/
-  NEWSUBFILETYPE(0x00fe, ExifDir.NONE, "Sub File Type", ExifTagDataType.LONG, ExifTagGroup.IFD0, null), //Full-resolution image, reduced-resolution image ... //TIFF
-  OLDSUBFILETYPE(0x00ff, ExifDir.NONE, "Sub File Type", ExifTagDataType.LONG, ExifTagGroup.IFD0, null), //Full-resolution image, reduced-resolution image ... //TIFF
-  IMAGEWIDTH(0x0100, ExifDir.NONE, "Image Width", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
-  IMAGEHEIGHT(0x0101, ExifDir.NONE, "Image Height", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
-  BITSPERSAMPLE(0x0102, ExifDir.NONE, "Bits Per Sample", ExifTagDataType.ARRAY_SHORT, ExifTagGroup.IFD0, null),  //array size n
-  COMPRESSION(0x103, ExifDir.NONE, "Compression", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),    //1=uncompressed, ... 7=JPEG, ... 34933 PNG, .., 65535=Pentax PEF Compressed
-  PHOTOMETRICINTERPRETATION(0x0106, ExifDir.NONE, "Photometric Interpretation", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //0=White is Zero, 1=Black is Zero, 2=RGB...
-  THRESHOLDING(0x107, ExifDir.NONE, "Thresholding", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=No dithering, 2=ordered dither, 3=randomized dither
-  CELLWIDTH(0x108, ExifDir.NONE, "Cell Width", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
-  CELLLENGTH(0x109, ExifDir.NONE, "Cell Length", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
-  FILLORDER(0x10a, ExifDir.NONE, "Fill Order", ExifTagDataType.ARRAY_SHORT, ExifTagGroup.IFD0, null), //1=normal, 2=reversed
-  STRIPOFFSETS(0x0111, ExifDir.NONE, "Strip Offsets", ExifTagDataType.LONG, ExifTagGroup.MISC, null),    //PreviewImageStart IFD0, PreviewImageStart All, JpgFromRawStart SubIFD2
-  SAMPLESPERPIXEL(0x0115, ExifDir.NONE, "Samples Per Pixel", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
-  ROWSPERSTRIP(0x0116, ExifDir.NONE, "Rows Per Strip", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
-  STRIPBYTECOUNTS(0x0117, ExifDir.NONE, "Strip Byte Counts", ExifTagDataType.LONG, ExifTagGroup.MISC, null), //PreviewImageLength IFDO/All, JpgFromRawLength SubIFD2
-  MINSAMPLEVALUE(0x0118, ExifDir.NONE, "Min Sample Value", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
-  MAXSAMPLEVALUE(0x0119, ExifDir.NONE, "Max Sample Value", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
-  PLANARCONFIGURATION(0x011c, ExifDir.NONE, "Planar Configuration", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=Chunky, 2=Planar
-  FREEOFFSETS(0x0120, ExifDir.NONE, "Free Offsets", ExifTagDataType.NO, ExifTagGroup.MISC, null),
-  FREEBYTECOUNTS(0x0121, ExifDir.NONE, "Free Byte Counts", ExifTagDataType.NO, ExifTagGroup.MISC, null),
-  GRAYRESPONSEUNIT(0x0122, ExifDir.NONE, "Gray Response Unit", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=0.1, 2=0.001, 3=0.0001, 4=1e-05, 5=1e-06
-  GRAYRESPONSECURVE(0x0123, ExifDir.NONE, "Gray Response Curve", ExifTagDataType.NO, ExifTagGroup.MISC, null),
-  T4OPTIONS(0x0124, ExifDir.NONE, "T4 Options", ExifTagDataType.NO, ExifTagGroup.MISC, null), //Bit 0=2-Dimensional encoding, Bit 1=Uncompressed, Bit2=Fill Bits added
-  T6OPTIONS(0x0125, ExifDir.NONE, "T6 Options", ExifTagDataType.NO, ExifTagGroup.MISC, null), //Bit 1=Uncompressed
-  COLORRESPONSEUNIT(0x012c, ExifDir.NONE, "Color Response Unit", ExifTagDataType.NO, ExifTagGroup.MISC, null),
-  TRANSFERFUNCTION(0x012d, ExifDir.NONE, "Transfer Function", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //array size 768
-  PREDICTOR(0x013d, ExifDir.NONE, "Predictor", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=None, 2=Horizontal differencing
-  WHITEPOINT(0x013e, ExifDir.NONE, "White Point", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //array size 2
-  PRIMARYCHROMATICITIES(0x013f, ExifDir.NONE, "Primary Chromaticities", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //array size 6
-  COLORMAP(0x0140, ExifDir.NONE, "Color Map", ExifTagDataType.NO, ExifTagGroup.MISC, null),
-  HALFTONEHINTS(0x0141, ExifDir.NONE, "Halftone Hints", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //array size 2
-  TILEWIDTH(0x0142, ExifDir.NONE, "Tile Width", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
-  TILELENGTH(0x0143, ExifDir.NONE, "Tile Length", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
-  TILEOFFSET(0x0144, ExifDir.NONE, "Tile Offset", ExifTagDataType.NO, ExifTagGroup.MISC, null),
-  TILEBYTECOUNTS(0x0145, ExifDir.NONE, "Tile Byte Counts", ExifTagDataType.NO, ExifTagGroup.MISC, null),
-  BADFAXLINES(0x0146, ExifDir.NONE, "Bad Fax Lines", ExifTagDataType.NO, ExifTagGroup.MISC, null),
-  CLEANFAXLINES(0x0147, ExifDir.NONE, "Clean Fax Lines", ExifTagDataType.NO, ExifTagGroup.MISC, null), //0=clean, 1=regenerated, 2=unclean
-  CONSECUTIVEBADFAXLINES(0x0148, ExifDir.NONE, "Consecutive Bad Fax Lines", ExifTagDataType.NO, ExifTagGroup.MISC, null),
-  //weiter bei 0x14a
+  NewSubfileType(0x00fe, ExifDir.NONE, "Sub File Type", ExifTagDataType.LONG, ExifTagGroup.IFD0, null), //Full-resolution image, reduced-resolution image ... //TIFF
+  OldSubfileType(0x00ff, ExifDir.NONE, "Sub File Type", ExifTagDataType.LONG, ExifTagGroup.IFD0, null), //Full-resolution image, reduced-resolution image ... //TIFF
+  ImageWidth(0x0100, ExifDir.NONE, "Image Width", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
+  ImageHeight(0x0101, ExifDir.NONE, "Image Height", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
+  BitsPerSample(0x0102, ExifDir.NONE, "Bits Per Sample", ExifTagDataType.ARRAY_SHORT, ExifTagGroup.IFD0, null),  //array size n
+  Compression(0x103, ExifDir.NONE, "Compression", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),    //1=uncompressed, ... 7=JPEG, ... 34933 PNG, .., 65535=Pentax PEF Compressed
+  PhotometricInterpretation(0x0106, ExifDir.NONE, "Photometric Interpretation", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //0=White is Zero, 1=Black is Zero, 2=RGB...
+  Thresholding(0x107, ExifDir.NONE, "Thresholding", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=No dithering, 2=ordered dither, 3=randomized dither
+  CellWidth(0x108, ExifDir.NONE, "Cell Width", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
+  CellLength(0x109, ExifDir.NONE, "Cell Length", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
+  FillOrder(0x10a, ExifDir.NONE, "Fill Order", ExifTagDataType.ARRAY_SHORT, ExifTagGroup.IFD0, null), //1=normal, 2=reversed
+  StripOffsets(0x0111, ExifDir.NONE, "Strip Offsets", ExifTagDataType.LONG, ExifTagGroup.MISC, null),    //PreviewImageStart IFD0, PreviewImageStart All, JpgFromRawStart SubIFD2
+  SamplesPerPixel(0x0115, ExifDir.NONE, "Samples Per Pixel", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
+  RowsPerStrip(0x0116, ExifDir.NONE, "Rows Per Strip", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
+  StripByteCounts(0x0117, ExifDir.NONE, "Strip Byte Counts", ExifTagDataType.LONG, ExifTagGroup.MISC, null), //PreviewImageLength IFDO/All, JpgFromRawLength SubIFD2
+  MinSampleValue(0x0118, ExifDir.NONE, "Min Sample Value", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
+  MaxSampleValue(0x0119, ExifDir.NONE, "Max Sample Value", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null),
+  PlanarConfiguration(0x011c, ExifDir.NONE, "Planar Configuration", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=Chunky, 2=Planar
+  FreeOffsets(0x0120, ExifDir.NONE, "Free Offsets", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  FreeByteCounts(0x0121, ExifDir.NONE, "Free Byte Counts", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  GrayResponseUnit(0x0122, ExifDir.NONE, "Gray Response Unit", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=0.1, 2=0.001, 3=0.0001, 4=1e-05, 5=1e-06
+  GrayResponseCurve(0x0123, ExifDir.NONE, "Gray Response Curve", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  T4Options(0x0124, ExifDir.NONE, "T4 Options", ExifTagDataType.NO, ExifTagGroup.MISC, null), //Bit 0=2-Dimensional encoding, Bit 1=Uncompressed, Bit2=Fill Bits added
+  T6Options(0x0125, ExifDir.NONE, "T6 Options", ExifTagDataType.NO, ExifTagGroup.MISC, null), //Bit 1=Uncompressed
+  ColorResponseUnit(0x012c, ExifDir.NONE, "Color Response Unit", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  TransferFunction(0x012d, ExifDir.NONE, "Transfer Function", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //array size 768
+  Predictor(0x013d, ExifDir.NONE, "Predictor", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=None, 2=Horizontal differencing
+  WhitePoint(0x013e, ExifDir.NONE, "White Point", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //array size 2
+  PrimaryChromaticities(0x013f, ExifDir.NONE, "Primary Chromaticities", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //array size 6
+  ColorMap(0x0140, ExifDir.NONE, "Color Map", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  HalftoneHints(0x0141, ExifDir.NONE, "Halftone Hints", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //array size 2
+  TileWidth(0x0142, ExifDir.NONE, "Tile Width", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
+  TileLength(0x0143, ExifDir.NONE, "Tile Length", ExifTagDataType.LONG, ExifTagGroup.IFD0, null),
+  TileOffset(0x0144, ExifDir.NONE, "Tile Offset", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  TileByteCounts(0x0145, ExifDir.NONE, "Tile Byte Counts", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  BadFaxLines(0x0146, ExifDir.NONE, "Bad Fax Lines", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  CleanFaxLines(0x0147, ExifDir.NONE, "Clean Fax Lines", ExifTagDataType.NO, ExifTagGroup.MISC, null), //0=clean, 1=regenerated, 2=unclean
+  ConsecutiveBadFaxLines(0x0148, ExifDir.NONE, "Consecutive Bad Fax Lines", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  SubIFDA100DAtaOffset(0x014a, ExifDir.NONE, "SubIFD A100 Data Offset", ExifTagDataType.NO, ExifTagGroup.IFD0, null), //see Exif Tags. The Data Offset in Original Sony DSLR A100 ARW images
+  InkSet(0x014c, ExifDir.NONE, "Ink Set", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=CMYK, 2=not CMYK
+  InkNames(0x014d, ExifDir.NONE, "Ink Names", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  NumberOfInks(0x014e, ExifDir.NONE, "Number of inks", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  DotRange(0x0150, ExifDir.NONE, "Dot Range", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  TargetPrinter(0x0151, ExifDir.NONE, "Target Printer", ExifTagDataType.ASCII, ExifTagGroup.IFD0, null),
+  ExtraSapmles(0x0152, ExifDir.NONE, "Extra Sample", ExifTagDataType.NO, ExifTagGroup.MISC, null), //0=unspecified, 1=Associated Alpha, 2=Unassociated Alpha
+  SampleFormat(0x0153, ExifDir.NONE, "Sample Format", ExifTagDataType.NO, ExifTagGroup.SUB_IFD, null), //SamplePerPixel values [values 0-3] 1=unsigned, 2=signed, 3=float, 4=undefined, 5=complex int, 6=complex float
+  SMinSampleValue(0x0154, ExifDir.NONE, "S Min Sample Value", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  SMaxSampleValue(0x0155, ExifDir.NONE, "S Max Sample Value", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  TransferRange(0x0156, ExifDir.NONE, "Transfer Range", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  ClipPath(0x0157, ExifDir.NONE, "Clip Path", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  XClipPathUnits(0x0158, ExifDir.NONE, "X Clip Path Units", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  YClipPathUnits(0x0159, ExifDir.NONE, "Y Clip Path Units", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  Indexed(0x015a, ExifDir.NONE, "Indexed", ExifTagDataType.NO, ExifTagGroup.MISC, null), //0=not indexed, 1=indexed
+  JPEGTables(0x015b, ExifDir.NONE, "JPEG Tables", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  OPIProxy(0x015f, ExifDir.NONE, "OPI Proxy", ExifTagDataType.NO, ExifTagGroup.MISC, null), //Open PrePress Interface. 0=Higher resolution image does not exist, 1= Higher resolution image exists
+  GlobalParametersIFD(0x0190, ExifDir.NONE, "Global Parameters IFD", ExifTagDataType.NO, ExifTagGroup.MISC, null), //see EXIF tags
+  ProfileType(0x0191, ExifDir.NONE, "Profile Type", ExifTagDataType.NO, ExifTagGroup.MISC, null), //0=unspecified, 1=Group3 FAX
+  FAXProfile(0x0192, ExifDir.NONE, "Fax Profile", ExifTagDataType.NO, ExifTagGroup.MISC, null), //0=unknown, 1=minimal B&W lossles,S , 2=Extended B&W,F , 3=Lossles JBIG B&W,J , 4=Lossy color and grayscale,C , 5=Lossless color and grayscale,L , 6=Mixed raster content,M , 7=Profile T, 255=Multi Profiles
+  CodingMethods(0x0193, ExifDir.NONE, "Coding Methods", ExifTagDataType.NO, ExifTagGroup.MISC, null), //Bit0=Unspecified Compression, Bit1=Modified Huffman, Bit2=Modified Read, Bit3=Modified MR, Bit4=JBIG, Bit5=Baseline JPEG, Bit6=JBIG color
+  VersionYear(0x0194, ExifDir.NONE, "Version Year", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  ModeNumber(0x0195, ExifDir.NONE, "Mode Number", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  Decode(0x01b1, ExifDir.NONE, "Decode", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  DefaultImageColor(0x01b2, ExifDir.NONE, "Default Image Color", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  T82Options(0x01b3, ExifDir.NONE, "T82 Options", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  JPEGTables1b5(0x01b5, ExifDir.NONE, "JPEG Tables 1b5", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  JPEGProc(0x0200, ExifDir.NONE, "JPEG Proc", ExifTagDataType.NO, ExifTagGroup.MISC, null), //1=Baseline, 14=Lossless
+  ThumbnailOffset(0x0201, ExifDir.NONE, "Thumbnail Offset", ExifTagDataType.LONG, ExifTagGroup.IFD0, null), //also in IFD1, IFD2, SubIFD, SubIFD1, SubIFD2, MakerNotes,  aka PreviewImageStart, JpgFromRawStart, OtherImageStart
+  ThumbnailLength(0x0202, ExifDir.NONE, "Thumbnail Length", ExifTagDataType.LONG, ExifTagGroup.IFD0, null), //also in IFD1, IFD2, SubIFD, SubIFD1, SubIFD2, MakerNotes,  aka PreviewImageLength, JpgFromRawLength, OtherImageLength
+  JPEGRestartInterval(0x0203, ExifDir.NONE, "JPEG Restart Interval", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  JPEGLosslessPredictors(0x0205, ExifDir.NONE, "JPEG Lossless Predictors", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  JPEGPointTransforms(0x0206, ExifDir.NONE, "JPEG Point Transforms", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  JPEGQTables(0x0207, ExifDir.NONE, "JPEG Q Tables", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  JPEGDCTables(0x0208, ExifDir.NONE, "JPEG DC Tables", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  JPEGACTables(0x0209, ExifDir.NONE, "JPEG AC Tables", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+  YCbCrCoefficients(0x0211, ExifDir.NONE, "YCbCr Coefficients", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //array size 3
+  YCbCrSubSampling(0x0212, ExifDir.NONE, "YCbCr Sub Sampling", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //array size 2: 11=YCbCr4:4:4, 12=YCbCr4:4:0, 14=YCbCr4:4:1, 21=YCbCr4:2:2, 22=YCbCr4:2:0, 24=YCbCr4:2:1, 41=YCbCr4:1:1, 42=YCbCr4:1:0
+  YCbCrPositioning(0x0213, ExifDir.NONE, "YCbCr Positioning", ExifTagDataType.SHORT, ExifTagGroup.IFD0, null), //1=Centered, 2=Co-sited
+  ReferenceBlackWhite(0x0214, ExifDir.NONE, "Reference Black White", ExifTagDataType.RATIONAL, ExifTagGroup.IFD0, null), //array size 6
+  StripRowCounts(0x022f, ExifDir.NONE, "Strip Row Counts", ExifTagDataType.NO, ExifTagGroup.MISC, null),
+
+  //continue at 0x2bc page 6
 
 
 
