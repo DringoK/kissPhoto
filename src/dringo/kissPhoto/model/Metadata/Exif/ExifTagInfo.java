@@ -41,6 +41,11 @@ public enum ExifTagInfo {
   ModifyDate(0x0132, ExifDir.DATE_TIME,  "Modify Date", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.IFD0, null),
   Artist(0x013b, ExifDir.COPYRIGHT, "Artist", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
   HostComputer(0x013c, ExifDir.OTHER, "Host Computer", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  Rating(0x4746, ExifDir.IMAGE_DESCRIPTION, "Rating", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),
+  RatingPercent(0x4749, ExifDir.IMAGE_DESCRIPTION, "Rating Percent", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),
+  Copyright(0x8298, ExifDir.COPYRIGHT, "Copyright", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  ExposureTime(0x829a, ExifDir.IMAGE_INFO, "Exposure Time", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  FNumber(0x829d, ExifDir.IMAGE_INFO, "F-Number", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null), //Blendenzahl
 
 
   //-------------- from here on: tree-builder in EditableRootItem (constructor) will stop to add the entries ------------
@@ -125,12 +130,77 @@ public enum ExifTagInfo {
   YCbCrPositioning(0x0213, ExifDir.NONE, "YCbCr Positioning", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null), //1=Centered, 2=Co-sited
   ReferenceBlackWhite(0x0214, ExifDir.NONE, "Reference Black White", ExifTagDataType.RATIONAL, 6, ExifTagGroup.IFD0, null),
   StripRowCounts(0x022f, ExifDir.NONE, "Strip Row Counts", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ApplicationNotes(0x02bc, ExifDir.NONE, "Application Notes XMP", ExifTagDataType.BYTE, 0, ExifTagGroup.IFD0, null),
+  USPTOMiscellaneous(0x03e7, ExifDir.NONE, "USPTO Miscellaneous", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //United Stated Patent and Trademark Office (USPTO)
 
-  //continue at 0x2bc page 6
+  RelatedImageFileFormat(0x1000, ExifDir.NONE, "Related Image File Format", ExifTagDataType.ASCII, 0, ExifTagGroup.INTEROP_IFD, null),
+  RelatedImageWidth(0x1001, ExifDir.NONE, "Related Image Width", ExifTagDataType.SHORT, 0, ExifTagGroup.INTEROP_IFD, null),
+  RelatedImageHeight(0x1002, ExifDir.NONE, "Related Image Height/Length", ExifTagDataType.SHORT, 0, ExifTagGroup.INTEROP_IFD, null), //...length in DCF spec.
 
-//ExifTagInfo(int, dringo.kissPhoto.model.Metadata.Exif.ExifDir, java.lang.String, dringo.kissPhoto.model.Metadata.Exif.ExifTagDataType, int, dringo.kissPhoto.model.Metadata.Exif.ExifTagGroup, java.util.Map<java.lang.Integer,?>)' in 'dringo.kissPhoto.model.Metadata.Exif.ExifTagInfo' cannot be applied to '
-//           (int, dringo.kissPhoto.model.Metadata.Exif.ExifDir, java.lang.String, dringo.kissPhoto.model.Metadata.Exif.ExifTagDataType, int, dringo.kissPhoto.model.Metadata.Exif.ExifTagGroup, null, int)'
+  XP_DIP_XML(0x4747, ExifDir.NONE, "XP DIP XML", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  StichInfo(0x4748, ExifDir.NONE, "Microsoft Stitch Info", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
 
+  SonyRawFileType(0x7000, ExifDir.NONE, "Sony Raw File Type", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=Sony Uncompressed 14bit RAW, 1=Sony Uncompressed 12bit RAW, 2=Sony Compressed RAW, 3=Sony Lossless Compressed RAW
+  VignettingCorrParams(0x7032, ExifDir.NONE, "Vignetting Correction Parameters", ExifTagDataType.SHORT, 17, ExifTagGroup.SUB_IFD, null), //Sony ARW images
+  ChromaticAberrationCorrParams(0x7035, ExifDir.NONE, "Chromatic Aberration Correction Parameters", ExifTagDataType.SHORT, 33, ExifTagGroup.SUB_IFD, null), //Sony ARW images
+  DistortionCorrParams(0x7037, ExifDir.NONE, "Distortion Correction Parameters", ExifTagDataType.SHORT, 17, ExifTagGroup.SUB_IFD, null), //Sony ARW images
+
+  ImageID(0x800d, ExifDir.NONE, "Image ID", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  WangTag1(0x80a3, ExifDir.NONE, "Wang Tag 1", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  WangAnnotation(0x80a4, ExifDir.NONE, "Wang Annotation", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  WangTag3(0x80a5, ExifDir.NONE, "Wang Tag 3", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  WangTag4(0x80a6, ExifDir.NONE, "Wang Tag 4", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageReferencePoints(0x80b9, ExifDir.NONE, "Image Reference Points", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  RegionXformTackPoint(0x80ba, ExifDir.NONE, "Region Xform Tack Point", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  WarpQuadrilateral(0x80bb, ExifDir.NONE, "Warp Quadrilateral", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  AffineTransformMat(0x80bc, ExifDir.NONE, "Affine Transformation Matrix", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  Matteing(0x80e3, ExifDir.NONE, "Matteing", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //matte archive paper
+  DataType(0x80e4, ExifDir.NONE, "Data Type", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageDepth(0x80e5, ExifDir.NONE, "Image Depth", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  TileDepth(0x80e6, ExifDir.NONE, "Tile Depth", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageFullWidth(0x8214, ExifDir.NONE, "Image Full Width", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageFullHeight(0x8215, ExifDir.NONE, "Image Full Height", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  TextureFormat(0x8216, ExifDir.NONE, "Texture Format", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  WrapModes(0x8217, ExifDir.NONE, "Wrap Modes", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  FovCot(0x8218, ExifDir.NONE, "Field of View Cotangent", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MatrixWorldToScreen(0x8219, ExifDir.NONE, "Matrix World to Screen", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MatrixWorldToCamera(0x821a, ExifDir.NONE, "Matrix World to Camera", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  Model2(0x827d, ExifDir.NONE, "Model 2", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  CFARepeatPatternDim(0x828d, ExifDir.NONE, "CFA Repeat Pattern Dim", ExifTagDataType.SHORT, 2, ExifTagGroup.SUB_IFD, null),
+  CFAPattern2(0x828e, ExifDir.NONE, "CFA Pattern 2", ExifTagDataType.BYTE, 1, ExifTagGroup.SUB_IFD, null),
+  BatteryLevel(0x828f, ExifDir.NONE, "Battery Level", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  KodakIFD(0x8290, ExifDir.NONE, "Kodak IFD", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //used in various types of Kodak images
+  MDFileTag(0x82a5, ExifDir.NONE, "Molecular Dynamics File Tag", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //tags 0x82a5-0x82ac are used in Molecular Dynamics GEL files
+  MDScalePixel(0x82a6, ExifDir.NONE, "Molecular Dynamics Scale Pixel", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MDColorTable(0x82a7, ExifDir.NONE, "Molecular Dynamics Color Table", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MDLabName(0x82a8, ExifDir.NONE, "Molecular Dynamics Lab Name", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MDSampleInfo(0x82a9, ExifDir.NONE, "Molecular Dynamics Sample Info", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MDPrepDate(0x82aa, ExifDir.NONE, "Molecular Dynamics Prep Date", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MDPrepTime(0x82ab, ExifDir.NONE, "Molecular Dynamics Prep Time", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MDFileUnits(0x82ac, ExifDir.NONE, "Molecular Dynamics File Units", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  PixelScale(0x830e, ExifDir.NONE, "Pixel Scale", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  AdventScale(0x8335, ExifDir.NONE, "Advent Scale", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  AdventRevision(0x8336, ExifDir.NONE, "Advent Revision", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  UIC1Tag(0x835c, ExifDir.NONE, "UIC 1 Tag", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),   //UIC=University of Illinois at Chicago
+  UIC2Tag(0x835d, ExifDir.NONE, "UIC 2 Tag", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),   //UIC=University of Illinois at Chicago
+  UIC3Tag(0x835e, ExifDir.NONE, "UIC 3 Tag", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),   //UIC=University of Illinois at Chicago
+  UIC4Tag(0x835f, ExifDir.NONE, "UIC 4 Tag", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),   //UIC=University of Illinois at Chicago
+  IPTCNAA(0x83bb, ExifDir.NONE, "IPTC NAA", ExifTagDataType.LONG, 0, ExifTagGroup.IFD0, null),  //IPTC=International Press Telecommunications Council NAA=Newspaper Association of America
+  IntergraphPacketData(0x847e, ExifDir.NONE, "Intergraph Packet Data", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  IntergraphFlagRegisters(0x847f, ExifDir.NONE, "Intergraph Flag Registers", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  IntergraphMatrix(0x8480, ExifDir.NONE, "Intergraph Matrix", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  INGRReserved(0x8481, ExifDir.NONE, "INGR Reserved", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ModelTiePoint(0x8482, ExifDir.NONE, "Model Tie Point", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  Site(0x84e0, ExifDir.NONE, "Site", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ColorSequence(0x84e1, ExifDir.NONE, "Color Sequence", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  IT8Header(0x84e2, ExifDir.NONE, "IT8 Header", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  RasterPadding(0x84e3, ExifDir.NONE, "Raster Padding", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=Byte, 1=Word, 2=LongWord, 9=Sector, 10=LongSector
+  BitsPerRunLength(0x84e4, ExifDir.NONE, "Bits per Run Length", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  BitsPerExtendedRunLength(0x84e5, ExifDir.NONE, "Bits per Extended Run Length", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ColorTable(0x84e6, ExifDir.NONE, "Color Table", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageColorIndicator(0x84e7, ExifDir.NONE, "Image Color Indicator", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=Unspecified Image Color 1=Specified Image Color
+
+  //continue at 0x84e8 page 8
 
 
   DUMMYLASTLine(0x0, ExifDir.NONE, "Eintrag löschen und darüber ein Strichpunkt setzen", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null);
