@@ -2,6 +2,7 @@ package dringo.kissPhoto.model.Metadata.Exif;
 
 import dringo.kissPhoto.model.Metadata.Exif.LookupValues.OrientationLookupValue;
 import dringo.kissPhoto.model.Metadata.Exif.LookupValues.ResolutionUnitLookupValue;
+import dringo.kissPhoto.model.Metadata.Exif.LookupValues.SecurityClassLookupValue;
 
 import java.util.Map;
 
@@ -38,7 +39,7 @@ public enum ExifTagInfo {
   ResolutionUnit(0x0128, ExifDir.IMAGE_INFO, "Resolution Unit", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, ResolutionUnitLookupValue.getValueMap()),
   PageNumber(0x0129, ExifDir.IMAGE_INFO, "Page Number", ExifTagDataType.SHORT, 2, ExifTagGroup.IFD0, null),
   Software(0x0131, ExifDir.OTHER, "Software", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
-  ModifyDate(0x0132, ExifDir.DATE_TIME,  "Modify Date", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.IFD0, null),
+  ModifyDate(0x0132, ExifDir.DATE_TIME,  "Date Time Modify", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.IFD0, null),
   Artist(0x013b, ExifDir.COPYRIGHT, "Artist", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
   HostComputer(0x013c, ExifDir.OTHER, "Host Computer", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
   Rating(0x4746, ExifDir.IMAGE_DESCRIPTION, "Rating", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),
@@ -46,7 +47,18 @@ public enum ExifTagInfo {
   Copyright(0x8298, ExifDir.COPYRIGHT, "Copyright", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
   ExposureTime(0x829a, ExifDir.IMAGE_INFO, "Exposure Time", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
   FNumber(0x829d, ExifDir.IMAGE_INFO, "F-Number", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null), //Blendenzahl
-
+  DateTimeOriginal(0x9003, ExifDir.DATE_TIME,  "Date Time Original (image taken)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null),
+  CreateDate(0x9004, ExifDir.DATE_TIME,  "Date Time Created (digitized)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null),
+  OffsetTime(0x9010, ExifDir.DATE_TIME,  "Time Zone Offset Modify", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for ModifyDate
+  OffsetTimeOriginal(0x9011, ExifDir.DATE_TIME,  "Time Zone Offset Original (image taken)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for DateTimeOriginal
+  OffsetTimeDigitized(0x9012, ExifDir.DATE_TIME,  "Time Zone Offset Created (digitized)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for CreateDate
+  ImageNumber(0x9211, ExifDir.IMAGE_INFO, "Image Number", ExifTagDataType.LONG, 0, ExifTagGroup.EXIF_IFD, null),
+  SecurityClassification(0x9212, ExifDir.IMAGE_INFO, "Security Classification", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, SecurityClassLookupValue.getValueMap()),
+  ImageHistory(0x9213, ExifDir.IMAGE_INFO, "Image History", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  //UserComment(0x9286, ExifDir.IMAGE_DESCRIPTION, "User Comment", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null),  //UNDEFINED currently not supported!!!!!!!!!!!!!!!!!!
+  SubSecTime(0x9090, ExifDir.DATE_TIME,  "Fractional Seconds for Modify", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for ModifyDate
+  SubSecTimeOriginal(0x9091, ExifDir.DATE_TIME,  "Fractional Seconds for Original (image taken)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for DateTimeOriginal
+  SubSecTimeDigitized(0x9092, ExifDir.DATE_TIME,  "Fractional Seconds for Created (digitized)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for CreateDate
 
   //-------------- from here on: tree-builder in EditableRootItem (constructor) will stop to add the entries ------------
   //(because ExifDir.NONE is found for the first time)
@@ -199,9 +211,94 @@ public enum ExifTagInfo {
   BitsPerExtendedRunLength(0x84e5, ExifDir.NONE, "Bits per Extended Run Length", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   ColorTable(0x84e6, ExifDir.NONE, "Color Table", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   ImageColorIndicator(0x84e7, ExifDir.NONE, "Image Color Indicator", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=Unspecified Image Color 1=Specified Image Color
+  BackgroundColorIndicator(0x84e8, ExifDir.NONE, "Background Color Indicator", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=Unspecified Background Color 1=Specified Background Color
+  ImageColorValue(0x84e9, ExifDir.NONE, "Image Color Value", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  BackgroundColorValue(0x84ea, ExifDir.NONE, "Background Color Value", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  PixelIntensityRange(0x84eb, ExifDir.NONE, "Pixel Intensity Range", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  TransparencyIndicator(0x84ec, ExifDir.NONE, "Transparency Indicator", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ColorCharacterization(0x84ed, ExifDir.NONE, "Color Characterization", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  HCUsage(0x84ee, ExifDir.NONE, "HC Usage", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),  //0=CT, 1=LineArt, 2=Trap
+  TrapIndicator(0x84ef, ExifDir.NONE, "Trap Indicator", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  CMYKEquivalent(0x84f0, ExifDir.NONE, "CMYK Equivalent", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SEMInfo(0x8546, ExifDir.NONE, "Scanning Electron Microscope Info", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null), //found in some scanning electron microscope images
+  AFCP_IPTC(0x8568, ExifDir.NONE, "AFCP_IPTC", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //see IPTC Tags
+  PixelMagicJBIGOptions(0x85b8, ExifDir.NONE, "Pixel Magic JBIG Options", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  JPLCartoIFD(0x85d7, ExifDir.NONE, "JPL Carto IFD", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //JPL=Nasa Jet Propulsion Laboratory
+  ModelTransform(0x85d8, ExifDir.NONE, "Model Transform", ExifTagDataType.DOUBLE, 16, ExifTagGroup.IFD0, null),
+  WB_GRGBLevels(0x8602, ExifDir.NONE, "WB G RGB Levels", ExifTagDataType.NO, 0, ExifTagGroup.IFD0, null),   //Found in IFD0 of Leaf MOS images
+  LeafData(0x8606, ExifDir.NONE, "Leaf Data", ExifTagDataType.NO, 0, ExifTagGroup.IFD0, null),   //see Leaf Tags
+  PhotoshopSettings(0x8649, ExifDir.NONE, "Photoshop Settings", ExifTagDataType.NO, 0, ExifTagGroup.IFD0, null),   //see Photoshop Tags
+  ExifOffset(0x8769, ExifDir.NONE, "Exif Offset", ExifTagDataType.NO, 0, ExifTagGroup.IFD0, null),   //see Exif Tags
+  ICCProfile(0x8773, ExifDir.NONE, "ICC Profile", ExifTagDataType.NO, 0, ExifTagGroup.IFD0, null),   //ICC=International Color Consortium, see ICC Profile Tags
+  TIFF_FXExtensions(0x877f, ExifDir.NONE, "TIFF FX Extensions", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),   //Bit 0=Resolution/Image Width, Bit1=N Layer Profile M, Bit2=Shared Data, Bit3=B&W JBIG2, Bit4=JBIG2 Profile M
+  MultiProfiles(0x8780, ExifDir.NONE, "Multi Profiles", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),   //Bit 0=Profile S, 1=F, 2=J, 3=C, 4=L, 5=M, 6=T, 7=Resolution/Image Width, 8=N Layer Profile M, 9=Shared Data, 10=JBIG2 Profile M
+  SharedData(0x8781, ExifDir.NONE, "Shared Data", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  T88Options(0x8782, ExifDir.NONE, "T88 Options", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageLayer(0x87ac, ExifDir.NONE, "ImageLayer", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  GeoTiffDirectory(0x87af, ExifDir.NONE, "Geo TIFF Directory", ExifTagDataType.SHORT, 5, ExifTagGroup.IFD0, null), //[0.5]?? Geo Tiff Tags may be read and written as a block, but they aren't extracted unless specifically requested. Byte order changes are handled automatically when copying between TIFF images with different byte order.
+  GeoTiffDoubleParams(0x87b0, ExifDir.NONE, "Geo TIFF Double Parameters", ExifTagDataType.DOUBLE, 125, ExifTagGroup.IFD0, null), //[0.125]??
+  GeoTiffAsciiParams(0x87b1, ExifDir.NONE, "Geo TIFF ASCII Parameters", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  JBIGOptions(0x87be, ExifDir.NONE, "JBIG Options", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ExposureProgram(0x8822, ExifDir.NONE, "Exposure Program", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Not Defined, 1=Manual, 2=Program AE, 3=Aperture-priority AE, 4=shutter speed priority AE, 5=creative (Slow speed), 6=Action (High speed), 7=Portrait, 8=Landscape, 9=Bulb (used by Canon EOS 7D)
+  SpectralSensitivity(0x8824, ExifDir.NONE, "Spectral Sensitivity", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  GPSInfo(0x8825, ExifDir.NONE, "GPS Info", ExifTagDataType.NO, 0, ExifTagGroup.IFD0, null), //see GPS Tags
+  ISO(0x8827, ExifDir.NONE, "ISO Speed/Photographic Sensitivity", ExifTagDataType.SHORT, 1, ExifTagGroup.EXIF_IFD, null),
+  OECF(0x8828, ExifDir.NONE, "Opto-Electric Conv Factor", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  INTERLACE(0x8829, ExifDir.NONE, "Interlace", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  TimeZoneOffset(0x882a, ExifDir.NONE,  "Time Zone Offset", ExifTagDataType.SHORT, 1, ExifTagGroup.EXIF_IFD, null), //1st value: offset of DateTimeOriginal from GMT in hours, 2nd value optional: offset of ModifyDate
+  SelfTimerMode(0x882b, ExifDir.NONE, "Self Timer Mode", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null),
+  SensitivityType(0x8830, ExifDir.NONE, "Sensitivity Type", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //applies to 0x8827(ISO): 0=Unknown, 1=Standard Output Sensitivity, 2=Recommended Exposure index, 3=ISO Speed, 4=1&2, 5=1&3, 6=2&3, 7=1&2&3
+  StandardOutputSensitivity(0x8831, ExifDir.NONE, "Standard Output Sensitivity", ExifTagDataType.LONG, 0, ExifTagGroup.EXIF_IFD, null),
+  RecommendedExposureIndex(0x8832, ExifDir.NONE, "Recommended Exposure Index", ExifTagDataType.LONG, 0, ExifTagGroup.EXIF_IFD, null),
+  ISOSpeed(0x8833, ExifDir.NONE, "ISO Speed", ExifTagDataType.LONG, 0, ExifTagGroup.EXIF_IFD, null),
+  ISOSpeedLatitudeyyy(0x8834, ExifDir.NONE, "ISO Speed Latitude yyy", ExifTagDataType.LONG, 0, ExifTagGroup.EXIF_IFD, null),
+  ISOSpeedLatitudezzz(0x8835, ExifDir.NONE, "ISO Speed Latitude zzz", ExifTagDataType.LONG, 0, ExifTagGroup.EXIF_IFD, null),
+  FaxRecvParams(0x885c, ExifDir.NONE, "Fax Receive Parameters", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  FaxSubAddress(0x885d, ExifDir.NONE, "Fax Sub Address", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  FaxRecvTime(0x885e, ExifDir.NONE, "Fax Receive Time", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  FedexEDR(0x8871, ExifDir.NONE, "Fedex EDR", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  LeafSubIFD(0x888a, ExifDir.NONE, "Leaf Sub IFD", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //see Leaf SubIFD Tags
 
-  //continue at 0x84e8 page 8
+  ExifVersion(0x9000, ExifDir.NONE, "Exif Version", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null), //type
+  GooglePlusUploadCode(0x9009, ExifDir.NONE,  "Google Plus Upload Code", ExifTagDataType.UNDEFINED, 1, ExifTagGroup.EXIF_IFD, null),
+  ComponentsConfiguration(0x9101, ExifDir.IMAGE_INFO,  "Components Configuration", ExifTagDataType.UNDEFINED, 4, ExifTagGroup.EXIF_IFD, null), //0=-, 1=Y, 2=Cb, 3=Cr, 4=R, 5=G, 6=B
+  CompressedBitsPerPixel(0x9102, ExifDir.IMAGE_INFO,  "Compressed Bits per Pixel", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  ShutterSpeedValue(0x9201, ExifDir.IMAGE_INFO,  "Shutter Speed Value", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.EXIF_IFD, null), //displayed in seconds but stored as an APEX value
+  ApertureValue(0x9202, ExifDir.IMAGE_INFO,  "Aperture Value", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null), //displayed as an F number but stored as an APEX value
+  BrightnessValue(0x9203, ExifDir.IMAGE_INFO,  "Brightness Value", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  ExposureCompensation(0x9204, ExifDir.IMAGE_INFO,  "Exposure Compensation/Bias value", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  MaxApertureValue(0x9205, ExifDir.IMAGE_INFO,  "Max Aperture Value", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null), //displayed as an F number but stored as an APEX value
+  SubjectDistance(0x9206, ExifDir.IMAGE_INFO,  "Subject Distance", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  MeteringMode(0x9207, ExifDir.IMAGE_INFO,  "MeteringMode", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=unknown, 1=Average, 2=Center-weighted average, 3=Spot, 4=Multi-Spot, 5=Multi-segment, 6=partial, 255=other
+  LightSource(0x9208, ExifDir.IMAGE_INFO,  "Light Source", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //see EXIF LightSource Values
+  Flash(0x9209, ExifDir.IMAGE_INFO,  "Flash Value", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //see Flash Values
+  FocalLength(0x920a, ExifDir.IMAGE_INFO,  "Focal Length", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  FlashEnergy(0x920b, ExifDir.IMAGE_INFO,  "Flash Energy", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SpatialFrequencyResponse(0x920c, ExifDir.IMAGE_INFO,  "Spatial Frequency Response", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  Noise(0x920d, ExifDir.IMAGE_INFO,  "Noise", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  FocalPlaneXResolution(0x920e, ExifDir.IMAGE_INFO,  "Focal Plane X Resolution", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  FocalPlaneYResolution(0x920f, ExifDir.IMAGE_INFO,  "Focal Plane Y Resolution", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  FocalPlaneResolutionUnit(0x9210, ExifDir.IMAGE_INFO,  "Focal Plane Resolution Unit", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //1=None, 2=inches, 3=cm, 4=mm
+  SubjectArea(0x9214, ExifDir.IMAGE_INFO, "Subject Area", ExifTagDataType.SHORT, 1, ExifTagGroup.EXIF_IFD, null),
+  ExposureIndex(0x9215, ExifDir.IMAGE_INFO, "Exposure Index", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  TIFFEPStandardID(0x9216, ExifDir.NONE, "TIFF EP Standard ID", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SensingMethod(0x9217, ExifDir.IMAGE_INFO, "Sensing Method", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //1=Monochrome area, 2=One-Chip color area, 3=Two-Chip color area, 4=Three-Chip color area, 5=Color sequential area, 6=Monochrome linear, 7=Tri linear, 8=Color sequential linear
+  CIP3DataFile(0x923a, ExifDir.NONE, "CIP3 Data File", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //CIP= International Cooperation for Integration of pre press, press and post press
+  CIP3Sheet(0x923b, ExifDir.NONE, "CIP3 Sheet", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  CIP3Side(0x923c, ExifDir.NONE, "CIP3 Side", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MakerNote(0x927c, ExifDir.NONE, "Maker Note", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null),  //see Apple-Tags, Nikon, Canon, Casio, DJI, FLIR, FujiFilm, HP, Kodak, Kyocera, Minolta, Olympus, Leica, Panasonic, Pentax, PhaseOne, Recony, Ricoh, Samsung, Sanyo, Sigma, Sony, Ericsson, Unknown
+  MSDocumentText(0x932f, ExifDir.NONE, "MS Document Text", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MSPropertySetStorage(0x9330, ExifDir.NONE, "MS Property Set Storage", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  MSDocumentTextPosition(0x9331, ExifDir.NONE, "MS Document Text Position", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageSourceData(0x935c, ExifDir.NONE, "Image Source Data", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null), //see: Photoshop Document Data Tags
+  AmbientTemperature(0x9400, ExifDir.IMAGE_INFO, "Ambient Temperature [celsius]", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.EXIF_IFD, null),  //called Temperature by the EXIF spec
+  Humidity(0x9401, ExifDir.IMAGE_INFO, "Humidity [percent]", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  Pressure(0x9402, ExifDir.IMAGE_INFO, "Air Pressure [hPa/mbar]", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  WaterDepth(0x9403, ExifDir.IMAGE_INFO, "Under Water Depth [m]", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.EXIF_IFD, null), //negative for above water
+  Acceleration(0x9404, ExifDir.IMAGE_INFO, "Camera Acceleration (directionless) [mGal or 10E-5 m/s2]", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  CameraElevationAngle(0x9405, ExifDir.IMAGE_INFO, "Camera Elevation Angle [degree]", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
 
+  //continue at 0x9c9b page 13
 
   DUMMYLASTLine(0x0, ExifDir.NONE, "Eintrag löschen und darüber ein Strichpunkt setzen", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null);
 
@@ -215,9 +312,9 @@ public enum ExifTagInfo {
   private final ExifTagDataType dataType;     //the type of the parameter
   private final int arraySize;                //0= not an array, 1=n (variable), x=dataType[x]=array of data Type size x
   private final ExifTagGroup group;           //grouping of ExifTags. If the standard does not define a group then use MISC
-  private final Map<Integer, ?> lookupValues; //possible values allowed for that exif entry or null if all values allowed (if not look-up values)
+  private final Map<?,?> lookupValues;        //possible values allowed for that exif entry or null if all values allowed (if not look-up values)
 
-  ExifTagInfo(int entryID, ExifDir exifDir, String entryName, ExifTagDataType dataType, int arraySize, ExifTagGroup group, Map<Integer, ?> lookupValues) {
+  ExifTagInfo(int entryID, ExifDir exifDir, String entryName, ExifTagDataType dataType, int arraySize, ExifTagGroup group, Map<?,?> lookupValues) {
     this.id = entryID;
     this.exifDir = exifDir;
     this.name = entryName;
@@ -251,7 +348,7 @@ public enum ExifTagInfo {
     return group;
   }
 
-  public Map<Integer, ?> getLookupValues() {
+  public Map<?,?> getLookupValues() {
     return lookupValues;
   }
 }

@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * MIT License
  * <p>
- * Copyright (c)2021 kissPhoto
+ * Copyright (c)2022 kissPhoto
  * </p>
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
@@ -14,33 +14,25 @@ import java.util.Map;
  * <p/>
  *
  * @author Dringo
- * @version 2021-11-13 First implementation
+ * @version 2022-01-30 improved variable names, common super class LookupValue introduced
  * @since 2021-11-13
  */
-public class IntegerLookupValue {
-  private final int value;                 //Tag ID = Exif Entry Key
-  private final String name;               //description to be displayed instead of the tagID
-
+public class IntegerLookupValue extends LookupValue {
+  private final int value;            //int value to be stored
   protected static Map<Integer, IntegerLookupValue> valueMap = new HashMap<>();
 
-  protected IntegerLookupValue(int value, String name) {
+  protected IntegerLookupValue(int value, String description) {
+    super(description);
     this.value = value;
-    this.name = name;
   }
 
-  public static IntegerLookupValue fromID(int entryID){
-    return valueMap.get(entryID);
+  public static IntegerLookupValue fromValue(int value){
+    return valueMap.get(value);
   }
 
   public int getValue() {
     return value;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public static Map<Integer, IntegerLookupValue> getValueMap() {
-    return valueMap;
-  }
+  public static Map<Integer, IntegerLookupValue> getValueMap(){return valueMap;}
 }
