@@ -59,6 +59,17 @@ public enum ExifTagInfo {
   SubSecTime(0x9090, ExifDir.DATE_TIME,  "Fractional Seconds for Modify", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for ModifyDate
   SubSecTimeOriginal(0x9091, ExifDir.DATE_TIME,  "Fractional Seconds for Original (image taken)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for DateTimeOriginal
   SubSecTimeDigitized(0x9092, ExifDir.DATE_TIME,  "Fractional Seconds for Created (digitized)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for CreateDate
+  //ags 0x9c9b-0x9c9f are used by Windows Explorer; special characters in these values are converted to UTF-8 by default, or Windows Latin1 with the -L option. XPTitle is ignored by Windows Explorer if ImageDescription exists
+  //todo: implement
+  XPTitle(0x9c9b, ExifDir.IMAGE_DESCRIPTION, "Win XP Title", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  XPComment(0x9c9c, ExifDir.IMAGE_DESCRIPTION, "Win XP Comment", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  XPAuthor(0x9c9d, ExifDir.IMAGE_DESCRIPTION, "Win XP Author", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null), //ignored by Windows Explorer if Artist exists
+  XPKeywords(0x9c9e, ExifDir.IMAGE_DESCRIPTION, "Win XP Keywords", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  XPSubject(0x9c9f, ExifDir.IMAGE_DESCRIPTION, "Win XP Subject", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+
+  ImageUniqueID(0xa420, ExifDir.COPYRIGHT, "Image Unique ID", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  OwnerName(0xa430, ExifDir.COPYRIGHT, "Camera Owner Name", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+
 
   //-------------- from here on: tree-builder in EditableRootItem (constructor) will stop to add the entries ------------
   //(because ExifDir.NONE is found for the first time)
@@ -298,7 +309,52 @@ public enum ExifTagInfo {
   Acceleration(0x9404, ExifDir.IMAGE_INFO, "Camera Acceleration (directionless) [mGal or 10E-5 m/s2]", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
   CameraElevationAngle(0x9405, ExifDir.IMAGE_INFO, "Camera Elevation Angle [degree]", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
 
-  //continue at 0x9c9b page 13
+  FlashpixVersion(0xa000, ExifDir.NONE, "Flashpix Version", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null),
+  //the value of 0x2 is not standard EXIF. Instead, an Adobe RGB image is indicated by "Uncalibrated" with an InteropIndex of "R03". The values 0xfffd and 0xfffe are also non-standard, and are used by some Sony cameras)
+  ColorSpace(0xa001, ExifDir.IMAGE_INFO, "Color Space", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0x1 = sRGB 0x2 = Adobe RGB 0xfffd = Wide Gamut RGB 0xfffe = ICC Profile 0xffff = Uncalibrated
+  ExifImageWidth(0xa002, ExifDir.IMAGE_INFO, "EXIF Image Width [pixel]", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //called PixelXDimension by the EXIF spec.
+  ExifImageHeight(0xa003, ExifDir.IMAGE_INFO, "EXIF Image Height [pixel]", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //called PixelYDimension by the EXIF spec.
+  RelatedSoundFile(0xa004, ExifDir.IMAGE_DESCRIPTION, "Related Sound File", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  InteropOffset(0xa005, ExifDir.NONE, "Inter op Offset", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //see EXIF Tags
+  SamsungRawPointerOffset(0xa010, ExifDir.NONE, "Samsung RAW Pointers Offset", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SamsungRawPointerLength(0xa011, ExifDir.NONE, "Samsung RAW Pointers Length", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SamsungRawByteOrder(0xa101, ExifDir.NONE, "Samsung RAW Byte Order", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SamsungRawUnknown(0xa102, ExifDir.NONE, "Samsung RAW Unknown", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  FlashEnergyA2(0xa20b, ExifDir.IMAGE_INFO, "Flash Energy", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  SpatialFrequencyResponseA2(0xa20c, ExifDir.IMAGE_INFO, "Spatial Frequency Response", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  NoiseA2(0xa20d, ExifDir.IMAGE_INFO, "Noise", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  FocalPlaneXResolutionA2(0xa20e, ExifDir.IMAGE_INFO, "Focal Plane X Resolution", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  FocalPlaneYResolutionA2(0xa20f, ExifDir.IMAGE_INFO, "Focal Plane Y Resolution", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  FocalPlaneResolutionUnitA2(0xa210, ExifDir.IMAGE_INFO, "Focal Plane Resolution Unit", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //1=None*, 2=inches, 3=cm, 4=mm*, 5=um*; *1,4,5 not standard EXIF
+  ImageNumberA2(0xa211, ExifDir.IMAGE_DESCRIPTION, "Image Number", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SecurityClassificationA2(0xa212, ExifDir.IMAGE_DESCRIPTION, "Security Classification", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageHistoryA2(0xa213, ExifDir.IMAGE_DESCRIPTION, "Image History", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SubjectLocation(0xa214, ExifDir.IMAGE_DESCRIPTION, "Subject Location", ExifTagDataType.SHORT, 2, ExifTagGroup.EXIF_IFD, null),
+  ExposureIndexA2(0xa215, ExifDir.IMAGE_INFO, "Exposure Index", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  TIFF_EPSStandardID(0xa216, ExifDir.NONE, "TIFF EPS Standard ID", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SensingMethodA2(0xa217, ExifDir.IMAGE_INFO, "Sensing Method", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //1=not defined, 2=One-chip color area, 3=Two-chip color area, 4=Three-chip color area, 7=Trilinear, 8=Color sequential linear
+  FileSource(0xa300, ExifDir.IMAGE_INFO, "File Source", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null), //1=Film Scanner, 2=Reflection Print Scanner, 3=Digital Camera, "\x03\x00\x00\x00" = Sigma Digital Camera
+  SceneType(0xa301, ExifDir.IMAGE_INFO, "Scene Type", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null), //1=directly photographed
+  CFAPattern(0xa302, ExifDir.NONE, "CFAPattern", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null),
+  CustomRendered(0xa401, ExifDir.IMAGE_INFO, "Custom Rendered", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0,1=Standard,other: Apple. 0=Normal, 1=Custom, 2=HDR (no original saved), 3=HDR (original saved), 4 = Original (for HDR), 6 = Panorama, 7 = Portrait HDR, 8 = Portrait
+  ExposureMode(0xa402, ExifDir.IMAGE_INFO, "Exposure Mode", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Auto, 1=Manual, 2=Auto bracket
+  WhiteBalance(0xa403, ExifDir.IMAGE_INFO, "White Balance", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Auto, 1=Manual
+  DigitalZoomRatio(0xa404, ExifDir.IMAGE_INFO, "Digital Zoom Ratio", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  FocalLengthIn35mmFormat(0xa405, ExifDir.IMAGE_INFO, "Focal Length in 35mm Film", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null),
+  SceneCaptureType(0xa406, ExifDir.IMAGE_INFO, "SceneCaptureType", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Standard, 1=Landscape, 2=Portrait, 3=Night 4=other(Samsung only)
+  GainControl(0xa407, ExifDir.IMAGE_INFO, "Gain Control", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=None, 1=Low gain up, 2=High gain up, 3=Low gain down, 4=High gain down
+  Contrast(0xa408, ExifDir.IMAGE_INFO, "Contrast", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Normal, 1=Low, 2=High
+  Saturation(0xa409, ExifDir.IMAGE_INFO, "Saturation", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Normal, 1=Low, 2=High
+  Sharpness(0xa40a, ExifDir.IMAGE_INFO, "Sharpness", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Normal, 1=Soft, 2=Hard
+  DeviceSettingDescription(0xa40b, ExifDir.IMAGE_INFO, "Device Setting Description", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  SubjectDistanceRange(0xa40c, ExifDir.IMAGE_INFO, "Subject Distance Range", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Unknown, 1=Macro, 2=Close, 3=Distant
+
+
+
+
+
+
+    //continue at 0xa431 page 15
 
   DUMMYLASTLine(0x0, ExifDir.NONE, "Eintrag löschen und darüber ein Strichpunkt setzen", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null);
 
