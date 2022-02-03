@@ -348,13 +348,47 @@ public enum ExifTagInfo {
   Sharpness(0xa40a, ExifDir.IMAGE_INFO, "Sharpness", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Normal, 1=Soft, 2=Hard
   DeviceSettingDescription(0xa40b, ExifDir.IMAGE_INFO, "Device Setting Description", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   SubjectDistanceRange(0xa40c, ExifDir.IMAGE_INFO, "Subject Distance Range", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Unknown, 1=Macro, 2=Close, 3=Distant
+  SerialNumber(0xa431, ExifDir.IMAGE_INFO, "Body Serial Number", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  LensInfo(0xa432, ExifDir.IMAGE_INFO, "Lens Info", ExifTagDataType.RATIONAL, 4, ExifTagGroup.EXIF_IFD, null), //4 values giving focal and aperture ranges, called Lens Specification by the Exif spec
+  LensMake(0xa433, ExifDir.IMAGE_INFO, "Lens Make", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  LensModel(0xa434, ExifDir.IMAGE_INFO, "Lens Model", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  LensSerialNumber(0xa435, ExifDir.IMAGE_INFO, "Lens Serial Number", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  CompositeImage(0xa460, ExifDir.IMAGE_INFO, "Composite Image", ExifTagDataType.SHORT, 0, ExifTagGroup.EXIF_IFD, null), //0=Unknown, 1=Not a Composite Image, 2=General Composite Image, 3=Composite Image Captured While Shooting
+  CompositeImageCount(0xa461, ExifDir.IMAGE_INFO, "Source Image Number of Composite Image", ExifTagDataType.SHORT, 2, ExifTagGroup.EXIF_IFD, null), //2 values: 1. Number of source images 2. Number of images used.
+  //CompositeImageExposureTimes: 11 or more values: 1. Total exposure time period, 2. Total exposure of all source images, 3. Total exposure of all used images, 4. Max exposure time of source images, 5. Max exposure time of used images, 6. Min exposure time of source images, 7. Min exposure of used images, 8. Number of sequences, 9. Number of source images in sequence. 10-N. Exposure times of each source image.
+  CompositeImageExposureTimes(0xa462, ExifDir.IMAGE_INFO, "Composite Image Exposure Time", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null), //Called SourceExposureTimesOfCompositeImage by the EXIF spec
+  GDALMetadata(0xa480, ExifDir.IMAGE_INFO, "GDAL Metadata", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null), //GDAL=Geospatial Data Abstraction Library
+  GDALNoData(0xa481, ExifDir.IMAGE_INFO, "GDAL No Data", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null), //GDAL=Geospatial Data Abstraction Library
+  Gamma(0xa500, ExifDir.IMAGE_INFO, "Gamma", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
+  ExpandSoftware(0xafc0, ExifDir.NONE, "Expand Software", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ExpandLens(0xafc1, ExifDir.NONE, "Expand Lens", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ExpandFilm(0xafc2, ExifDir.NONE, "Expand Film", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ExpandFilterLens(0xafc3, ExifDir.NONE, "Expand Filter Lens", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ExpandScanner(0xafc4, ExifDir.NONE, "Expand Scanner", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ExpandFlashLamp(0xafc5, ExifDir.NONE, "Expand Flash Lamp", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+
+  HasselbladRawImage(0xb4c3, ExifDir.NONE, "Hasselblad RAW Image", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  PixelFormat(0xbc01, ExifDir.NONE, "Pixel Format", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //(tags 0xbc** are used in Windows HD Photo (HDP and WDP) images. The actual javafx.scene.image.PixelFormat values are 16-byte GUID's but the leading 15 bytes, '6fddc324-4e03-4bfe-b1853-d77768dc9', have been removed below to avoid unnecessary clutter
+  //0x5 = Black & White, 0x8 = 8-bit Gray, 0x9 = 16-bit BGR555, 0xa = 16-bit BGR565, 0xb = 16-bit Gray, 0xc = 24-bit BGR, 0xd = 24-bit RGB, 0xe = 32-bit BGR, 0xf = 32-bit BGRA
+  //0x10 = 32-bit PBGRA, 0x11 = 32-bit Gray Float, 0x12 = 48-bit RGB Fixed Point, EXIF Tags https://exiftool.org/TagNames/EXIF.html, 15 von 23 30.01.2022, 12:30, 0x13 = 32-bit BGR101010, 0x15 = 48-bit RGB, 0x16 = 64-bit RGBA,
+  //0x17 = 64-bit PRGBA, 0x18 = 96-bit RGB Fixed Point, 0x19 = 128-bit RGBA Float, 0x1a = 128-bit PRGBA Float, 0x1b = 128-bit RGB Float, 0x1c = 32-bit CMYK, 0x1d = 64-bit RGBA Fixed Point, 0x1e = 128-bit RGBA Fixed Point, 0x1f = 64-bit CMYK
+  //0x20 = 24-bit 3 Channels, 0x21 = 32-bit 4 Channels, 0x22 = 40-bit 5 Channels, 0x23 = 48-bit 6 Channels, 0x24 = 56-bit 7 Channels, 0x25 = 64-bit 8 Channels, 0x26 = 48-bit 3 Channels, 0x27 = 64-bit 4 Channels, 0x28 = 80-bit 5 Channels, 0x29 = 96-bit 6 Channels
+  //0x2a = 112-bit 7 Channels, 0x2b = 128-bit 8 Channels, 0x2c = 40-bit CMYK Alpha, 0x2d = 80-bit CMYK Alpha, 0x2e = 32-bit 3 Channels Alpha, 0x2f = 40-bit 4 Channels Alpha
+  //0x30 = 48-bit 5 Channels Alpha, 0x31 = 56-bit 6 Channels Alpha, 0x32 = 64-bit 7 Channels Alpha, 0x33 = 72-bit 8 Channels Alpha, 0x34 = 64-bit 3 Channels Alpha, 0x35 = 80-bit 4 Channels Alpha, 0x36 = 96-bit 5 Channels Alpha, 0x37 = 112-bit 6 Channels Alpha
+  //0x38 = 128-bit 7 Channels Alpha, 0x39 = 144-bit 8 Channels Alpha, 0x3a = 64-bit RGBA Half, 0x3b = 48-bit RGB Half, 0x3d = 32-bit RGBE, 0x3e = 16-bit Gray Half, 0x3f = 32-bit Gray Fixed Point
+  Transformation(0xbc02, ExifDir.NONE, "Transformation", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=Horizontal(normal), 1=Mirror vertical, 2=Mirror horizontal, 3=Rotate 180, 4=Rotate 90CW, 5=Mirror horizontal and rotate 90CW, 6=Mirror horizontal and rotate 270CW, 7=Rotate 270CW
+  Uncompressed(0xbc03, ExifDir.NONE, "Uncompressed", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=No, 1=Yes
+  ImageType(0xbc04, ExifDir.NONE, "Image Type", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //Bit0=Preview, Bit1=Page
+  ImageWidthBC(0xbc80, ExifDir.NONE, "Image Width", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageHeightBC(0xbc81, ExifDir.NONE, "Image Height", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  WidthResolution(0xbc82, ExifDir.NONE, "Width Resolution", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  HeightResolution(0xbc83, ExifDir.NONE, "Height Resolution", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageOffset(0xbcc0, ExifDir.NONE, "Image Offset", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageByteCount(0xbcc1, ExifDir.NONE, "Image Byte Count", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  AlphaOffset(0xbcc2, ExifDir.NONE, "Alpha Offset", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
 
 
-
-
-
-
-    //continue at 0xa431 page 15
+  //>>>>>>>>>>>>>>>>continue at 0xbcc3 page 17
 
   DUMMYLASTLine(0x0, ExifDir.NONE, "Eintrag löschen und darüber ein Strichpunkt setzen", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null);
 
