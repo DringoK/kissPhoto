@@ -77,7 +77,8 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   protected final static String MAIN_EDITOR = "_mainEditor";
   protected final static String SECOND_EDITOR = "_2ndEditor";
   //helpers
-  private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  public static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss";
+  public static final SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_PATTERN);
 
   /**
    * status is a single character representing the most important boolean error flag of this File
@@ -908,7 +909,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   }
 
   public void setModifiedDate(String modifiedDate) {
-    if (!modifiedDate.equals(this.modifiedDate.get())) {
+    if(!modifiedDate.equals(this.modifiedDate.get())) {
       this.modifiedDate.set(modifiedDate);
       setTimeStampChanged(true);
     }

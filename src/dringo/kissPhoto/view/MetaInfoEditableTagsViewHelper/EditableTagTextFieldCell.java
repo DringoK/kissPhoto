@@ -34,6 +34,7 @@ import javafx.stage.Stage;
  *
  * @author Ingo
  * @since 2021-11-15
+ * @version 2022-02-06 improved support for DateTime Fields
  * @version 2022-01-07 first working version
  */
 public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem, String> {
@@ -55,9 +56,6 @@ public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem
     escPressed = false;
 
     createInputField();        //every time a new TextField
-
-    inputField.setText(getString());
-
 
     setText(null);
     setGraphic((Node) inputField);
@@ -87,7 +85,7 @@ public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem
 
   @Override
   public void commitEdit(String newValue) {
-    super.commitEdit(newValue);   //this will fire the change event, sets editing to false  and calls updateItem
+    super.commitEdit(inputField.validate(newValue, ""));   //this will fire the change event, sets editing to false  and calls updateItem
     hideInputField();
   }
   @Override
@@ -95,8 +93,9 @@ public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem
     if (!escPressed) { //if just focus lost (e.g. by clicking on different line) then behave like commitEdit (saveEditedValue is called)
       //calling commitEdit in cancelEdit would lead to NullPointerException! Therefore, just call saveEditedValue
       EditableMetaInfoItem editableMetaInfoItem = getTableRow().getItem();
-      editableMetaInfoItem.saveEditedValue(inputField.getText()); //update model
-      updateItem(inputField.getText(), false);   // update view: update the item within this cell, so that it represents the new value
+      String newValue = inputField.validate(inputField.getText(),"");
+      editableMetaInfoItem.saveEditedValue(newValue); //update model
+      updateItem(newValue, false);   // update view: update the item within this cell, so that it represents the new value
     }
     super.cancelEdit();     //sets editing to false
     setText(getItem());     //reset the displayed text to the original (or just changed if !escPressed) item's (cell's) value

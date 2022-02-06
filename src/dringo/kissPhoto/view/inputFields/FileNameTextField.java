@@ -26,8 +26,8 @@ public class FileNameTextField extends RestrictedTextField {
     super(stage);
   }
 
-  public FileNameTextField(String caption, Stage stage) {
-    super(caption, stage);
+  public FileNameTextField(String initialText, Stage stage) {
+    super(initialText, stage);
   }
 
   /**

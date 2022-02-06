@@ -317,11 +317,14 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
     TreeItem<EditableMetaInfoItem> item = getRoot();
     if (item != null) {
       int pathIndex = path.size() - 2; //start at the end of the list (-1 because indices are 0-based), ignore the invisible root (-1)
-      boolean found = true; //if element has been found
+      boolean found = false;
       while (pathIndex >= 0) {
         //search for element in children
         for (TreeItem<EditableMetaInfoItem> child : item.getChildren()) {
-          found = (child.getValue().getTagString().getValue().equalsIgnoreCase(path.get(pathIndex)));
+          if (child.getValue()!=null)
+            found = (child.getValue().getTagString().getValue().equalsIgnoreCase(path.get(pathIndex)));
+          else
+            found = false;
           if (found) {
             item = child; //take over as current item
             item.setExpanded(true);
@@ -400,7 +403,7 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
         metaInfoView.selectTagInAllTagsView(((EditableTagItem) item).getTagID());
       }
     }
-  };
+  }
 
   public FileTableView getFileTableView() {
     return fileTableView;

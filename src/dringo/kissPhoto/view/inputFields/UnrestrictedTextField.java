@@ -21,11 +21,11 @@ public class UnrestrictedTextField extends RestrictedTextField {
   }
 
   /**
-   * @param caption the caption can be passed for an inital value of the TextField
+   * @param initialText the initialText can be passed for an inital value of the TextField
    * @param stage   is the containing Stage (for showing tooltips, when restricted character has been entered
    */
-  public UnrestrictedTextField(String caption, Stage stage) {
-    super(caption, stage);
+  public UnrestrictedTextField(String initialText, Stage stage) {
+    super(initialText, stage);
   }
 
   /**

@@ -30,9 +30,11 @@ public enum ExifTagDataType {
   //derived types. //their ID is the same as their official type
   DATE_TIME(2, "dateTime"),   //YYYY:MM:DD HH:MM:SS in 24-hour format (20 Bytes incl 1 blank and trailing NULL). ->officially stored as an ASCII
   UTF8(1, "UTF8"),            //Bytes interpreted as  UTF8
+  FRACTION(5, "fraction"),       //same as rational byte edited as x/y
   //not or not fully supported. Not editable
   NO(0, "no"),
-  DOUBLE(0, "Double"); //not in the EXIF-Standard, but used e.g. in 0x85d8 ModelTransform
+  DOUBLE(0, "Double"), //not in the EXIF-Standard, but used e.g. in 0x85d8 ModelTransform
+  FLOAT(0, "Float"); //not in the EXIF Standard, but used e.g. in 0xcfa ProfileHueSatMapData1
 
   private final int value;
   private final String name;

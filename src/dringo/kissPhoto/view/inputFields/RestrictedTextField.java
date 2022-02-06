@@ -2,7 +2,6 @@ package dringo.kissPhoto.view.inputFields;
 
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
@@ -10,7 +9,7 @@ import javafx.stage.Stage;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
+ * <p>
  * This is an abstract input field (TextField) which supports verification of input
  * it installs event listener and calls abstract verification methods
  * A tooltip is shown with explanation which characters are allowed if illegal characters are tried to enter
@@ -18,7 +17,7 @@ import javafx.stage.Stage;
  *
  * @author Ingo
  * @since 2012-10-06
- * @version 2020-12-20 lambda expressions for event handlers
+ * @version 2022-02-06 improved support for DateTime. validate() introduced.
  * @version 2016-11-01 RestrictedTextfield stores connected MediaFile and Column no more locally
  */
 public abstract class RestrictedTextField extends TextField implements RestrictedInputField {
@@ -34,11 +33,11 @@ public abstract class RestrictedTextField extends TextField implements Restricte
   }
 
   /**
-   * @param caption the caption can be passed for an inital value of the TextField
+   * @param initialText the initialText should be passed for an initial value of the TextField
    * @param stage   is the containing Stage (for showing tooltips, when restricted character has been entered
    */
-  RestrictedTextField(String caption, Stage stage) {
-    super(caption);
+  RestrictedTextField(String initialText, Stage stage) {
+    super(initialText);
     init(stage);
   }
 
@@ -71,30 +70,34 @@ public abstract class RestrictedTextField extends TextField implements Restricte
    * Event Handlers to prevent from illegal input
    */
   private void installEventHandlers() {
+
     //remove invalid characters after ctrl-V (insert from clipboard)
     setOnKeyReleased(event -> {
-      //clipboard  or copy from line above
-      if (event.isControlDown() && (event.getCode() == KeyCode.V) ||
-        (event.isControlDown() && (event.getCode() == KeyCode.U))) {
-        String err = verifyClipboardInsertion(); //abstract method to be overwritten by implementing classes
-        if (!err.isEmpty()) {
-          tooltip.setText(err);
-          setTooltip(tooltip);
-          tooltip.show(RestrictedTextField.this, tooltipScreenLocationX(), tooltipScreenLocationY());
-        } else {
-          tooltip.hide();
-          Tooltip.uninstall(RestrictedTextField.this, tooltip);
+      switch (event.getCode()) {
+        //clipboard  or copy from line above
+        case V, U -> {
+          if (event.isControlDown()) {
+            String err = verifyClipboardInsertion(); //abstract method to be overwritten by implementing classes
+            if (!err.isEmpty()) {
+              tooltip.setText(err);
+              setTooltip(tooltip);
+              tooltip.show(RestrictedTextField.this, tooltipScreenLocationX(), tooltipScreenLocationY());
+            } else {
+              tooltip.hide();
+              Tooltip.uninstall(RestrictedTextField.this, tooltip);
+            }
+          }
         }
       }
     });
 
     //suppress invalid characters
     addEventFilter(KeyEvent.KEY_TYPED, event -> {
-      if ((event.getCharacter().length() > 0) &&
-          !(event.getCharacter().startsWith("\t")) && //do not check tab (will move the focus and not produce text)
-          !(event.getCharacter().startsWith("\b"))   //do not check backspace (will not produce text(but remove;-))
-          ) {
-        String err = verifyKeyTyped(event);  //abstract method to be overwritten by implementing classes
+      if ((event.getCharacter().length() > 0)
+          && !(event.getCharacter().startsWith("\t")) //do not check tab (will move the focus and not produce text)
+          && !(event.isControlDown())                //also ignore checking all control-input like ctrl-A (select all)
+      ){
+        String err = verifyKeyTyped(event);  //abstract method is overwritten by implementing classes
 
         if (!err.isEmpty()) {
           tooltip.setText(err);
@@ -113,6 +116,44 @@ public abstract class RestrictedTextField extends TextField implements Restricte
         Tooltip.uninstall(RestrictedTextField.this, tooltip);
       }
     });
+  }
+
+  /**
+   * insert a delimiter (e.g. in a date/time) if it is not already there
+   * move the Caret Position after the delimiter
+   * if pos=length+1 the delimiter is appended
+   * if pos is completely out of bounds (<0 or >length+1) nothing happens
+   *
+   * @param pos       position in the inputField text to check/insert the delimiter. caretPosition=pos+1 after the call
+   * @param delimiter the delimiter to check/insert
+   */
+  public void insertMissingDelimiterUpdateCaretPosition(int pos, char delimiter) {
+    try {
+      if (pos == getText().length()) {  //append?
+        setText(getText() + delimiter);
+      } else if (getText().charAt(pos) != delimiter) { //if delimiter is not already there
+        //insert it
+        StringBuilder current = new StringBuilder(getText());
+        current.insert(pos, delimiter);
+        setText(current.toString());
+      }
+      positionCaret(pos + 1);
+    } catch (IndexOutOfBoundsException e) {
+      //charAt(pos) in "else if" might be invalid --> nothing happens
+    }
+  }
+
+  /**
+   * At the end of editing FileTableTextFieldCell calls this method to give the RestrictedTextField-Implementation a chance
+   * to make the entered value valid. E.g. a valid Date/Time in DateTimeTextField
+   * The default implementation of validate here just returns the unchanged input text
+   *
+   * @param text to be validated
+   * @param defaultText return this text if validation and repair fail
+   * @return the text modified so that it is valid
+   */
+  public String validate(String text, String defaultText) {
+    return text;
   }
 
   /**

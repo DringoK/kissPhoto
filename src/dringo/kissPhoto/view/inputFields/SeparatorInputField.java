@@ -34,13 +34,13 @@ public class SeparatorInputField extends ComboBox<String> implements RestrictedI
   /**
    * create new ComboBox
    *
-   * @param caption is the initial value
+   * @param initialText is the initial value
    */
 //@constructor
-  public SeparatorInputField(String caption) {
+  public SeparatorInputField(String initialText) {
     super();
     init();
-    setValue(caption);
+    setValue(initialText);
   }
 
   /**
@@ -104,6 +104,18 @@ public class SeparatorInputField extends ComboBox<String> implements RestrictedI
       //use the others as is
       default -> s;
     };
+  }
+
+  /**
+   * At the end of editing TextFieldCell calls this method to give the RestrictedTextField-Implementation a chance
+   * to make the entered value valid. E.g. a valid Date/Time in DateTimeTextField
+   * The default implementation of validate here just returns the unchanged input text
+   * @param text to be validated
+   * @param defaultText the text to be returend if text could not be "repaired" during validation
+   * @return the text modified so that it is valid or empty String if not possible
+   */
+  public String validate(String text, String defaultText){
+    return text;
   }
 
   //implement TextFieldComboBox interface to map the TextField-Interface to ComboBox

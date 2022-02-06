@@ -33,4 +33,7 @@ public interface RestrictedInputField {
   void setMinWidth(double minWidth);
 
   void requestFocus();
-}
+
+  String validate(String newValue, String defaultValue);
+
+  }

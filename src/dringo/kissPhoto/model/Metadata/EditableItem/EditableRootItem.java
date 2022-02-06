@@ -24,11 +24,11 @@ import mediautil.image.jpeg.Exif;
  * It consists of Directories (EditableDirectoryItem) which again consist of Tags (EditableTagItem)
  *
  * Because AbstractImageInfo does not define Directories a Directory/Tag Tree is built here grouping editable tags
- * plus a dirctory "misc" that is empty in the beginning, but editable tags can be added
  * <p/>
  *
  * @author Dringo
  * @since 2021-11-13
+ * @version 2022-02-05 additional tag type FRACTION supported
  * @version 2022-01-07 first working version
  */
 

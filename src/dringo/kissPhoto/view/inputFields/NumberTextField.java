@@ -27,8 +27,8 @@ public class NumberTextField extends RestrictedTextField {
     super(stage);
   }
 
-  public NumberTextField(String caption, Stage stage) {
-    super(caption, stage);
+  public NumberTextField(String initialText, Stage stage) {
+    super(initialText, stage);
   }
 
   /**

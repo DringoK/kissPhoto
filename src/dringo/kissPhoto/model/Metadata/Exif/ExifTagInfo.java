@@ -31,11 +31,9 @@ public enum ExifTagInfo {
   Make(0x10f, ExifDir.OTHER, "Make", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
   Model(0x110, ExifDir.OTHER, "Model", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
   Orientation(0x0112, ExifDir.IMAGE_INFO, "Orientation", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, OrientationLookupValue.getValueMap()),
-  XResolution(0x011a, ExifDir.IMAGE_INFO, "X Resolution", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
-  YResolution(0x011b, ExifDir.IMAGE_INFO, "Y Resolution", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
+  XResolution(0x011a, ExifDir.IMAGE_INFO, "X Resolution", ExifTagDataType.FRACTION, 0, ExifTagGroup.IFD0, null),
+  YResolution(0x011b, ExifDir.IMAGE_INFO, "Y Resolution", ExifTagDataType.FRACTION, 0, ExifTagGroup.IFD0, null),
   PageName(0x011d, ExifDir.IMAGE_INFO, "Page Name", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
-  XPosition(0x011e, ExifDir.IMAGE_INFO, "X Position", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
-  YPosition(0x011f, ExifDir.IMAGE_INFO, "Y Position", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
   ResolutionUnit(0x0128, ExifDir.IMAGE_INFO, "Resolution Unit", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, ResolutionUnitLookupValue.getValueMap()),
   PageNumber(0x0129, ExifDir.IMAGE_INFO, "Page Number", ExifTagDataType.SHORT, 2, ExifTagGroup.IFD0, null),
   Software(0x0131, ExifDir.OTHER, "Software", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
@@ -45,8 +43,6 @@ public enum ExifTagInfo {
   Rating(0x4746, ExifDir.IMAGE_DESCRIPTION, "Rating", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),
   RatingPercent(0x4749, ExifDir.IMAGE_DESCRIPTION, "Rating Percent", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),
   Copyright(0x8298, ExifDir.COPYRIGHT, "Copyright", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
-  ExposureTime(0x829a, ExifDir.IMAGE_INFO, "Exposure Time", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null),
-  FNumber(0x829d, ExifDir.IMAGE_INFO, "F-Number", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null), //Blendenzahl
   DateTimeOriginal(0x9003, ExifDir.DATE_TIME,  "Date Time Original (image taken)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null),
   CreateDate(0x9004, ExifDir.DATE_TIME,  "Date Time Created (digitized)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null),
   OffsetTime(0x9010, ExifDir.DATE_TIME,  "Time Zone Offset Modify", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for ModifyDate
@@ -56,11 +52,8 @@ public enum ExifTagInfo {
   SecurityClassification(0x9212, ExifDir.IMAGE_INFO, "Security Classification", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, SecurityClassLookupValue.getValueMap()),
   ImageHistory(0x9213, ExifDir.IMAGE_INFO, "Image History", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
   //UserComment(0x9286, ExifDir.IMAGE_DESCRIPTION, "User Comment", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null),  //UNDEFINED currently not supported!!!!!!!!!!!!!!!!!!
-  SubSecTime(0x9090, ExifDir.DATE_TIME,  "Fractional Seconds for Modify", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for ModifyDate
-  SubSecTimeOriginal(0x9091, ExifDir.DATE_TIME,  "Fractional Seconds for Original (image taken)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for DateTimeOriginal
-  SubSecTimeDigitized(0x9092, ExifDir.DATE_TIME,  "Fractional Seconds for Created (digitized)", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.EXIF_IFD, null), //time zone for CreateDate
-  //ags 0x9c9b-0x9c9f are used by Windows Explorer; special characters in these values are converted to UTF-8 by default, or Windows Latin1 with the -L option. XPTitle is ignored by Windows Explorer if ImageDescription exists
-  //todo: implement
+  //tags 0x9c9b-0x9c9f are used by Windows Explorer; special characters in these values are converted to UTF-8 by default, or Windows Latin1 with the -L option. XPTitle is ignored by Windows Explorer if ImageDescription exists
+  //todo: implement UTF8
   XPTitle(0x9c9b, ExifDir.IMAGE_DESCRIPTION, "Win XP Title", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
   XPComment(0x9c9c, ExifDir.IMAGE_DESCRIPTION, "Win XP Comment", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
   XPAuthor(0x9c9d, ExifDir.IMAGE_DESCRIPTION, "Win XP Author", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null), //ignored by Windows Explorer if Artist exists
@@ -69,6 +62,7 @@ public enum ExifTagInfo {
 
   ImageUniqueID(0xa420, ExifDir.COPYRIGHT, "Image Unique ID", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
   OwnerName(0xa430, ExifDir.COPYRIGHT, "Camera Owner Name", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  CameraLabel(0xc7a1, ExifDir.OTHER, "Camera Label", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
 
 
   //-------------- from here on: tree-builder in EditableRootItem (constructor) will stop to add the entries ------------
@@ -92,6 +86,8 @@ public enum ExifTagInfo {
   MinSampleValue(0x0118, ExifDir.NONE, "Min Sample Value", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),
   MaxSampleValue(0x0119, ExifDir.NONE, "Max Sample Value", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),
   PlanarConfiguration(0x011c, ExifDir.NONE, "Planar Configuration", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null), //1=Chunky, 2=Planar
+  XPosition(0x011e, ExifDir.IMAGE_INFO, "X Position", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
+  YPosition(0x011f, ExifDir.IMAGE_INFO, "Y Position", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
   FreeOffsets(0x0120, ExifDir.NONE, "Free Offsets", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   FreeByteCounts(0x0121, ExifDir.NONE, "Free Byte Counts", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   GrayResponseUnit(0x0122, ExifDir.NONE, "Gray Response Unit", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null), //1=0.1, 2=0.001, 3=0.0001, 4=1e-05, 5=1e-06
@@ -193,6 +189,8 @@ public enum ExifTagInfo {
   CFAPattern2(0x828e, ExifDir.NONE, "CFA Pattern 2", ExifTagDataType.BYTE, 1, ExifTagGroup.SUB_IFD, null),
   BatteryLevel(0x828f, ExifDir.NONE, "Battery Level", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   KodakIFD(0x8290, ExifDir.NONE, "Kodak IFD", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //used in various types of Kodak images
+  ExposureTime(0x829a, ExifDir.IMAGE_INFO, "Exposure Time", ExifTagDataType.FRACTION, 0, ExifTagGroup.EXIF_IFD, null),
+  FNumber(0x829d, ExifDir.IMAGE_INFO, "F-Number", ExifTagDataType.RATIONAL, 0, ExifTagGroup.EXIF_IFD, null), //Blendenzahl
   MDFileTag(0x82a5, ExifDir.NONE, "Molecular Dynamics File Tag", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //tags 0x82a5-0x82ac are used in Molecular Dynamics GEL files
   MDScalePixel(0x82a6, ExifDir.NONE, "Molecular Dynamics Scale Pixel", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   MDColorTable(0x82a7, ExifDir.NONE, "Molecular Dynamics Color Table", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
@@ -298,6 +296,9 @@ public enum ExifTagInfo {
   CIP3Sheet(0x923b, ExifDir.NONE, "CIP3 Sheet", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   CIP3Side(0x923c, ExifDir.NONE, "CIP3 Side", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   MakerNote(0x927c, ExifDir.NONE, "Maker Note", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null),  //see Apple-Tags, Nikon, Canon, Casio, DJI, FLIR, FujiFilm, HP, Kodak, Kyocera, Minolta, Olympus, Leica, Panasonic, Pentax, PhaseOne, Recony, Ricoh, Samsung, Sanyo, Sigma, Sony, Ericsson, Unknown
+  SubSecTime(0x9290, ExifDir.DATE_TIME,  "Fractional Seconds for Modify", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null), //time zone for ModifyDate
+  SubSecTimeOriginal(0x9291, ExifDir.DATE_TIME,  "Fractional Seconds for Original (image taken)", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null), //time zone for DateTimeOriginal
+  SubSecTimeDigitized(0x9292, ExifDir.DATE_TIME,  "Fractional Seconds for Created (digitized)", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null), //time zone for CreateDate
   MSDocumentText(0x932f, ExifDir.NONE, "MS Document Text", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   MSPropertySetStorage(0x9330, ExifDir.NONE, "MS Property Set Storage", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   MSDocumentTextPosition(0x9331, ExifDir.NONE, "MS Document Text Position", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
@@ -386,14 +387,165 @@ public enum ExifTagInfo {
   ImageOffset(0xbcc0, ExifDir.NONE, "Image Offset", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   ImageByteCount(0xbcc1, ExifDir.NONE, "Image Byte Count", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
   AlphaOffset(0xbcc2, ExifDir.NONE, "Alpha Offset", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  AlphaByteCount(0xbcc3, ExifDir.NONE, "Alpha Byte Count", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ImageDataDiscard(0xbcc4, ExifDir.NONE, "Image Data Discard", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=Full Resolution, 1=Flexbits Discarded, 2=HighPass Frequency Data Discarded, 3=Highpass and LowPass Frequency Data Discarded
+  AlphaDataDiscard(0xbcc5, ExifDir.NONE, "Alpha Data Discard", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=Full Resolution, 1=Flexbits Discarded, 2=HighPass Frequency Data Discarded, 3=Highpass and LowPass Frequency Data Discarded
 
+  OceScanJobDesc(0xc427, ExifDir.NONE, "Oce Scan Job Description", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  OceApplicationSelector(0xc428, ExifDir.NONE, "Oce Application Selector", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  OceIDNumber(0xc429, ExifDir.NONE, "Oce ID Number", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  OceImageLogic(0xc42a, ExifDir.NONE, "Oce Image Logic", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  Annotations(0xc44f, ExifDir.NONE, "Annotations", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  PrintIM(0xc4a5, ExifDir.NONE, "Print IM", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null), //subTags not decoded
+  HasselbladExif(0xc51b, ExifDir.NONE, "Hasselblad Exif", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  OriginalFileName(0xc573, ExifDir.NONE, "Original File Name", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //used by some obscure software
+  UPTOOriginalContentType(0xc580, ExifDir.NONE, "UPTO Original Content Type", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //0=Text or Drawing, 1=Grayscale, 2=Color
+  CR2CFAPattern(0xc5e0, ExifDir.NONE, "CR 2 CFA Pattern", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //1='0 1 1 2'=[Red,Green][Green,Blue], 2='2 1 1 0'=[Blue,Green][Green,Red], 3='1 2 0 1'=[Green,Blue][Red,Green], 4=' 1 0 2 1'=[Green,Red][Blue,Green]
+  //tags 0xc612-0xcd3b are defined by the DNG (Digital Negative)specification unless otherwise noted. See https://helpx.adobe.com/photoshop/digital-negative.html for the specification
+  DNGVersion(0xc612, ExifDir.NONE, "DNG Version", ExifTagDataType.BYTE, 4, ExifTagGroup.IFD0, null),
+  DNGBackwardVersion(0xc613, ExifDir.NONE, "DNG Backward Version", ExifTagDataType.BYTE, 4, ExifTagGroup.IFD0, null),
+  UniqueCameraModel(0xc614, ExifDir.NONE, "Unique Camera Model", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  LocalizedCameraModel(0xc615, ExifDir.NONE, "Localized Camera Model", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  CFAPlaneColor(0xc616, ExifDir.NONE, "CFA Plane Color", ExifTagDataType.NO, 0, ExifTagGroup.SUB_IFD, null),
+  CFALayout(0xc617, ExifDir.NONE, "CFA Layout", ExifTagDataType.NO, 0, ExifTagGroup.SUB_IFD, null),  //1=Rectangular, 2=Even columns offset down 1/2 row, 3=Even columns offset up 1/2 row, 4=Even rows offset right 1/2 column, 5=Even rows offset left 1/2 column,
+  // 6=Even rows offset up by 1/2 row, even columns offset left by 1/2 column, 7=Even rows offset up by 1/2 row, even columns offset right by 1/2 column, 8=Even rows offset down by 1/2 row, even columns offset left by 1/2 column, 9=Even rows offset down by 1/2 row, even columns offset right by 1/2 column
+  LinearizationTable(0xc618, ExifDir.NONE, "Linearization Table", ExifTagDataType.SHORT, 1, ExifTagGroup.SUB_IFD, null),
+  BlackLevelRepeatDim(0xc619, ExifDir.NONE, "Black Level Repeat Dim", ExifTagDataType.SHORT, 1, ExifTagGroup.SUB_IFD, null),
+  BlackLevel(0xc61a, ExifDir.NONE, "Black Level", ExifTagDataType.RATIONAL, 1, ExifTagGroup.SUB_IFD, null),
+  BlackLevelDeltaH(0xc61b, ExifDir.NONE, "Black Level Delta H", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.SUB_IFD, null),
+  BlackLevelDeltaV(0xc61c, ExifDir.NONE, "Black Level Delta V", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.SUB_IFD, null),
+  WhiteLevel(0xc61d, ExifDir.NONE, "White Level", ExifTagDataType.LONG, 1, ExifTagGroup.SUB_IFD, null),
+  DefaultScale(0xc61e, ExifDir.NONE, "Default Scale", ExifTagDataType.RATIONAL, 2, ExifTagGroup.SUB_IFD, null),
+  DefaultCropOrigin(0xc61f, ExifDir.NONE, "Default Crop Origin", ExifTagDataType.LONG, 2, ExifTagGroup.SUB_IFD, null),
+  DefaultCropSize(0xc620, ExifDir.NONE, "Default Crop Size", ExifTagDataType.LONG, 2, ExifTagGroup.SUB_IFD, null),
+  ColorMatrix1(0xc621, ExifDir.NONE, "Color Matrix 1", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  ColorMatrix2(0xc622, ExifDir.NONE, "Color Matrix 2", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  CameraCalibration1(0xc623, ExifDir.NONE, "Camera Calibration 1", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  CameraCalibration2(0xc624, ExifDir.NONE, "Camera Calibration 2", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  ReductionMatrix1(0xc625, ExifDir.NONE, "Reduction Matrix 1", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  ReductionMatrix2(0xc626, ExifDir.NONE, "Reduction Matrix 2", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  AnalogBalance(0xc627, ExifDir.NONE, "Analog Balance", ExifTagDataType.RATIONAL, 1, ExifTagGroup.IFD0, null),
+  AsShotNeutral(0xc628, ExifDir.NONE, "As Shot Neutral", ExifTagDataType.RATIONAL, 1, ExifTagGroup.IFD0, null),
+  AsShotWhiteXY(0xc629, ExifDir.NONE, "As Shot White XY", ExifTagDataType.RATIONAL, 2, ExifTagGroup.IFD0, null),
+  BaselineExposure(0xc62a, ExifDir.NONE, "Baseline Exposure", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.IFD0, null),
+  BaselineNoise(0xc62b, ExifDir.NONE, "Baseline Noise", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
+  BaselineSharpness(0xc62c, ExifDir.NONE, "Baseline Sharpness", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
+  BayerGreenSplit(0xc62d, ExifDir.NONE, "Bayer Green Split", ExifTagDataType.LONG, 0, ExifTagGroup.SUB_IFD, null),
+  LinearResponseLimit(0xc62e, ExifDir.NONE, "Linear Response Limit", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
+  CameraSerialNumber(0xc62f, ExifDir.NONE, "Camera Serial Number", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  DNGLensInfo(0xc630, ExifDir.NONE, "DNG Lens Info", ExifTagDataType.RATIONAL, 4, ExifTagGroup.IFD0, null),
+  ChromaBlurRadius(0xc631, ExifDir.NONE, "Chroma Blur Radius", ExifTagDataType.RATIONAL, 0, ExifTagGroup.SUB_IFD, null),
+  AntiAliasStrength(0xc632, ExifDir.NONE, "Anti Alias Strength", ExifTagDataType.RATIONAL, 0, ExifTagGroup.SUB_IFD, null),
+  ShadowScale(0xc633, ExifDir.NONE, "Shadow Scale", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
+  DNGPrivateData(0xc634, ExifDir.NONE, "DNG Private Data", ExifTagDataType.BYTE, 0, ExifTagGroup.IFD0, null), //or Subtags SR2Private, DNGAdobeData (undef), MakerNotePentax, MakerNotePetax5, MakerNoteRicohPentax...all IFD0
+  MakerNoteSafety(0xc635, ExifDir.NONE, "Maker Note Safety", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null), //0=Unsafe, 1=Safe
+  RawImageSegmentation(0xc640, ExifDir.NONE, "RAW Image Segmentation", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //used in segmented Canon CR2 images. 3 numbers: 1. Number of segments minus one; 2. Pixel width of segments except last; 3. Pixel width of last segment
+  CalibrationIlluminant1(0xc65a, ExifDir.NONE, "Calibration Illuminant 1", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),  //EXIF LightSource Values
+  CalibrationIlluminant2(0xc65b, ExifDir.NONE, "Calibration Illuminant 2", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),  //EXIF LightSource Values
+  BestQualityScale(0xc65c, ExifDir.NONE, "Best Quality Scale", ExifTagDataType.RATIONAL, 0, ExifTagGroup.SUB_IFD, null),
+  RawDataUniqueID(0xc65d, ExifDir.NONE, "RAW Data Unique ID", ExifTagDataType.BYTE, 16, ExifTagGroup.IFD0, null),
+  AliasLayerMetadata(0xc660, ExifDir.NONE, "Alias Layer Metadata", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),  //Used by Alias Sketchbook Pro
+  OriginalRAWFileName(0xc68b, ExifDir.NONE, "Original RAW File Name", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  OriginalRAWFileData(0xc68c, ExifDir.NONE, "Original RAW File Data", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null), //DNG Original Raw Tags
+  ActiveArea(0xc68d, ExifDir.NONE, "Active Area", ExifTagDataType.LONG, 4, ExifTagGroup.SUB_IFD, null),
+  MaskedAreas(0xc68e, ExifDir.NONE, "Masked Areas", ExifTagDataType.LONG, 1, ExifTagGroup.SUB_IFD, null),
+  AsShotICCProfile(0xc68f, ExifDir.NONE, "As Shot ICC Profile", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null), //see ICC Profile Tags
+  AsShotPreProfileMatrix(0xc690, ExifDir.NONE, "As Shot Pre Profile Matrix", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  CurrentICCProfile(0xc691, ExifDir.NONE, "Current ICC Profile", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null), //see ICC Profile Tags
+  CurrentPreProfileMatrix(0xc692, ExifDir.NONE, "Current Pre Profile Matrix", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  ColorimetricReference(0xc6bf, ExifDir.NONE, "Colorimetric Reference", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null),
+  SRawType(0xc6c5, ExifDir.NONE, "S RAW Type", ExifTagDataType.NO, 0, ExifTagGroup.IFD0, null),
+  PanasonicTitle(0xc6d2, ExifDir.NONE, "Panasonic Title", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null), //proprietary Panasonic tag used for baby/pet name etc
+  PanasonicTitle2(0xc6d3, ExifDir.NONE, "Panasonic Title 2", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null), //proprietary Panasonic tag used for baby/pet name with age
+  CameraCalibrationSig(0xc6f3, ExifDir.NONE, "Camera Calibration Sig", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  ProfileCalibrationSig(0xc6f4, ExifDir.NONE, "Profile Calibration Sig", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  ProfileIFD(0xc6f5, ExifDir.NONE, "Profile IFD", ExifTagDataType.NO, 0, ExifTagGroup.IFD0, null), //see Exif Tags
+  AsShotProfileName(0xc6f6, ExifDir.NONE, "As Shot Profile Name", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  NoiseReductionApplied(0xc6f7, ExifDir.NONE, "Noise Reduction Applied", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.IFD0, null),
+  ProfileName(0xc6f8, ExifDir.NONE, "Profile Name", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  ProfileHueSatMapsDims(0xc6f9, ExifDir.NONE, "Profile Hue Sat Maps Dims", ExifTagDataType.LONG, 3, ExifTagGroup.IFD0, null),
+  ProfileHueSatMapData1(0xc6fa, ExifDir.NONE, "Profile Hue Sat Map Data 1", ExifTagDataType.FLOAT, 1, ExifTagGroup.IFD0, null),
+  ProfileHueSatMapData2(0xc6fb, ExifDir.NONE, "Profile Hue Sat Map Data 2", ExifTagDataType.FLOAT, 1, ExifTagGroup.IFD0, null),
+  ProfileToneCurve(0xc6fc, ExifDir.NONE, "Profile Tone Curve", ExifTagDataType.FLOAT, 1, ExifTagGroup.IFD0, null),
+  ProfileEmbedPolicy(0xc6fd, ExifDir.NONE, "Profile Embed Policy", ExifTagDataType.LONG, 0, ExifTagGroup.IFD0, null),//0=Allow Copying, 1=Embed if Used, 2=Never Embed, 3=No Restrictions
+  ProfileCopyright(0xc6fe, ExifDir.NONE, "Profile Copyright", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  ForwardMatrix1(0xc714, ExifDir.NONE, "Forward Matrix 1", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  ForwardMatrix2(0xc715, ExifDir.NONE, "Forward Matrix 2", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  PreviewApplicationName(0xc716, ExifDir.NONE, "Preview Application Name", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  PreviewApplicationVersion(0xc717, ExifDir.NONE, "Preview Application Version", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  PreviewSettingsName(0xc718, ExifDir.NONE, "Preview Settings Name", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  PreviewSettingsDigest(0xc719, ExifDir.NONE, "Preview Settings Digest", ExifTagDataType.BYTE, 0, ExifTagGroup.IFD0, null),
+  PreviewColorSpace(0xc71a, ExifDir.NONE, "Preview Color Space", ExifTagDataType.LONG, 0, ExifTagGroup.IFD0, null), //0=Unknown, 1=Gray Gamma 2.2, 2=sRGB, 3=Adobe RGB, 4=ProPhoto RGB
+  PreviewDateTime(0xc71b, ExifDir.NONE, "Preview Date Time", ExifTagDataType.DATE_TIME, 0, ExifTagGroup.IFD0, null),
+  RawImageDigest(0xc71c, ExifDir.NONE, "RAW Image Digest", ExifTagDataType.BYTE, 16, ExifTagGroup.IFD0, null),
+  OriginalRawFileDigest(0xc71d, ExifDir.NONE, "Original RAW File Digest", ExifTagDataType.BYTE, 16, ExifTagGroup.IFD0, null),
+  SubTileBlockSize(0xc71e, ExifDir.NONE, "Sub Tile Block Size", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  RowInterleaveFactor(0xc71f, ExifDir.NONE, "Row Interleave Factor", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null),
+  ProfileLookTableDims(0xc725, ExifDir.NONE, "Profile Look Table Dims", ExifTagDataType.LONG, 3, ExifTagGroup.IFD0, null),
+  ProfileLookTableData(0xc726, ExifDir.NONE, "Profile Look Table Data", ExifTagDataType.FLOAT, 1, ExifTagGroup.IFD0, null),
+  //Values for OpcodeList1-3
+  //1=WarpRectilinear, 2=WarpFisheye, 3=FixVignetteRadial, 4=FixBadPixelsConstant, 5=FixBadPixelsList, 6=TrimBounds, 7=MapTable, 8=MapPolynomial, 9=GainMap, 10=DeltaPerRow, 11=DeltaPerColumn, 12=ScalePerRow, 13=ScalePerColumn, 14=WarpRectilinear2
+  OpcodeList1(0xc740, ExifDir.NONE, "Opcode List 1", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.SUB_IFD, null),
+  OpcodeList2(0xc741, ExifDir.NONE, "Opcode List 2", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.SUB_IFD, null),
+  OpcodeList3(0xc74e, ExifDir.NONE, "Opcode List 3", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.SUB_IFD, null), //should this be 0xc743??? (=Typo in Exif Tags list?)
+  NoiseProfile(0xc761, ExifDir.NONE, "Noise Profile", ExifTagDataType.DOUBLE, 1, ExifTagGroup.SUB_IFD, null),
+  TimeCodes(0xc763, ExifDir.NONE, "Time Codes", ExifTagDataType.BYTE, 1, ExifTagGroup.IFD0, null),
+  FrameRate(0xc764, ExifDir.NONE, "Frame Rate", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.IFD0, null),
+  TStop(0xc772, ExifDir.NONE, "T Stop", ExifTagDataType.RATIONAL, 1, ExifTagGroup.IFD0, null),
+  ReelName(0xc789, ExifDir.NONE, "Reel Name", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  OriginalDefaultFinalSize(0xc791, ExifDir.NONE, "Original Default Final Size", ExifTagDataType.LONG, 2, ExifTagGroup.IFD0, null),
+  OriginalBestQualitySize(0xc792, ExifDir.NONE, "Original Best Quality Size", ExifTagDataType.LONG, 2, ExifTagGroup.IFD0, null), //called OriginalBestQualityFinalSize by the DNG spec
+  OriginalDefaultCropSize(0xc793, ExifDir.NONE, "Original Default Crop Size", ExifTagDataType.RATIONAL, 2, ExifTagGroup.IFD0, null),
+  ProfileHueSatMapEncoding(0xc7a3, ExifDir.NONE, "Profile Hue Sat Map Encoding", ExifTagDataType.LONG, 0, ExifTagGroup.IFD0, null), //0=Linear, 1=sRGB
+  ProfileLookTableEncoding(0xc7a4, ExifDir.NONE, "Profile Look Table Encoding", ExifTagDataType.LONG, 0, ExifTagGroup.IFD0, null), //0=Linear, 1=sRGB
+  BaselineExposureOffset(0xc7a5, ExifDir.NONE, "Baseline Exposure Offset", ExifTagDataType.SRATIONAL, 0, ExifTagGroup.IFD0, null),
+  DefaultBlackRender(0xc7a6, ExifDir.NONE, "Default Black Render", ExifTagDataType.LONG, 0, ExifTagGroup.IFD0, null), //0=Auto, 1=None
+  NewRawImageDigest(0xc7a7, ExifDir.NONE, "New RAW Image Digest", ExifTagDataType.BYTE, 16, ExifTagGroup.IFD0, null),
+  RawToPreviewGain(0xc7a8, ExifDir.NONE, "RAW to Preview Gain", ExifTagDataType.DOUBLE, 0, ExifTagGroup.IFD0, null),
+  CacheVersion(0xc7aa, ExifDir.NONE, "Cache Version", ExifTagDataType.LONG, 0, ExifTagGroup.SUB_IFD2, null),
+  DefaultUserCrop(0xc7b5, ExifDir.NONE, "Default User Crop", ExifTagDataType.RATIONAL, 4, ExifTagGroup.SUB_IFD, null),
+  NikonNEFInfo(0xc7d5, ExifDir.NONE, "Nikon NEF Info", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //see Nikon NEFInfo Tags
+  //tags 0xc7e9-0xc7ee added by DNG 1.5.0.0
+  DepthFormat(0xc7e9, ExifDir.NONE, "Depth Format", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null), //0=Unknown, 1=Linear, 2=Inverse
+  DepthNear(0xc7ea, ExifDir.NONE, "Depth Near", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
+  DepthFar(0xc7eb, ExifDir.NONE, "Depth Far", ExifTagDataType.RATIONAL, 0, ExifTagGroup.IFD0, null),
+  DepthUnits(0xc7ec, ExifDir.NONE, "Depth Units", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null), //0=Unknown, 1=Meters
+  DepthMeasureType(0xc7ed, ExifDir.NONE, "Depth Measure Type", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null), //0=Unknown, 1=Optical Axis, 2=Optical Ray
+  EnhanceParams(0xc7ee, ExifDir.NONE, "Enhance Params", ExifTagDataType.ASCII, 0, ExifTagGroup.IFD0, null),
+  ProfileGainTableMap(0xcd2d, ExifDir.NONE, "Profile Gain Table Map", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.SUB_IFD, null),
+  SemanticName(0xcd2e, ExifDir.NONE, "Semantic Name", ExifTagDataType.NO, 0, ExifTagGroup.SUB_IFD, null),
+  SemanticInstanceIFD(0xcd30, ExifDir.NONE, "Semantic Instance IFD", ExifTagDataType.NO, 0, ExifTagGroup.SUB_IFD, null),
+  CalibrationIlluminant3(0xcd31, ExifDir.NONE, "Calibration Illuminant 3", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null), //see EXIF LightSource Values
+  CameraCalibration3(0xcd32, ExifDir.NONE, "Camera Calibration 3", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  ColorMatrix3(0xcd33, ExifDir.NONE, "Color Matrix 3", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  ForwardMatrix3(0xcd34, ExifDir.NONE, "Forward Matrix 3", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  IlluminantData1(0xcd35, ExifDir.NONE, "Illuminant Data 1", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null),
+  IlluminantData2(0xcd36, ExifDir.NONE, "Illuminant Data 2", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null),
+  IlluminantData3(0xcd37, ExifDir.NONE, "Illuminant Data 3", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null),
+  MaskSubArea(0xcd38, ExifDir.NONE, "Mask Sub Area", ExifTagDataType.NO, 0, ExifTagGroup.SUB_IFD, null),
+  ProfileHueSatMapData3(0xcd39, ExifDir.NONE, "Profile Hue Sat Map Data 3", ExifTagDataType.FLOAT, 1, ExifTagGroup.IFD0, null),
+  ReductionMatrix3(0xcd3a, ExifDir.NONE, "Reduction Matrix 3", ExifTagDataType.SRATIONAL, 1, ExifTagGroup.IFD0, null),
+  RGBTables(0xcd3b, ExifDir.NONE, "RGBTables", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.IFD0, null),
 
-  //>>>>>>>>>>>>>>>>continue at 0xbcc3 page 17
+  Padding(0xea1c, ExifDir.NONE, "Padding", ExifTagDataType.UNDEFINED, 0, ExifTagGroup.EXIF_IFD, null),
+  OffsetSchema(0xea1d, ExifDir.NONE, "Offset Schema", ExifTagDataType.SLONG, 0, ExifTagGroup.EXIF_IFD, null),  //Microsoft's ill-conceived maker note offset difference
 
-  DUMMYLASTLine(0x0, ExifDir.NONE, "Eintrag löschen und darüber ein Strichpunkt setzen", ExifTagDataType.SHORT, 0, ExifTagGroup.IFD0, null);
-
-
-
+  //tags 0xfde8-0xfdea and 0xfe4c-0xfe58 are generated by Photoshop Camera RAW. Some names are the same as other EXIF tags, but ExifTool will avoid writing these unless they already exist in the file
+  OwnerNameFD(0xfde8, ExifDir.NONE, "Owner Name fde8", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  SerialNumberFD(0xfde9, ExifDir.NONE, "Serial Number fde9", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  Lens(0xfdea, ExifDir.NONE, "Lens fdea", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  KDC_IFD(0xfe00, ExifDir.NONE, "Kodak KDC IFD Tags", ExifTagDataType.NO, 0, ExifTagGroup.MISC, null), //used in some Kodak KDC images
+  RawFile(0xfe4c, ExifDir.NONE, "Raw File", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  Converter(0xfe4d, ExifDir.NONE, "Converter", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  WhiteBalanceFE(0xfe4e, ExifDir.NONE, "White Balance FE", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  Exposure(0xfe51, ExifDir.NONE, "Exposure", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  Shadows(0xfe52, ExifDir.NONE, "Shadows", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  Brightness(0xfe53, ExifDir.NONE, "Brightness", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  ContrastFE(0xfe54, ExifDir.NONE, "Contrast FE", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  SaturationFE(0xfe55, ExifDir.NONE, "Saturation FE", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  SharpnessFE(0xfe56, ExifDir.NONE, "Sharpness FE", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  Smoothness(0xfe57, ExifDir.NONE, "Smoothness", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null),
+  MoireFilter(0xfe58, ExifDir.NONE, "Moire Filter", ExifTagDataType.ASCII, 0, ExifTagGroup.EXIF_IFD, null);
 
   private final ExifDir exifDir;              //id of the ExifDirectory in which the tag shall be displayed
 
@@ -409,7 +561,7 @@ public enum ExifTagInfo {
     this.exifDir = exifDir;
     this.name = entryName;
     this.dataType = dataType;
-    this.arraySize = arraySize; 
+    this.arraySize = arraySize;
     this.group = group;
     this.lookupValues = lookupValues;
   }

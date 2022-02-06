@@ -52,9 +52,6 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
 
     createInputField();        //every time a new TextField
 
-    inputField.setText(getString());
-
-
     setText(null);
     setGraphic((Node) inputField);
     this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -102,7 +99,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
 
   @Override
   public void commitEdit(String newValue) {
-    super.commitEdit(newValue);   //this will fire the change event, sets editing to false  and calls updateItem
+    super.commitEdit(inputField.validate(newValue, getItem()));   //this will fire the change event, sets editing to false  and calls updateItem
     hideInputField();
   }
   @Override
@@ -110,13 +107,14 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
     if (!escPressed) { //if just focus lost (e.g. by clicking on different line) then behave like commitEdit (saveEditedValue is called)
       //calling commitEdit in cancelEdit would lead to NullPointerException! Therefore just call saveEditedValue
       MediaFile mediaFile = getTableRow().getItem();
-      ((FileTableView) getTableColumn().getTableView()).saveEditedValue(mediaFile, getTableColumn(), inputField.getText());
+      ((FileTableView) getTableColumn().getTableView()).saveEditedValue(mediaFile, getTableColumn(), inputField.validate(inputField.getText(),getItem()));
     }
     super.cancelEdit(); //sets editing to false
 
     setText(getItem());          //reset the displayed text to the original item's (cell's) value
     hideInputField();
   }
+
   /**
    * Perform all the special actions that are common to CommitEdit and CancelEdit
    */

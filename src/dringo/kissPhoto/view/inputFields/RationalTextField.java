@@ -25,8 +25,8 @@ public class RationalTextField extends RestrictedTextField {
     super(stage);
   }
 
-  public RationalTextField(String caption, Stage stage) {
-    super(caption, stage);
+  public RationalTextField(String initialText, Stage stage) {
+    super(initialText, stage);
   }
 
   /**
