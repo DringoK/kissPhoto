@@ -156,6 +156,8 @@ public class EditableTagTextFieldCell extends TreeTableCell<EditableMetaInfoItem
       inputField = new NumberTextField(getString(), stage);
     else if (item instanceof EditableRationalTagItem)
       inputField = new RationalTextField(getString(), stage);
+    else if (item instanceof EditableFractionTagItem)
+      inputField = new FractionTextField(getString(), stage);
 
     inputField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
 

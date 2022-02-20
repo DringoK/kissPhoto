@@ -76,7 +76,7 @@ public class MetaInfoEditableTagsView extends TreeTableView<EditableMetaInfoItem
   private ObservableStringList userSelectionPath = null; //same as above as a String-Path. This is used as a cached value for userSelection which is valid from last getSelectionPath until user changes selection
   private boolean freezeUserSelection; //do not change currentSelection while loading new media, so that the selection can be restored after loading
 
-  private MetaInfoView metaInfoView; //link to the view we are contained in
+  private final MetaInfoView metaInfoView; //link to the view we are contained in
   private MediaFile currentMediaFile = null; //if invisible then setMedia only stores here what has to be loaded if MetaInfoView becomes visible (=active), null while visible
 
   /**
