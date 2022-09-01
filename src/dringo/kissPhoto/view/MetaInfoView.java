@@ -236,7 +236,7 @@ public class MetaInfoView extends TabPane {
    * https://www.google.com/maps/place/47°05'29.0"N+8°27'52.0"E
    */
   public void showGPSPositionInGoogleMaps() {
-    metaInfoAllTagsView.setMediaFile(currentMediaFile, true); //just for the case that metadata not yet loaded e.g. because allTagsView is not visible
+    metaInfoAllTagsView.setMediaFile(currentMediaFile, true); //just for the case that metadata not yet loaded e.g. because allTagsView is currently not visible
 
     boolean successful = false;
     String gpsCoordinates = metaInfoAllTagsView.getGpsCoordinates();

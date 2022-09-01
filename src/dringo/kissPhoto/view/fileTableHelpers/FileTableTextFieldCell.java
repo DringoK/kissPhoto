@@ -44,11 +44,14 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   static boolean lastCaretPositionValid = false;
   static RestrictedInputField inputField;
   Boolean escPressed = false;
+  FileTableView fileTableView; //link back to the view
 
   @Override
   public void startEdit() {
     super.startEdit();
     escPressed = false;
+    fileTableView = (FileTableView) getTableColumn().getTableView();
+    fileTableView.setEditingCell(this);
 
     createInputField();        //every time a new TextField
 
@@ -60,7 +63,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
       inputField.requestFocus();
       positionCaretOrSelect(); //works only, if it has the focus ;_)
 
-      ((FileTableView) getTableColumn().getTableView()).resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
+      fileTableView.resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
       lastCaretPositionValid = false; //also consume last caret position
     });
   }
@@ -82,7 +85,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   }
   public void positionCaretOrSelect() {
     //select searchResult if available
-    if (((FileTableView) getTableColumn().getTableView()).isSelectSearchResultOnNextStartEdit()) {
+    if (fileTableView.isSelectSearchResultOnNextStartEdit()) {
       //select Search Result
       MediaFileList.SearchRec searchRec = ((FileTableView) getTableColumn().getTableView()).getSearchRec();
       if (searchRec != null)
@@ -101,18 +104,20 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   public void commitEdit(String newValue) {
     super.commitEdit(inputField.validate(newValue, getItem()));   //this will fire the change event, sets editing to false  and calls updateItem
     hideInputField();
+    fileTableView.setEditingCell(null);
   }
   @Override
   public void cancelEdit() {
     if (!escPressed) { //if just focus lost (e.g. by clicking on different line) then behave like commitEdit (saveEditedValue is called)
       //calling commitEdit in cancelEdit would lead to NullPointerException! Therefore just call saveEditedValue
       MediaFile mediaFile = getTableRow().getItem();
-      ((FileTableView) getTableColumn().getTableView()).saveEditedValue(mediaFile, getTableColumn(), inputField.validate(inputField.getText(),getItem()));
+      fileTableView.saveEditedValue(mediaFile, getTableColumn(), inputField.validate(inputField.getText(),getItem()));
     }
     super.cancelEdit(); //sets editing to false
 
     setText(getItem());          //reset the displayed text to the original item's (cell's) value
     hideInputField();
+    fileTableView.setEditingCell(null);
   }
 
   /**

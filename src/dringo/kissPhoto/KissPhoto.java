@@ -48,6 +48,8 @@ import java.util.ResourceBundle;
  * <p>
  *
  * Next:
+ * todo lookup-Felder in Editable Meta Tags anzeigen und mit Pulldown editieren
+ * todo Bei Namenskonflikt (z.B. wenn Datum als Zahl genommen und alles andere gelöscht) wird beim umbenennen automatisch Zahl angehängt. Dann muss Sternchen weg und Zahl in Anzeige übernommen werden
  * todo settingsdatei: aktiven TagsView-Tab speichern/wiederherstellen
  * todo settingsdatei: Pfad in EditableTagsView speichern/wiederherstellen
  * todo Exif schreiben in Datei
@@ -58,7 +60,7 @@ import java.util.ResourceBundle;
  * todo Test:number-Tag
  * todo Multi-Edit-Dialog: Copyright und Event-Beschreibung
  * todo Multi-Edit-Dialog: Datum-Dialog mit Berechnungen.
- * todo Helper, der Differenz zwischen zwei Files ausgibt
+ * todo Helper, der Zeit-Differenz zwischen zwei Files ausgibt
  * todo System.out in MetaInfoEditableTagsView und MetaInfoAllTagsView und MediaFileTaggedEditable.getEditableImageInfo entfernen
  * Bugs:
  * todo Name-Parsing-Heuristik tut nicht falls 1, 2, ... und ein Datum 2021_01_02 drin ist. Idee: angeklickte Datei und nicht erste Datei untersuchen
@@ -67,8 +69,13 @@ import java.util.ResourceBundle;
  * ======================
  * todo Meldung initalFile genauer: 1. übergebene Datei nicht gefunden ... +2. vorheriges Verzeichnis nicht gefunden
  * todo overscan mit padding im ContenView (FullScreen only) und auch speichern in globalSettings (nur context-Menü und Tastenkombi/Mausrad)
- * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger)
- * todo Editierbar: Datum, Autor, Beschreibung, Copyright
+ *
+ * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger) am besten immer wenn Exif gelesen wird (z.B. auch beim Sortieren von Exif-Spalte??)
+ *
+ * todo Änderungen während Speichern verhindern (z.B. Modales Fenster mit Abbrechen-Knopf). Inbesondere, wenn viele Drehungen/Exif-Operationen dabei sind
+ * todo Abbrechen von Speichern ermöglichen (z.B. Modales Fenster mit Abbrechen-Knopf): Insbesondere, wenn Zugriff auf Ziellaufwerk langsam ist und doch nicht gespeichert werden soll
+ *
+ * todo Multi-Edit Exif: Datum, Autor, Beschreibung, Copyright
  * todo Multi-Edit-Dialog: Hilfe nur auf Knopfdruck ("Hilfe zu %p %d..."), Aufruf Nummerieren-Dialog rein, EXIF-Kommentar rein (der bekommt %k, damit Übernahme möglich)
  * todo   Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
  * todo   Umbenennen-Dialog. Default-Feld = Description, Cursor ans Ende stellen
@@ -83,7 +90,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.21.1110"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.22.831"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 

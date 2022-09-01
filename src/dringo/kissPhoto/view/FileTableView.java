@@ -11,6 +11,7 @@ import dringo.kissPhoto.model.*;
 import dringo.kissPhoto.view.dialogs.*;
 import dringo.kissPhoto.view.fileTableHelpers.FileHistory;
 import dringo.kissPhoto.view.fileTableHelpers.FileTableContextMenu;
+import dringo.kissPhoto.view.fileTableHelpers.FileTableTextFieldCell;
 import dringo.kissPhoto.view.fileTableHelpers.FileTableTextFieldCellFactory;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.application.Platform;
@@ -142,6 +143,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   private boolean isMovingFiles = false; //ignore selection refresh events while movingUp/Dn because selection has to be rebuilt with every step there, but effectively it does not change
   private boolean enableSelectionListener = true; //will be disabled while loading to prevent from many unecessary change events each would cause setMedia...
+  private FileTableTextFieldCell editingFileTableTextFieldCell;  //will be updated in FileTableTextFieldCell in startEdit and reset to null on cancelEdit or commitEdit
+
   /**
    * constructor will try to open the passed file or foldername
    * if there is no such file or folder an empty list is shown
@@ -388,7 +391,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private void installMouseHandlers() {
     setOnMousePressed(event -> {
       if (event.getClickCount() > 1) { //if double clicked
-        Platform.runLater(()->rename());
+        Platform.runLater(this::rename);
       }
     });
   }
@@ -1163,6 +1166,18 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       findReplaceDialog.handleFindFirst_FindNext();
     }
   }
+
+  /**
+   * FileTableTextFieldCell calls this method
+   * on startEdit: set the editing cell
+   * on commitEdit/cancelEdit: set editing cell to null
+   * see cancelEdit
+   *
+   * @param cell the currently active editing cell or null if edit is not active
+   */
+  public void setEditingCell(FileTableTextFieldCell cell){
+    editingFileTableTextFieldCell = cell;
+  }
   /**
    * rename selected line...or if multiple lines are selected call renameWithDialog()
    * if no column is currently selected, then select descriptionColumn
@@ -1170,14 +1185,25 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   public synchronized void rename() {
     if (getSelectionModel().getSelectedItems().size() > 1) {
+      if (isEditMode()) {
+        cancelEdit(); //F2 might have activated Cell-Edit-Mode already
+      }
       renameWithDialog();
     } else {
-      TablePosition focusedCell = getFocusModel().getFocusedCell();
+      TablePosition<MediaFile,String> focusedCell = getFocusModel().getFocusedCell();
       if (focusedCell != null) {
-        setEditable(true);       //editable will be reset in TextFieldCell on CommitEdit to avoid startEdit if multiple lines are selected
         edit(getFocusModel().getFocusedIndex(), getFocusModel().getFocusedCell().getTableColumn());
       }
     }
+  }
+
+  /**
+   * stop editing and restore last values
+   * if edit mode was not active nothing happens
+   */
+  public void cancelEdit(){
+    if (editingFileTableTextFieldCell!=null)
+      editingFileTableTextFieldCell.cancelEdit();
   }
 
   /**
@@ -1201,7 +1227,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     }
 
     //---show dialog
-    renameDialogActive = true;
+    renameDialogActive = true;    //indicate active edit mode for keyEvents, see isEditMode()
     try {
       if (firstSelectedFile != null) {
         result = renameDialog.showModal(firstSelectedFile.getPrefix(), firstSelectedFile.getSeparator(), firstSelectedFile.getDescription(), firstSelectedFile.getExtension());

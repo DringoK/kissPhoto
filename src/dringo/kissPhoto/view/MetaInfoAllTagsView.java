@@ -434,9 +434,9 @@ public class MetaInfoAllTagsView extends TreeTableView<MetaInfoItem> {
       }
       //only return a string if all components of the GPS coordinate are available
       if (latitudeRef != null && latitude != null && longitudeRef != null && longitude != null){
-        gpsCoordinates = latitude + latitudeRef + "+" + longitude + longitudeRef;
-        gpsCoordinates = gpsCoordinates.replaceAll(",","."); //on some computers decimal is represented as comma which is not accepted by Google Maps
-
+        gpsCoordinates = latitude + latitudeRef + longitude + longitudeRef;
+        gpsCoordinates = gpsCoordinates.replaceAll(",",".") //on some computers decimal is represented as comma which is not accepted by Google Maps
+            .replaceAll(" |-",""); //delete spaces and minus (because Reference "W" and "S" is redundantly represented by negative coordinates sometimes) not accepted by Google Maps
       }
     }
     return gpsCoordinates;
