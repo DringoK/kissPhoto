@@ -40,6 +40,7 @@ import java.text.MessageFormat;
  * <p/>
  *
  * @author Dringo
+ * @version 2022-09-01 Touch Rotation Support added
  * @version 2021-01-09 isMediaPlayerActive() neu
  * @version 2020-11-02 change viewer strategy: every viewer decides by it's own if it is compatible with the media. FullScreen Stage is now a singleton to save memory
  */
@@ -72,6 +73,7 @@ public class MediaContentView extends Pane {
   private final SimpleBooleanProperty isImageActive = new SimpleBooleanProperty(false);
   private final SimpleBooleanProperty isFullScreenActiveProperty = new SimpleBooleanProperty(false); //in primary MediaContentView redundant to hasActiveFullScreenMediaContentView(), but here menusItems can be bound to
 
+  private double rotation; //original rotation angle during touch rotation
   /**
    * constructor
    */
@@ -160,6 +162,23 @@ public class MediaContentView extends Pane {
           showNextMedia();
         scrollEvent.consume();
       }
+    });
+
+    //Touch rotate
+    //default is "no rotation"
+
+    setOnRotationStarted(event -> {
+      rotation =mediaStackPane.getRotate();
+    });
+    setOnRotate(event -> {
+      mediaStackPane.setRotate(rotation+event.getTotalAngle());
+    });
+    setOnRotationFinished(event -> {
+      //round to 90°
+      if (event.getTotalAngle()>135 || event.getTotalAngle()<-135) currentMediaFile.rotate(MediaFile.RotateOperation.ROTATE180);
+      else if (event.getTotalAngle()>45) currentMediaFile.rotate(MediaFile.RotateOperation.ROTATE90);
+      else if (event.getTotalAngle()<-45) currentMediaFile.rotate(MediaFile.RotateOperation.ROTATE270);
+      showRotationAndFlippingPreview();
     });
 
     setOnMouseClicked(event -> {

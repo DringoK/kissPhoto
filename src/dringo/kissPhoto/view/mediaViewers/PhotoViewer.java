@@ -28,7 +28,7 @@ import java.nio.file.Path;
  *
  * @author Dringo
  * @since 2014-05-25
- * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only the know what they accept and what should be cached to speed up viewing
+ * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only they know what they accept and what should be cached to speed up viewing
  * @version 2020-12-13: same structure like playerViewers now: "contains an imageView" not "is an imageView". Therefore common sybling: MediaViewer :)
  * @version 2020-11-02: Viewer now decides if it can show a media and returns true if so
  * @version 2019-07-07: Cache problems fixed

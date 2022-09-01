@@ -19,6 +19,7 @@ import javafx.scene.input.*;
  * All routines for Zooming an moving with the viewport are same for these classes and therefore implemented here uniquely
  *
  * @author Dringo
+ * @version 2022-09-01 touch zoom fixed again for touch screen (touch panel worked already)
  * @version 2021-11-01 simple touch support added
  * @version 2017-10-08 fixed: while zooming not the complete space of the surrounding Pane has been used
  * @since 2016-11-06 all zooming/moving routines moved from PhotoViewer to this class
@@ -36,6 +37,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
   private double mouseDownY = 0;
   private double mouseDownMinX = 0;
   private double mouseDownMinY = 0;
+  private boolean isTouchScroll;  //Touch Scroll is prevented, Mouse Wheel scroll is supported to call previous/next media
 
   public MediaViewerZoomable(final MediaContentView mediaContentView) {
     super(mediaContentView);
@@ -44,7 +46,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
     installResizeHandler();
     installMouseHandlers();
     installKeyboardHandlers();
-    installTouchHandlers();
+    installGestureHandlers();
   }
 
   public void installResizeHandler() {
@@ -431,10 +433,6 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
    * install mouse support in the mediaViewer that uses the viewportZoomer
    */
   public void installMouseHandlers() {
-    setOnScroll(event -> {
-      boolean handled = handleMouseScroll(event);
-      if (handled) event.consume();
-    });
     setOnMousePressed(event -> {
       boolean handled = handleMousePressed(event);
       if (handled) event.consume();
@@ -458,7 +456,7 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
   /**
    * install handlers for finger gestures on Touch screens
    */
-  public void installTouchHandlers() {
+  public void installGestureHandlers() {
     setOnZoom(event -> {
       if (getViewport() == null) initializeZooming();
 
@@ -466,6 +464,25 @@ public abstract class MediaViewerZoomable extends MediaViewer implements Zoomabl
       event.consume();
     });
 
+    setOnScrollStarted(event -> {
+      isTouchScroll = true; //only touch scrolls start with this event. Mouse Wheel scroll only produce onScroll-Events
+      event.consume();
+    });
+    setOnScroll(event ->{
+      if (isTouchScroll || event.isInertia()) //ignore touch scroll and touch events due to inertia after ScrollFinished
+        event.consume(); //just consume to prevent touch gesture to scroll in file table
+      else{
+        //probably mouse wheel zoom??
+        boolean handled = handleMouseScroll(event);
+        if (handled) event.consume();
+        //otherwise, MediaContentView handles this event, e.g. next/prev media
+      }
+
+    });
+    setOnScrollFinished(event -> {
+      isTouchScroll=false; //touch gesture ended therefore further Scroll events come from inertia or mouse wheel
+      event.consume(); //consume to prevent touch gesture opens context menu
+    });
 
   }
   //zooming
