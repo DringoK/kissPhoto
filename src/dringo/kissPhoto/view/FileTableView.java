@@ -1,13 +1,14 @@
 package dringo.kissPhoto.view;
 
 
-import com.drew.lang.annotations.NotNull;
 import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.ctrl.FileChangeWatcher;
 import dringo.kissPhoto.ctrl.FileChangeWatcherEventListener;
 import dringo.kissPhoto.helper.ObservableStringList;
 import dringo.kissPhoto.helper.PathHelpers;
-import dringo.kissPhoto.model.*;
+import dringo.kissPhoto.model.MediaFile;
+import dringo.kissPhoto.model.MediaFileList;
+import dringo.kissPhoto.model.MediaFileListSavingTask;
 import dringo.kissPhoto.view.dialogs.*;
 import dringo.kissPhoto.view.fileTableHelpers.FileHistory;
 import dringo.kissPhoto.view.fileTableHelpers.FileTableContextMenu;
@@ -53,6 +54,7 @@ import static dringo.kissPhoto.KissPhoto.language;
  *
  * @author Ingo
 
+ * @version 2022-09-04 clean up primaryStage parameter
  * @version 2022-01-08 improvement getting focus after start edit if double-clicked on empty part of table (without text)
  * @version 2021-11-07 Meta-Info Column added. Only visible while meta-InfoView is visible
  * @version 2021-11-01 context menu added, renumbering simplified
@@ -103,7 +105,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private ObservableStringList metaInfoColumnPath = null; //currently shown tag in this column
 
   //---- views linking
-  private final Stage primaryStage;  //main window
   protected MediaContentView mediaContentView; //mediaContentView to show media if selection changes
   private final MetaInfoView metaInfoView;
   private final StatusBar statusBar;  //messages
@@ -149,13 +150,13 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * constructor will try to open the passed file or foldername
    * if there is no such file or folder an empty list is shown
    *
-   * @param primaryStage     link back to main window
    * @param mediaContentView link to the view where media is displayed if focus changes
+   * @param metaInfoView     link to metaInfoView for showing Exif and other Metadata
    * @param statusBar        link to statusBar for showing information/errors
+   * @param primaryStage     link to main window (getScene().getWindow() is null during start up)
    */
-  public FileTableView(Stage primaryStage, final MediaContentView mediaContentView, final MetaInfoView metaInfoView, StatusBar statusBar) {
+  public FileTableView(final MediaContentView mediaContentView, final MetaInfoView metaInfoView, StatusBar statusBar, Stage primaryStage) {
     //remember connections to main window etc
-    this.primaryStage = primaryStage;
     this.mediaContentView = mediaContentView;
     this.metaInfoView = metaInfoView;
     this.statusBar = statusBar;
@@ -327,9 +328,11 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     }
   }
 
-  private void installDragDropHandlers(@NotNull Stage primaryStage) {
-
-
+  /**
+   *
+   * @param primaryStage link to primary window needed because this.getScene() is null during start up
+   */
+  private void installDragDropHandlers(Stage primaryStage) {
     //--------------FileTable accepts dragging of tags from metaInfoView
     setOnDragOver(dragEvent -> {
       if (dragEvent.getGestureSource() == metaInfoView.getMetaInfoAllTagsView()) {
@@ -667,7 +670,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         MessageLabel = MessageFormat.format(language.getString("there.are.0.unsaved.changes"), Integer.toString(unsavedChanges));
       }
 
-      int result = new MessageBox(primaryStage, MessageLabel,
+      int result = new MessageBox(getPrimaryStage(), MessageLabel,
         MessageBox.USER_BTN + MessageBox.NO_BTN + MessageBox.CANCEL_BTN,
         language.getString("save")).showModal();
       if ((result == MessageBox.CANCEL_BTN) || (result == MessageBox.NONE_BTN)) {
@@ -689,8 +692,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       dirChooserDialog.setTitle(language.getString("kissphoto.select.a.folder"));
       if (mediaFileList.getCurrentFolder() != null && Files.exists(mediaFileList.getCurrentFolder()))  //only if something has been loaded before
         dirChooserDialog.setInitialDirectory(mediaFileList.getCurrentFolder().toFile());
-      //File dir = dirChooserDialog.showDialog(primaryStage);
-      File dir = dirChooserDialog.showOpenDialog(primaryStage);
+      File dir = dirChooserDialog.showOpenDialog(getPrimaryStage());
       if (dir != null) {
         openFolder(dir.toPath(), false); //false, because already cared for unsaved changes
         resetSortOrder();
@@ -774,7 +776,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       } else
         newFileOrFolder = fileOrFolder;  //normal open
 
-      final Scene primaryScene = primaryStage.getScene();
+      final Scene primaryScene = this.getScene();
       if (primaryScene != null)
         primaryScene.setCursor(Cursor.WAIT); //can be null during openInitialFolder() called from main()
 
@@ -789,7 +791,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         errMsg = mediaFileList.openFolder(newFileOrFolder);
 
         if (errMsg.length() == 0) {
-          primaryStage.setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
+          getPrimaryStage().setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
           if (reopened)
             statusBar.showMessage(MessageFormat.format(language.getString("0.reopend"), mediaFileList.getCurrentFolderName()));
           else
@@ -834,7 +836,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     }
     refresh();
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
-    primaryStage.requestFocus();
+    getPrimaryStage().requestFocus();
     enableSelectionListener = true;
 
   }
@@ -945,7 +947,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       new FileChooser.ExtensionFilter(language.getString(WriteFolderStructureCSVDialog.ALL_FILES), "*.*")
     );
 
-    File file = fileChooserDialog.showSaveDialog(primaryStage);   //already asks if existing file should be replaced ;-)
+    File file = fileChooserDialog.showSaveDialog(getPrimaryStage());   //already asks if existing file should be replaced ;-)
     if (file != null) {
       try {
         mediaFileList.exportToCSV(file);
@@ -1126,7 +1128,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     }
 
     //show dialog
-    if (renumberDialog == null) renumberDialog = new RenumberDialog(primaryStage);
+    if (renumberDialog == null) renumberDialog = new RenumberDialog(getPrimaryStage());
     int result = renumberDialog.showModal(start, numberingStepSize, numberingDigits);
 
     //execute numbering and store dialog values for next renumbering
@@ -1139,7 +1141,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       mediaFileList.renumber(start, numberingStepSize, numberingDigits, getSelectionModel().getSelectedIndices());
     }
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
-    primaryStage.requestFocus();
+    getPrimaryStage().requestFocus();
   }
 
   /**
@@ -1148,16 +1150,21 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   public synchronized void findAndReplace() {
     //initialize with first of selected files
-    if (findReplaceDialog == null) findReplaceDialog = new FindReplaceDialog(primaryStage, this);
+    if (findReplaceDialog == null) findReplaceDialog = new FindReplaceDialog( getPrimaryStage(), this);
 
     //---show dialog
     findReplaceDialog.showModal();
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
-    primaryStage.requestFocus();
+    getPrimaryStage().requestFocus();
   }
 
-  public ReadOnlyBooleanProperty getFindReplaceDialogShowingProperty(){
-    if (findReplaceDialog == null) findReplaceDialog = new FindReplaceDialog(primaryStage, this);
+  /**
+   * for binding Showing property in MainMenuBar during startup
+   * @param primaryStage necessary because getPrimaryStage() does not work during startup
+   * @return
+   */
+  public ReadOnlyBooleanProperty getFindReplaceDialogShowingProperty(Stage primaryStage){
+    if (findReplaceDialog == null) findReplaceDialog = new FindReplaceDialog(primaryStage,this);
     return findReplaceDialog.showingProperty();
   }
 
@@ -1215,7 +1222,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     MediaFile firstSelectedFile;
 
     //initialize with first of selected files
-    if (renameDialog == null) renameDialog = new RenameDialog(primaryStage);
+    if (renameDialog == null) renameDialog = new RenameDialog(getPrimaryStage());
 
     //copy and sort the selection for determining the "fist selected"
     ObservableList<Integer> selectedIndicesSorted = FXCollections.observableArrayList(getSelectionModel().getSelectedIndices()); //copy
@@ -1249,7 +1256,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     }
     refresh();
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
-    primaryStage.requestFocus();
+    getPrimaryStage().requestFocus();
   }
 
   /**
@@ -1481,7 +1488,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
       mediaContentView.getPlayerViewer().pause();  //stop all currently played media because in undeleteDialog there could also be media played
       //show dialog
-      if (unDeleteDialog == null) unDeleteDialog = new UnDeleteDialog(primaryStage);
+      if (unDeleteDialog == null) unDeleteDialog = new UnDeleteDialog(getPrimaryStage());
       int result = unDeleteDialog.showModal(mediaFileList.getDeletedFileList());
 
       unDeleteDialog.stopPlayers(); //now stop media from the undeleteDialog so that main window can playback again...
@@ -1503,7 +1510,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     if (unDeleteMenuItem != null) unDeleteMenuItem.setDisable(mediaFileList.getDeletedFileList().size() < 1);
     requestLayout();
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
-    primaryStage.requestFocus();
+    getPrimaryStage().requestFocus();
   }
 
   /**
@@ -1761,7 +1768,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * Copy the date from the file to all files with the same name (but different file extension)
    */
   public void copyFileDatesByExtension() {
-    CopyFileDatesExtDialog dialog = new CopyFileDatesExtDialog(primaryStage, mediaFileList);
+    CopyFileDatesExtDialog dialog = new CopyFileDatesExtDialog(getPrimaryStage(), mediaFileList);
 
     if (dialog.showModal()) {
       //copy dates from master extension to all others with same name
@@ -1819,9 +1826,16 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     return fileDateColumn;
   }
 
-  //Cell needs primary stage for enabling hints in editable textFields and to get focus back to mainWindow from SearchDialog
+  /**
+   * determine primary window starting from "this" (fileTableView)
+   * for getting focus, and binding sub windows (dialogs)
+   * e.g. Cell needs primary stage for enabling hints in editable textFields and to get focus back to mainWindow from SearchDialog
+   *
+   * caution: during startup there will be a null pointer exception: getScene() reports null until fileTable is added to the main window
+   * @return the main window
+   */
   public Stage getPrimaryStage() {
-    return primaryStage;
+    return (Stage)this.getScene().getWindow();
   }
 
   //how many lines are currently in the table

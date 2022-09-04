@@ -26,7 +26,7 @@ import java.nio.file.Paths;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
+ * <p/>
  * this dialog is for copying filedates from a "master-extension".
  * Imagine you've converted your video clips from mov-container to mp4 container, e.g. using XMediaRecode.
  * Then the mp4 version of the clips have the conversion date as their file date.
@@ -35,6 +35,7 @@ import java.nio.file.Paths;
  *
  * @author Dringo
  * @since 2014-06-19
+ * @version 2022-09-04 clean up primaryStage parameter
  * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
  * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  */

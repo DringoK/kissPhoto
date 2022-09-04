@@ -30,6 +30,7 @@ import java.text.MessageFormat;
  *
  * @author Ingo Kreuz
  * @since 2014-05-03
+ * @version 2022-09-04 clean up primaryStage parameter
  * @version 2021-01-09 own statusBar implemention to avoid show statistics. FindNext ShortCut F3 support here and from fileTable, TextFieldCell and MainMenu
  * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
  * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
@@ -60,8 +61,13 @@ public class FindReplaceDialog extends KissDialog {
   //link to mediaFileList window for getting selection etc
   FileTableView fileTableView;
 
-  public FindReplaceDialog(Stage owner, final FileTableView fileTableView) {
-    super(owner);
+  /**
+   * constructor
+   * @param primaryStage   link to main window (necessary because fileTableView.getScene.getWindow() is null during start up), when binding showProperty in MainMenuBar
+   * @param fileTableView  link to fileTableView to search in
+   */
+  public FindReplaceDialog(Stage primaryStage, final FileTableView fileTableView) {
+    super(primaryStage);
     initModality(Modality.NONE); //this is the only non-modal dialog
 
     this.fileTableView = fileTableView;

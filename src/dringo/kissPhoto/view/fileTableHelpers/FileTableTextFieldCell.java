@@ -34,6 +34,7 @@ import javafx.scene.input.KeyEvent;
  *
  * @author Ingo
  * @since 2016-11-04
+ * @version 2022-09-04 clean up primaryStage parameter
  * @version 2022-01-08 improvement getting focus after start edit if double-clicked on empty part of table (without text)
  * @version 2021-01-17 support saving the currently editing line, simplify commitEdit and cancelEdit
  * @version 2020-12-20 lambda expressions for event handlers

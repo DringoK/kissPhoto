@@ -90,7 +90,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.22.901"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.22.904"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -212,13 +212,13 @@ static private boolean isOption(String arg){
     mediaContentView = new MediaContentView(); //Area for showing Media
 
     metaInfoView = new MetaInfoView(detailsSplitPane); //it needs a handle to the SplitPane where it resides because its size controls the split position
-    fileTableView = new FileTableView(primaryStage, mediaContentView, metaInfoView, statusBar); //File table and directory
+    fileTableView = new FileTableView(mediaContentView, metaInfoView, statusBar, primaryStage); //File table and directory
     statusBar.connectUndeleteDialog(fileTableView);
     mediaContentView.setOtherViews(fileTableView, metaInfoView);
     metaInfoView.setOtherViews(fileTableView, mediaContentView, statusBar);
 
 
-    MainMenuBar mainMenuBar = new MainMenuBar(primaryStage, fileTableView, mediaContentView, metaInfoView);
+    MainMenuBar mainMenuBar = new MainMenuBar(fileTableView, mediaContentView, metaInfoView, primaryStage);
     mainMenuBar.addRecentlyMenu(fileTableView.getFileHistory().getRecentlyFilesMenu());
     // Left and right split pane
     mainSplitPane.prefWidthProperty().bind(scene.widthProperty());

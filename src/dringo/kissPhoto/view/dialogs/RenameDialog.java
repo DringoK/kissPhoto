@@ -33,6 +33,7 @@ import java.text.MessageFormat;
  *
  * @author Dringo
  * @since 2012-10-05
+ * @version 2022-09-04 clean up primaryStage parameter
  * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
  * @version 2017-10-14: Fixed: Scaling problems. Centrally solved in kissDialog
  * @version 2016-11-02: RestrictedTextfield has changed signature

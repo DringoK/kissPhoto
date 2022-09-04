@@ -26,6 +26,7 @@ import javafx.stage.WindowEvent;
  *
  * @author Ingo
  * @since 2012-09-09
+ * @version 2022-09-04 clean up primaryStage parameter
  * @version 2021-11-01 clean prefixes, numbering added
  * @version 2021-01-09 findNext in editMenu
  * @version 2020-11-19 globalSettings is now global (static in Kissphoto)  and therefore no longer necessary in this class (formerly just passed through)
@@ -44,7 +45,6 @@ public class MainMenuBar extends MenuBar {
   public static final String RENUMBER_STANDARD_MENU = "renumber.standardMenu";
   public static final String CLEAN_PREFIXES = "clean.prefixes";
   public static final String CLEAN_COUNTERS = "clean.counters";
-  private final Stage primaryStage; //link to embedding window
   private final FileTableView fileTableView; //link to fileTableView to call methods via menu
   private final MediaContentView mediaContentView; //link to mediaContentView for full screen etc
   private final MetaInfoView metaInfoView; //link to metaInfoView for showing/hiding it via view menu
@@ -69,18 +69,19 @@ public class MainMenuBar extends MenuBar {
   /**
    * create the main menu bar and install all shortcuts/handlers
    *
-   * @param primaryStage   link to the main window
    * @param fileTableView  link for calling of most of the methods, i.e. Filetable.open etc.
+   * @param mediaContentView link to mediaContentView for player menu items
+   * @param metaInfoView link to Exif/Metadata View for navigation/show hide etc
+   * @param primaryStage link to main window because getScene().getWindow() is null during startup, because Menu is added after creation only
    */
-  public MainMenuBar(Stage primaryStage, FileTableView fileTableView, MediaContentView mediaContentView, MetaInfoView metaInfoView) {
+  public MainMenuBar(FileTableView fileTableView, MediaContentView mediaContentView, MetaInfoView metaInfoView, Stage primaryStage) {
     super();
-    this.primaryStage = primaryStage;
     this.fileTableView = fileTableView;
     this.mediaContentView = mediaContentView;
     this.metaInfoView = metaInfoView;
 
     createFileMenu();
-    createEditMenu();
+    createEditMenu(primaryStage);
     createViewMenu();
     createImageMenu();
     createPlayerMenu();
@@ -129,7 +130,7 @@ public class MainMenuBar extends MenuBar {
     exportFolderCSVItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
     exportFolderCSVItem.setOnAction(event -> {
       event.consume();
-      WriteFolderStructureCSVDialog writeFolderStructureCSVDialog = new WriteFolderStructureCSVDialog(primaryStage, fileTableView.getMediaFileList(), fileTableView.getStatusBar());
+      WriteFolderStructureCSVDialog writeFolderStructureCSVDialog = new WriteFolderStructureCSVDialog(fileTableView.getPrimaryStage(), fileTableView.getMediaFileList(), fileTableView.getStatusBar());
       writeFolderStructureCSVDialog.showModal();
     });
     fileMenu.getItems().add(exportFolderCSVItem);
@@ -141,7 +142,7 @@ public class MainMenuBar extends MenuBar {
     exitItem.setOnAction(event -> {
       event.consume();
       //note: Platform.exit() and primaryStage.close() would not fire the "onClose"-Event-Handler!
-      primaryStage.fireEvent(new WindowEvent(primaryStage, WindowEvent.WINDOW_CLOSE_REQUEST));
+      fileTableView.getPrimaryStage().fireEvent(new WindowEvent(fileTableView.getPrimaryStage(), WindowEvent.WINDOW_CLOSE_REQUEST));
     });
     fileMenu.getItems().add(exitItem);
 
@@ -155,7 +156,7 @@ public class MainMenuBar extends MenuBar {
   /**
    * ########################### Edit Menu Items ###########################
    */
-  private void createEditMenu() {
+  private void createEditMenu(Stage primaryStage) {
     final MenuItem findReplaceItem = new MenuItem(KissPhoto.language.getString("findReplaceMenu"));
     findReplaceItem.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
     findReplaceItem.setOnAction(event -> {
@@ -166,7 +167,7 @@ public class MainMenuBar extends MenuBar {
 
     final MenuItem findNextItem = new MenuItem(KissPhoto.language.getString("find.next"));
     findNextItem.setAccelerator(new KeyCodeCombination(KeyCode.F3));
-    findNextItem.disableProperty().bind(fileTableView.getFindReplaceDialogShowingProperty().not());
+    findNextItem.disableProperty().bind(fileTableView.getFindReplaceDialogShowingProperty(primaryStage).not());
     findNextItem.setOnAction(event -> {
       event.consume();
       fileTableView.findNext();
@@ -473,7 +474,7 @@ public class MainMenuBar extends MenuBar {
     MenuItem languageItem = new MenuItem(KissPhoto.language.getString("language.settingsMenu"));
     languageItem.setOnAction(event -> {
       event.consume();
-      if (languageDialog == null) languageDialog = new LanguageDialog(primaryStage);
+      if (languageDialog == null) languageDialog = new LanguageDialog(fileTableView.getPrimaryStage());
       languageDialog.showModal();
     });
     extrasMenu.getItems().add(languageItem);
@@ -481,7 +482,7 @@ public class MainMenuBar extends MenuBar {
     MenuItem externalEditorsItem = new MenuItem(KissPhoto.language.getString("specify.external.editors"));
     externalEditorsItem.setOnAction(event -> {
       event.consume();
-      if (externalEditorsDialog == null) externalEditorsDialog = new ExternalEditorsDialog(primaryStage);
+      if (externalEditorsDialog == null) externalEditorsDialog = new ExternalEditorsDialog(fileTableView.getPrimaryStage());
       externalEditorsDialog.showModal();
     });
     extrasMenu.getItems().add(externalEditorsItem);
@@ -499,7 +500,7 @@ public class MainMenuBar extends MenuBar {
     aboutItem.setAccelerator(new KeyCodeCombination(KeyCode.F1));
     aboutItem.setOnAction(event -> {
       event.consume();
-      if (aboutDialog == null) aboutDialog = new AboutDialog(primaryStage, KissPhoto.KISS_PHOTO_VERSION);
+      if (aboutDialog == null) aboutDialog = new AboutDialog(fileTableView.getPrimaryStage(), KissPhoto.KISS_PHOTO_VERSION);
       aboutDialog.showModal();
     });
     helpMenu.getItems().add(aboutItem);
