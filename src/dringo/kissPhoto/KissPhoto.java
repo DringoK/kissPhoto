@@ -209,7 +209,7 @@ static private boolean isOption(String arg){
     //Create the View-Areas
     statusBar = new StatusBar();
     statusBar.showMessage("");
-    mediaContentView = new MediaContentView(primaryStage); //Area for showing Media
+    mediaContentView = new MediaContentView(); //Area for showing Media
 
     metaInfoView = new MetaInfoView(detailsSplitPane); //it needs a handle to the SplitPane where it resides because its size controls the split position
     fileTableView = new FileTableView(primaryStage, mediaContentView, metaInfoView, statusBar); //File table and directory

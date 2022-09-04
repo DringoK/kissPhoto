@@ -40,9 +40,10 @@ import java.text.MessageFormat;
  * <p/>
  *
  * @author Dringo
+ * @version 2022-09-04 Fixed Full-Screen with TV-sets and parmeter Stage is not necessary
  * @version 2022-09-01 Touch Rotation Support added
  * @version 2021-01-09 isMediaPlayerActive() neu
- * @version 2020-11-02 change viewer strategy: every viewer decides by it's own if it is compatible with the media. FullScreen Stage is now a singleton to save memory
+ * @version 2020-11-02 change viewer strategy: every viewer decides by its own if it is compatible with the media. FullScreen Stage is now a singleton to save memory
  */
 public class MediaContentView extends Pane {
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
@@ -51,8 +52,6 @@ public class MediaContentView extends Pane {
 
   private FileTableView fileTableView = null; //optional link to the fileTableView connected with this MediaContentView (for selecting pictures while focus is in MediaContentView
   private MetaInfoView metaInfoView = null;
-
-  private final Stage ownerStage; //normal mediaContentView is in the primary stage, full-Screen MediaContentView is in a dialog-stage which is in fullScreenMode
 
   private FullScreenStage fullScreenStage = null; //in primary content view: link to secondary mediaContentView (fullscreen)
   private MediaContentView primaryMediaContentView = null; //in full screen content view only: link to the mediaContentView of the primary stage
@@ -77,21 +76,17 @@ public class MediaContentView extends Pane {
   /**
    * constructor
    */
-  public MediaContentView(Stage ownerStage) {
+  public MediaContentView() {
     super();
-    this.ownerStage = ownerStage;
     init();
   }
 
   /**
-   * @param ownerStage                   link to the stage which contains this mediaContentView
    * @param primaryMediaContentView link to the primaryMediaContentView (i.e. from full screen to "normal view"
    * this constructor is only used internally for linking back the full-Screen version to the primary MediaContentView (in primary Stage)
    */
-  protected MediaContentView(Stage ownerStage, MediaContentView primaryMediaContentView) {
+  protected MediaContentView(MediaContentView primaryMediaContentView) {
     super();
-    this.ownerStage = ownerStage;
-
     this.primaryMediaContentView = primaryMediaContentView;
     init();
   }
@@ -723,7 +718,8 @@ public class MediaContentView extends Pane {
    * @param next if true next, if false previous screen is selected
    */
   public void showFullScreenOnNextScreen(boolean next) {
-    if (ownerStage.isFullScreen()) {
+    Stage stage = (Stage)this.getScene().getWindow();
+    if (stage.isFullScreen()) {
       ObservableList<Screen> screens = Screen.getScreens();
 
       //only if multiple screens are available
@@ -732,7 +728,7 @@ public class MediaContentView extends Pane {
       //Screen.getPrimary().getBounds()
 
       if (screens != null && screens.size() > 1) {
-        ObservableList<Screen> currentScreens = Screen.getScreensForRectangle(ownerStage.getX(), ownerStage.getY(), 1,1); //relevant for "currentScreen" is the left upper corner of its stage only
+        ObservableList<Screen> currentScreens = Screen.getScreensForRectangle(stage.getX(), stage.getY(), 1,1); //relevant for "currentScreen" is the left upper corner of its stage only
 
         Screen currentScreen;
         if (currentScreens.size() > 0)
@@ -753,11 +749,11 @@ public class MediaContentView extends Pane {
           //move to new Screen
           currentScreen = screens.get(currentIndex);  //select new currentIndex ;-)
           //owner.setFullScreen(false); //so that the bounds can be changed
-          ownerStage.setX(currentScreen.getBounds().getMinX());
-          ownerStage.setY(currentScreen.getBounds().getMinY());
-          ownerStage.setWidth(currentScreen.getBounds().getWidth());
-          ownerStage.setHeight(currentScreen.getBounds().getHeight());
-          ownerStage.setFullScreen(true);   //necessary to fix a problem with some TV sets where the width and height are reported wrongly
+          stage.setX(currentScreen.getBounds().getMinX());
+          stage.setY(currentScreen.getBounds().getMinY());
+          stage.setWidth(currentScreen.getBounds().getWidth());
+          stage.setHeight(currentScreen.getBounds().getHeight());
+          //stage.setFullScreen(true);   //necessary to fix a problem with some TV sets where the width and height are reported wrongly
           System.out.println("Current Screen=" + currentScreen.getBounds() + " scale=(" + currentScreen.getOutputScaleX() + "/" + currentScreen.getOutputScaleY() + ") dpi=" + currentScreen.getDpi());
         }
       }
@@ -995,8 +991,8 @@ public class MediaContentView extends Pane {
     return photoViewer;
   }
 
-  public Stage getOwnerStage() {
-    return ownerStage;
+  public Stage getStage() {
+    return (Stage)this.getScene().getWindow();
   }
 
   public FileTableView getFileTableView() {

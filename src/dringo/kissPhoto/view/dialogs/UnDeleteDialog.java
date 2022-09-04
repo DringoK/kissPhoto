@@ -41,7 +41,7 @@ public class UnDeleteDialog extends KissDialog {
   public static final int CANCEL_BTN = 2;
 
   final ListView<MediaFile> listView = new ListView<>();
-  final MediaContentView mediaContentView = new MediaContentView(this);
+  final MediaContentView mediaContentView = new MediaContentView();
   //no fileTableViewConnection set, i.e. no moving up/down (=no prev/next media) when MediaContentView would have the focus
 
   private final Button unDeleteSelectionBtn;
