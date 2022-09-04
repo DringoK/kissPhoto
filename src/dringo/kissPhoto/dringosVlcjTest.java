@@ -136,7 +136,6 @@ public class dringosVlcjTest extends Application {
         });
     }
 
-      @Override
       public void positionChanged(MediaPlayer mediaPlayer, float newPosition) {
         System.out.println("VLCJ-Event: PositionChanged");
       }

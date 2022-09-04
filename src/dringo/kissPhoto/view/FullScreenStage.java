@@ -36,7 +36,7 @@ class FullScreenStage extends Stage {
    */
   public FullScreenStage(MediaContentView primaryMediaContentView, MetaInfoView metaInfoView) {
     super();
-    initOwner(primaryMediaContentView.getOwner()); //link to main Application, so that it will be closed together
+    initOwner(primaryMediaContentView.getOwnerStage()); //link to main Application, so that it will be closed together
 
     //build GUI
     Group root = new Group();
