@@ -3,7 +3,6 @@ package dringo.kissPhoto.view.viewerHelpers;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 
 /**
  * MIT License
@@ -27,7 +26,7 @@ import javafx.scene.layout.Region;
  * @modified:
  */
 
-public class RotatablePaneLayouter extends Region {
+public class RotatablePaneLayouter extends Pane {
   private Pane child;
 
   /**
@@ -38,6 +37,9 @@ public class RotatablePaneLayouter extends Region {
   public RotatablePaneLayouter(Pane childPane) {
     getChildren().add(childPane);
     this.child = childPane;
+
+    setStyle("-fx-background-color: blue;");
+
 
     // make sure layout gets invalidated when the childPane orientation changes
     childPane.rotateProperty().addListener(new ChangeListener<Number>() {

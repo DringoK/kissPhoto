@@ -1,11 +1,11 @@
 package dringo.kissPhoto.view;
 
-import dringo.kissPhoto.KissPhoto;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.paint.Color;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 /**
  * MIT License
@@ -22,6 +22,7 @@ import javafx.stage.Stage;
  *<br>
  * @author Dringo
  * @since 2016-11-06 moved from inner class of MediaContentView to separate class
+ * @version 2022-09-04 when output scaling changes, width/height will be recalculated to solve problem with TV-sets under Win10
  * @version 2020-12-20 language now static in KissPhoto
  * @version 2017-10-08 currentPlayerPosition is handed over from main window
  * @version 2016-11-06
@@ -37,6 +38,8 @@ class FullScreenStage extends Stage {
   public FullScreenStage(MediaContentView primaryMediaContentView, MetaInfoView metaInfoView) {
     super();
     initOwner(primaryMediaContentView.getStage()); //link to main Application, so that it will be closed together
+    initStyle(StageStyle.UNDECORATED);
+    setResizable(false);
 
     //build GUI
     Group root = new Group();
@@ -51,12 +54,24 @@ class FullScreenStage extends Stage {
     mediaContentView.prefWidthProperty().bind(scene.widthProperty());
     root.getChildren().add(mediaContentView);
 
-    setFullScreenExitKeyCombination(KeyCombination.NO_MATCH); //dont show hint
-    //because: otherwise the ESC for the context menu would close the full screen at the same time
-    //ESC is - instead - handled by a KeyEvent-Listener which gets no event if context-menu is closed with ESC
-    setFullScreenExitHint(KissPhoto.language.getString("press.esc.to.exit.full.screen.mode"));
-    setFullScreen(true);
+    //setFullScreen does not work with Win10, JDK16,17&18, and TVsets
+    //setFullScreen(true);
   }
+
+  /**
+   * to make the contentView's Stage fullScreen:
+   * move its Stage to the given screen
+   * and adapt width/height to the screen's width/height
+   * @param screen the screen where to move
+   */
+  public void moveToFullScreen(Screen screen) {
+    setX(screen.getBounds().getMinX());
+    setY(screen.getBounds().getMinY());
+    setWidth(screen.getBounds().getWidth());
+    setHeight(screen.getBounds().getHeight());
+    toFront();
+  }
+
 
   /**
    * @return the link to to primary MediaContentView (if in full screen stage)

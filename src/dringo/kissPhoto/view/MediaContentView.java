@@ -17,7 +17,6 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -28,7 +27,7 @@ import java.text.MessageFormat;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
+ * <p/>
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
  * This is the Pane where visible Media (photo, video) is shown<br>
@@ -45,7 +44,7 @@ import java.text.MessageFormat;
  * @version 2021-01-09 isMediaPlayerActive() neu
  * @version 2020-11-02 change viewer strategy: every viewer decides by its own if it is compatible with the media. FullScreen Stage is now a singleton to save memory
  */
-public class MediaContentView extends Pane {
+public class MediaContentView extends StackPane {
   public static final String SHOW_ON_NEXT_SCREEN_FULLSCREEN = "show.on.next.screen.fullscreen";
 
   private int enteredLineNumber = -1; //negative means: nothing entered
@@ -53,7 +52,8 @@ public class MediaContentView extends Pane {
   private FileTableView fileTableView = null; //optional link to the fileTableView connected with this MediaContentView (for selecting pictures while focus is in MediaContentView
   private MetaInfoView metaInfoView = null;
 
-  private FullScreenStage fullScreenStage = null; //in primary content view: link to secondary mediaContentView (fullscreen)
+  private FullScreenStage fullScreenStage = null; //in primary content view: link to secondary mediaContentView (fullscreen), in FullScreen Stage==null (no self-link) indicating that it has no Full Screen but is the Full Screen
+  private Screen currentFullScreen = null; //in FullScreen-Mode changes in Scaling need to sync Stage and Current Full Screen sizes
   private MediaContentView primaryMediaContentView = null; //in full screen content view only: link to the mediaContentView of the primary stage
 
   StackPane mediaStackPane = new StackPane(); //the viewers lie one above the other, so fading will (in future) be possible even from photo to video clip ...
@@ -72,7 +72,9 @@ public class MediaContentView extends Pane {
   private final SimpleBooleanProperty isImageActive = new SimpleBooleanProperty(false);
   private final SimpleBooleanProperty isFullScreenActiveProperty = new SimpleBooleanProperty(false); //in primary MediaContentView redundant to hasActiveFullScreenMediaContentView(), but here menusItems can be bound to
 
+
   private double rotation; //original rotation angle during touch rotation
+
   /**
    * constructor
    */
@@ -140,8 +142,8 @@ public class MediaContentView extends Pane {
     //centering/resizing is performed without further binding of its content
     RotatablePaneLayouter rotatablePaneLayouter = new RotatablePaneLayouter(mediaStackPane);
     //but the layouter has to be bound to its father (this)
-    rotatablePaneLayouter.prefHeightProperty().bind(heightProperty());
-    rotatablePaneLayouter.prefWidthProperty().bind(widthProperty());
+    //rotatablePaneLayouter.prefHeightProperty().bind(heightProperty());
+    //rotatablePaneLayouter.prefWidthProperty().bind(widthProperty());
 
     //add contents to mediaContentView
     getChildren().addAll(rotatablePaneLayouter, attrViewer); //the attr. Viewer lies over all other viewers, but not in stack Pane (because it would fill the whole screen :-(
@@ -211,11 +213,11 @@ public class MediaContentView extends Pane {
 
         //full screen support
         case F5:
-          showFullScreen();
+          createFullScreenStage();
           break;
         case TAB:
           //tab = next screen
-          showFullScreenOnNextScreen(!keyEvent.isShiftDown()); //shift-Tab = previous screen
+          showFullScreenStageOnNextScreen(!keyEvent.isShiftDown()); //shift-Tab = previous screen
           break;
         case ESCAPE:
           endFullScreen();
@@ -717,9 +719,8 @@ public class MediaContentView extends Pane {
    *
    * @param next if true next, if false previous screen is selected
    */
-  public void showFullScreenOnNextScreen(boolean next) {
-    Stage stage = (Stage)this.getScene().getWindow();
-    if (stage.isFullScreen()) {
+  public void showFullScreenStageOnNextScreen(boolean next) {
+    if (getStage() instanceof FullScreenStage) {
       ObservableList<Screen> screens = Screen.getScreens();
 
       //only if multiple screens are available
@@ -728,15 +729,16 @@ public class MediaContentView extends Pane {
       //Screen.getPrimary().getBounds()
 
       if (screens != null && screens.size() > 1) {
-        ObservableList<Screen> currentScreens = Screen.getScreensForRectangle(stage.getX(), stage.getY(), 1,1); //relevant for "currentScreen" is the left upper corner of its stage only
+        ObservableList<Screen> currentScreens = Screen.getScreensForRectangle(getStage().getX(), getStage().getY(), 1,1); //relevant for "currentScreen" is the left upper corner of its fullScreenStage only
 
-        Screen currentScreen;
+        FullScreenStage currentStage = (FullScreenStage) getStage();
+
         if (currentScreens.size() > 0)
-          currentScreen = currentScreens.get(0);
+          currentFullScreen = currentScreens.get(0);
         else
-          currentScreen = Screen.getPrimary();
+          currentFullScreen = Screen.getPrimary();
 
-        int currentIndex = screens.indexOf(currentScreen);
+        int currentIndex = screens.indexOf(currentFullScreen);
         if (currentIndex >= 0) {
           if (next) {         //next or previous screen to be selected
             currentIndex++; //select next
@@ -746,19 +748,16 @@ public class MediaContentView extends Pane {
             if (currentIndex < 0) currentIndex = screens.size() - 1; //make it a loop
           }
 
+          //System.out.println("before: Screen X=" + screens.get(currentIndex).toString());
+          //System.out.println("before: Stage X=" + currentStage.getX() + " Y=" + currentStage.getY() + " width=" + currentStage.getWidth() + " height="+currentStage.getHeight());
+
           //move to new Screen
-          currentScreen = screens.get(currentIndex);  //select new currentIndex ;-)
-          //owner.setFullScreen(false); //so that the bounds can be changed
-          stage.setX(currentScreen.getBounds().getMinX());
-          stage.setY(currentScreen.getBounds().getMinY());
-          stage.setWidth(currentScreen.getBounds().getWidth());
-          stage.setHeight(currentScreen.getBounds().getHeight());
-          //stage.setFullScreen(true);   //necessary to fix a problem with some TV sets where the width and height are reported wrongly
-          System.out.println("Current Screen=" + currentScreen.getBounds() + " scale=(" + currentScreen.getOutputScaleX() + "/" + currentScreen.getOutputScaleY() + ") dpi=" + currentScreen.getDpi());
+          currentStage.moveToFullScreen(screens.get(currentIndex));  //select new currentIndex ;-)
+          //System.out.println("after: Stage X=" + currentStage.getX() + " Y=" + currentStage.getY() + " width=" + currentStage.getWidth() + " height="+currentStage.getHeight());
         }
       }
     } else if (fullScreenStage != null) {      //if this method was called in the main mediaContentView then try to forward it to the fullScreen-stage
-      fullScreenStage.mediaContentView.showFullScreenOnNextScreen(next);
+      fullScreenStage.mediaContentView.showFullScreenStageOnNextScreen(next);
     }
   }
 
@@ -767,7 +766,7 @@ public class MediaContentView extends Pane {
    * open an additional MediaContentView in a full screen stage (window).
    * Any Players will be stopped in main window, but the position is handed over into full screen
    */
-  public void showFullScreen() {
+  public void createFullScreenStage() {
     if (!isFullScreenMediaContentView() && !hasActiveFullScreenMediaContentView()) { //only the primary window and not already fullScreen-Mode active
       Duration currentPlayerPosition = null; //only used if player was active to hand over the position to full-screen stage
 
@@ -787,7 +786,6 @@ public class MediaContentView extends Pane {
       }else{
         fullScreenStage.getMediaContentView().currentMediaFile = null; //reset it, so that setMedia detects a change and will set/start it again
       }
-
       fullScreenStage.mediaContentView.getAttrViewer().copyState(attrViewer); //synchronize normal and full screen attributesViewers
 
       isFullScreenActiveProperty.set(true); //setting the property to update all bound menuItems
@@ -808,6 +806,9 @@ public class MediaContentView extends Pane {
         fullScreenStage.mediaContentView.getPlayerViewer().resetPlayer();
       }
       fullScreenStage.close();
+      fullScreenStage=null;
+      currentFullScreen=null;
+
       //fullScreenStage.getMediaContentView().cleanUp();
       //fullScreenStage = null;
 
@@ -832,8 +833,8 @@ public class MediaContentView extends Pane {
       if (fileTableView != null) fileTableView.getStatusBar().clearMessage();
     } else {
       //start it
-      showFullScreen();
-      showFullScreenOnNextScreen(true); //if multiple screens are available use the "next" initially
+      createFullScreenStage();
+      showFullScreenStageOnNextScreen(true); //if multiple screens are available use the "next" initially
       //note: fileTableView = null if in UnDeleteDialog (i.e. no progressBar)
       if (fileTableView != null)
         fileTableView.getStatusBar().showMessage(KissPhoto.language.getString("esc.to.end.full.screen.tab.to.shift.full.screen.panel.between.screens"));
@@ -905,7 +906,7 @@ public class MediaContentView extends Pane {
 
     MenuItem showOnNextScreenItem = new MenuItem(KissPhoto.language.getString(SHOW_ON_NEXT_SCREEN_FULLSCREEN));
     showOnNextScreenItem.setAccelerator((new KeyCodeCombination(KeyCode.TAB))); //TAB, previous shift-Tab is not shown in menu
-    showOnNextScreenItem.setOnAction(actionEvent -> showFullScreenOnNextScreen(true));
+    showOnNextScreenItem.setOnAction(actionEvent -> showFullScreenStageOnNextScreen(true));
     showOnNextScreenItem.setDisable(true); //enable only in Full screen mode
     if (isFullScreenMediaContentView()) {
       //in FullScreenStage isFullScreen is always true why the text can be set to be constant

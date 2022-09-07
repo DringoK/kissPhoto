@@ -375,7 +375,7 @@ public class MainMenuBar extends MenuBar {
 
     MenuItem showOnNextScreenItem = new MenuItem(KissPhoto.language.getString(MediaContentView.SHOW_ON_NEXT_SCREEN_FULLSCREEN));
     showOnNextScreenItem.setAccelerator((new KeyCodeCombination(KeyCode.TAB))); //TAB, previous shift-Tab is not shown in menu
-    showOnNextScreenItem.setOnAction(actionEvent -> mediaContentView.showFullScreenOnNextScreen(true));
+    showOnNextScreenItem.setOnAction(actionEvent -> mediaContentView.showFullScreenStageOnNextScreen(true));
     showOnNextScreenItem.disableProperty().bind(mediaContentView.getIsFullScreenActiveProperty().not());  //only enabled if fullScreen-Mode is active
 
     viewMenu.getItems().addAll(fullScreenItem, showOnNextScreenItem);
