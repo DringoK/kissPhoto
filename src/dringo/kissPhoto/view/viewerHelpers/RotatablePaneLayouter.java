@@ -38,7 +38,7 @@ public class RotatablePaneLayouter extends Pane {
     getChildren().add(childPane);
     this.child = childPane;
 
-    setStyle("-fx-background-color: blue;");
+    //setStyle("-fx-background-color: blue;");  //for debugging: Panelayouter is blue, Media Content View is black
 
 
     // make sure layout gets invalidated when the childPane orientation changes

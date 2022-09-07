@@ -142,8 +142,8 @@ public class MediaContentView extends StackPane {
     //centering/resizing is performed without further binding of its content
     RotatablePaneLayouter rotatablePaneLayouter = new RotatablePaneLayouter(mediaStackPane);
     //but the layouter has to be bound to its father (this)
-    //rotatablePaneLayouter.prefHeightProperty().bind(heightProperty());
-    //rotatablePaneLayouter.prefWidthProperty().bind(widthProperty());
+    rotatablePaneLayouter.prefHeightProperty().bind(heightProperty());
+    rotatablePaneLayouter.prefWidthProperty().bind(widthProperty());
 
     //add contents to mediaContentView
     getChildren().addAll(rotatablePaneLayouter, attrViewer); //the attr. Viewer lies over all other viewers, but not in stack Pane (because it would fill the whole screen :-(
