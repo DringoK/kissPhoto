@@ -718,16 +718,12 @@ public class MediaContentView extends StackPane {
   public void showFullScreenStageOnNextScreen(boolean next) {
     if (getStage() instanceof FullScreenStage) {
       ObservableList<Screen> screens = Screen.getScreens();
-
-      //only if multiple screens are available
-
-      //Toolkit.getDefaultToolkit().getScreenSize()
-      //Screen.getPrimary().getBounds()
+      FullScreenStage currentStage = (FullScreenStage) getStage();
 
       if (screens != null && screens.size() > 1) {
+        //only if multiple screens are available --> select next screen
         ObservableList<Screen> currentScreens = Screen.getScreensForRectangle(getStage().getX(), getStage().getY(), 1,1); //relevant for "currentScreen" is the left upper corner of its fullScreenStage only
 
-        FullScreenStage currentStage = (FullScreenStage) getStage();
 
         if (currentScreens.size() > 0)
           currentFullScreen = currentScreens.get(0);
@@ -747,7 +743,11 @@ public class MediaContentView extends StackPane {
           //move to new Screen
           currentStage.moveToFullScreen(screens.get(currentIndex));  //select new currentIndex ;-)
         }
+      }else{
+        //if only one screen exists select primary screen
+        currentStage.moveToFullScreen(Screen.getPrimary());
       }
+
     } else if (fullScreenStage != null) {      //if this method was called in the main mediaContentView then try to forward it to the fullScreen-stage
       fullScreenStage.mediaContentView.showFullScreenStageOnNextScreen(next);
     }
@@ -784,6 +784,8 @@ public class MediaContentView extends StackPane {
 
       fullScreenStage.show();
       fullScreenStage.getMediaContentView().setMedia(getCurrentMediaFile(), currentPlayerPosition);       //and start playing, if player was active
+
+      showFullScreenStageOnNextScreen(true); //if multiple screens are available use the "next" initially
     }
   }
 
@@ -826,7 +828,6 @@ public class MediaContentView extends StackPane {
     } else {
       //start it
       createFullScreenStage();
-      showFullScreenStageOnNextScreen(true); //if multiple screens are available use the "next" initially
       //note: fileTableView = null if in UnDeleteDialog (i.e. no progressBar)
       if (fileTableView != null)
         fileTableView.getStatusBar().showMessage(KissPhoto.language.getString("esc.to.end.full.screen.tab.to.shift.full.screen.panel.between.screens"));
