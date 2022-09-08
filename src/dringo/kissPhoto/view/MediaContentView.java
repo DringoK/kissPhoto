@@ -39,7 +39,7 @@ import java.text.MessageFormat;
  * <p/>
  *
  * @author Dringo
- * @version 2022-09-04 Fixed Full-Screen with TV-sets and parmeter Stage is not necessary
+ * @version 2022-09-08 Fixed Full-Screen with TV-sets, parameter 'Stage' is not necessary (see getStage())
  * @version 2022-09-01 Touch Rotation Support added
  * @version 2021-01-09 isMediaPlayerActive() neu
  * @version 2020-11-02 change viewer strategy: every viewer decides by its own if it is compatible with the media. FullScreen Stage is now a singleton to save memory
@@ -164,12 +164,8 @@ public class MediaContentView extends StackPane {
     //Touch rotate
     //default is "no rotation"
 
-    setOnRotationStarted(event -> {
-      rotation =mediaStackPane.getRotate();
-    });
-    setOnRotate(event -> {
-      mediaStackPane.setRotate(rotation+event.getTotalAngle());
-    });
+    setOnRotationStarted(event -> rotation =mediaStackPane.getRotate());
+    setOnRotate(event -> mediaStackPane.setRotate(rotation+event.getTotalAngle()));
     setOnRotationFinished(event -> {
       //round to 90°
       if (event.getTotalAngle()>135 || event.getTotalAngle()<-135) currentMediaFile.rotate(MediaFile.RotateOperation.ROTATE180);
@@ -748,12 +744,8 @@ public class MediaContentView extends StackPane {
             if (currentIndex < 0) currentIndex = screens.size() - 1; //make it a loop
           }
 
-          //System.out.println("before: Screen X=" + screens.get(currentIndex).toString());
-          //System.out.println("before: Stage X=" + currentStage.getX() + " Y=" + currentStage.getY() + " width=" + currentStage.getWidth() + " height="+currentStage.getHeight());
-
           //move to new Screen
           currentStage.moveToFullScreen(screens.get(currentIndex));  //select new currentIndex ;-)
-          //System.out.println("after: Stage X=" + currentStage.getX() + " Y=" + currentStage.getY() + " width=" + currentStage.getWidth() + " height="+currentStage.getHeight());
         }
       }
     } else if (fullScreenStage != null) {      //if this method was called in the main mediaContentView then try to forward it to the fullScreen-stage

@@ -2,7 +2,6 @@ package dringo.kissPhoto.view;
 
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -10,7 +9,6 @@ import javafx.stage.StageStyle;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
  *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p>
@@ -22,7 +20,7 @@ import javafx.stage.StageStyle;
  *<br>
  * @author Dringo
  * @since 2016-11-06 moved from inner class of MediaContentView to separate class
- * @version 2022-09-04 when output scaling changes, width/height will be recalculated to solve problem with TV-sets under Win10
+ * @version 2022-09-08 Solved problem with TV-sets under Win10: same resolution but different scaling: Scene will show wrong dimensions. Therefore bind contentView with stage not scene
  * @version 2020-12-20 language now static in KissPhoto
  * @version 2017-10-08 currentPlayerPosition is handed over from main window
  * @version 2016-11-06
@@ -43,19 +41,18 @@ class FullScreenStage extends Stage {
 
     //build GUI
     Group root = new Group();
-    Scene scene = new Scene(root, 1, 1, Color.BLACK);  //1,1 --> use min Size during build. Will be fullScreen.
+    Scene scene = new Scene(root);
     setScene(scene);
 
     //build new MediaContentView for fullScreen Stage and link it to main window / primaryMediaContentView
     mediaContentView = new MediaContentView( primaryMediaContentView); //link to primaryMediaContentView
     mediaContentView.setOtherViews(primaryMediaContentView.getFileTableView(), metaInfoView);
 
-    mediaContentView.prefHeightProperty().bind(scene.heightProperty());
-    mediaContentView.prefWidthProperty().bind(scene.widthProperty());
+    mediaContentView.prefHeightProperty().bind(heightProperty());  //bind directly to stage because scene might have wrong dimensions due to scaling in win 10
+    mediaContentView.prefWidthProperty().bind(widthProperty());
     root.getChildren().add(mediaContentView);
 
-    //setFullScreen does not work with Win10, JDK16,17&18, and TVsets
-    //setFullScreen(true);
+    //setFullScreen(true) not used to have better control when moving fullScreenStage between screens
   }
 
   /**

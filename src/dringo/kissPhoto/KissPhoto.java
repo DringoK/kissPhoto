@@ -82,7 +82,7 @@ import java.util.ResourceBundle;
  * todo   Umbenennen-Dialog sollte Link zu Nummerieren-Dialog haben und man sollte die Nummer auch löschen können
  * todo Zeit-Dialog: Übernehmen von Ändern, Exif, Digitalisierung Stunden/Minuten dazu/abziehen(anwenden immer auf alles andere)
  * todo Auto/One Click Grundformatierung: "Drehen", "Nummerieren", "Space"(, sonst nix)", falls die Bilder noch DSCN heißen, sonst Warnung
- * todo EXIF schreiben evtl über http://sourceforge.net/projects/image-tagger/
+ * todo EXIF schreiben evtl über <a href="http://sourceforge.net/projects/image-tagger/">...</a>
  * nice to haves:
  * ===============
  * todo doch nochmal schauen, ob die Updates vom FileWatcher nicht verwendet werden können. Siehe JavaFX Task: A Task Which Returns Partial Results
@@ -90,7 +90,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.22.904"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.22.908"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
