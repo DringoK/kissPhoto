@@ -3,8 +3,6 @@ package dringo.kissPhoto.view.mediaViewers;
 import dringo.kissPhoto.model.ImageFile;
 import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.view.MediaContentView;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -28,6 +26,7 @@ import java.nio.file.Path;
  *
  * @author Dringo
  * @since 2014-05-25
+ * @version 2022-10-15: retry problem solved: no more infinite retries
  * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only they know what they accept and what should be cached to speed up viewing
  * @version 2020-12-13: same structure like playerViewers now: "contains an imageView" not "is an imageView". Therefore common sybling: MediaViewer :)
  * @version 2020-11-02: Viewer now decides if it can show a media and returns true if so
@@ -120,7 +119,7 @@ public class PhotoViewer extends MediaViewerZoomable{
    *
    * @return Image if successful or null if not
    * note: if null is returned possibly MediaCache needs to be maintained to free memory..and retried again
-   * which is recursively tried
+   * which is tried in background
    */
   @Override
   public Object getViewerSpecificMediaContent(MediaFile mediaFile) {
@@ -130,27 +129,26 @@ public class PhotoViewer extends MediaViewerZoomable{
     Image image= null;
     if (mediaFile.isMediaContentInValid()) {  //if not already loaded i.e. image in cache is invalid
       try {
-        //System.out.println("RetryCounter="+loadRetryCounter + "  getMediaContent loading " + fileOnDisk);
         image = new Image(mediaFile.getFileOnDisk().toUri().toString(), true);  //true=load in Background
-        //install error-listener for background-loading
-        image.errorProperty().addListener(new ChangeListener<Boolean>() {
-          @Override
-          public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            mediaFile.flushFromCache();
-            if (mediaFile.shouldRetryLoad())
-              mediaFile.getMediaContentCached(photoViewer); //i.e. retry is recursive
-          }
+
+        image.exceptionProperty().addListener((exception, oldValue, newValue) -> {
+          System.out.println("image loading failed for " + mediaFile.getResultingFilename() + ": " + exception.toString());
         });
-        image.progressProperty().addListener(new ChangeListener<Number>() {
-          @Override
-          public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-            if (newValue.doubleValue() >= 1.0) {     //if image loaded completely then retryCounter can be reset
-              mediaFile.resetLoadRetryCounter();
+
+        //install error-listener for background-loading
+        image.errorProperty().addListener((observable, oldValue, newValue) -> {
+          if (newValue) { //true means "it's an error"
+            mediaFile.flushFromCache();
+            if (mediaFile.shouldRetryLoad()) {  //shouldRetryLoad maintains the retry-Counter and prevents from inifite load
+              System.out.println("!!!PhotoViewer->getViewerSpecificMediaContent: retry=" + mediaFile.getLoadRetryCounter() + " loading " + mediaFile.getResultingFilename());
+              mediaFile.tryOrRetryMediaContentCached(photoViewer, false); //i.e. retry is recursive
             }
+          }else{ //false means: it's no longer an error. Because a new Image object is used when retrying this will never happen
+            System.out.println("PhotoViewer->getViewerSpecificMediaContent: no longer an error loading " + mediaFile.getResultingFilename());
           }
         });
       } catch (Exception e) {
-        //will not occur with backgroundLoading: image.getException will get the exception
+        //will not occur with backgroundLoading: image.getException will get the exception and therefore handled in error-Listener
       }
     }
 

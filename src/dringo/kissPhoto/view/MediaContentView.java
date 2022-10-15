@@ -446,6 +446,9 @@ public class MediaContentView extends StackPane {
       fullScreenStage.getMediaContentView().setMedia(mediaFile, lastPlayerPos);
     }
 
+    //test-code
+
+
   }
 
   /**

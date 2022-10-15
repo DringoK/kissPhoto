@@ -202,7 +202,8 @@ public class ImageFile extends MediaFileTaggedEditable {
    * @return orientation or -1 if not readable
    */
   public int getEXIFOrientation() {
-    getMetadata();
+    getMetadata(); //as a side effect it renews field metadata
+    if (metadata==null) return -1;
 
     ExifIFD0Directory jpegDirectory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class); //JpegDirectory.class);
 

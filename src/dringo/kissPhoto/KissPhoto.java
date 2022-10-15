@@ -52,8 +52,7 @@ import java.util.ResourceBundle;
  * todo Bei Namenskonflikt (z.B. wenn Datum als Zahl genommen und alles andere gelöscht) wird beim umbenennen automatisch Zahl angehängt. Dann muss Sternchen weg und Zahl in Anzeige übernommen werden
  * todo settingsdatei: aktiven TagsView-Tab speichern/wiederherstellen
  * todo settingsdatei: Pfad in EditableTagsView speichern/wiederherstellen
- * todo Exif schreiben in Datei
- * todo Komplette Exif-Spec übernehmen in Exif-Klasse
+ * Exif:
  * todo Test:String-Tag
  * todo Test:lookup-Tag
  * todo Test:Datum-Tag
@@ -64,6 +63,7 @@ import java.util.ResourceBundle;
  * todo System.out in MetaInfoEditableTagsView und MetaInfoAllTagsView und MediaFileTaggedEditable.getEditableImageInfo entfernen
  * Bugs:
  * todo Name-Parsing-Heuristik tut nicht falls 1, 2, ... und ein Datum 2021_01_02 drin ist. Idee: angeklickte Datei und nicht erste Datei untersuchen
+ * todo falls Fotos im Cache sind lassen sich die Bilder nicht drehen. Sind sie wirklich geschlossen nach dem Laden? (noch überprüfen, war sehr(!!!) langsam, hat dann aber funktioniert) Wahrscheinlich auch beim normalen Umbenennen. Das lässt sich schneller testen ;-)
  * ======================
  * planned features:
  * ======================

@@ -38,6 +38,7 @@ import java.util.Date;
  *
  * @author ikreuz
  * @since 2012-08-28
+ * @version 2022-10-15 retry strategy corrected: no more infinite retries (retries used currently for images in PhotoViewer only)
  * @version 2022-01-07 meta info writing supported. performDelete() and moveFileToDeleted() separated, so that backup files before transformations become possible
  * @version 2021-11-07 metainfo column support (="" if not MediaFileTagged), reflection for FileTableView eliminated
  * @version 2021-04-07 metadata stuff (cache!) now completely in subclass MediaFileTagged
@@ -660,12 +661,26 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public abstract Exception getMediaContentException();
 
   //-------------------- Cache support -------------
-  /**
+   /**
    * try to load MediaContent from Cache. If not possible load it with specific load-routine and put it into cache
+   * @param mediaViewer the mediaView which is asked to (pre) load the file in its specific format
    * @return MediaContent or null if this was not possible
    */
   public Object getMediaContentCached(MediaViewer mediaViewer) {
-    //prevent from infinite load-retry
+    return tryOrRetryMediaContentCached(mediaViewer, false);
+  }
+
+  /**
+   * try or retry to load MediaContent from Cache. If not possible load it with specific load-routine and put it into cache
+   * @param mediaViewer the mediaView which is asked to (pre) load the file in its specific format
+   * @param isNotRetry call it with true if you try first. recursive retries will call it with false to count up retry-Counter
+   * @return MediaContent or null if this was not possible
+   */
+  public Object tryOrRetryMediaContentCached(MediaViewer mediaViewer, boolean isNotRetry) {
+    if (isNotRetry)
+      resetLoadRetryCounter();
+    //if Retry then counter still needed (will be counted in shouldRetryLoad() that must be called before trying to retry)
+
     if (isMediaContentInValid()){
       //if not in cache then ask the viewer to load it
       mediaCache.maintainCacheSizeByFlushingOldest(); //housekeeping before load for having enough memory to laod
@@ -678,9 +693,13 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     return content;
   }
 
+  public int getLoadRetryCounter() {
+    return loadRetryCounter;
+  }
+
   public boolean shouldRetryLoad(){
     loadRetryCounter++;
-    //System.out.println("MediaFile.shouldRetryLoad retryCounter="+loadRetryCounter);
+    System.out.println("MediaFile.shouldRetryLoad: retryCounter="+loadRetryCounter + " for " + fileOnDisk.getFileName());
     return loadRetryCounter < MAX_LOAD_RETRIES;
   }
 
