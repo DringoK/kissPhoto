@@ -8,6 +8,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 import java.nio.file.Path;
+import java.util.concurrent.CancellationException;
 
 /**
  * MIT License
@@ -131,20 +132,14 @@ public class PhotoViewer extends MediaViewerZoomable{
       try {
         image = new Image(mediaFile.getFileOnDisk().toUri().toString(), true);  //true=load in Background
 
-        image.exceptionProperty().addListener((exception, oldValue, newValue) -> {
-          System.out.println("image loading failed for " + mediaFile.getResultingFilename() + ": " + exception.toString());
-        });
-
         //install error-listener for background-loading
-        image.errorProperty().addListener((observable, oldValue, newValue) -> {
-          if (newValue) { //true means "it's an error"
-            mediaFile.flushFromCache();
-            if (mediaFile.shouldRetryLoad()) {  //shouldRetryLoad maintains the retry-Counter and prevents from inifite load
-              System.out.println("!!!PhotoViewer->getViewerSpecificMediaContent: retry=" + mediaFile.getLoadRetryCounter() + " loading " + mediaFile.getResultingFilename());
-              mediaFile.tryOrRetryMediaContentCached(photoViewer, false); //i.e. retry is recursive
-            }
-          }else{ //false means: it's no longer an error. Because a new Image object is used when retrying this will never happen
-            System.out.println("PhotoViewer->getViewerSpecificMediaContent: no longer an error loading " + mediaFile.getResultingFilename());
+        image.exceptionProperty().addListener((exception, oldValue, newValue) -> {
+          System.out.println("---image loading failed for " + mediaFile.getResultingFilename() + ": " + exception.toString());
+
+          mediaFile.flushFromCache();
+          if (!(exception.getValue() instanceof CancellationException) && mediaFile.shouldRetryLoad()) {  //cancellations will not be retried (see MediaFileList.preLoadMedia()) AND shouldRetryLoad maintains the retry-Counter and prevents from infinite loading
+            System.out.println("!!!PhotoViewer->getViewerSpecificMediaContent: retry=" + mediaFile.getLoadRetryCounter() + " loading " + mediaFile.getResultingFilename());
+            mediaFile.tryOrRetryMediaContentCached(photoViewer, false); //i.e. retry is recursive
           }
         });
       } catch (Exception e) {

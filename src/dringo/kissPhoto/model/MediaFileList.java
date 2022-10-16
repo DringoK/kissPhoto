@@ -194,18 +194,27 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   /**
    * Preload-Strategy: try to put one file before and one after the current position into the cache
    * What to put in cache is determined by the viewer for the media. What is the appropriate viewer selects ContentView
+   * To prevent too many concurrent preloads cancel old preload trials (e.g. if running through FileList by holding cursor down or up):
+   * 0 - cancel preload
+   * 1 - do nothing
+   * 2 - preload
+   * 3 --> current <--
+   * 4 - preload
+   * 5 - do nothing
+   * 6 - cancel preload
+   *
    * @param index the current position in mediaFileList
    * @param contentView selects the appropriate viewer which again knows what to put in cache
    */
   public void preLoadMedia(int index, MediaContentView contentView){
     MediaFile mediaFile;
-      //Cancel any background loadings except next/previous
-      if (index > 1) {//if there is a previous/previous
-        mediaFile = fileList.get(index - 2);
+      //Cancel any background loadings except next or next-next / previous or previous-previous
+      if (index > 2) {//if there is a previous/previous/previous, in the example above: index(3) > 2
+        mediaFile = fileList.get(index - 3);
         if (mediaFile != null) mediaFile.cancelBackgroundLoading();
       }
-      if (index < fileList.size() - 2) { //if there exists a 'next next'
-        mediaFile = fileList.get(index + 2);
+      if (index < fileList.size() - 3) { //if there exists a 'next next next', in the example above index(3) < 4: size(7)-3
+        mediaFile = fileList.get(index + 3);
         if (mediaFile != null) mediaFile.cancelBackgroundLoading();
       }
 

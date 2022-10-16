@@ -104,6 +104,8 @@ public class MediaCache {
    * If the cache is full
    * i.e. less memory available then MIN_FREE_MEM_SIZE
    * then the oldest entries are deleted (and content flushed)
+   *
+   * called twice per mediaFile: before media is (pre) loaded and before meta-info is loaded
    */
   public void maintainCacheSizeByFlushingOldest() {
     //flushing cached content does not have direct effect on getAvailableMem (until gc() has run)

@@ -699,12 +699,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
   public boolean shouldRetryLoad(){
     loadRetryCounter++;
-    System.out.println("MediaFile.shouldRetryLoad: retryCounter="+loadRetryCounter + " for " + fileOnDisk.getFileName());
     return loadRetryCounter < MAX_LOAD_RETRIES;
   }
 
   public void resetLoadRetryCounter(){
-    //System.out.println("MediaFile.resetLoadRetryCounter");
     loadRetryCounter = 0;
   }
 
