@@ -2,9 +2,11 @@ package dringo.kissPhoto.model;
 
 import dringo.kissPhoto.KissPhoto;
 import dringo.kissPhoto.ctrl.CounterPositionHeuristic;
+import dringo.kissPhoto.helper.PathHelpers;
 import dringo.kissPhoto.view.FileTableView;
 import dringo.kissPhoto.view.MediaContentView;
-import dringo.kissPhoto.helper.PathHelpers;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.IntegerBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
@@ -17,7 +19,7 @@ import java.text.MessageFormat;
 
 /**
  * MIT License
- * Copyright (c)2021 kissPhoto
+ * Copyright (c)2023 kissPhoto
  *
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br>
  * This list reflects a directory of the hard disc interpreted as a list of MediaFiles
@@ -34,6 +36,7 @@ import java.text.MessageFormat;
  *
  * @author Dringo
  * @since 2012-09-01
+ * @version 2023-01-05 undeleteLastFile() added
  * @version 2020-12-20 Media Cache moved to MediaFile
  * @version 2020-11-30 clean up code
  * @version 2017-10-30 support lossless rotation and flipping of ImageFiles, saving moved to mediaFileListSavingTask to enable ProgressBar (with rotation it can take long!)
@@ -46,8 +49,9 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   private static final String NO_SUCH_FILE_OR_DIRECTORY = "no.such.file.or.directory";
 
   private Path folder;    //without a trailing File.separator!
-  private ObservableList<MediaFile> fileList;         //the list of files to be shown and edited
-  private ObservableList<MediaFile> deletedFileList;  //the files to be deleted on next saving (File-Save ctrl-s)
+  private final ObservableList<MediaFile> fileList = FXCollections.observableArrayList();  //the list of files to be shown and edited
+  private final ObservableList<MediaFile> deletedFileList = FXCollections.observableArrayList();  //the files to be deleted on next saving (File-Save ctrl-s)
+  public final IntegerBinding deletedFileListSizeProperty;
   private ObservableList<MediaFile> clipboardFileList;//the deleted files that can be inserted by paste menu (=move in file list)
   private final CounterPositionHeuristic heuristic = new CounterPositionHeuristic();
   private int counterPosition = 0; //effectively used position (nth number in filenames)entered by user or guessed by heuristic
@@ -59,11 +63,12 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
    */
   public MediaFileList() {
     resetMediaFileList();
+    deletedFileListSizeProperty = Bindings.size(deletedFileList);
   }
 
   private void resetMediaFileList() {
-    fileList = FXCollections.observableArrayList();  //use factory
-    deletedFileList = FXCollections.observableArrayList();
+    fileList.clear();
+    deletedFileList.clear();
     clipboardFileList = null; //i.e. invalid until next cut (see deleteFiles(true))
   }
 
@@ -260,11 +265,12 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
     int countNotRotatable = 0;
     for (MediaFile mediaFile : selectedFiles) {
 //      if (mediaFile instanceof ImageFile) //rotate all despite only jpg images' rotation can be saved
-      if (!(mediaFile instanceof OtherFile))
+      if (!(mediaFile instanceof OtherFile)) {
         if (horizontally)
-        mediaFile.flipHorizontally();
-      else
-        mediaFile.flipVertically();
+          mediaFile.flipHorizontally();
+        else
+          mediaFile.flipVertically();
+      }
 
       if (!mediaFile.canTransformInFile()) countNotRotatable++;
     }
@@ -497,7 +503,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
    * the numbering begins with start and uses step as step size
    *
    * @param start   starting number
-   * @param step    repeatingly add this number to the start, can be negative, 0 leads to constant numbering (using start)
+   * @param step    repeating addition of this number to the start, can be negative, 0 leads to constant numbering (using start)
    * @param digits  Use leading zeros for to fill up digits for the number . 0=automatic(Use the smallest possible fixed number), 1=no leading zeros
    * @param indices The indices of fileList to be renumbered. null or empty list will prevent from any renumbering
    */
@@ -571,10 +577,24 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   }
 
   /**
+   * remove from filelist (=hide them)
+   * add them to the deletedFileList
+   *
+   * @param index the index of the  filelist which shall be moved dot deletedFileList
+   *              if index out of bounce nothing happens
+   */
+  public void deleteFile(int index) {
+    if (index>=0 && index<fileList.size()) {
+      deletedFileList.add(fileList.get(index));
+      fileList.remove(index);
+    }
+  }
+
+  /**
    * undelete the files of the clipBoardFileList
    *
    * @param insertionIndex the inserting will be before the line with this index (e.g. the focused line)
-   * @return the list of the pasted files (so they can be selected) or null if there were no cutted files
+   * @return the list of the pasted files (so they can be selected) or null if there were no cut files
    */
   public ObservableList<MediaFile> paste(int insertionIndex) {
     ObservableList<MediaFile> retVal = clipboardFileList;
@@ -588,7 +608,7 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
   }
 
   /**
-   * unmark all files passed in the parameter to be unDeleted:
+   * all files marked are passed in the parameter to be unDeleted:
    * remove them from deletedFileList
    * add them to fileList (recover them)
    * caution: the list in the parameter must not be a subset of the list to be deleted
@@ -607,8 +627,23 @@ public class MediaFileList { //should extend ObservableList, but JavaFx only pro
     if (clipboardFileList != null) clipboardFileList.removeAll(filesToBeUnDeleted);
   }
 
+  /**
+   * move the last file from deletedFileList to fileList (therefore undeleting it)
+   * @param insertionIndex     the inserting will be before the line with this index (e.g. the focused line)
+   */
+  public void undeleteLastFile(int insertionIndex){
+    if (deletedFileList.size()>0){
+      int i = deletedFileList.size()-1;     //last element = last deleted
+      fileList.add(insertionIndex, deletedFileList.get(i));
+      deletedFileList.remove(i);
+    }
+  }
+
   public ObservableList<MediaFile> getDeletedFileList() {
     return deletedFileList;
+  }
+  public IntegerBinding getDeletedFileListSizeProperty(){
+    return deletedFileListSizeProperty;
   }
 
   /**

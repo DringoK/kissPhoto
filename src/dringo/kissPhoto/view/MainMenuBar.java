@@ -26,6 +26,7 @@ import javafx.stage.WindowEvent;
  *
  * @author Ingo
  * @since 2012-09-09
+ * @version 2023-01-05 undelete last file supported. Gray-out of undelete menuItems now use Bindings
  * @version 2022-09-04 clean up primaryStage parameter
  * @version 2021-11-01 clean prefixes, numbering added
  * @version 2021-01-09 findNext in editMenu
@@ -229,22 +230,31 @@ public class MainMenuBar extends MenuBar {
     editMenu.getItems().add(new SeparatorMenuItem());
 
     final MenuItem deleteItem = new MenuItem(KissPhoto.language.getString("deleteMenu"));
-    deleteItem.setAccelerator(new KeyCodeCombination(KeyCode.DELETE));
+    deleteItem.setAccelerator(new KeyCodeCombination(KeyCode.DELETE, KeyCodeCombination.CONTROL_DOWN));
     deleteItem.setOnAction(event -> {
       event.consume();
       fileTableView.deleteSelectedFiles(false);
     });
     editMenu.getItems().add(deleteItem);
 
+    final MenuItem unDeleteLastItem = new MenuItem(KissPhoto.language.getString("undelete.last.file"));
+    unDeleteLastItem.setAccelerator(new KeyCodeCombination(KeyCode.Z, KeyCombination.CONTROL_DOWN));
+    unDeleteLastItem.setOnAction(event -> {
+      event.consume();
+      fileTableView.undeleteLastDeletedFile();
+    });
+    unDeleteLastItem.setDisable(true);      //non-active until first deletion
+    editMenu.getItems().add(unDeleteLastItem);
+
     final MenuItem unDeleteItem = new MenuItem(KissPhoto.language.getString("undeleteMenu"));
-    unDeleteItem.setAccelerator(new KeyCodeCombination(KeyCode.DELETE, KeyCombination.CONTROL_DOWN));
+    unDeleteItem.setAccelerator(new KeyCodeCombination(KeyCode.DELETE, KeyCodeCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN));
     unDeleteItem.setOnAction(event -> {
       event.consume();
       fileTableView.unDeleteWithDialog();
     });
     unDeleteItem.setDisable(true);      //non-active until first deletion
     editMenu.getItems().add(unDeleteItem);
-    fileTableView.setUnDeleteMenuItem(unDeleteItem);     //pass a link to the father window so there enabling/disabling can be controlled
+    fileTableView.registerGrayingDeleteMenuItems(unDeleteLastItem, unDeleteItem);     //pass a link to the father window so there enabling/disabling can be controlled
 
     editMenu.getItems().add(new SeparatorMenuItem());
 
@@ -320,7 +330,7 @@ public class MainMenuBar extends MenuBar {
    * ########################### View Menu Items ###########################
    */
   private void createViewMenu() {
-    //--------------- FileTableViews's View
+    //--------------- FileTableViews' View
     final MenuItem resetSortingItem = new MenuItem(KissPhoto.language.getString("reset.sortingMenu"));
     resetSortingItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN, KeyCodeCombination.SHIFT_DOWN));
     resetSortingItem.setOnAction(event -> {
@@ -441,9 +451,7 @@ public class MainMenuBar extends MenuBar {
 
     playPauseItem = new MenuItem(KissPhoto.language.getString("play"));  //Pause/Play --> two states reflected by setting text
     playPauseItem.setAccelerator(MainMenuBar.PLAY_PAUSE_KEYCODE);
-    playPauseItem.setOnAction(actionEvent -> {
-      playerControls.togglePlayPause();
-    });
+    playPauseItem.setOnAction(actionEvent -> playerControls.togglePlayPause());
     playerControls.bindPlayPauseMenuItem(playPauseItem); //keep state of playControls and menuItem synced
 
     rewindItem = new MenuItem(KissPhoto.language.getString("rewind"));  //Pause/Play --> two states reflected by setting text

@@ -24,14 +24,15 @@ import java.text.MessageFormat;
 
 /**
  * MIT License
- * Copyright (c)2021 kissPhoto
+ * Copyright (c)2023 kissPhoto
  *
  * This is the Dialog Window for Find and Replace
  *
  * @author Ingo Kreuz
  * @since 2014-05-03
+ * @version 2023-01-05 height adjusted
  * @version 2022-09-04 clean up primaryStage parameter
- * @version 2021-01-09 own statusBar implemention to avoid show statistics. FindNext ShortCut F3 support here and from fileTable, TextFieldCell and MainMenu
+ * @version 2021-01-09 own statusBar implementation to avoid show statistics. FindNext ShortCut F3 support here and from fileTable, TextFieldCell and MainMenu
  * @version 2020-12-20 language now static in KissPhoto, lambda expressions for event handlers@version 2020-12-20 housekeeping
  * @version 2017-10-14 Fixed: Scaling problems. Centrally solved in kissDialog
  * @version 2016-11-04 indicate search mode: in all or in selected lines only
@@ -49,17 +50,17 @@ public class FindReplaceDialog extends KissDialog {
   final Button findBtn = new Button(findCaption);
   final Button replaceBtn = new Button(replaceCaption);
   final Button replaceAllBtn = new Button(KissPhoto.language.getString("replace.all"));
-  Label searchSelectedLabel = new Label();
-  Text statusMessage = new Text(); //local statusBar in the Dialog to show search-Results
+  final Label searchSelectedLabel = new Label();
+  final Text statusMessage = new Text(); //local statusBar in the Dialog to show search-Results
 
-  boolean findFirstMode = true; //findButton is FindFirst in the beginnen (false=FindNextMode)
+  boolean findFirstMode = true; //findButton is FindFirst in the beginning (false=FindNextMode)
   boolean found = true;
   boolean searchSelectionMode = false; //true=search all selected lines, false=search from current line
   boolean startedSearchFromFirstLine = false; //if true at the end of a search/replace all without selection user will be asked if to continue from the start
 
   int firstCounter = 0; //if replaceAll is continued from the beginning the first counter-result is added to the final result
   //link to mediaFileList window for getting selection etc
-  FileTableView fileTableView;
+  final FileTableView fileTableView;
 
   /**
    * constructor
@@ -74,7 +75,7 @@ public class FindReplaceDialog extends KissDialog {
 
     setTitle(KissPhoto.language.getString("kissphoto.findreplace"));
 
-    setHeight(200);
+    setHeight(250);
     setWidth(450);
     setMinHeight(getHeight());
     setMinWidth(getWidth());
@@ -176,7 +177,7 @@ public class FindReplaceDialog extends KissDialog {
     if (findBtn.isDisabled()) return; //ignore call if button is disabled
 
     if (findFirstMode) {
-      showSelectionInfo();
+      showSelectionInfo();   //update status bar of search dialog
 
       startedSearchFromFirstLine = fileTableView.isFirstLineSelectedOnly();
       found = fileTableView.findFirst(findTextField.getText());

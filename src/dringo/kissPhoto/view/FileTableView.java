@@ -45,7 +45,7 @@ import static dringo.kissPhoto.KissPhoto.language;
 
 /**
  * MIT License
- * Copyright (c)2021 kissPhoto
+ * Copyright (c)2023 kissPhoto
  *
  * kissPhoto for managing and viewing your photos and media, but keep it simple...stupid ;-)
  * <p/>
@@ -54,11 +54,12 @@ import static dringo.kissPhoto.KissPhoto.language;
  *
  * @author Ingo
 
+ * @version 2023-01-05 ctrl-del to delete while inplace editing  and undelete last implemented. Moving to next/previous file cleaned up and moved to FileTableView from ContentView
  * @version 2022-09-04 clean up primaryStage parameter
  * @version 2022-01-08 improvement getting focus after start edit if double-clicked on empty part of table (without text)
  * @version 2021-11-07 Meta-Info Column added. Only visible while meta-InfoView is visible
  * @version 2021-11-01 context menu added, renumbering simplified
- * @version 2021-01-16 eliminating the slow and error-prone reflection: column.setCellValueFactory(new PropertyValueFactory<>("propertyname") replaced with call back. ToolTipText added
+ * @version 2021-01-16 eliminating the slow and error-prone reflection: column.setCellValueFactory(new PropertyValueFactory<>("propertyName") replaced with call back. ToolTipText added
  * @version 2021-01-09 improve scrolling, save also currently edited value, improve findNext (F3-support)
  * @version 2014-05-02 I18Support, Cursor in Edit-Mode over lines, reopen added etc
  * @since 2012-09-06
@@ -105,7 +106,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private ObservableStringList metaInfoColumnPath = null; //currently shown tag in this column
 
   //---- views linking
-  protected MediaContentView mediaContentView; //mediaContentView to show media if selection changes
+  protected final MediaContentView mediaContentView; //mediaContentView to show media if selection changes
   private final MetaInfoView metaInfoView;
   private final StatusBar statusBar;  //messages
   //---- the content to be displayed
@@ -117,12 +118,12 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   protected VirtualFlow<?> flow;  //viewport for scrolling
   //----- Define Cell Factory and EditEventHandler
   //will be the identical for all columns (except statusColumn, see FileTableView constructor)
-  FileTableTextFieldCellFactory fileTableTextFieldCellFactory = new FileTableTextFieldCellFactory();
-  CellEditCommitEventHandler cellEditCommitEventHandler = new CellEditCommitEventHandler();
+  final FileTableTextFieldCellFactory fileTableTextFieldCellFactory = new FileTableTextFieldCellFactory();
+  final CellEditCommitEventHandler cellEditCommitEventHandler = new CellEditCommitEventHandler();
   //every mediaFileList has one searchRec that is built once.
   // For convenience a pointer to that is searchRec is stored in Filetable while search is active (see findFirst/replaceAll)
   // if no search is active searchRec == null!
-  MediaFileList.SearchRec searchRec = null;
+  private MediaFileList.SearchRec searchRec = null;
   private MediaFile lastSelection = null;
   //renumbering values will be initialized on every openFolder() and can be changed by user using renumberDialog()
   private int numberingOffset = 1;  //determines with which number renumbering of the list starts.
@@ -134,7 +135,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private RenameDialog renameDialog = null; //will be created when used firstly (see renameWithDialog())
   private UnDeleteDialog unDeleteDialog = null; //will be created when used firstly (see unDeleteWithDialog())
   //----- link to MenuItems to enable/disable
-  private MenuItem unDeleteMenuItem = null;  //Main menu will pass a link to it's unDeleteMenuItem, so deletion routines can control if disabled or not
   private MenuItem pasteMenuItem = null;     //Main menu will pass a link to it's pasteMenuItem, so copy/cut routines can control if disabled or not
   //----- Enable keeping Cursor-Position while editing when changing line
   private boolean selectSearchResultOnNextStartEdit = false;  //during SearchNext searchRec Cursor needs to be set on StartEdit
@@ -143,7 +143,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private final Tooltip tooltip = new Tooltip();
 
   private boolean isMovingFiles = false; //ignore selection refresh events while movingUp/Dn because selection has to be rebuilt with every step there, but effectively it does not change
-  private boolean enableSelectionListener = true; //will be disabled while loading to prevent from many unecessary change events each would cause setMedia...
+  private boolean enableSelectionListener = true; //will be disabled while loading to prevent from many unnecessary change events each would cause setMedia...
   private FileTableTextFieldCell editingFileTableTextFieldCell;  //will be updated in FileTableTextFieldCell in startEdit and reset to null on cancelEdit or commitEdit
 
   /**
@@ -294,7 +294,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
           setTooltipText(lastSelection);
           mediaFileList.preLoadMedia(newValue.intValue(), mediaContentView);
         } else {
-          if (mediaFileList.getFileList().size() <= 0) {
+          if (mediaFileList.getFileList().size() == 0) {
             //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
             //keep lastSelection, so the sortOrderChange-Listener can restore selection
 
@@ -410,6 +410,12 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
           }
           break;
 
+        case DELETE: //menu shows "ctrl-Delete" to delete files. But while list is in selection model delete is more natural to use
+          if (!keyEvent.isShiftDown()) { //delete and ctrl-delete are same but shift-ctrl-delete is undelete
+            keyEvent.consume();
+            deleteSelectedFiles(false);
+          }
+
         //Player
         case SPACE:
           if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && !isEditMode() && mediaContentView.getPlayerViewer().isVisible()) {
@@ -424,7 +430,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
           }
           break;
 
-        //overwrite standard functionality (selection) view ctrl-shift up/down with file moving
+        //overwrite standard functionality (selection) view Alt-shift up/down with file moving
         case DOWN:
           if (keyEvent.isAltDown() && keyEvent.isShiftDown()) {
             keyEvent.consume();
@@ -737,7 +743,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * if the string is a path to a folder then the folder is opened and the first file is focused
    *
    * @param fileOrFolderName     string path to the file or folder
-   * @param askForUnsavedChanges if true and ansaved changes are pending then a dialog opens, if false the caller must care itself for it
+   * @param askForUnsavedChanges if true and unsaved changes are pending then a dialog opens, if false the caller must care itself for it
    */
   public void openFolder(String fileOrFolderName, boolean askForUnsavedChanges) {
     openFolder(Paths.get(fileOrFolderName), askForUnsavedChanges);
@@ -793,7 +799,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
         if (errMsg.length() == 0) {
           getPrimaryStage().setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
           if (reopened)
-            statusBar.showMessage(MessageFormat.format(language.getString("0.reopend"), mediaFileList.getCurrentFolderName()));
+            statusBar.showMessage(MessageFormat.format(language.getString("0.reopened"), mediaFileList.getCurrentFolderName()));
           else
             statusBar.showMessage(MessageFormat.format(language.getString("0.files.opened"), Integer.toString(getMediaFileList().getFileList().size())));
 
@@ -842,7 +848,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   }
 
   /**
-   * Status Bar's statistics are registered with the currently loaded MediaFileList and Selection
+   * Status Bar's statistics are registered with the currently loaded MediaFileList and Selection/deleted File List
    */
   private void registerStatisticsPanel() {
     //register statistics-changes
@@ -868,7 +874,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       }
     });
 
-    //note: modifications are not yet registered, because they are not tracked in a observable list, but es attributes of MediaFile (decentral)
+    //note: modifications are not yet registered, because they are not tracked in a observable list, but es attributes of MediaFile (decentralized)
     //it's not worth to search for them every time a change has been made only to show the number
     //therefore the modificationNumber remains invisible as initialized in StatisticsPanel
   }
@@ -917,7 +923,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     //and start the task in a new thread
     mediaFileList.startSavingTask(savingTask);
 
-    //here is how a cancel button could be implemented (not yet used as saving should no be interrupted)
+    //here is how a cancel button could be implemented (not yet used as saving should not be interrupted)
 //    Button cancelButton = new Button("Cancel");
 //    cancelButton.setOnAction(new EventHandler<ActionEvent>() {
 //      @Override
@@ -959,7 +965,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   }
 
   /**
-   * Cut selected lines:  save the selection internally and delete the files from the list (move to undeletion list)
+   * Cut selected lines:  save the selection internally and delete the files from the list (move to un-deletion list)
    * todo Cutting to system clipboard as csv should also be supported
    */
   public void cutToClipboard() {
@@ -969,7 +975,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   }
 
   /**
-   * paste previously cutted lines before current line --> move files using clipboard
+   * paste previously cut lines before current line --> move files using clipboard
    * note: pasting from system clipboard is not planned (what should it do...move/copy files on disk?...does not fit the UI concept...)
    */
   public void pasteFromClipboard() {
@@ -1112,7 +1118,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    * The values stepSize and Digits are stored for next renumbering
    * if renumbering is initialized with globalNumbering the dialog is initialized with global numberingOffset (start) values and the new value is stored
    * if renumbering is initialized with local Numbering (global=false) the dialog start offset is initialized with smallest number found in selection
-   * if renum_all was chosen in the dialog the start value will also be stored as numberingOffset
+   * if renumber_all was chosen in the dialog the start value will also be stored as numberingOffset
    */
   public synchronized void renumberWithDialog() {
     //initialize start index
@@ -1161,7 +1167,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   /**
    * for binding Showing property in MainMenuBar during startup
    * @param primaryStage necessary because getPrimaryStage() does not work during startup
-   * @return
+   * @return BooleanProperty indicating if FindReplaceDialog is visible
    */
   public ReadOnlyBooleanProperty getFindReplaceDialogShowingProperty(Stage primaryStage){
     if (findReplaceDialog == null) findReplaceDialog = new FindReplaceDialog(primaryStage,this);
@@ -1360,7 +1366,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   /**
    * move all files to be deleted to deletion list and remove them from the FileTableView
    * when saving (File-Save) they are deleted physically from disk
-   * The Deletion List can be used for undeletion until saving
+   * The Deletion List can be used for un-deletion until saving
    * <p/>
    * The selection is moved after the last deleted row (or last row of the table if the last row has been deleted)
    *
@@ -1396,8 +1402,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       scrollViewportToIndex(newSelectionIndex, Alignment.CENTER);
     }
     statusBar.showMessage(MessageFormat.format(language.getString("0.file.s.marked.for.deletion.files.can.be.recovered.using.edit.undelete.until.next.save"), deletionList.size()));
-    if (unDeleteMenuItem != null)
-      unDeleteMenuItem.setDisable(mediaFileList.getDeletedFileList().size() < 1); //enable Menu for undeletion if applicable
   }
 
   /**
@@ -1483,6 +1487,23 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       ExternalEditorsDialog.executeExternalEditor(getSelectionModel().getSelectedItems(), mainEditor);
   }
 
+  /**
+   * the last element of deletedFileList ist put back into the fileList
+   * i.e. the file which have been deleted at last is undeleted
+   * if no file has been deleted nothing happens
+   * note: the deletedFileList is empty after saving has been performed and undelete therefore is then no longer possible with current implementation
+   */
+  public void undeleteLastDeletedFile(){
+    if (mediaFileList.getDeletedFileList().size() > 0) {
+      mediaFileList.undeleteLastFile(getSelectionModel().getSelectedIndex());
+      showPreviousMedia();  //select the newly restored file
+
+      statusBar.showMessage(MessageFormat.format(language.getString("0.file.s.recovered.before.the.previously.selected.row.you.may.want.to.use.view.reset.sorting.columns.from.main.menu"), 1));
+    } else {
+      statusBar.showError(language.getString("no.files.marked.for.deletion.therefore.nothing.to.un.delete"));
+    }
+  }
+
   public synchronized void unDeleteWithDialog() {
     if (mediaFileList.getDeletedFileList().size() > 0) {
 
@@ -1507,7 +1528,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     } else {
       statusBar.showError(language.getString("no.files.marked.for.deletion.therefore.nothing.to.un.delete"));
     }
-    if (unDeleteMenuItem != null) unDeleteMenuItem.setDisable(mediaFileList.getDeletedFileList().size() < 1);
     requestLayout();
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
     getPrimaryStage().requestFocus();
@@ -1685,16 +1705,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       else
         foundIndex = searchRec.tableRow;
 
-      getFocusModel().focus(foundIndex);
-      getSelectionModel().clearAndSelect(foundIndex, foundCol);
-
-      //make it visible
-      if (searchRec.found){
-        scrollViewportToIndex(foundIndex, Alignment.CENTER);
-      }
+      showMediaInLineNumber(foundIndex);       //ViewPort is not maintained sometimes. todo: find out why this is so
 
       selectSearchResultOnNextStartEdit = true;
-      setEditable(true);
       edit(foundIndex, foundCol);
 
       return searchRec.found; //only if searchRec not null
@@ -1733,7 +1746,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
     int counter = mediaFileList.replaceAll(searchText, replaceText);
     if (!doInitSearch)
-      counter++; //if this is a continued search on occurance was replace before mediaFileList.replaceAll
+      counter++; //if this is a continued search on occurrence was replaced before mediaFileList.replaceAll
 
     if (counter == 0)
       statusBar.showError(language.getString(NOTHING_FOUND));
@@ -1781,8 +1794,9 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     return mediaFileList;
   }
 
-  public void setUnDeleteMenuItem(MenuItem unDeleteMenuItem) {
-    this.unDeleteMenuItem = unDeleteMenuItem;
+  public void registerGrayingDeleteMenuItems(MenuItem unDeleteLastMenuItem, MenuItem unDeleteMenuItem) {
+    unDeleteMenuItem.disableProperty().bind(getMediaFileList().getDeletedFileListSizeProperty().isEqualTo(0));
+    unDeleteLastMenuItem.disableProperty().bind(getMediaFileList().getDeletedFileListSizeProperty().isEqualTo(0));
   }
 
   public void setPasteMenuItem(MenuItem pasteMenuItem) {
@@ -1852,9 +1866,90 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     selectSearchResultOnNextStartEdit = false;
   }
 
-  //searchRec is != null only while find/replace is activ
+  //searchRec is != null only while find/replace is active
   public MediaFileList.SearchRec getSearchRec() {
     return searchRec;
+  }
+
+  /**
+   * select previous line in fileTableView
+   * the selectionChangeListener there will load the previous media then
+   * (if there is no current selection (e.g. empty filelist) or no connection to the fileTableView (e.g. in undeleteDialog) nothing will happen)
+   * @return true if successfully skipped to previous Media, false if already at the beginning of the list
+   */
+  public boolean showPreviousMedia() {
+    boolean succesful = false;
+    if (getSelectionModel() != null) {
+
+      int currentSelection = getSelectionModel().getSelectedIndex();
+      if (currentSelection > 0) {
+        getSelectionModel().clearAndSelect(currentSelection - 1);
+        scrollViewportToIndex(currentSelection - 1, FileTableView.Alignment.TOP);
+        succesful = true;
+      }
+    }
+    return succesful;
+  }
+
+  /**
+   * select next line in fileTableView
+   * the selectionChangeListener there will load the next media then
+   * (if there is no current selection (e.g. empty filelist) or no connection to the fileTableView (e.g. in undeleteDialog) nothing will happen)
+   *
+   * @return true if successfully skipped to next Media, false if already at the end of the list
+   */
+  public boolean showNextMedia() {
+    boolean successful = false;
+
+    if (getSelectionModel() != null) {
+
+      int currentSelection = getSelectionModel().getSelectedIndex();
+      if (currentSelection < getMediaFileList().getFileList().size() - 1) { //if not already at the end of the fileTableView's list
+        getSelectionModel().clearAndSelect(currentSelection + 1);
+        scrollViewportToIndex(currentSelection + 1, Alignment.BOTTOM);
+        successful = true;
+      }
+    }
+    return successful;
+  }
+  /**
+   * jump to a line number in fileTableView
+   * if the line number is smaller than 0 the first line is selected
+   * if the line number is greater than the length of fileTableView the last element is selected
+   *
+   * @param lineNumber the line to jump to (zero based! i.e. first line is zero, last line is getFileList().size()-1)
+   */
+  public void showMediaInLineNumber(int lineNumber) {
+    if (getSelectionModel() != null) {
+      if (lineNumber <= 0) {
+        getSelectionModel().clearAndSelect(0); //first element
+        scrollViewportToIndex(0, FileTableView.Alignment.TOP);
+      } else if (lineNumber < getMediaFileList().getFileList().size()) {
+        getSelectionModel().clearAndSelect(lineNumber);
+        scrollViewportToIndex(lineNumber, FileTableView.Alignment.CENTER);
+      } else {
+        getSelectionModel().clearAndSelect(getMediaFileList().getFileList().size() - 1); //last element
+        scrollViewportToIndex(getMediaFileList().getFileList().size() - 1, FileTableView.Alignment.BOTTOM);
+      }
+    }
+  }
+
+  /**
+   * currently selected line is deleted (moved to deletedFiles)
+   * @return true if a file could be deleted (=something selected and not an empty list)
+   */
+  public boolean deleteCurrentLineAndMoveToNext(){
+    boolean successful = false;
+
+    if (mediaFileList.getFileList().size()>0 && getSelectionModel() != null) {
+      int currentSelection = getSelectionModel().getSelectedIndex();
+      //try to select next, if not possible try previous
+      if (!showNextMedia())
+        showPreviousMedia();
+
+      mediaFileList.deleteFile(currentSelection);
+    }
+    return successful;
   }
 
   public enum Alignment {TOP, CENTER, BOTTOM}

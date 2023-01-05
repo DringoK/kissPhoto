@@ -26,7 +26,7 @@ import java.text.MessageFormat;
 
 /**
  * MIT License
- * Copyright (c)2021 kissPhoto
+ * Copyright (c)2023 kissPhoto
  * <p/>
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
@@ -39,6 +39,7 @@ import java.text.MessageFormat;
  * <p/>
  *
  * @author Dringo
+ * @version 2023-01-05 del/ctrl-del, Shift-Ctrl-del and ctrl-z (=delete/undelete) support added while focus on MediaContentView . Moving to next/previous file cleaned up and moved to FileTableView
  * @version 2022-09-08 Fixed Full-Screen with TV-sets, parameter 'Stage' is not necessary (see getStage())
  * @version 2022-09-01 Touch Rotation Support added
  * @version 2021-01-09 isMediaPlayerActive() neu
@@ -56,7 +57,7 @@ public class MediaContentView extends StackPane {
   private Screen currentFullScreen = null; //in FullScreen-Mode changes in Scaling need to sync Stage and Current Full Screen sizes
   private MediaContentView primaryMediaContentView = null; //in full screen content view only: link to the mediaContentView of the primary stage
 
-  StackPane mediaStackPane = new StackPane(); //the viewers lie one above the other, so fading will (in future) be possible even from photo to video clip ...
+  private final StackPane mediaStackPane = new StackPane(); //the viewers lie one above the other, so fading will (in future) be possible even from photo to video clip ...
   private PhotoViewer photoViewer;
   private PlayerViewer playerViewer;
   private OtherViewer otherViewer;
@@ -115,10 +116,9 @@ public class MediaContentView extends StackPane {
       }
     }
 
-    if (playerViewer == null || !((PlayerViewerVLCJ) playerViewer).isVlcAvailable()) {
+    if (playerViewer == null || !PlayerViewerVLCJ.isVlcAvailable()) {
       //try 2: JavaFX
       try {
-       // if (!InetAddress.getLocalHost().getHostName().startsWith("CMTC"))  //videos could not be played by JavaFX on Daimler-Installations with Java 8
        if (!KissPhoto.optionNoFX)
           playerViewer = new PlayerViewerFX(this);
         else //3: Dummy
@@ -218,10 +218,18 @@ public class MediaContentView extends StackPane {
         case ESCAPE:
           endFullScreen();
           break;
-        case DELETE:    //also with ctrl-delete: close the window, not only end full screen (see "workaround" in this class)
-          if (keyEvent.isControlDown()) endFullScreen();
-          break;
 
+        //main menu short-cuts that should fire also when focus on mediaContentView
+        case DELETE:
+          if (keyEvent.isShiftDown() && keyEvent.isControlDown())  //shift-ctrl-del = undelete with dialog
+            fileTableView.unDeleteWithDialog();
+          else
+            fileTableView.deleteSelectedFiles(false);  //ctrl-del or del = delete file
+          break;
+        case Z:
+          if (keyEvent.isControlDown())
+            fileTableView.undeleteLastDeletedFile();  //ctrl-z = undelete
+          break;
         //attributes viewer control (toggle) (note: shortcuts are described in context menu --> don't forget to keep consistent!!!)
         case D:
           if (keyEvent.isControlDown()) {
@@ -332,7 +340,7 @@ public class MediaContentView extends StackPane {
 
   /**
    * Report if the mediaPlayer is the currently active viewer.
-   * Use: FileTableView.saveFoler() needs write access also to the currently active media. If this is the mediaPlayer
+   * Use: FileTableView.saveFolder() needs write access also to the currently active media. If this is the mediaPlayer
    * resetPlayer() needs to be called to free the media temporarily (esp. because of VLCJPlayer)
    * @return true if the mediaPlayer is the active (visible) player
    */
@@ -591,22 +599,40 @@ public class MediaContentView extends StackPane {
    * (if there is no current selection (e.g. empty filelist) or no connection to the fileTableView (e.g. in undeleteDialog) nothing will happen)
    */
   public void showPreviousMedia() {
-    if (fileTableView == null || fileTableView.getSelectionModel() == null) return;
-
-    boolean fileTableViewHadFocus = fileTableView.isFocused();
-
-    int currentSelection = fileTableView.getSelectionModel().getSelectedIndex();
-    if (currentSelection > 0) {
-      fileTableView.getSelectionModel().clearAndSelect(currentSelection - 1);
-      fileTableView.scrollViewportToIndex(currentSelection - 1, FileTableView.Alignment.TOP);
+    if (fileTableView != null) {
+      fileTableView.showPreviousMedia();
     }
+    //this might steel the focus (set it to filetable)
+    requestFocus();
+  }
+  /**
+   * select next line in fileTableView
+   * the selectionChangeListener there will load the previous media then
+   * (if there is no current selection (e.g. empty filelist) or no connection to the fileTableView (e.g. in undeleteDialog) nothing will happen)
+   * @return true if successfully skipped to next Media, false if already at the end of the list
+   */
+  public boolean showNextMedia() {
+    boolean skipped = false;
 
-    //above selection might steel focus from mediaContentView if changed from movie to image
-    if (!fileTableViewHadFocus) Platform.runLater(() -> {
-      playerViewer.requestFocus();   //whatever is visible gets the focus back
-      otherViewer.requestFocus();
-      photoViewer.requestFocus();
-    });
+    if (fileTableView != null) {
+      skipped = fileTableView.showNextMedia();
+    }
+    //this might steel the focus (set it to filetable)
+    requestFocus();
+
+    return skipped;
+  }
+
+  /**
+   * jump to a line number in fileTableView
+   * if the line number is smaller than 0 the first line is selected
+   * if the line number is greater than the length of fileTableView the last element is selected
+   *
+   * @param lineNumber the line to jump to (zero based! i.e. first line is zero, last line is getFileList().size()-1)
+   */
+  public void showMediaInLineNumber(int lineNumber) {
+    fileTableView.showMediaInLineNumber(lineNumber);    //above selection might steel focus from mediaContentView if changed from movie to image
+    requestFocus();
   }
 
   /**
@@ -634,57 +660,6 @@ public class MediaContentView extends StackPane {
     }
   }
 
-  /**
-   * select next line in fileTableView
-   * the selectionChangeListener there will load the next media then
-   * (if there is no current selection (e.g. empty filelist) or no connection to the fileTableView (e.g. in undeleteDialog) nothing will happen)
-   *
-   * @return true if skipped to next Media, false if already at the end of the list
-   */
-  public boolean showNextMedia() {
-    boolean skipped = false;
-
-    if (fileTableView != null && fileTableView.getSelectionModel() != null) {
-
-      int currentSelection = fileTableView.getSelectionModel().getSelectedIndex();
-      if (currentSelection < fileTableView.getMediaFileList().getFileList().size() - 1) { //if not already at the end of the fileTableView's list
-        showMediaInLineNumber(currentSelection + 1);
-        fileTableView.getSelectionModel().clearAndSelect(currentSelection + 1);
-        fileTableView.scrollViewportToIndex(currentSelection + 1, FileTableView.Alignment.BOTTOM);
-        skipped = true;
-      }
-    }
-    return skipped;
-  }
-
-  /**
-   * jump to a line number in fileTableView
-   * if the line number is smaller than 0 the first line is selected
-   * if the line number is greater than the length of fileTableView the last element is selected
-   *
-   * @param lineNumber the line to jump to (zero based! i.e. first line is zero, last line is getFileList().size()-1)
-   */
-  public void showMediaInLineNumber(int lineNumber) {
-    if (fileTableView == null || fileTableView.getSelectionModel() == null) return;
-
-    boolean fileTableViewHadFocus = fileTableView.isFocused();
-
-    if (lineNumber <= 0) {
-      fileTableView.getSelectionModel().clearAndSelect(0); //first element
-      fileTableView.scrollViewportToIndex(0, FileTableView.Alignment.TOP);
-    } else if (lineNumber < fileTableView.getMediaFileList().getFileList().size()) {
-      fileTableView.getSelectionModel().clearAndSelect(lineNumber);
-      fileTableView.scrollViewportToIndex(lineNumber, FileTableView.Alignment.CENTER);
-    } else {
-      fileTableView.getSelectionModel().clearAndSelect(fileTableView.getMediaFileList().getFileList().size() - 1); //last element
-      fileTableView.scrollViewportToIndex(fileTableView.getMediaFileList().getFileList().size() - 1, FileTableView.Alignment.BOTTOM);
-    }
-
-    //above selection might steel focus from mediaContentView if changed from movie to image
-    //whatever is visible --> get the focus back
-    if (!fileTableViewHadFocus) Platform.runLater(this::requestFocus);
-
-  }
 
   /**
    * if digits are typed they are collected by this method
@@ -719,9 +694,8 @@ public class MediaContentView extends StackPane {
    * @param next if true next, if false previous screen is selected
    */
   public void showFullScreenStageOnNextScreen(boolean next) {
-    if (getStage() instanceof FullScreenStage) {
+    if (getStage() instanceof FullScreenStage currentStage) {
       ObservableList<Screen> screens = Screen.getScreens();
-      FullScreenStage currentStage = (FullScreenStage) getStage();
 
       if (screens != null && screens.size() > 1) {
         //only if multiple screens are available --> select next screen
@@ -1007,8 +981,8 @@ public class MediaContentView extends StackPane {
   }
 
   /**
-   * ProgressChangeListner cannot be an anonymous class because it has to be rememered where it has been activated
-   * so that it can be stopped before the next media is loaded an connected to the progress bar
+   * ProgressChangeListener cannot be an anonymous class because it has to be remembered where it has been activated
+   * so that it can be stopped before the next media is loaded and connected to the progress bar
    * see showProgressBar() and clearProgress()
    */
   private static class ProgressChangeListener implements ChangeListener<Number> {

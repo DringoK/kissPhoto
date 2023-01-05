@@ -4,7 +4,6 @@ import dringo.kissPhoto.helper.GlobalSettings;
 import dringo.kissPhoto.helper.I18Support;
 import dringo.kissPhoto.view.*;
 import dringo.kissPhoto.view.dialogs.ExternalEditorsDialog;
-import dringo.kissPhoto.view.MetaInfoView;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Orientation;
@@ -25,13 +24,13 @@ import java.util.ResourceBundle;
 
 /**
  * MIT License
- * Copyright (c)2021 kissPhoto
+ * Copyright (c)2023 kissPhoto
  *
  * Keep it simple! File renaming and Photo/Media File Management Main Class<br>
  * ========================================================<p>
  * The main KISS ideas of the application are
  * <ul>
- * <li>Rename files like in a word processor's table:  move around with the cursor, search and replace + mass rename, renumbering and sorting</li>
+ * <li>Rename files like in a word processor's table:  move around with the cursor, search and replace + mass renaming, renumbering and sorting</li>
  * <li>photo management and photo show without any additional files or database</li>
  * <li>self containing: all information is in the picture files, filenames or directory names</li>
  * <li>auto numbering: file order can be changed, file numbering will follow</li>
@@ -62,6 +61,8 @@ import java.util.ResourceBundle;
  * todo Helper, der Zeit-Differenz zwischen zwei Files ausgibt
  * todo System.out in MetaInfoEditableTagsView und MetaInfoAllTagsView und MediaFileTaggedEditable.getEditableImageInfo entfernen
  * Bugs:
+ * todo beim Suchen: Markieren über Maus tut, über F3=search next wird immer alles makiert, Viewport tut nicht (FileTabble.findNext())
+ * todo beim Laufen im Edit-Mode: sehr schnelles Laufen: TextField und selektierte Zeile nicht identisch??? Wenn man dann ändert wird aber die richtige/zugehörige Zeile geändert
  * todo Name-Parsing-Heuristik tut nicht falls 1, 2, ... und ein Datum 2021_01_02 drin ist. Idee: angeklickte Datei und nicht erste Datei untersuchen
  * todo falls Fotos im Cache sind lassen sich die Bilder nicht drehen. Sind sie wirklich geschlossen nach dem Laden? (noch überprüfen, war sehr(!!!) langsam, hat dann aber funktioniert) Wahrscheinlich auch beim normalen Umbenennen. Das lässt sich schneller testen ;-)
  * ======================
@@ -90,13 +91,13 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.22.1016"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.23.0105"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
   //set in void main(args) = in static context, so the need to be static
   private static String initialFileOrFolder = "";
-  public static boolean optionNoVLC = false; //if -noVLC is provided then prevent from searching for and using of vlc
+  public static boolean optionNoVLC = false; //if -noVLC is provided then prevent from searching for and using vlc
   public static boolean optionNoFX = false;  //if -noFX is provided then use the DummyPlayerViewer (for FX incompatible installations without VLC)
   private static boolean optionHelp = false; //-Help will println a short helptext
 
@@ -104,7 +105,7 @@ public class KissPhoto extends Application {
   private final SplitPane detailsSplitPane = new SplitPane();
 
   private Stage primaryStage;
-  private Scene scene;
+  Scene scene;
 
   private FileTableView fileTableView;
   private MediaContentView mediaContentView;
@@ -112,7 +113,7 @@ public class KissPhoto extends Application {
   private StatusBar statusBar;
 
   //all classes can access the settings file
-  public static GlobalSettings globalSettings = new GlobalSettings();
+  final public static GlobalSettings globalSettings = new GlobalSettings();
 
 
   //------- Default Window size/position if no valid settings file found
