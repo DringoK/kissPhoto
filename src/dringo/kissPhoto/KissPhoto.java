@@ -91,7 +91,7 @@ import java.util.ResourceBundle;
  */
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.23.0105"; // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.23.0129"; // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -350,7 +350,7 @@ static private boolean isOption(String arg){
    * <p>
    * Especially call this method after restoreLastMainWindowSettings() has been used...
    * <p>
-   * When called during start-up: wait after resizing of stage has been performed (using runlater)
+   * When called during start-up: wait after resizing of stage has been performed (using runLater)
    * so that the scene size has followed stage size and the decoWidth (border) can be calculated correctly
    *
    * @param stage (not null) the window which will be sized
@@ -410,7 +410,7 @@ static private boolean isOption(String arg){
     }
 
     //status: either the stage already fits on the screens or
-    //if it is larger then the screens it is now in the left upper corner
+    //if it is larger than the screens it is now in the left upper corner
 
     //adapt width if stage is larger than visible screens
     if (stage.getWidth() > maxX) {

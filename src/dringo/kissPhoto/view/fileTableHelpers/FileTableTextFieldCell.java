@@ -4,7 +4,6 @@ import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileList;
 import dringo.kissPhoto.view.FileTableView;
 import dringo.kissPhoto.view.inputFields.*;
-import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TableCell;
@@ -22,7 +21,7 @@ import javafx.scene.input.KeyEvent;
  * <p>
  * Special features are
  * <ul>
- * <li> TextfieldCells which restrict input e.g. to numberinput or valid filenamecharacters are used for editing
+ * <li> TextFieldCells which restrict input e.g. to numberInput or valid filenameCharacters are used for editing
  * <li> from one editing line to the next line cursor up/dn can be used without loosing editing mode
  * <li> search results can be marked
  * <li> commitEdit is automatically fired when focus is lost (e.g. when selecting the MediaView
@@ -32,13 +31,14 @@ import javafx.scene.input.KeyEvent;
  * <p/>
  *
  * @author Ingo
+ * @version 2023-01-29 Support moving file while in editing mode + improve keeping caret position again
  * @version 2023-01-05 Support delete/undelete file while keeping editing mode + improve keeping caret position
  * @version 2018-11-17 Ctrl-U now copies information from the line above in edit mode, (Shift) TAB moves to next (prev) column, fixed: keeping caret position fixed
  * @since 2016-11-04
  */
 public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   static int lastCaretPosition = 0; //this is to save the caretPosition when moving up/down lines in editMode
-  static boolean lastCaretPositionValid = false;
+  static boolean lastCaretPositionValid = false;  //will become true when the position is stored and remain true until a new TextFieldCell is produced by TextFieldCellFactory in FileTableView (=when new edit starts)
   static RestrictedInputField inputField;
   Boolean escPressed = false;
   FileTableView fileTableView; //link back to the view
@@ -46,6 +46,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   @Override
   public void startEdit() {
     super.startEdit();
+
     escPressed = false;
     fileTableView = (FileTableView) getTableColumn().getTableView();
     fileTableView.setEditingCell(this);
@@ -56,15 +57,11 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
     setGraphic((Node) inputField);
     this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
-    Platform.runLater(() -> {
+    inputField.requestFocus();
+    positionCaretOrSelect(); //works only, if it has the focus ;-)
+    //lastCaretPositionValid = false; //consume last caret position
 
-      inputField.requestFocus();
-
-      positionCaretOrSelect(); //works only, if it has the focus ;-)
-
-      fileTableView.resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
-      lastCaretPositionValid = false; //also consume last caret position
-    });
+    fileTableView.resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
   }
 
   /**
@@ -110,7 +107,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   @Override
   public void cancelEdit() {
     if (!escPressed) { //if just focus lost (e.g. by clicking on different line) then behave like commitEdit (saveEditedValue is called)
-      //calling commitEdit in cancelEdit would lead to NullPointerException! Therefore just call saveEditedValue
+      //calling commitEdit in cancelEdit would lead to NullPointerException! Therefore, just call saveEditedValue
       MediaFile mediaFile = getTableRow().getItem();
       fileTableView.saveEditedValue(mediaFile, getTableColumn(), inputField.validate(inputField.getText(), getItem()));
     }
@@ -165,7 +162,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
    */
   private void createInputField() {
     //fix the connection to the underlying Model when created
-    //and store this connection in the Textfield (pass to constructor)
+    //and store this connection in the TextField (pass to constructor)
     TableColumn<MediaFile, String> editingColumn = getTableColumn();
     FileTableView fileTableView = (FileTableView) getTableColumn().getTableView();
 
@@ -192,7 +189,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
       }
     });
 
-    //use EventFilter instead of setOnKeyPressed. Otherwise Up/Dn would first execute their default behaviour (home/end) before onKeyPressed is fired
+    //use EventFilter instead of setOnKeyPressed. Otherwise, Up/Dn would first execute their default behaviour (home/end) before onKeyPressed is fired
     ((Node) inputField).addEventFilter(KeyEvent.KEY_PRESSED, event -> {
       switch (event.getCode()) {
         case ENTER: //Enter will commit edit and stay in line
@@ -212,11 +209,19 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
             selectNextColumn();
           break;
         case UP:
-          moveCaretUpOrDown(true, editingColumn);
+          if (event.isAltDown() && event.isShiftDown()){
+            moveFileUpOrDown(true, editingColumn);
+          }else {
+            moveCaretUpOrDown(true, editingColumn);
+          }
           event.consume();
           break;
         case DOWN:
-          moveCaretUpOrDown(false, editingColumn);
+          if (event.isAltDown() && event.isShiftDown()){
+            moveFileUpOrDown(false, editingColumn);
+          }else {
+            moveCaretUpOrDown(false, editingColumn);
+          }
           event.consume();
           break;
         case DELETE:
@@ -278,7 +283,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   }
 
   /**
-   * commitedit, jump to beginning of next cell and start edit there
+   * commit edit, jump to beginning of next cell and start edit there
    */
   private void selectNextColumn() {
     int currentLine = fileTableView.getSelectionModel().getSelectedIndex();
@@ -371,6 +376,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
 
     fileTableView.edit(fileTableView.getSelectionModel().getSelectedIndex(), editingColumn); //startEdit will re-set the caretPosition :-)
   }
+
   /**
    * Helper for undeleting the last file while in edit mode
    * moving caret to previous file (=the restored file) and remain in inline edit mode
@@ -384,6 +390,28 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
 
     fileTableView.edit(fileTableView.getSelectionModel().getSelectedIndex(), editingColumn); //startEdit will re-set the caretPosition :-)
   }
+
+  /**
+   * Helper for moving the currently editing file in the FileList up/down
+   * @param up if true moving up, if false moving down is performed
+   */
+  private void moveFileUpOrDown(boolean up, TableColumn<MediaFile, String>editingColumn){
+    lastCaretPosition = inputField.getCaretPosition(); //remember last caretPosition so that it can be used again in next/prev line
+    lastCaretPositionValid = true;
+
+    if (up) {
+      fileTableView.moveSelectedFilesUp();
+    }else {
+      fileTableView.moveSelectedFilesDown();
+    }
+
+    fileTableView.edit(fileTableView.getSelectionModel().getSelectedIndex(), editingColumn); //startEdit will re-set the caretPosition :-)
+  }
+
+  /**
+   * overwrite default getString for TextFieldCell
+   * @return getItem() or "" if getItem() returns null
+   */
   private String getString() {
     if (getItem() == null) return "";
     else return getItem();
