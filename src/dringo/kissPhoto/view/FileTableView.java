@@ -1204,10 +1204,8 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       }
       renameWithDialog();
     } else {
-      System.out.println("FileTableView.rename()");
       TablePosition<MediaFile,String> focusedCell = getFocusModel().getFocusedCell();
       if (focusedCell != null) {
-        System.out.println("FileTableView.rename().edit");
         edit(getFocusModel().getFocusedIndex(), getFocusModel().getFocusedCell().getTableColumn());
       }
     }
