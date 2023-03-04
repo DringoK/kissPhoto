@@ -5,9 +5,9 @@ jpackage \
   --type deb \
   --input out/artifacts \
   --main-jar kissPhoto.jar \
-  --app-version 00.22.1016 \
+  --app-version 00.23.0304 \
   --name kissPhoto \
-  --copyright '(c)2022 Dr. Ingo Kreuz' \
+  --copyright '(c)2023 Dr. Ingo Kreuz' \
   --vendor 'Ingo Kreuz' \
   --description 'KissPhoto: file renaming, renumbering, photo and video-clip sorting - but keep it simple stupid' \
   --java-options '-splash:resources/images/KissPhotoSplash.jpg' \
