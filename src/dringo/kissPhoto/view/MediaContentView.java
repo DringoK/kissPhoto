@@ -10,7 +10,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
-import javafx.scene.control.CheckMenuItem;
+import javafx.geometry.Pos;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
@@ -39,6 +39,7 @@ import java.text.MessageFormat;
  * <p/>
  *
  * @author Dringo
+ * @version 2023-10-03 Keep it simple: Description usage was too complicated: "Show Description" toggles now between description, show all and off.
  * @version 2023-01-05 del/ctrl-del, Shift-Ctrl-del and ctrl-z (=delete/undelete) support added while focus on MediaContentView . Moving to next/previous file cleaned up and moved to FileTableView
  * @version 2022-09-08 Fixed Full-Screen with TV-sets, parameter 'Stage' is not necessary (see getStage())
  * @version 2022-09-01 Touch Rotation Support added
@@ -126,6 +127,7 @@ public class MediaContentView extends StackPane {
 
       } catch (Exception e) {
         playerViewer = new PlayerViewerDummy(this);
+        //noinspection CallToPrintStackTrace
         e.printStackTrace();
       }
     }
@@ -146,6 +148,7 @@ public class MediaContentView extends StackPane {
     rotatablePaneLayouter.prefWidthProperty().bind(widthProperty());
 
     //add contents to mediaContentView
+    StackPane.setAlignment(attrViewer, Pos.BOTTOM_CENTER);
     getChildren().addAll(rotatablePaneLayouter, attrViewer); //the attr. Viewer lies over all other viewers, but not in stack Pane (because it would fill the whole screen :-(
 
     setOnScroll(scrollEvent -> {
@@ -175,7 +178,7 @@ public class MediaContentView extends StackPane {
     });
 
     setOnMouseClicked(event -> {
-      if (event.getClickCount() > 1) { //if double clicked
+      if (event.getClickCount() > 1) { //if double-clicked
         toggleFullScreenAndNormal();
       }
     });
@@ -233,27 +236,7 @@ public class MediaContentView extends StackPane {
         //attributes viewer control (toggle) (note: shortcuts are described in context menu --> don't forget to keep consistent!!!)
         case D:
           if (keyEvent.isControlDown()) {
-            attrViewer.setVisible(!attrViewer.isVisible());
-            break;
-          }
-        case P:
-          if (keyEvent.isControlDown()) {
-            attrViewer.setDisplayPrefix(!attrViewer.isDisplayPrefix());
-            break;
-          }
-        case C:
-          if (keyEvent.isControlDown()) {
-            attrViewer.setDisplayCounter(!attrViewer.isDisplayCounter());
-            break;
-          }
-        case E:
-          if (keyEvent.isControlDown()) {
-            attrViewer.setDisplayExtension(!attrViewer.isDisplayExtension());
-            break;
-          }
-        case F:
-          if (keyEvent.isControlDown()) {
-            attrViewer.setDisplayFileDate(!attrViewer.isDisplayFileDate());
+            attrViewer.toggleDiplayMode();
             break;
           }
 
@@ -275,7 +258,7 @@ public class MediaContentView extends StackPane {
 
   /**
    * call this before setting mediaContentView to null (e.g. when ending full screen mode)
-   * e.g. to cleanUp all playerViewers
+   * e.g. to clean up all playerViewers
    */
   public void cleanUp() {
     if (photoViewer != null) photoViewer.cleanUp();
@@ -362,20 +345,19 @@ public class MediaContentView extends StackPane {
     attrViewer.setMedia(mediaFile);
 
     //----- empty directory
-    if (compatibleViewer == null) {
-      activateEmptyMediaViewer();
-    }
-    //----- Photo
-    else if (compatibleViewer instanceof PhotoViewer) {
-      photoViewer.setMediaFileIfCompatible(mediaFile);
-      activatePhotoViewer();
-    }
-    //----- Playable File (Video or Audio) only shown in main Window
-    else if (compatibleViewer instanceof PlayerViewer) {
-      activatePlayerOnOtherScreenHint();
+    switch (compatibleViewer) {
+      case null -> activateEmptyMediaViewer();
+
+      //----- Photo
+      case PhotoViewer viewer -> {
+        photoViewer.setMediaFileIfCompatible(mediaFile);
+        activatePhotoViewer();
+      }
+      //----- Playable File (Video or Audio) only shown in main Window
+      case PlayerViewer viewer -> activatePlayerOnOtherScreenHint();
+
       //----- Unsupported Media
-    } else {
-      activateOtherMediaViewer();
+      default -> activateOtherMediaViewer();
     }
   }
 
@@ -395,7 +377,7 @@ public class MediaContentView extends StackPane {
    * <br>
    * If this is the main mediaContentView (i.e. the only one or the fullscreen = the controlling window which also contains the active player) then
    * find the suitable viewer by trying one after the other until a suitable viewer is found.
-   * Note: at least the "OtherViewer" will fits in the end
+   * Note: at least the "OtherViewer" will fit in the end
    * when the compatible viewer has been found it is activated on the main mediaContentView and synchronized with the other views by activating the same viewer there<br>
    * <br>
    * if this is not the main view and a fullScreenStage exists then forward the call to the main mediaContentView<br>
@@ -446,6 +428,7 @@ public class MediaContentView extends StackPane {
 
       } catch (
         Exception e) {
+        //noinspection CallToPrintStackTrace
         e.printStackTrace();
       }
     } else {
@@ -669,7 +652,7 @@ public class MediaContentView extends StackPane {
   private void collectDigit(int digit) {
     if (enteredLineNumber < 0) //new number
       enteredLineNumber = digit;
-    else //new digit for a existing entry
+    else //new digit for an existing entry
       enteredLineNumber = enteredLineNumber * 10 + digit;
   }
 
@@ -689,7 +672,7 @@ public class MediaContentView extends StackPane {
    * if content is in Fullscreen mode
    * then the underlying stage is moved to the next screen
    * if only one screen is available the window is moved to the primary screen
-   * (this might be useful if multiscreen support was switched of while the content was displayed on a secondary screen)
+   * (this might be useful if multiscreen support was switched off while the content was displayed on a secondary screen)
    *
    * @param next if true next, if false previous screen is selected
    */
@@ -702,7 +685,7 @@ public class MediaContentView extends StackPane {
         ObservableList<Screen> currentScreens = Screen.getScreensForRectangle(getStage().getX(), getStage().getY(), 1,1); //relevant for "currentScreen" is the left upper corner of its fullScreenStage only
 
 
-        if (currentScreens.size() > 0)
+        if (!currentScreens.isEmpty())
           currentFullScreen = currentScreens.get(0);
         else
           currentFullScreen = Screen.getPrimary();
@@ -779,9 +762,6 @@ public class MediaContentView extends StackPane {
       fullScreenStage.close();
       fullScreenStage=null;
       currentFullScreen=null;
-
-      //fullScreenStage.getMediaContentView().cleanUp();
-      //fullScreenStage = null;
 
       MediaFile mediaFile = currentMediaFile; //save it
       currentMediaFile = null; //reset it, so that setMedia will have an effect, otherwise re-setting would be prevented
@@ -902,41 +882,22 @@ public class MediaContentView extends StackPane {
 
 
 //-------- Attributes
-    final CheckMenuItem showAttrItem = new CheckMenuItem(KissPhoto.language.getString("display.description"));
+    final MenuItem showAttrItem = new MenuItem();
     showAttrItem.setAccelerator(new KeyCodeCombination(KeyCode.D, KeyCombination.CONTROL_DOWN));
-    showAttrItem.setOnAction(actionEvent -> attrViewer.setVisible(showAttrItem.isSelected()));
+    showAttrItem.setOnAction(actionEvent -> attrViewer.toggleDiplayMode());
 //--------
-    final CheckMenuItem showPrefixItem = new CheckMenuItem(KissPhoto.language.getString("show.prefix"));
-    showPrefixItem.setAccelerator(new KeyCodeCombination(KeyCode.P, KeyCombination.CONTROL_DOWN));
-    showPrefixItem.setOnAction(actionEvent -> attrViewer.setDisplayPrefix(showPrefixItem.isSelected()));
-
-    final CheckMenuItem showCounterItem = new CheckMenuItem(KissPhoto.language.getString("show.counter"));
-    showCounterItem.setAccelerator(new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN));
-    showCounterItem.setOnAction(actionEvent -> attrViewer.setDisplayCounter(showCounterItem.isSelected()));
-    final CheckMenuItem showExtensionItem = new CheckMenuItem(KissPhoto.language.getString("show.extension"));
-    showExtensionItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN));
-    showExtensionItem.setOnAction(actionEvent -> attrViewer.setDisplayExtension(showExtensionItem.isSelected()));
-    final CheckMenuItem showFileDateItem = new CheckMenuItem(KissPhoto.language.getString("show.file.date"));
-    showFileDateItem.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
-    showFileDateItem.setOnAction(actionEvent -> attrViewer.setDisplayFileDate(showFileDateItem.isSelected()));
-
-    contextMenu.getItems().addAll(new SeparatorMenuItem(), showAttrItem, showPrefixItem, showCounterItem,
-      showExtensionItem, showFileDateItem);
+    contextMenu.getItems().addAll(new SeparatorMenuItem(), showAttrItem);
 
     contextMenu.setOnShowing(windowEvent -> {
-      showAttrItem.setSelected(attrViewer.isVisible());
-
-      showPrefixItem.setSelected(attrViewer.isDisplayPrefix());
-      showPrefixItem.setDisable(!attrViewer.isVisible());
-
-      showCounterItem.setSelected(attrViewer.isDisplayCounter());
-      showCounterItem.setDisable(!attrViewer.isVisible());
-
-      showExtensionItem.setSelected(attrViewer.isDisplayExtension());
-      showExtensionItem.setDisable(!attrViewer.isVisible());
-
-      showFileDateItem.setSelected(attrViewer.isDisplayFileDate());
-      showFileDateItem.setDisable(!attrViewer.isVisible());
+      if (attrViewer.isVisible()) {  //if already visible then "all Attributes" can be activated
+          if (attrViewer.isDisplayAll()){
+            showAttrItem.setText(KissPhoto.language.getString("hide.attributes"));
+          }else {
+            showAttrItem.setText(KissPhoto.language.getString("display.all.attributes"));
+          }
+      }else{ //if it is not visible then Display of description can be activated
+          showAttrItem.setText(KissPhoto.language.getString("display.description"));
+      }
 
       //enable the menu item only if gps data is available
       showGPSLocationItem.setDisable(!metaInfoView.isValidGpsAvailable());
@@ -985,6 +946,7 @@ public class MediaContentView extends StackPane {
    * so that it can be stopped before the next media is loaded and connected to the progress bar
    * see showProgressBar() and clearProgress()
    */
+  @SuppressWarnings("ClassCanBeRecord")
   private static class ProgressChangeListener implements ChangeListener<Number> {
     private final MediaContentView mediaContentView; //link back to the calling object
 

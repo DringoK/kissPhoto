@@ -25,7 +25,7 @@ import java.util.ResourceBundle;
 /**
  * MIT License
  * Copyright (c)2023 kissPhoto
- *
+ * <p>
  * Keep it simple! File renaming and Photo/Media File Management Main Class<br>
  * ========================================================<p>
  * The main KISS ideas of the application are
@@ -70,12 +70,12 @@ import java.util.ResourceBundle;
  * ======================
  * todo Meldung initalFile genauer: 1. übergebene Datei nicht gefunden ... +2. vorheriges Verzeichnis nicht gefunden
  * todo overscan mit padding im ContenView (FullScreen only) und auch speichern in globalSettings (nur context-Menü und Tastenkombi/Mausrad)
- *
+ * <p>
  * todo Fortschrittsbalken auch bei Drehen (weil Exif gelesen werden muss, dauert das manchmal länger) am besten immer wenn Exif gelesen wird (z.B. auch beim Sortieren von Exif-Spalte??)
- *
+ * <p>
  * todo Änderungen während Speichern verhindern (z.B. Modales Fenster mit Abbrechen-Knopf). Inbesondere, wenn viele Drehungen/Exif-Operationen dabei sind
  * todo Abbrechen von Speichern ermöglichen (z.B. Modales Fenster mit Abbrechen-Knopf): Insbesondere, wenn Zugriff auf Ziellaufwerk langsam ist und doch nicht gespeichert werden soll
- *
+ * <p>
  * todo Multi-Edit Exif: Datum, Autor, Beschreibung, Copyright
  * todo Multi-Edit-Dialog: Hilfe nur auf Knopfdruck ("Hilfe zu %p %d..."), Aufruf Nummerieren-Dialog rein, EXIF-Kommentar rein (der bekommt %k, damit Übernahme möglich)
  * todo   Umbenennen-Dialog renovieren (Kontextmenü statt Buttons) und testen ob alle Ersetzungen auch funktionieren
@@ -89,9 +89,10 @@ import java.util.ResourceBundle;
  * todo doch nochmal schauen, ob die Updates vom FileWatcher nicht verwendet werden können. Siehe JavaFX Task: A Task Which Returns Partial Results
  * todo Nice to have: Undo-History
  */
+@SuppressWarnings("DataFlowIssue")
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.23.03.04";  // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "0.23.10.14";  // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -205,6 +206,7 @@ static private boolean isOption(String arg){
     scene.getStylesheets().add(getClass().getResource("/kissPhoto.css").toExternalForm());      //styling esp. for TreeTableView to look like a TableView
     primaryStage.setScene(scene);
 
+    //noinspection DataFlowIssue
     stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/KissPhotoIcon.jpg")));
 
     //Create the View-Areas
@@ -337,8 +339,8 @@ static private boolean isOption(String arg){
       mainSplitPane.setDividerPosition(0, MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS);
     }
 
-    metaInfoView.restoreVisibilityFromGlobalSettings();
     fileTableView.restoreLastSettings();
+    Platform.runLater(()->metaInfoView.restoreVisibilityFromGlobalSettings()); //wait until all other layout has been performed otherwise metaInfoView gets a resize event after original position was restored
   }
 
   /**

@@ -18,7 +18,7 @@ import javafx.stage.WindowEvent;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
+ * <p>
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)
  * <p/>
  * The main menu bar is defined here
@@ -26,6 +26,7 @@ import javafx.stage.WindowEvent;
  *
  * @author Ingo
  * @since 2012-09-09
+ * @version 2023-10-14 metaInfoItem binding with MetaInfoView.visibleProperty improved (only local calls now)
  * @version 2023-01-05 undelete last file supported. Gray-out of undelete menuItems now use Bindings
  * @version 2022-09-04 clean up primaryStage parameter
  * @version 2021-11-01 clean prefixes, numbering added
@@ -352,14 +353,7 @@ public class MainMenuBar extends MenuBar {
 
     final CheckMenuItem showMetaInfoItem = new CheckMenuItem(KissPhoto.language.getString("show.meta.data"));
     showMetaInfoItem.setAccelerator(new KeyCodeCombination(KeyCode.M, KeyCombination.CONTROL_DOWN));
-    showMetaInfoItem.selectedProperty().bindBidirectional(metaInfoView.visibleProperty());
-    showMetaInfoItem.setOnAction(event -> {
-      event.consume();
-      //because the changed selection is bound to visibility it is not necessary to set it here again
-      if (showMetaInfoItem.isSelected()) { //i.e. if metaInfoView is visible
-        metaInfoView.guaranteeMinimumHeight(); //after manual showing guarantee a minimum height to ensure it really became visible
-      }
-    });
+    showMetaInfoItem.selectedProperty().bindBidirectional(metaInfoView.visibleProperty());   //--> visibility changes in MetaInfoView fire MetaInfoView.onShowHide()
     viewMenu.getItems().add(showMetaInfoItem);
 
     final MenuItem showGPSLocationItem = new MenuItem(KissPhoto.language.getString("show.gps.location.in.google.maps"));

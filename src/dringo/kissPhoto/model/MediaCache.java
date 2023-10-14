@@ -6,7 +6,7 @@ import javafx.collections.ObservableList;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
+ * <p>
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class implements a cache strategy for speeding up displaying of pictures/movies:
@@ -67,7 +67,7 @@ public class MediaCache {
     //    (double) (oldHeapUsage.getMax() - oldHeapUsage.getUsed()) / MB));
 
     long available = env.maxMemory() - env.totalMemory() + env.freeMemory();  //unassigned=max-total; available=unassigned + free
-    System.out.println(String.format("MediaCache: env max=%.2f MB, total=%.2f MB, free=%.2f MB, available=%.2f MB", 1.0*env.maxMemory()/MB, 1.0*env.totalMemory()/MB, 1.0*env.freeMemory()/MB, 1.0*available/MB));
+    System.out.printf("MediaCache: env max=%.2f MB, total=%.2f MB, free=%.2f MB, available=%.2f MB%n", 1.0*env.maxMemory()/MB, 1.0*env.totalMemory()/MB, 1.0*env.freeMemory()/MB, 1.0*available/MB);
 
 //    System.out.println("Max Heap Size = maxMemory() = " + env.maxMemory()); //max heap size from -Xmx, i.e. is constant during runtime
 //    System.out.println("Current Heap Size = totalMemory() = " +  env.totalMemory()); //currently assigned  heap
@@ -104,7 +104,7 @@ public class MediaCache {
    * If the cache is full
    * i.e. less memory available then MIN_FREE_MEM_SIZE
    * then the oldest entries are deleted (and content flushed)
-   *
+   * <p>
    * called twice per mediaFile: before media is (pre) loaded and before meta-info is loaded
    */
   public void maintainCacheSizeByFlushingOldest() {
@@ -114,16 +114,16 @@ public class MediaCache {
     //is respected again
     long approxMemFreed = 0;
 
-    //memory full?
     //remove the oldest MediaFiles from cache until MIN_FREE_MEM_SIZE is reached again
-    while (getAvailableMem() + approxMemFreed <= MIN_FREE_MEM_SIZE && cacheBuffer.size() > 0) {//size = 0 means: to less memory for caching at all
+    while (getAvailableMem() + approxMemFreed <= MIN_FREE_MEM_SIZE && !cacheBuffer.isEmpty()) {//size = 0 means: to less memory for caching at all
       MediaFile oldestMediaFile = cacheBuffer.get(0);                              //begin of the list contains the oldest element
       approxMemFreed = approxMemFreed + oldestMediaFile.getContentApproxMemSize();
       oldestMediaFile.flushMediaContent();
       cacheBuffer.remove(0);
       //System.out.println("flushing --> cache Buffer Size = " + cacheBuffer.size() + " approxMemFreed=" + approxMemFreed + " availMem="+getAvailableMem());
     }
-    //env.gc();
+    if (approxMemFreed >0)
+      env.gc(); //only if something has been taken out of the cache call garbage collector
     //System.out.println("available mem after gc=" + getAvailableMem());
   }
 
@@ -133,13 +133,13 @@ public class MediaCache {
    * If it is already in Cache than put it at the end of the cache because "youngest" entry
    * the content of the media file remains valid until mediaFile.flushFromCache() is called
    * the cached content is stored in the MediaFile object. Putting it into the cache just determines
-   * which if the content is valid and what is the "oldest" mediaFile that is flushed next if out of memory
+   * if the content is valid and what is the "oldest" mediaFile that is flushed next if out of memory
    *
    * @param mediaFile  the file to be put into the cache
    */
   public void addAsLatest(MediaFile mediaFile) {
     cacheBuffer.remove(mediaFile);  //for the case it was already in the cache
-    //add as new/youngest element
+    //add as new i.e. youngest element
     cacheBuffer.add(mediaFile);//and remember that it is now in memory
   }
 

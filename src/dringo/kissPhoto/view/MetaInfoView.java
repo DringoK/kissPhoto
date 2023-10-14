@@ -7,6 +7,9 @@ import dringo.kissPhoto.model.MediaFileTagged;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.input.KeyCode;
+
+import java.util.Objects;
 
 import static dringo.kissPhoto.KissPhoto.language;
 
@@ -21,11 +24,12 @@ import static dringo.kissPhoto.KissPhoto.language;
  * MetaInfoView is the Window in the lower right corner which shows the Meta Tags (e.g. Exif) of a {@link MediaFileTagged}
  * setMedia() loads the meta info in the memory
  * It has two tabs: one to show all tags, but readonly, one to show editable tabs only
- *
+ * <p>
  * <p/>
  *
  *
  * @author Dringo
+ * @version 2023-10-14 Fixed: 1.Restoring of divider position fixed 2.Resizing of the main window no longer activates metaInfoView if switched off: property SplitPane.ResizableWithParent is "false" now.
  * @version 2021-12-30 Fixed: "Show GPS in Google Maps" works now also if metaInfoView is not visible
  * @version 2021-11-10 tags introduced, MetaInfoAllTagsView is the old implementation which is now in one of the tabs
  * @since 2021-11-10
@@ -40,7 +44,7 @@ public class MetaInfoView extends TabPane {
   //IDs for globalSettings
   private static final String META_INFO_VIEW_VISIBLE = "metaInfoView_Visible";
   private static final String DETAILS_AREA_DIVIDER_POSITION = "detailsArea_DividerPosition";
-  private static final String META_INFO_ACTIVE_TAB = "metaInfoView_ActiveTabe";
+  private static final String META_INFO_ACTIVE_TAB = "metaInfoView_ActiveTab";
 
   private final MetaInfoAllTagsView metaInfoAllTagsView = new MetaInfoAllTagsView(this);
   private final MetaInfoEditableTagsView metaInfoEditableTagsView = new MetaInfoEditableTagsView(this);
@@ -48,7 +52,6 @@ public class MetaInfoView extends TabPane {
   private final SplitPane surroundingPane;    //surroundingPane the splitPane where the metaView lies in. When showing/hiding the dividerPos will be restored
   private final Tab metaInfoAllTagsViewTab;
   private final Tab metaInfoEditableTagsViewTab;
-  private FileTableView fileTableView;        //some key presses are led to fileTableView
   private MediaContentView mediaContentView;  //some key presses are led to mediaContentView
   private StatusBar statusBar;
   private double rememberDividerPos = 0; //keep old DividerPos if MetaInfoView becomes visible again, i.e. valid while MetaInfoView is not visible. maintained in onShowHide
@@ -66,7 +69,9 @@ public class MetaInfoView extends TabPane {
     this.setMinHeight(0);
 
     heightProperty().addListener((observable, oldValue, newValue) -> onHeightChanged(newValue.doubleValue()));
-    visibleProperty().addListener((observable, oldValue, newValue) -> onShowHide());
+    visibleProperty().addListener((observable, oldValue, newValue) -> onShowHide(newValue));
+    SplitPane.setResizableWithParent(this,false); //node-property is evaluated by the surrounding splitPane
+
 
     metaInfoAllTagsViewTab = new Tab(language.getString("contained.tags.Tab"), metaInfoAllTagsView);
     metaInfoAllTagsViewTab.setClosable(false);
@@ -91,7 +96,6 @@ public class MetaInfoView extends TabPane {
   }
 
   public void setOtherViews(FileTableView fileTableView, MediaContentView mediaContentView, StatusBar statusBar) {
-    this.fileTableView = fileTableView;
     this.mediaContentView = mediaContentView;
     this.statusBar = statusBar;
 
@@ -102,14 +106,12 @@ public class MetaInfoView extends TabPane {
 
     private void installKeyHandlers() {
     setOnKeyReleased(keyEvent -> {   //KeyPressed and KeyTyped are not fired for F2
-      switch (keyEvent.getCode()) {
-        //Player
-        case SPACE:
-          if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && mediaContentView.getPlayerViewer().isVisible()) {
-            keyEvent.consume();
-            mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
-          }
-          break;
+      //Player
+      if (Objects.requireNonNull(keyEvent.getCode()) == KeyCode.SPACE) {
+        if (!keyEvent.isControlDown() && !keyEvent.isShiftDown() && mediaContentView.getPlayerViewer().isVisible()) {
+          keyEvent.consume();
+          mediaContentView.getPlayerViewer().getPlayerControls().togglePlayPause();
+        }
       }
     });
   }
@@ -148,14 +150,15 @@ public class MetaInfoView extends TabPane {
    * while it is inactive no metadata is read or cached to speed up the application
    * when hiding (visible=false) the current position of the divider is stored and restored when showing again
    */
-  public void onShowHide() {
-    if (isVisible()) {       //i.e. just became visible
+  public void onShowHide(boolean visible) {
+    if (visible) {       //i.e. just became visible
       surroundingPane.setDividerPosition(0, rememberDividerPos);
-      if (currentMediaFile != null)
-        setMediaFile(currentMediaFile);
+      if (currentMediaFile != null) setMediaFile(currentMediaFile);
+      guaranteeMinimumHeight(); //after manual showing guarantee a minimum height to ensure it really became visible
     } else {
-      rememberDividerPos = surroundingPane.getDividerPositions()[0];
-      surroundingPane.setDividerPosition(0, 1); //100%=only media is shown
+      double divPos = surroundingPane.getDividerPositions()[0];
+      surroundingPane.setDividerPosition(0, 1.0); //100%=only media is shown
+      rememberDividerPos = divPos;
     }
   }
 
@@ -200,10 +203,22 @@ public class MetaInfoView extends TabPane {
    * read visibility and dividerPos from settings file and restore the view accordingly
    */
   public void restoreVisibilityFromGlobalSettings() {
+    //restore the visibility settings of the tabs
+    metaInfoAllTagsView.restoreVisibilityFromGlobalSettings();
+    metaInfoEditableTagsView.restoreVisibilityFromGlobalSettings();
+
+    //restore which tab was active
     try {
-      setVisible(Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(META_INFO_VIEW_VISIBLE)));
+      getSelectionModel().select(Integer.parseInt(KissPhoto.globalSettings.getProperty(META_INFO_ACTIVE_TAB)));
     } catch (Exception e) {
-      setVisible(DEFAULT_VISIBILITY);
+      //getSelectionModel().select(0); //default tab (0 is the default therefore nothing to do)
+    }
+
+    boolean wasVisible = DEFAULT_VISIBILITY;
+    try{
+      wasVisible = Boolean.parseBoolean(KissPhoto.globalSettings.getProperty(META_INFO_VIEW_VISIBLE));
+    } catch (Exception e) {
+      //is already default --> nothing to do
     }
 
     try {
@@ -211,20 +226,19 @@ public class MetaInfoView extends TabPane {
     } catch (Exception e) {
       rememberDividerPos = DETAILS_AREA_DEFAULT_DIVIDER_POS;
     }
-    if (isVisible()) surroundingPane.setDividerPosition(0, rememberDividerPos);
 
-    //restore the visibility settings of the tabs
-    metaInfoAllTagsView.restoreVisibilityFromGlobalSettings();
-    metaInfoEditableTagsView.restoreVisibilityFromGlobalSettings();
+    double divPos = rememberDividerPos;
 
-    //and finally, restore which tab was active
-    try {
-      getSelectionModel().select(Integer.parseInt(KissPhoto.globalSettings.getProperty(META_INFO_ACTIVE_TAB)));
-    } catch (Exception e) {
-      //getSelectionModel().select(0); //default tab (0 is the default therefore nothing to do)
-    }
+    if (wasVisible)
+      onShowHide(true);  //now chang event, therefore trigger onShowHide manually
+    else
+      setVisible(false);  //change in visibility fires OnShowHide() which might change remember divPos to 1.0 (hide)
+
+    //set the restored dividerPos if visible:
+    rememberDividerPos = divPos;
   }
 
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   public boolean isValidGpsAvailable(){
     metaInfoAllTagsView.setMediaFile(currentMediaFile, true); //just for the case that metadata not yet loaded e.g. because allTagsView is not visible
     return metaInfoAllTagsView.getGpsCoordinates() != null;
@@ -233,7 +247,7 @@ public class MetaInfoView extends TabPane {
    * Try to open maps.google.com in the default browser
    * at the coordinates given in the GPS directory of the current media file
    * e.g.
-   * https://www.google.com/maps/place/47°05'29.0"N+8°27'52.0"E
+   * <a href="https://www.google.com/maps/place/47">...</a>°05'29.0"N+8°27'52.0"E
    */
   public void showGPSPositionInGoogleMaps() {
     metaInfoAllTagsView.setMediaFile(currentMediaFile, true); //just for the case that metadata not yet loaded e.g. because allTagsView is currently not visible
@@ -252,8 +266,8 @@ public class MetaInfoView extends TabPane {
 
   /**
    * try to find the tagId in
-   * @param tagId
-   * @return
+   * @param tagId  id of the tag to bei edited
+   * @return true if tag found
    */
   public boolean editTag(int tagId){
     boolean successful = metaInfoEditableTagsView.selectTag(tagId);

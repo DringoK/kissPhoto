@@ -15,7 +15,7 @@ import java.util.Objects;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
+ * <p>
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class implements a viewer for movie clips using JavaFX's media player component
@@ -38,7 +38,7 @@ import java.util.Objects;
  * @version 2016-11-06: ViewportZoomerMover extracted for all viewport zooming and moving operations (now identical to PhotoViewer's)
  */
 public class PlayerViewerFX extends PlayerViewer {
-  protected MediaView mediaView;
+  protected final MediaView mediaView;
   protected MediaPlayer mediaPlayer;      //initialized in setMedia()
 
 
@@ -47,14 +47,11 @@ public class PlayerViewerFX extends PlayerViewer {
    */
   public PlayerViewerFX(final MediaContentView contentView) {
     super(contentView);   //mediaContentView of father class is now = contentView
-    //binding is automatically when placed in a StackPane (mediaStackPane is a StackPane)
-    //prefHeightProperty().bind(mediaContentView.getMediaStackPaneHeightProperty());
-    //prefWidthProperty().bind(mediaContentView.getMediaStackPaneWidthProperty());
 
     mediaView = new MediaView();
     mediaView.setPreserveRatio(true);
 
-    //note: playerControlPanel defined and initialized in PlayerViewer (fatherclass)
+    //note: playerControlPanel defined and initialized in PlayerViewer (father class)
     getChildren().addAll(mediaView, viewerControlPanel);
 
     mediaView.fitHeightProperty().bind(prefHeightProperty());
@@ -89,7 +86,7 @@ public class PlayerViewerFX extends PlayerViewer {
     resetPlayer();
     PlayerControlPanel viewerControlPanel = (PlayerControlPanel) this.viewerControlPanel; //one central cast
 
-    if (compatible) try {
+    try {
       Media media = (Media)mediaFile.getMediaContentCached(this);  //if it cannot be put into a Media object it can not be played --> catch
       mediaPlayer = new MediaPlayer(media);
 
@@ -192,7 +189,7 @@ public class PlayerViewerFX extends PlayerViewer {
       mediaPlayer.seek(Objects.requireNonNullElse(newPos, Duration.ZERO));
 
       if (finished){
-        finished=false; //seeking results in not being at the end of the media any more
+        finished=false; //seeking results in not being at the end of the media anymore
       }
       if (((PlayerControlPanel)viewerControlPanel).isUserHasPaused()) mediaPlayer.pause();     //FX player keeps PLAYING status even if finished
     }
@@ -230,17 +227,17 @@ public class PlayerViewerFX extends PlayerViewer {
    * load a Media specified by "FileOnDisk" property
    *
    * @return Media if successful or null if not
-   * note: if null is returned possibly MediaCache needs to be maintained to free memory..and retried again
+   * note: if null is returned possibly MediaCache needs to be maintained to free memory and retried again
    * retry not implemented because never needed
    */
   @Override
   public Object getViewerSpecificMediaContent(MediaFile mediaFile) {
     Media media = null;
-    if (mediaFile.isMediaContentInValid()) {
+    if (mediaFile.isMediaContentInvalid()) {
       try {
         media = new Media(mediaFile.getFileOnDisk().toFile().toURI().toString());
       } catch (Exception e) {
-        media = null;  //not supported
+        //media = null;  //not supported --> media remains null
       }
 
     }

@@ -9,6 +9,7 @@ import dringo.kissPhoto.helper.AppStarter;
 import dringo.kissPhoto.helper.StringHelper;
 import dringo.kissPhoto.view.mediaViewers.MediaViewer;
 import dringo.kissPhoto.view.mediaViewers.PlayerViewerVLCJ;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -40,11 +41,10 @@ import java.util.Date;
  * @since 2012-08-28
  * @version 2022-10-15 retry strategy corrected: no more infinite retries (retries used currently for images in PhotoViewer only)
  * @version 2022-01-07 meta info writing supported. performDelete() and moveFileToDeleted() separated, so that backup files before transformations become possible
- * @version 2021-11-07 metainfo column support (="" if not MediaFileTagged), reflection for FileTableView eliminated
  * @version 2021-04-07 metadata stuff (cache!) now completely in subclass MediaFileTagged
  * @version 2020-12-20 cache now directly in this class. What to put into cache is asked from according viewer.
  * @version 2019-06-22 cache issue fixed: isMediaContentValid() and getMediaContentException() added
- * @version 2018-10-21 support rotation in general (for subclasses which provide a MediaFileRotater sybling)
+ * @version 2018-10-21 support rotation in general (for subclasses which provide a MediaFileRotater sibling)
  * @version 2016-06-12 performDelete will now no longer delete but move to subfolder "deleted" (localized, e.g. german "aussortiert")
  * @version 2014-07-05 bug found why separator column didn't reflect changes in the property over the model: separatorProperty() had wrong capitalization
  * @version 2014-06-22 extra column for the counter's separator (the character after the counter)
@@ -74,7 +74,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static final int SECOND_RUN = 1;
   public static final int RENAME_ERROR = 2;
 
-  //this constants are used by sibling classes for ids in globalSettings (together with their class.getSimpleName())
+  //these constants are used by sibling classes for ids in globalSettings (together with their class.getSimpleName())
   protected final static String MAIN_EDITOR = "_mainEditor";
   protected final static String SECOND_EDITOR = "_2ndEditor";
   //helpers
@@ -88,7 +88,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    */
   public static final String STATUSFLAGS_HELPTEXT = KissPhoto.language.getString("statusFlags.Helptext");
   protected Path fileOnDisk;   //including physical filename on Disk...to be renamed
-  protected MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
+  protected final MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
   protected Object content = null;            //cached content
 
   /**
@@ -140,7 +140,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
     try {
       this.modifiedDate.set(dateFormatter.format(new Date(Files.getLastModifiedTime(fileOnDisk).toMillis())));
     } catch (IOException e) {
-      //if date cannot be accessed nothing will displayed as the date
+      //if date cannot be accessed nothing will be displayed as the date
       this.modifiedDate.set("");
     }
   }
@@ -148,7 +148,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   /**
    * Factory method for creating a matching subclass of MediaFile
    * supported MediaPlayer FileTypes are documented in JavaFX: Package javafx.scene.media
-   * http://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html#SupportedMediaTypes
+   * <a href="http://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html#SupportedMediaTypes">...</a>
    *
    * @param file       to be investigated and wrapped by MediaFile
    * @param parentList every MediaFile knows about the list it is contained in
@@ -184,11 +184,11 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * If the selection is empty or null nothing will happen
    *
    * @param selection  the list of MediaFiles currently selected will be passed as parameters
-   * @param editorPath string holding the path to the external editor. If invalid (null, empty, nofile..),
+   * @param editorPath string holding the path to the external editor. If invalid (null, empty, nofile...),
    *                   in windows cmd /c is used to start the standard app for the file type otherwise nothing will happen
    */
   public static void executeExternalEditor(ObservableList<MediaFile> selection, String editorPath) {
-    if (selection != null && selection.size() > 0) {
+    if (selection != null && !selection.isEmpty()) {
       AppStarter.exec(editorPath, selection);
     }
   }
@@ -244,7 +244,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
       description.set(pureFilename);
     }
 
-    //if there is only a prefix (no counter or description), than show the filename as description
+    //if there is only a prefix (no counter or description), then show the filename as description
     if (description.get().isEmpty() && counter.get().isEmpty()) {
       description.set(prefix.get());
       prefix.set("");
@@ -347,7 +347,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * the modalResult is stored in the searchRec structure and additionally true is returned if found
    *
    * @param searchRec cursors and modalResult are used as staring point and will be updated here: startPos, endPos, found
-   * @return true if found, false if not (same as searchRec.found)
+   * @return true if found, false if not (same as searchRec.found())
    */
   public boolean searchNext(String searchText, MediaFileList.SearchRec searchRec) {
     String textToSearchIn;
@@ -358,11 +358,11 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
       textToSearchIn = getStringPropertyForColNumber(searchRec.tableColumn).get();
 
-      //search is not case sensitive (toUpperCase is compared)
+      //search is not case-sensitive (toUpperCase is compared)
       foundPos = textToSearchIn.toLowerCase().indexOf(searchText.toLowerCase(), searchRec.endPos);
       found = (foundPos >= 0);
 
-      if (!found) searchRec.tableColumn++;  //ggf. in nächster Spalte weitersuchen
+      if (!found) searchRec.tableColumn++;  //continue search in next column if necessary
       //always start the search in the next column from the beginning
       searchRec.startPos = 0;
       searchRec.endPos = 0;
@@ -617,17 +617,14 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   }
 
   public String statusFlagsToString() {
-    //status in first line has highest priority
     if (renameError) {
       return "R";
-    }
-    if (timeStampWriteError) {
+    }else if (timeStampWriteError) {
       return "T";
-    }
-    if (isChanged()) {
+    }else if (isChanged()) {
       return "*";
-    }
-    return ""; //= nothing to report
+    } else
+      return ""; //= nothing to report
   }
 
   /**
@@ -647,13 +644,13 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   /**
    * @return true if Media Content is valid, false if not loaded or Exception occurred while loading
    */
-  public boolean isMediaContentInValid() {
+  public boolean isMediaContentInvalid() {
     return ((content == null) || (getMediaContentException() != null));
   }
 
   /**
-   * Non abstract Media-Types overwrite this method
-   * to get any exception that occured while loading.
+   * Non-abstract Media-Types overwrite this method
+   * to get any exception that occurred while loading.
    * A content is valid if:  (content != null) && (getMediaContentException() == null)
    *
    * @return null if no exception has occurred or content empty, anException if error occurred while loading
@@ -673,22 +670,34 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   /**
    * try or retry to load MediaContent from Cache. If not possible load it with specific load-routine and put it into cache
    * @param mediaViewer the mediaView which is asked to (pre) load the file in its specific format
-   * @param isNotRetry call it with true if you try first. recursive retries will call it with false to count up retry-Counter
+   * @param isRetry call it with false if you try first. Recursive retries will call it with true to count up retry-Counter
    * @return MediaContent or null if this was not possible
    */
-  public Object tryOrRetryMediaContentCached(MediaViewer mediaViewer, boolean isNotRetry) {
-    if (isNotRetry)
+  public Object tryOrRetryMediaContentCached(MediaViewer mediaViewer, boolean isRetry) {
+    if (!isRetry)
       resetLoadRetryCounter();
     //if Retry then counter still needed (will be counted in shouldRetryLoad() that must be called before trying to retry)
 
-    if (isMediaContentInValid()){
+    if (isMediaContentInvalid()){
       //if not in cache then ask the viewer to load it
-      mediaCache.maintainCacheSizeByFlushingOldest(); //housekeeping before load for having enough memory to laod
-      content = mediaViewer.getViewerSpecificMediaContent(this);
+      mediaCache.maintainCacheSizeByFlushingOldest(); //housekeeping before load for having enough memory to load (incl. GC() call)
+      if (isRetry) {
+        //just in case: let the gc do its job before reloading.
+        MediaFile currentMediaFile = this;
+        Platform.runLater(() -> {
+          System.out.println("MediaFile:tryOrRetryMediaContentCached: retry->runLater(LoadImage"+currentMediaFile.getResultingFilename()+")");
+          content = mediaViewer.getViewerSpecificMediaContent(currentMediaFile);
+          if (content != null)
+            mediaCache.addAsLatest(currentMediaFile);//and remember that it is now in memory and the youngest entry of the cache
+        });
+      }else{
+        //first try: load it directly (no runLater())
+        content = mediaViewer.getViewerSpecificMediaContent(this);
+        if (content != null)
+          mediaCache.addAsLatest(this);//and remember that it is now in memory and the youngest entry of the cache
+      }
     }
 
-    if (content != null)
-      mediaCache.addAsLatest(this);//and remember that it is now in memory and the youngest entry of the cache
 
     return content;
   }
@@ -699,7 +708,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
   public boolean shouldRetryLoad(){
     loadRetryCounter++;
-    return loadRetryCounter < MAX_LOAD_RETRIES;
+    return loadRetryCounter <= MAX_LOAD_RETRIES;
   }
 
   public void resetLoadRetryCounter(){
@@ -713,6 +722,13 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public void flushFromCache(){
     flushMediaContent();
     mediaCache.flush(this);
+  }
+
+  /**
+   * the viewer can also try to get more memory if media file loading throws an out of memory exception
+   */
+  public void maintainCacheSizeByFlushingOldest(){
+    mediaCache.maintainCacheSizeByFlushingOldest();
   }
 
   /**
@@ -785,12 +801,12 @@ public abstract class MediaFile implements Comparable<MediaFile> {
 
 
     if (timeStampChanged){
-      if (s.length()>0) s+= "\n";
+      if (!s.isEmpty()) s+= "\n";
       s += KissPhoto.language.getString("time.stamp.changed");
     }
 
     if (isTransformed()){
-      if (s.length()>0) s+= "\n";
+      if (!s.isEmpty()) s+= "\n";
       if (isRotated()) {
         if (isFlippedHorizontally() || isFlippedVertically())
           s+= KissPhoto.language.getString("image.rotated.and.flipped");
@@ -826,7 +842,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    *
    * @return status
    */
-  public StringProperty statusProperty() { //TableView binds the property over it's name during runtime with that method
+  public StringProperty statusProperty() { //TableView binds the property over its name during runtime with that method
     return status;
   }
 
@@ -971,7 +987,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * is the resulting Filename the same when ignoring the extension (ignore Case)
    *
    * @param otherFile the file to compare with
-   * @return true if the resulting filname is the same when ignoring the extension
+   * @return true if the resulting filename is the same when ignoring the extension
    */
   public boolean isSameResultingNameButExtension(MediaFile otherFile) {
     return getPrefix().equalsIgnoreCase(otherFile.getPrefix()) &&
@@ -992,7 +1008,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   /**
    * orientation is changed if the resulting rotation since last save() is not 0°
    *
-   * @return if orientation has change since last save()
+   * @return if orientation has changed since last save()
    */
   public boolean isOrientationChanged() {
     return rotateOperation != RotateOperation.ROTATE0;

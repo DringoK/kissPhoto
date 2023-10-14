@@ -13,7 +13,7 @@ import java.util.concurrent.CancellationException;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
+ * <p>
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class implements a viewer for photos
@@ -29,7 +29,7 @@ import java.util.concurrent.CancellationException;
  * @since 2014-05-25
  * @version 2022-10-15: retry problem solved: no more infinite retries
  * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only they know what they accept and what should be cached to speed up viewing
- * @version 2020-12-13: same structure like playerViewers now: "contains an imageView" not "is an imageView". Therefore common sybling: MediaViewer :)
+ * @version 2020-12-13: same structure like playerViewers now: "contains an imageView" not "is an imageView". Therefore, common sibling: MediaViewer :)
  * @version 2020-11-02: Viewer now decides if it can show a media and returns true if so
  * @version 2019-07-07: Cache problems fixed
  * @version 2018-10-11: Support preview of rotation/mirroring
@@ -60,7 +60,7 @@ public class PhotoViewer extends MediaViewerZoomable{
           filename.endsWith(".ico");
   }
 
-  private ImageView imageView = new ImageView();
+  private final ImageView imageView = new ImageView();
 
   /**
    * constructor to initialize the viewer
@@ -119,7 +119,7 @@ public class PhotoViewer extends MediaViewerZoomable{
    * load an image specified by "FileOnDisk" property
    *
    * @return Image if successful or null if not
-   * note: if null is returned possibly MediaCache needs to be maintained to free memory..and retried again
+   * note: if null is returned possibly MediaCache needs to be maintained to free memory and retried again
    * which is tried in background
    */
   @Override
@@ -128,7 +128,7 @@ public class PhotoViewer extends MediaViewerZoomable{
     MediaViewer photoViewer = this; //to hand over into errorPropertyChange Listener
 
     Image image= null;
-    if (mediaFile.isMediaContentInValid()) {  //if not already loaded i.e. image in cache is invalid
+    if (mediaFile.isMediaContentInvalid()) {  //if not already loaded i.e. image in cache is invalid
       try {
         image = new Image(mediaFile.getFileOnDisk().toUri().toString(), true);  //true=load in Background
 
@@ -136,10 +136,9 @@ public class PhotoViewer extends MediaViewerZoomable{
         image.exceptionProperty().addListener((exception, oldValue, newValue) -> {
           System.out.println("---image loading failed for " + mediaFile.getResultingFilename() + ": " + exception.toString());
 
-          mediaFile.flushFromCache();
           if (!(exception.getValue() instanceof CancellationException) && mediaFile.shouldRetryLoad()) {  //cancellations will not be retried (see MediaFileList.preLoadMedia()) AND shouldRetryLoad maintains the retry-Counter and prevents from infinite loading
             System.out.println("!!!PhotoViewer->getViewerSpecificMediaContent: retry=" + mediaFile.getLoadRetryCounter() + " loading " + mediaFile.getResultingFilename());
-            mediaFile.tryOrRetryMediaContentCached(photoViewer, false); //i.e. retry is recursive
+            mediaFile.tryOrRetryMediaContentCached(photoViewer, true); //i.e. retry is recursive  and after gc() was active.
           }
         });
       } catch (Exception e) {

@@ -13,7 +13,7 @@ import javafx.scene.text.Text;
 /**
  * MIT License
  * Copyright (c)2021 kissPhoto
- *
+ * <p>
  * kissPhoto for managing and viewing your photos, but keep it simple-stupid ;-)<br><br>
  * <br>
  * This Class implements a viewer for Attributes of media files.<br>
@@ -31,14 +31,15 @@ import javafx.scene.text.Text;
  * Which of the attributes are visible can be chosen by the user (standard: just description)
  *
  * @author Dringo
+ * @version 2023-10-02 bug fix: overlay was full mediaContentView. Is now: lower border only. toggleDisplayMode() added.
  * @version 2020-11-06 bug fixing: handle empty mediaFile
  * @version 2014-06-01 changed from overlaying fullscreen panel to a small panel with bound position to the bottom border
  *            otherwise mouse events would not be recognized from the underlying viewer
  */
 public class AttributesViewer extends StackPane {
-  MediaContentView mediaContentView; //link to the underlying ContentView (for resizing etc)
+  final MediaContentView mediaContentView; //link to the underlying ContentView (for resizing etc.)
   MediaFile mediaFile;   //attributes currently displayed from media file  (@see setMedia)
-  Text text = new Text();
+  final Text text = new Text();
 
   boolean displayPrefix = false;
   boolean displayCounter = false;
@@ -55,9 +56,8 @@ public class AttributesViewer extends StackPane {
     super();
 
     this.mediaContentView = contentView;
-    setPrefHeight(25);
-    prefWidthProperty().bind(contentView.widthProperty());  //use full width
-    translateYProperty().bind(contentView.heightProperty().subtract(heightProperty())); //bind to bottom border
+    setMaxHeight(25);  // will be placed in StackPane. Prevent StackPane from filling complete area in height.
+    //Note: Sourrounding StackPane will set width to complete width
 
     text.setFill(Color.WHITE);
     text.setFont(Font.font(null, FontWeight.BOLD, 14));
@@ -96,6 +96,23 @@ public class AttributesViewer extends StackPane {
   }
 
   /**
+   * toggles between
+   *   <li>show Description only</li>
+   *   <li>show All</li>
+   *   <li>hide</li>
+   */
+  public void toggleDiplayMode(){
+    if (isDisplayAll()){      //was "displayAll" --> hide
+      setDisplayAll(false);
+      setVisible(false);
+    } else if (isVisible()){  //if only visible, then description was on --> display all
+      setDisplayAll(true);
+    } else {                  //was not visible --> showDescription
+      setVisible(true);
+    }
+  }
+
+  /**
    * copy the state (i.e. if and what is to be displayed)
    * especially used when full screen mode is enabled: then the state of the normal and the full screen mediaContentView's
    * attributes viewers are synchronized
@@ -112,6 +129,16 @@ public class AttributesViewer extends StackPane {
   }
 
   //------------------------------------- getters and setters ----------------------
+  public void setDisplayAll(boolean visible){
+    displayPrefix = visible;
+    displayCounter = visible;
+    displayExtension = visible;
+    displayFileDate = visible;
+    refreshText();
+  }
+  public boolean isDisplayAll(){
+    return displayPrefix && displayCounter && displayExtension && displayFileDate;
+  }
   public void setDisplayPrefix(boolean displayPrefix) {
     this.displayPrefix = displayPrefix;
     refreshText();

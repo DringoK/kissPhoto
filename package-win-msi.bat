@@ -1,9 +1,9 @@
 @echo off
 echo msi
-jpackage --input out/artifacts --name kissPhoto --app-version 0.23.0304 ^
+jpackage --input out/artifacts --name kissPhoto --app-version 0.23.1014 ^
  --copyright "(c)2023 Dr. Ingo Kreuz" ^
  --vendor "Ingo Kreuz" ^
- --description "KissPhoto: file renaming, renumbering, photo and video-clip sorting - but keep it simple stupid" ^
+ --description "KissPhoto: - keep it simple stupid" ^
  --main-jar kissPhoto.jar --java-options "-splash:resources/images/KissPhotoSplash.jpg" ^
  --win-shortcut --win-menu ^
  --win-menu-group "kissPhoto" --icon resources/images/KissPhotoIconLarge.ico ^
