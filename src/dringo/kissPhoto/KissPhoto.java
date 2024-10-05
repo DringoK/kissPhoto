@@ -47,6 +47,7 @@ import java.util.ResourceBundle;
  * <p>
  *
  * Next:
+ * todo wenn Vollbild aktiv war, dann Vollbild und nicht Fenster groß ziehen. Vollbild und Größe getrennt speichern/wiederherstellen
  * todo lookup-Felder in Editable Meta Tags anzeigen und mit Pulldown editieren
  * todo Bei Namenskonflikt (z.B. wenn Datum als Zahl genommen und alles andere gelöscht) wird beim umbenennen automatisch Zahl angehängt. Dann muss Sternchen weg und Zahl in Anzeige übernommen werden
  * todo settingsdatei: aktiven TagsView-Tab speichern/wiederherstellen

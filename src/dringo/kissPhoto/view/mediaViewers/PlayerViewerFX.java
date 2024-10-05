@@ -4,6 +4,7 @@ import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.PlayableFile;
 import dringo.kissPhoto.view.MediaContentView;
 import dringo.kissPhoto.view.viewerHelpers.PlayerControlPanel;
+import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -32,6 +33,7 @@ import java.util.Objects;
  *
  * @author Dringo
  * @since 2014-06-09
+ * @version 2024-10-06: Retry support to fix MediaPlayer issue described e.g. in https://stackoverflow.com/questions/74247333/flaky-javafx-error-media-invalid-mediaexception
  * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only the know what they accept and what should be cached to speed up viewing
  * @version 2020-10-25: JavaFX MediaPlayer renamed from MovieViewer to MovieViewerFX, to enable MovieViewerVLCJ. Pause/End of File behavior improved
  * @version 2017-10-21: Event-Handling (mouse/keyboard) centralized, so that viewport events and player viewer events can be handled
@@ -39,7 +41,7 @@ import java.util.Objects;
  */
 public class PlayerViewerFX extends PlayerViewer {
   protected final MediaView mediaView;
-  protected MediaPlayer mediaPlayer;      //initialized in setMedia()
+  private Duration seekPosition;
 
 
   /**
@@ -64,6 +66,7 @@ public class PlayerViewerFX extends PlayerViewer {
   }
 
   public javafx.scene.media.MediaPlayer.Status getStatus(){
+    MediaPlayer mediaPlayer = mediaView.getMediaPlayer();
     if (mediaPlayer!= null)
       return mediaPlayer.getStatus();
     else
@@ -77,63 +80,97 @@ public class PlayerViewerFX extends PlayerViewer {
      * @param seekPosition if not null it is tried to seek this position as soon as the movie is loaded/visible
      * @return true if the file could be played, false if not
      */
+  @Override
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
-    if (!(mediaFile instanceof PlayableFile)){  //includes test on null
+    super.setMediaFileIfCompatible(mediaFile);   //maintains currentlyShowedMediaFile
+    System.out.println("PlayerViewerFX->setMediaFileIfCompatible: " + mediaFile.getFileOnDiskName());
+    this.seekPosition = seekPosition;
+    if (!(mediaFile instanceof PlayableFile playableFile)){  //includes test on null
+      System.out.println("PlayerViewerFX.setMediaFileIfCompatible --> mediaFile ist nicht instanceof PlayableFile:" + mediaFile.getClass());
       return false;
     }
     boolean compatible = true;
 
     resetPlayer();
-    PlayerControlPanel viewerControlPanel = (PlayerControlPanel) this.viewerControlPanel; //one central cast
 
     try {
-      Media media = (Media)mediaFile.getMediaContentCached(this);  //if it cannot be put into a Media object it can not be played --> catch
-      mediaPlayer = new MediaPlayer(media);
-
-      mediaPlayer.setOnReady(() -> {
-        if (viewerControlPanel.isUserHasPaused())
-          pause();
-        else
-          play();
-
-        // as the media is playing move the slider for progress
-        viewerControlPanel.setSliderScaling(mediaPlayer.getTotalDuration());
-        viewerControlPanel.showProgress(Duration.ZERO);
-
-        mediaPlayer.currentTimeProperty().addListener(ov -> {
-          if (mediaPlayer != null) viewerControlPanel.showProgress(mediaPlayer.getCurrentTime());
-        });
-
-        if (seekPosition != null) seek(seekPosition);
-      });
-      mediaPlayer.setOnEndOfMedia(() -> {
-        finished = true;
-        mediaContentView.showNextOrRepeatMedia();
-      });
-
-      //install listener for player status to update play/pause/inactive, stop active/inactive
-      mediaPlayer.statusProperty().addListener((observable, oldValue, newValue) -> {
-        finished = false; //setEndOfMedia will set it to true
-      });
-
-      mediaView.setMediaPlayer(mediaPlayer);
+      //if it cannot be put into a Media object it can not be played --> catch
+      MediaPlayer mediaPlayer = (MediaPlayer) playableFile.getCachedOrLoadMediaContent(this, false);
+      refreshViewIfCurrentMediaFile(playableFile, mediaPlayer);
     } catch (Exception e) {
+      System.out.println("PlayerViewerFX->setMediaFileIfCompatible->Catch: " + e);
       compatible = false;
     }
     return compatible;
   }
+
+  /**
+   * show video in viewer, if the mediaFile is the currently shown mediaFile (therefore preloaded files are not directly shown)
+   * @param mediaFile
+   * @param media  needs to be a MediaPlayer object
+   * @return true if it was the current mediaFile
+   */
+  @Override
+  public boolean refreshViewIfCurrentMediaFile(MediaFile mediaFile, Object media) {
+    if (super.refreshViewIfCurrentMediaFile(mediaFile, media)) {
+      if (media instanceof MediaPlayer mediaPlayer) {
+        PlayerControlPanel viewerControlPanel = (PlayerControlPanel) this.viewerControlPanel; //one central cast cause in MediaViewer it's a ViewerControlPanel only
+
+        mediaPlayer.setOnEndOfMedia(() -> {
+          finished = true;
+          mediaContentView.showNextOrRepeatMedia();
+        });
+
+        //install listener for player status to update play/pause/inactive, stop active/inactive
+        mediaPlayer.statusProperty().addListener((observable, oldValue, newValue) -> {
+          finished = false; //setEndOfMedia will set it to true
+        });
+
+        mediaPlayer.setOnReady(() -> {
+          if (viewerControlPanel.isUserHasPaused())
+            pause();
+          else
+            play();
+
+          // as the media is playing move the slider for progress
+          viewerControlPanel.setSliderScaling(mediaPlayer.getTotalDuration());
+          viewerControlPanel.showProgress(Duration.ZERO);
+
+          mediaPlayer.currentTimeProperty().addListener(ov -> {
+            viewerControlPanel.showProgress(mediaPlayer.getCurrentTime());
+          });
+
+          if (seekPosition != null) seek(seekPosition);
+        });
+
+        mediaView.setMediaPlayer(mediaPlayer);
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   /**
    * reset the player: stop it and free all event Handlers
    */
-  public void resetPlayer(){
-    if (mediaPlayer != null) {
-      mediaPlayer.stop();
-      mediaPlayer.setOnPaused(null);
-      mediaPlayer.setOnPlaying(null);
-      mediaPlayer.setOnReady(null);
-      mediaPlayer.dispose();
-      mediaPlayer = null;
+  public void resetPlayer() {
+    if (currentlyShowedMediaFile != null) {
+      currentlyShowedMediaFile.flushMediaContent(); //do not use cache for PlayerViewerFX files
+      System.out.println("PlayerViewerFX.resetPlayer->flush " + currentlyShowedMediaFile.getFileOnDiskName());
     }
+
+    MediaPlayer mediaPlayer = this.mediaView.getMediaPlayer();
+    if (mediaPlayer == null) return; //nothing to clean up, if there is none
+    if (mediaPlayer.getStatus() == MediaPlayer.Status.DISPOSED) return;
+
+    if (mediaPlayer.getStatus() != MediaPlayer.Status.STOPPED) mediaPlayer.stop();
+    mediaPlayer.setOnPaused(null);
+    mediaPlayer.setOnPlaying(null);
+    mediaPlayer.setOnReady(null);
+    mediaPlayer.dispose();
+    mediaView.setMediaPlayer(null);
+
   }
 
   /**
@@ -149,6 +186,7 @@ public class PlayerViewerFX extends PlayerViewer {
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    */
   public void play() {
+    MediaPlayer mediaPlayer = this.mediaView.getMediaPlayer();
     if (mediaPlayer != null) {
       mediaPlayer.play();
     }
@@ -159,6 +197,7 @@ public class PlayerViewerFX extends PlayerViewer {
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    */
   public void pause() {
+    MediaPlayer mediaPlayer = this.mediaView.getMediaPlayer();
     if (mediaPlayer != null) {
       if (finished){
         seek(Duration.ZERO); //rewind
@@ -174,6 +213,7 @@ public class PlayerViewerFX extends PlayerViewer {
    * if mediaPlayer is null (currently no media file displayed) nothing happens
    */
   public void stop() {
+    MediaPlayer mediaPlayer = this.mediaView.getMediaPlayer();
     if (mediaPlayer != null) {
       mediaPlayer.stop();
     }
@@ -185,6 +225,7 @@ public class PlayerViewerFX extends PlayerViewer {
    * @param newPos position to jump to. null is treated like Duration.Zero (rewind)
    */
   public void seek(Duration newPos){
+    MediaPlayer mediaPlayer = this.mediaView.getMediaPlayer();
     if (mediaPlayer != null){
       mediaPlayer.seek(Objects.requireNonNullElse(newPos, Duration.ZERO));
 
@@ -199,6 +240,7 @@ public class PlayerViewerFX extends PlayerViewer {
    * @return current position
    */
   public Duration getCurrentTime() {
+    MediaPlayer mediaPlayer = this.mediaView.getMediaPlayer();
     if (mediaPlayer != null)
       return mediaPlayer.getCurrentTime();
     else
@@ -210,6 +252,7 @@ public class PlayerViewerFX extends PlayerViewer {
    * @return the total length of the currently loaded media
    */
   public Duration getTotalDuration(){
+    MediaPlayer mediaPlayer = this.mediaView.getMediaPlayer();
     if (mediaPlayer != null)
       return mediaPlayer.getTotalDuration();
     else
@@ -225,23 +268,41 @@ public class PlayerViewerFX extends PlayerViewer {
 
   /**
    * load a Media specified by "FileOnDisk" property
-   *
-   * @return Media if successful or null if not
    * note: if null is returned possibly MediaCache needs to be maintained to free memory and retried again
    * retry not implemented because never needed
+   *
+   * @return MediaPlayer if successful or null if not
    */
+
   @Override
   public Object getViewerSpecificMediaContent(MediaFile mediaFile) {
-    Media media = null;
-    if (mediaFile.isMediaContentInvalid()) {
-      try {
-        media = new Media(mediaFile.getFileOnDisk().toFile().toURI().toString());
-      } catch (Exception e) {
-        //media = null;  //not supported --> media remains null
-      }
+    if (!(mediaFile instanceof PlayableFile)) return null;
 
+    MediaPlayer mediaPlayer = null;
+    try {
+      Media media = null;
+      media = new Media(mediaFile.getFileOnDisk().toFile().toURI().toString());
+      mediaPlayer = new MediaPlayer(media);
+
+      //install error-listener for background start
+      mediaPlayer.setOnError(() -> {
+        System.out.println("!!! PlayerViewerFX.getViewerSpecificMediaContent-->ErrorHandler Error= " + mediaView.getMediaPlayer().getError());
+        System.out.println("!!!PlayerViewerFX->getViewerSpecificMediaContent: retry=" + mediaFile.getLoadRetryCounter() + " loading " + mediaFile.getResultingFilename());
+
+        resetPlayer();
+
+        Platform.runLater(()->{    //
+          if (mediaFile.retryCounterNotExceeded()){
+            MediaPlayer reloadedPlayer = (MediaPlayer) mediaFile.getCachedOrLoadMediaContent(this, true);
+            refreshViewIfCurrentMediaFile(mediaFile, reloadedPlayer);
+          }
+        });
+      });
+
+    } catch (Exception e) {
+      //media = null;  //not supported --> media remains null
     }
-    return media;
+    return mediaPlayer;
   }
 
   //----------------------- Implement ZoomableViewer Interface ----------------------------
@@ -258,12 +319,12 @@ public class PlayerViewerFX extends PlayerViewer {
 
   @Override
   public double getMediaWidth() {
-    return mediaPlayer.getMedia().getWidth();
+    return mediaView.getMediaPlayer().getMedia().getWidth();
   }
 
   @Override
   public double getMediaHeight() {
-    return mediaPlayer.getMedia().getHeight();
+    return mediaView.getMediaPlayer().getMedia().getHeight();
   }
 
   @Override

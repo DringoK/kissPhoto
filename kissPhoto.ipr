@@ -229,7 +229,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" project-jdk-name="liberica-21" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_23" project-jdk-name="liberica-23" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -294,7 +294,15 @@
     </option>
   </component>
   <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/../adobe-xmp-core" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../metadata-extractor" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../metadata-extractor/wiki" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../metadata-extractor/wiki-images" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../vlcj" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../vlcj-file-filters" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../vlcj-javafx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../vlcj-natives" vcs="Git" />
   </component>
   <component name="libraryTable">
     <library name="jna">

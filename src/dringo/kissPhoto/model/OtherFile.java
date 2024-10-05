@@ -27,11 +27,6 @@ public class OtherFile extends MediaFile {
   }
 
   @Override
-  public Exception getMediaContentException() {
-    return null;
-  }
-
-  @Override
   public long getContentApproxMemSize() {
     return 0;  //content of other file is never loaded, freeing from cache has no effect on memory consumption
   }

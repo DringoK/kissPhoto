@@ -1,15 +1,14 @@
 package dringo.kissPhoto.model;
 
 import dringo.kissPhoto.KissPhoto;
+import dringo.kissPhoto.helper.AppStarter;
 import dringo.kissPhoto.helper.ObservableStringList;
+import dringo.kissPhoto.helper.StringHelper;
 import dringo.kissPhoto.model.Metadata.MetaInfoProperty;
 import dringo.kissPhoto.view.inputFields.SeparatorInputField;
-import dringo.kissPhoto.view.mediaViewers.PhotoViewer;
-import dringo.kissPhoto.helper.AppStarter;
-import dringo.kissPhoto.helper.StringHelper;
 import dringo.kissPhoto.view.mediaViewers.MediaViewer;
+import dringo.kissPhoto.view.mediaViewers.PhotoViewer;
 import dringo.kissPhoto.view.mediaViewers.PlayerViewerVLCJ;
-import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -39,6 +38,7 @@ import java.util.Date;
  *
  * @author ikreuz
  * @since 2012-08-28
+ * @version 2024-10-06 retries set to 30 for PlayerViewerFX. Corrections in comments (false/true exchanged), getCachedOrLoadMediaContent reworked
  * @version 2022-10-15 retry strategy corrected: no more infinite retries (retries used currently for images in PhotoViewer only)
  * @version 2022-01-07 meta info writing supported. performDelete() and moveFileToDeleted() separated, so that backup files before transformations become possible
  * @version 2021-04-07 metadata stuff (cache!) now completely in subclass MediaFileTagged
@@ -69,7 +69,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static final int COL_EXTENSION = 4;
   public static final int COL_FILEDATE = 5;
 
-  public final static int MAX_LOAD_RETRIES = 3;
+  public final static int MAX_LOAD_RETRIES = 30;
   public static final int SUCCESSFUL = 0;
   public static final int SECOND_RUN = 1;
   public static final int RENAME_ERROR = 2;
@@ -89,7 +89,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   public static final String STATUSFLAGS_HELPTEXT = KissPhoto.language.getString("statusFlags.Helptext");
   protected Path fileOnDisk;   //including physical filename on Disk...to be renamed
   protected final MediaFileList mediaFileList; //every list element knows about its list: Access counterPosition and for future use (e.g. support dirTree)
-  protected Object content = null;            //cached content
+  protected Object cachedContent = null;       //cached content is stored in mediaFile object and listed in the cache list
 
   /**
    * Constants for rotating (lossless if possible) media.
@@ -642,10 +642,10 @@ public abstract class MediaFile implements Comparable<MediaFile> {
   }
 
   /**
-   * @return true if Media Content is valid, false if not loaded or Exception occurred while loading
+   * @return false if Media Content is valid, true if not loaded or Exception occurred while loading
    */
   public boolean isMediaContentInvalid() {
-    return ((content == null) || (getMediaContentException() != null));
+    return ((cachedContent == null) || (getMediaContentException() != null));
   }
 
   /**
@@ -655,17 +655,11 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    *
    * @return null if no exception has occurred or content empty, anException if error occurred while loading
    */
-  public abstract Exception getMediaContentException();
+  public Exception getMediaContentException(){
+    return null;
+  };
 
   //-------------------- Cache support -------------
-   /**
-   * try to load MediaContent from Cache. If not possible load it with specific load-routine and put it into cache
-   * @param mediaViewer the mediaView which is asked to (pre) load the file in its specific format
-   * @return MediaContent or null if this was not possible
-   */
-  public Object getMediaContentCached(MediaViewer mediaViewer) {
-    return tryOrRetryMediaContentCached(mediaViewer, false);
-  }
 
   /**
    * try or retry to load MediaContent from Cache. If not possible load it with specific load-routine and put it into cache
@@ -673,40 +667,30 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * @param isRetry call it with false if you try first. Recursive retries will call it with true to count up retry-Counter
    * @return MediaContent or null if this was not possible
    */
-  public Object tryOrRetryMediaContentCached(MediaViewer mediaViewer, boolean isRetry) {
+  public Object getCachedOrLoadMediaContent(MediaViewer mediaViewer, boolean isRetry) {
     if (!isRetry)
       resetLoadRetryCounter();
     //if Retry then counter still needed (will be counted in shouldRetryLoad() that must be called before trying to retry)
 
-    if (isMediaContentInvalid()){
+    //System.out.println("MediaFile.getCachedOrLoadMediaContent isMediaContentInvalid=" + isMediaContentInvalid());
+    if (isMediaContentInvalid()){        //load only if necessary, i.e. if not already successfully loaded and cached
       //if not in cache then ask the viewer to load it
       mediaCache.maintainCacheSizeByFlushingOldest(); //housekeeping before load for having enough memory to load (incl. GC() call)
-      if (isRetry) {
-        //just in case: let the gc do its job before reloading.
-        MediaFile currentMediaFile = this;
-        Platform.runLater(() -> {
-          System.out.println("MediaFile:tryOrRetryMediaContentCached: retry->runLater(LoadImage"+currentMediaFile.getResultingFilename()+")");
-          content = mediaViewer.getViewerSpecificMediaContent(currentMediaFile);
-          if (content != null)
-            mediaCache.addAsLatest(currentMediaFile);//and remember that it is now in memory and the youngest entry of the cache
-        });
-      }else{
-        //first try: load it directly (no runLater())
-        content = mediaViewer.getViewerSpecificMediaContent(this);
-        if (content != null)
-          mediaCache.addAsLatest(this);//and remember that it is now in memory and the youngest entry of the cache
-      }
+
+      cachedContent = mediaViewer.getViewerSpecificMediaContent(this);
+      if (cachedContent != null)
+        mediaCache.addAsLatest(this);//and remember that it is now in memory and the youngest entry of the cache
     }
 
 
-    return content;
+    return cachedContent;
   }
 
   public int getLoadRetryCounter() {
     return loadRetryCounter;
   }
 
-  public boolean shouldRetryLoad(){
+  public boolean retryCounterNotExceeded(){
     loadRetryCounter++;
     return loadRetryCounter <= MAX_LOAD_RETRIES;
   }
@@ -736,7 +720,7 @@ public abstract class MediaFile implements Comparable<MediaFile> {
    * don't forget to clear it in the cache also (or use flushFromCache instead)
    */
   public void flushMediaContent() {
-    content = null;
+    cachedContent = null;
   }
 
   public static void flushAllMediaFromCache(){

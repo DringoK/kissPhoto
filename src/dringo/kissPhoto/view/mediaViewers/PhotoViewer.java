@@ -27,6 +27,7 @@ import java.util.concurrent.CancellationException;
  *
  * @author Dringo
  * @since 2014-05-25
+ * @version 2024-10-06: retry problem solved: after reload it is now not only set into cache but also displayed. Code cleaned.
  * @version 2022-10-15: retry problem solved: no more infinite retries
  * @version 2020-12-20: MediaFile-Type and cache content is now controlled by the viewers: only they know what they accept and what should be cached to speed up viewing
  * @version 2020-12-13: same structure like playerViewers now: "contains an imageView" not "is an imageView". Therefore, common sibling: MediaViewer :)
@@ -82,7 +83,7 @@ public class PhotoViewer extends MediaViewerZoomable{
     installKeyboardHandlers();
   }
 
-  /**
+/**
    * determine if the mediaFile is an ImageFile that can be displayed by this viewer
    * compatible if
    * <ul>
@@ -99,51 +100,63 @@ public class PhotoViewer extends MediaViewerZoomable{
    * @param mediaFile mediaFile to be displayed
    * @return true if displaying was successful, false if mediaFile could not be displayed
    */
+  @Override
   public boolean setMediaFileIfCompatible(MediaFile mediaFile) {
-    if (!(mediaFile instanceof ImageFile)){ //includes test on null
+    super.setMediaFileIfCompatible(mediaFile);   //maintains currentlyShowedMediaFile
+    if (!(mediaFile instanceof ImageFile imageFile)){ //includes test on null
       return false;
     }
-    boolean compatible = true;
 
-    //remember link to the file object to access current rotation
-    Image image = (Image) mediaFile.getMediaContentCached(this);  //getMediaContent tries to put the content into an Image-Object and returns null if not possible
-    if (image != null) {
-      imageView.setImage(image);
+    Image image = (Image) imageFile.getCachedOrLoadMediaContent(this, false);  //when load: retry in exceptionProperty-Handler in getViewerSpecificMediaContent
+    refreshViewIfCurrentMediaFile(mediaFile, image);
+    return true;
+  }
+
+  /**
+   * show image in viewer, if the mediaFile is the currently shown mediaFile (therefore preloaded files are not directly shown)
+   * @param mediaFile
+   * @param media     needs to be an Image object
+   * @return true if it was the current mediaFile
+   */
+  @Override
+  public boolean refreshViewIfCurrentMediaFile(MediaFile mediaFile, Object media) {
+    if (super.refreshViewIfCurrentMediaFile(mediaFile, media)) {
+      if (media instanceof Image) {
+        imageView.setImage((Image) media);
+      }
+      return true;
     } else {
-      compatible = false;
+      return false;
     }
-    return compatible;
   }
 
   /**
    * load an image specified by "FileOnDisk" property
    *
    * @return Image if successful or null if not
-   * note: if null is returned possibly MediaCache needs to be maintained to free memory and retried again
-   * which is tried in background
+   * note: because I use backgroundLoading null is never returned
+   * instead exceptionPropertyHandler will recursively try to reload by calling getCachedOrLeadMediaContent again
+   * @param mediaFile file from which the mediaContent needs to be loaded
    */
   @Override
   public Object getViewerSpecificMediaContent(MediaFile mediaFile) {
     if (!(mediaFile instanceof ImageFile)) return null;
-    MediaViewer photoViewer = this; //to hand over into errorPropertyChange Listener
 
     Image image= null;
-    if (mediaFile.isMediaContentInvalid()) {  //if not already loaded i.e. image in cache is invalid
-      try {
-        image = new Image(mediaFile.getFileOnDisk().toUri().toString(), true);  //true=load in Background
+    try {
+      image = new Image(mediaFile.getFileOnDisk().toUri().toString(), true);  //true=load in Background
 
-        //install error-listener for background-loading
-        image.exceptionProperty().addListener((exception, oldValue, newValue) -> {
+      //install error-listener for background-loading
+      image.exceptionProperty().addListener((exception, oldValue, newValue) -> {
+        if (!(exception.getValue() instanceof CancellationException) && mediaFile.retryCounterNotExceeded()) {  //cancellations will not be retried (see MediaFileList.preLoadMedia()) AND retryCounterNotExceeded() maintains the retry-Counter and prevents from infinite retries
           System.out.println("---image loading failed for " + mediaFile.getResultingFilename() + ": " + exception.toString());
-
-          if (!(exception.getValue() instanceof CancellationException) && mediaFile.shouldRetryLoad()) {  //cancellations will not be retried (see MediaFileList.preLoadMedia()) AND shouldRetryLoad maintains the retry-Counter and prevents from infinite loading
-            System.out.println("!!!PhotoViewer->getViewerSpecificMediaContent: retry=" + mediaFile.getLoadRetryCounter() + " loading " + mediaFile.getResultingFilename());
-            mediaFile.tryOrRetryMediaContentCached(photoViewer, true); //i.e. retry is recursive  and after gc() was active.
-          }
-        });
-      } catch (Exception e) {
-        //will not occur with backgroundLoading: image.getException will get the exception and therefore handled in error-Listener
-      }
+          System.out.println("!!!PhotoViewer->getViewerSpecificMediaContent: retry=" + mediaFile.getLoadRetryCounter() + " loading " + mediaFile.getResultingFilename());
+          Image reloadedImage = (Image) mediaFile.getCachedOrLoadMediaContent(this, true);
+          refreshViewIfCurrentMediaFile(mediaFile, reloadedImage);
+        }
+      });
+    } catch (Exception e) {
+      //will not occur with backgroundLoading: image.getException will get the exception and therefore handled in error-Listener
     }
 
     return image;

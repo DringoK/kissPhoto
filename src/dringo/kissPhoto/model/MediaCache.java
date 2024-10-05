@@ -116,10 +116,10 @@ public class MediaCache {
 
     //remove the oldest MediaFiles from cache until MIN_FREE_MEM_SIZE is reached again
     while (getAvailableMem() + approxMemFreed <= MIN_FREE_MEM_SIZE && !cacheBuffer.isEmpty()) {//size = 0 means: to less memory for caching at all
-      MediaFile oldestMediaFile = cacheBuffer.get(0);                              //begin of the list contains the oldest element
+      MediaFile oldestMediaFile = cacheBuffer.getFirst();                              //begin of the list contains the oldest element
       approxMemFreed = approxMemFreed + oldestMediaFile.getContentApproxMemSize();
       oldestMediaFile.flushMediaContent();
-      cacheBuffer.remove(0);
+      cacheBuffer.removeFirst();
       //System.out.println("flushing --> cache Buffer Size = " + cacheBuffer.size() + " approxMemFreed=" + approxMemFreed + " availMem="+getAvailableMem());
     }
     if (approxMemFreed >0)

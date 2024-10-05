@@ -25,11 +25,6 @@ public class PlayableFile extends MediaFileTagged {
     super(movieFile, parent);
   }
 
-  @Override
-  public Exception getMediaContentException() {
-    return null;
-  }
-
   /*
    *------------------------------------------------- Logic for External Editors --------------------------------
    * re-implement these methods for all siblings of MediaFile, because every child of MediaFile needs different editors and constants

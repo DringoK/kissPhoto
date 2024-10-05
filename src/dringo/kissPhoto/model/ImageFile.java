@@ -21,6 +21,7 @@ import java.util.Objects;
  *
  * @author Dringo
  * @since 2012-08-28
+ * @version 2024-10-06 code made clearer (cachedContent renamed)
  * @version 2020-12-20 the according viewer determines now what to put in the cache (i.e. helps the viewer to show quickly)
  * @version 2020-11-19 globalSettings is now global (static in Kissphoto)
  * @version 2019-07-07: Cache problems fixed
@@ -48,7 +49,7 @@ public class ImageFile extends MediaFileTaggedEditable {
   @Override
   public void cancelBackgroundLoading() {
     super.cancelBackgroundLoading();
-    if (content != null) ((Image) content).cancel();
+    if (cachedContent != null) ((Image) cachedContent).cancel();
   }
 
   /**
@@ -56,8 +57,8 @@ public class ImageFile extends MediaFileTaggedEditable {
    */
   @Override
   public ReadOnlyDoubleProperty getContentProgressProperty() {
-    if (content != null)
-      return ((Image) content).progressProperty();
+    if (cachedContent != null)
+      return ((Image) cachedContent).progressProperty();
     else
       return null;
   }
@@ -72,7 +73,7 @@ public class ImageFile extends MediaFileTaggedEditable {
    */
   @Override
   public Exception getMediaContentException() {
-    Image image = (Image) content;
+    Image image = (Image) cachedContent;
     if (image != null) {
       if (image.getException() != null)
         return image.getException();   //image but not valid
@@ -100,8 +101,8 @@ public class ImageFile extends MediaFileTaggedEditable {
    */
   public int getBytesPerPixel() {
     try {
-      Image currentContent = (Image) content;
-      if (content != null) {
+      Image currentContent = (Image) cachedContent;
+      if (cachedContent != null) {
         return switch (currentContent.getPixelReader().getPixelFormat().getType()) {
           case BYTE_RGB -> 3;
           case BYTE_BGRA, BYTE_BGRA_PRE, BYTE_INDEXED -> 4;
@@ -116,7 +117,7 @@ public class ImageFile extends MediaFileTaggedEditable {
 
   @Override
   public long getContentApproxMemSize() {
-    Image currentImage = (Image) content;
+    Image currentImage = (Image) cachedContent;
 
     //the "guess"
     if (currentImage != null)
