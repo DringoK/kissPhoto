@@ -44,10 +44,10 @@ import java.util.ResourceBundle;
  * @author Ingo Kreuz<br>
  * @since 2014-04-29
  * @version see below in constant KISS_PHOTO_VERSION
+ * @version 2024-10-06 restore window size even if closed in maximized window state, PlayerViewerFX/ImageViewer retries added/reworked,
  * <p>
  *
  * Next:
- * todo wenn Vollbild aktiv war, dann Vollbild und nicht Fenster groß ziehen. Vollbild und Größe getrennt speichern/wiederherstellen
  * todo lookup-Felder in Editable Meta Tags anzeigen und mit Pulldown editieren
  * todo Bei Namenskonflikt (z.B. wenn Datum als Zahl genommen und alles andere gelöscht) wird beim umbenennen automatisch Zahl angehängt. Dann muss Sternchen weg und Zahl in Anzeige übernommen werden
  * todo settingsdatei: aktiven TagsView-Tab speichern/wiederherstellen
@@ -93,7 +93,7 @@ import java.util.ResourceBundle;
 @SuppressWarnings("DataFlowIssue")
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "0.23.10.14";  // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "8.24.1006";  // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
@@ -124,12 +124,14 @@ public class KissPhoto extends Application {
   private static final double default_width = 1000;
   private static final double default_height = 800;
   private static final double MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS = 0.5;
+  private static final boolean default_isMaximized = false;
 
   //------------- IDs for GlobalSettings-File
   private static final String STAGE_X = "StageX";
   private static final String STAGE_Y = "StageY";
   private static final String STAGE_WIDTH = "StageWidth";
   private static final String STAGE_HEIGHT = "StageHeight";
+  private static final String STAGE_MAXIMIZED = "StageMaximized";
 
   private static final String MAIN_SPLIT_PANE_DIVIDER_POSITION = "mainSplitPane_DividerPosition";
 
@@ -292,6 +294,9 @@ static private boolean isOption(String arg){
    * - primaryStage not null
    */
   private void storeLastMainWindowSettings() {
+    globalSettings.setProperty(STAGE_MAXIMIZED, Boolean.toString(primaryStage.isMaximized()));
+    primaryStage.setMaximized(false); //to get the nonMaximized sizes if it was maximized
+
     globalSettings.setProperty(STAGE_X, Double.toString(primaryStage.getX()));
     globalSettings.setProperty(STAGE_Y, Double.toString(primaryStage.getY()));
     globalSettings.setProperty(STAGE_WIDTH, Double.toString(primaryStage.getWidth()));
@@ -339,6 +344,15 @@ static private boolean isOption(String arg){
     } catch (Exception e) {
       mainSplitPane.setDividerPosition(0, MAIN_SPLIT_PANE_DEFAULT_DIVIDER_POS);
     }
+
+    Platform.runLater(()->{ //Maximized not before the window is visible
+      try {
+        primaryStage.setMaximized(Boolean.parseBoolean(globalSettings.getProperty(STAGE_MAXIMIZED)));
+      } catch (Exception e) {
+        primaryStage.setMaximized(default_isMaximized);
+      }
+    });
+
 
     fileTableView.restoreLastSettings();
     Platform.runLater(()->metaInfoView.restoreVisibilityFromGlobalSettings()); //wait until all other layout has been performed otherwise metaInfoView gets a resize event after original position was restored

@@ -54,6 +54,7 @@ import static dringo.kissPhoto.KissPhoto.language;
  *
  * @author Ingo
 
+ * @version 2024-10-06 support auto-open previous/next directory (depth first) if moving over borders (first/last) of list
  * @version 2023-01 29 support file deletion and moving while in edit mode (see FileTableTextFieldCell)
  * @version 2023-01-05 ctrl-del to delete while inplace editing  and undelete last implemented. Moving to next/previous file cleaned up and moved to FileTableView from ContentView
  * @version 2022-09-04 clean up primaryStage parameter
