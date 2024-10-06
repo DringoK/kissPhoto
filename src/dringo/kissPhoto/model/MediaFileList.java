@@ -45,7 +45,7 @@ import java.text.MessageFormat;
  * @version 2014-06-04 open with invalid file but valid path will open the path (directory)
  * @version 2014-05-24 find/replace works now
  */
-public class MediaFileList { //should extend ObservableList, but JavaFx only provides FactoryClasses. Therefore it contains an Observable List only
+public class MediaFileList { //should extend ObservableList, but JavaFx only provides FactoryClasses. Therefore, it contains an ObservableList only
   private static final String NO_SUCH_FILE_OR_DIRECTORY = "no.such.file.or.directory";
 
   private Path folder;    //without a trailing File.separator!

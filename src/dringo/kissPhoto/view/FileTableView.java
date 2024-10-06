@@ -296,7 +296,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
           setTooltipText(lastSelection);
           mediaFileList.preLoadMedia(newValue.intValue(), mediaContentView);
         } else {
-          if (mediaFileList.getFileList().size() == 0) {
+          if (mediaFileList.getFileList().isEmpty()) {
             //this happens e.g. if sort order is changed (by clicking the headlines) in an empty list (nothing loaded)
             //keep lastSelection, so the sortOrderChange-Listener can restore selection
 
@@ -322,7 +322,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
    */
   public void setTooltipText(MediaFile focusedMediaFile){
     String s= focusedMediaFile.getChangesText();
-    if (s.length()>0) {
+    if (!s.isEmpty()) {
       setTooltip(tooltip);
       tooltip.setText(focusedMediaFile.getChangesText());
     }else{
@@ -367,7 +367,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
       boolean success = false;
       if (db.hasFiles()) {
         //load first file only
-        openFolder(db.getFiles().get(0).getAbsolutePath(), true);
+        openFolder(db.getFiles().getFirst().getAbsolutePath(), true);
         success = true;
       }
       //stop dragging also if it could not be handled
@@ -472,13 +472,13 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     //----------------------------------------
     // try to open file or Folder
 
-    if ((initialFileOrFolderName != null) && (initialFileOrFolderName.length() > 0)) {
+    if ((initialFileOrFolderName != null) && (!initialFileOrFolderName.isEmpty())) {
       //first trial is to open the file passed as a parameter
       openFolder(initialFileOrFolderName, false); //no unsaved changes possible, because initial opening
     } else {
       //second trial is to open the last file opened
-      if (fileHistory.getRecentlyOpenedList().size() > 0) {
-        openFolder(fileHistory.getRecentlyOpenedList().get(0), false); //no unsaved changes possible, because initial opening
+      if (!fileHistory.getRecentlyOpenedList().isEmpty()) {
+        openFolder(fileHistory.getRecentlyOpenedList().getFirst(), false); //no unsaved changes possible, because initial opening
       } else {
         statusBar.showMessage(language.getString("use.ctrl.o.to.open.a.folder"));
       }
@@ -798,7 +798,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
         errMsg = mediaFileList.openFolder(newFileOrFolder);
 
-        if (errMsg.length() == 0) {
+        if (errMsg.isEmpty()) {
           getPrimaryStage().setTitle(KissPhoto.KISS_PHOTO + KissPhoto.KISS_PHOTO_VERSION + " - " + mediaFileList.getCurrentFolderName());
           if (reopened)
             statusBar.showMessage(MessageFormat.format(language.getString("0.reopened"), mediaFileList.getCurrentFolderName()));
@@ -832,12 +832,12 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
       } finally {
         //empty directory?
-        if (mediaFileList.getFileList().size() < 1) {
+        if (mediaFileList.getFileList().isEmpty()) {
           //clear any visible image shown before
           showMedia(null,null);
         }
         if (primaryScene != null) primaryScene.setCursor(Cursor.DEFAULT);
-        if (errMsg.length() > 0) {
+        if (!errMsg.isEmpty()) {
           statusBar.showError(MessageFormat.format(language.getString("could.not.open.0"), fileOrFolder.toString()));
         }
       }
@@ -846,6 +846,14 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     requestFocus(); //if full-screen is active then after a dialog the main window should be active again
     getPrimaryStage().requestFocus();
     enableSelectionListener = true;
+  }
+
+  /**
+   * open next folder on the same level
+   * keep it simple: if there is none, nothing happens, don't leave the parent folder
+   *
+   */
+  public void openNextFolder(){
 
   }
 
