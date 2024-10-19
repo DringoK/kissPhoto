@@ -83,10 +83,8 @@ public class PlayerViewerFX extends PlayerViewer {
   @Override
   public boolean setMediaFileIfCompatible(MediaFile mediaFile, Duration seekPosition) {
     super.setMediaFileIfCompatible(mediaFile);   //maintains currentlyShowedMediaFile
-    System.out.println("PlayerViewerFX->setMediaFileIfCompatible: " + mediaFile.getFileOnDiskName());
     this.seekPosition = seekPosition;
     if (!(mediaFile instanceof PlayableFile playableFile)){  //includes test on null
-      System.out.println("PlayerViewerFX.setMediaFileIfCompatible --> mediaFile ist nicht instanceof PlayableFile:" + mediaFile.getClass());
       return false;
     }
     boolean compatible = true;
@@ -98,7 +96,6 @@ public class PlayerViewerFX extends PlayerViewer {
       MediaPlayer mediaPlayer = (MediaPlayer) playableFile.getCachedOrLoadMediaContent(this, false);
       refreshViewIfCurrentMediaFile(playableFile, mediaPlayer);
     } catch (Exception e) {
-      System.out.println("PlayerViewerFX->setMediaFileIfCompatible->Catch: " + e);
       compatible = false;
     }
     return compatible;
@@ -157,7 +154,6 @@ public class PlayerViewerFX extends PlayerViewer {
   public void resetPlayer() {
     if (currentlyShowedMediaFile != null) {
       currentlyShowedMediaFile.flushMediaContent(); //do not use cache for PlayerViewerFX files
-      System.out.println("PlayerViewerFX.resetPlayer->flush " + currentlyShowedMediaFile.getFileOnDiskName());
     }
 
     MediaPlayer mediaPlayer = this.mediaView.getMediaPlayer();
@@ -286,9 +282,6 @@ public class PlayerViewerFX extends PlayerViewer {
 
       //install error-listener for background start
       mediaPlayer.setOnError(() -> {
-        System.out.println("!!! PlayerViewerFX.getViewerSpecificMediaContent-->ErrorHandler Error= " + mediaView.getMediaPlayer().getError());
-        System.out.println("!!!PlayerViewerFX->getViewerSpecificMediaContent: retry=" + mediaFile.getLoadRetryCounter() + " loading " + mediaFile.getResultingFilename());
-
         resetPlayer();
 
         Platform.runLater(()->{    //

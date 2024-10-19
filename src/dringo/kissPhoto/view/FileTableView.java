@@ -14,6 +14,7 @@ import dringo.kissPhoto.view.fileTableHelpers.FileHistory;
 import dringo.kissPhoto.view.fileTableHelpers.FileTableContextMenu;
 import dringo.kissPhoto.view.fileTableHelpers.FileTableTextFieldCell;
 import dringo.kissPhoto.view.fileTableHelpers.FileTableTextFieldCellFactory;
+import dringo.kissPhoto.view.viewerHelpers.NextFolderOverlay;
 import dringo.kissPhoto.view.viewerHelpers.ViewerControlPanel;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -54,7 +55,7 @@ import static dringo.kissPhoto.KissPhoto.language;
  *
  * @author Ingo
 
- * @version 2024-10-06 support auto-open previous/next directory (depth first) if moving over borders (first/last) of list
+ * @version 2024-10-06 support auto-open previous/next directory (depth first) if moving over borders (first/last) of list, viewport search more robust
  * @version 2023-01 29 support file deletion and moving while in edit mode (see FileTableTextFieldCell)
  * @version 2023-01-05 ctrl-del to delete while inplace editing  and undelete last implemented. Moving to next/previous file cleaned up and moved to FileTableView from ContentView
  * @version 2022-09-04 clean up primaryStage parameter
@@ -143,6 +144,7 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
   private boolean renameDialogActive = false;
 
   private final Tooltip tooltip = new Tooltip();
+  private final NextFolderOverlay nextFolderOverlay = new NextFolderOverlay(this);
 
   private boolean isMovingFiles = false; //ignore selection refresh events while movingUp/Dn because selection has to be rebuilt with every step there, but effectively it does not change
   private boolean enableSelectionListener = true; //will be disabled while loading to prevent from many unnecessary change events each would cause setMedia...
@@ -165,6 +167,10 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
     fileHistory = new FileHistory(this);
 
     this.setMinSize(100.0, 100.0);
+
+    getChildren().add(nextFolderOverlay);
+    nextFolderOverlay.show(NextFolderOverlay.Direction.PREV);
+
 
     //set properties of the table
     getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -283,7 +289,6 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
 
     setOnContextMenuRequested(contextMenuEvent -> contextMenu.show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY()));
-
   }
 
   private void installSelectionHandler(MediaContentView mediaContentView) {
@@ -379,16 +384,23 @@ public class FileTableView extends TableView<MediaFile> implements FileChangeWat
 
   private void getViewPort() {
     //this is a solution for getting the viewport (flow) seen on http://stackoverflow.com/questions/17268529/javafx-tableview-keep-selected-row-in-current-view
-    skinProperty().addListener((ov, t, t1) -> {
-      if (t1 == null) {
+
+    skinProperty().addListener((observableValue, oldSkin, newSkin) -> {
+      if (! (newSkin instanceof TableViewSkin<?>)){
         return;
       }
 
-      TableViewSkin<?> tvs = (TableViewSkin<?>) t1;
+      TableViewSkin<?> tvs = (TableViewSkin<?>) newSkin;
       ObservableList<Node> kids = tvs.getChildren();
 
+      //look up the VirtualFlow child:
       if (kids != null && !kids.isEmpty()) {
-        flow = (VirtualFlow<?>) kids.get(1);
+        for (Node o:kids){
+          if (o instanceof VirtualFlow<?>){
+            flow = (VirtualFlow<?>) o;
+            break;
+          }
+        }
       }
     });
   }

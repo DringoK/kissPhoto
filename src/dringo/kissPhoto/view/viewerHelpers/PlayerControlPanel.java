@@ -70,7 +70,7 @@ public class PlayerControlPanel extends ViewerControlPanel {
 
   /**
    * create a player control and connect it to a MediaPlayer
-   * @param viewer to be conntected to
+   * @param viewer to be connected to
    */
   public PlayerControlPanel(PlayerViewer viewer) {
     super(viewer);   //builds control and option area and installs hiding thread
