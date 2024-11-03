@@ -1,6 +1,6 @@
 @echo off
 echo msi
-jpackage --input out/artifacts --name kissPhoto --app-version 0.24.1016 ^
+jpackage --input out/artifacts --name kissPhoto --app-version 0.24.1103 ^
  --copyright "(c)2024 Dr. Ingo Kreuz" ^
  --vendor "Ingo Kreuz" ^
  --description "KissPhoto" ^

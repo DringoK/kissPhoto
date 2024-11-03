@@ -4,10 +4,13 @@ import dringo.kissPhoto.model.MediaFile;
 import dringo.kissPhoto.model.MediaFileList;
 import dringo.kissPhoto.view.FileTableView;
 import dringo.kissPhoto.view.inputFields.*;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.input.InputMethodEvent;
 import javafx.scene.input.KeyEvent;
 
 import static java.util.Objects.isNull;
@@ -48,6 +51,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   @Override
   public void startEdit() {
     super.startEdit();
+    System.out.println("FileTableTextFieldCell.startEdit: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
 
     escPressed = false;
     fileTableView = (FileTableView) getTableColumn().getTableView();
@@ -59,12 +63,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
     setGraphic((Node) inputField);
     this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
-    inputField.requestFocus();
-    positionCaretOrSelect(); //works only, if it has the focus ;-)
-    //lastCaretPositionValid = false; //consume last caret position
-
-    fileTableView.resetSelectSearchResultOnNextStartEdit(); //consume not before second positioning..
-    System.out.println("FileTableTextFieldCell.startEdit: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
+    inputField.requestFocus();  //selection or last Caret Position is restored in input field's focus handler (see createInputField())
   }
 
   /**
@@ -75,34 +74,38 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
    * </ul>
    */
   private void restoreCaretPositionIfValid() {
+    System.out.println("FileTableTextFieldCell.restoreCaretPositionIfValid: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
 
     if (lastCaretPositionValid) {
       inputField.deselect();
       inputField.positionCaret(lastCaretPosition); //move to last text cursor position in the new row
+      System.out.println("FileTableTextFieldCell.restoreCaretPositionIfValid--->Positioned :-) !!!!!!!!!: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
     } else {
+      System.out.println("FileTableTextFieldCell.restoreCaretPositionIfValid()--> Select All");
       inputField.selectAll();
     }
-    System.out.println("FileTableTextFieldCell.restoreCaretPositionIfValid: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
 
   }
 
   public void positionCaretOrSelect() {
+    System.out.println("FileTableTextFieldCell.positionCaretOrSelect(): pos = " + (!isNull(inputField) ? inputField.getCaretPosition() : "-") + " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
 
     //select searchResult if available
     if (fileTableView.isSelectSearchResultOnNextStartEdit()) {
       //select Search Result
       MediaFileList.SearchRec searchRec = ((FileTableView) getTableColumn().getTableView()).getSearchRec();
-      if (searchRec != null)
+      if (searchRec != null) {
+        System.out.println("FileTableTextFieldCell.positionCaretOrSelect().if SelectSearchResult: pos = " + (!isNull(inputField) ? inputField.getCaretPosition() : "-") + " StartPos = " + searchRec.startPos + " EndPos = " + searchRec.endPos + "    lastPos=" + lastCaretPosition);
         inputField.selectRange(searchRec.startPos, searchRec.endPos);
-      else
-        inputField.selectAll();
-      ((FileTableView) getTableColumn().getTableView()).getPrimaryStage().requestFocus();  //put focus from dialog to main window
+      }
+      fileTableView.resetSelectSearchResultOnNextStartEdit(); //consume
 
       // or select same Caret Position as in last row
     } else {
+      System.out.println("FileTableTextFieldCell.positionCaretOrSelect().else: pos = " + (!isNull(inputField) ? inputField.getCaretPosition() : "-") + " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
       restoreCaretPositionIfValid();
     }
-    System.out.println("FileTableTextFieldCell.positionCaretOrSelect: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
+    System.out.println("FileTableTextFieldCell.positionCaretOrSelect()--->Ende: pos = " + (!isNull(inputField) ? inputField.getCaretPosition() : "-") + " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
   }
 
   @Override
@@ -155,7 +158,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
       if (isEditing()) {
         if (inputField != null && inputField.getText().isEmpty()) {   //only if possible and necessary
           inputField.setText(getString());
-          restoreCaretPositionIfValid();
+          //restoreCaretPositionIfValid();
         }
         setText(null);
         setGraphic((Node) inputField);
@@ -195,13 +198,22 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
 
     inputField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
 
-    // CommitEdit on Focus lost of FileTableView
+    //----Focus Handler: getFocus=> restore Selection/CaretPos, loose Focus=> CommitEdit on Focus lost of FileTableView
     ((Node) inputField).focusedProperty().addListener((observable, oldValue, newValue) -> {
-      if (!newValue) { //if focus lost (newValue of focussed=false)
+      if (newValue) {
+        System.out.println("FileTableTextFieldCell.createInputField.focusChanged: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
+        Platform.runLater(this::positionCaretOrSelect);
+      }else{  //if focus lost (newValue of focussed=false)
         if (isEditing()) commitEdit(inputField.getText());
       }
 
-      System.out.println("FileTableTextFieldCell.createInputField.focusChanged: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
+    });
+
+    ((Node)inputField).setOnInputMethodTextChanged(new EventHandler<InputMethodEvent>() {
+      @Override
+      public void handle(InputMethodEvent event) {
+        System.out.println("FileTableTextFieldCell.createInputField.InputMethodTextChanged: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
+      }
     });
 
     //use EventFilter instead of setOnKeyPressed. Otherwise, Up/Dn would first execute their default behaviour (home/end) before onKeyPressed is fired
@@ -368,7 +380,7 @@ public class FileTableTextFieldCell extends TableCell<MediaFile, String> {
   private void moveCaretUpOrDown(boolean up, TableColumn<MediaFile, String> editingColumn) {
     lastCaretPosition = inputField.getCaretPosition(); //remember last caretPosition so that it can be used again in next/prev line
     lastCaretPositionValid = true;
-    System.out.println("FileTableTextFieldCell.moveCaretPositionUpOrDown: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
+    System.out.println("----------------------------\nFileTableTextFieldCell.moveCaretPositionUpOrDown: pos = " + (!isNull(inputField)?inputField.getCaretPosition():"-") +  " lastPos=" + lastCaretPosition + " valid=" + lastCaretPositionValid);
     if (up)
       fileTableView.showPreviousMedia();
     else //down

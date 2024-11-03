@@ -123,7 +123,7 @@ public class PathHelpers {
       }
     folderList.sort(Comparator.naturalOrder());
 
-    } catch (IOException _) {
+    } catch (IOException e) {
     }
 
     return folderList;

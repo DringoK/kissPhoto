@@ -93,7 +93,7 @@ import java.util.ResourceBundle;
 @SuppressWarnings("DataFlowIssue")
 public class KissPhoto extends Application {
   //please check Log.debugLevel in main()
-  public static final String KISS_PHOTO_VERSION = "8.24.1006";  // <------------------------------------------------------------------------------
+  public static final String KISS_PHOTO_VERSION = "8.24.1103a";  // <------------------------------------------------------------------------------
   public static final String KISS_PHOTO = "kissPhoto ";
   public static ResourceBundle language = null;
 
